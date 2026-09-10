@@ -15,6 +15,7 @@ void ABBHUD::DrawHUD()
     ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
     ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(PlayerOwner->GetPawn());
     if (!Match || !Rider) return;
+    UpdateAudioFeedback(Match, Rider);
     const float W = Canvas->SizeX, H = Canvas->SizeY;
     const float S = FMath::Min(W/1600.f, H/900.f);
     const FLinearColor Ink(.015,.026,.038,.90), Muted(.56,.67,.7,1), Cream(.94,.91,.82,1), Teal(.12,.9,.73,1), Copper(1,.46,.20,1), Gold(1,.77,.24,1), Violet(.7,.38,1,1);
@@ -49,16 +50,29 @@ void ABBHUD::DrawHUD()
     ABBBall* ChaseTarget = nullptr;
     float BestDist = TNumericLimits<float>::Max();
     const bool CanChase = Rider->Position == 3 || Rider->Position == 5 || Match->Phase == TEXT("DONNYBROOK");
-    float StatusY = 155;
+    Text(TEXT("BALLS IN PLAY"),UW-244,143,.78f,Muted);
     for (TActorIterator<ABBBall> It(GetWorld()); It; ++It)
     {
         ABBBall* B = *It;
         if (B->Holder == Rider) Held = B;
+        const FLinearColor BallColor = B->BallIndex == 0 ? Copper : B->BallIndex < 3 ? Violet : B->BallIndex == 3 ? Copper : B->BallIndex == 4 ? Gold : Muted;
+        const float StatusY = 169 + FMath::Clamp(B->BallIndex,0,6) * 48;
+        Rect(UW-252,StatusY-3,228,43,Ink);
+        Rect(UW-252,StatusY-3,3,43,B->bActive ? BallColor : Muted*.5f);
+        Text(B->DisplayName(),UW-240,StatusY,.82f,BallColor);
+        FString BallState = B->bActive ? TEXT("FREE") : TEXT("OUT OF PLAY");
+        if (IsValid(B->Holder))
+            BallState = (B->Holder->TeamIndex ? TEXT("COPPER / ") : TEXT("TEAL / ")) + ABBMatchState::PositionName(B->Holder->Position).ToUpper();
+        else if (B->ReturnIn > 0)
+        {
+            const int32 ReturnSeconds = FMath::CeilToInt(B->ReturnIn);
+            BallState = FString::Printf(TEXT("%s %d:%02d"), B->BallStatus == TEXT("scheduled_release") ? TEXT("RELEASE IN") : TEXT("RETURNS IN"), ReturnSeconds/60, ReturnSeconds%60);
+        }
+        else if (B->BallStatus == TEXT("crown")) BallState = TEXT("NO CROWN / RETURNING");
+        else if (!Match->bLive && B->bActive) BallState = TEXT("WAITING FOR PLAY");
+        Text(BallState,UW-240,StatusY+20,.67f,Muted);
         if (B->IsChase())
         {
-            const FLinearColor Color = B->BallIndex == 3 ? Copper : Gold;
-            FString State = B->bActive ? TEXT("LIVE") : B->ReturnIn > 0 ? FString::Printf(TEXT("%d:%02d"),int32(B->ReturnIn)/60,int32(B->ReturnIn)%60) : TEXT("HELD");
-            Text(B->DisplayName()+TEXT("  ")+State,UW-212,StatusY,.9,Color); StatusY += 26;
             const float D = FVector::Distance(Rider->GetActorLocation(),B->GetActorLocation());
             if (CanChase && B->bActive && D < BestDist) { BestDist = D; ChaseTarget = B; }
         }
@@ -103,7 +117,17 @@ void ABBHUD::DrawHUD()
         Rect(UW/2-155,UH/2-90,310,42,Ink);
         Text(TEXT("STUNNED - RECOVERING"),UW/2-134,UH/2-79,1.1,Copper);
     }
-    if (!Match->bLive || Rider->bShowRoster)
+    if (Match->Status == TEXT("FINAL") || Match->Status == TEXT("CERTIFYING RESULT"))
+    {
+        const bool bFinal = Match->Status == TEXT("FINAL");
+        const FLinearColor ResultColor = Match->Winner == 0 ? Teal : Copper;
+        Rect(UW/2-300,188,600,210,Ink);
+        Rect(UW/2-300,188,600,4,bFinal ? ResultColor : Gold);
+        Text(bFinal ? (Match->Winner == 0 ? TEXT("TEAL WINS") : TEXT("COPPER WINS")) : TEXT("RESULT UNDER REVIEW"),UW/2-265,216,1.8f,bFinal ? ResultColor : Gold);
+        Text(FString::Printf(TEXT("TEAL  %d     /     COPPER  %d"),Match->TealScore,Match->CopperScore),UW/2-265,273,1.2f,Cream);
+        Text(bFinal ? TEXT("Certified result. Close and relaunch to play again.") : TEXT("Resolving the final play and outstanding decisions."),UW/2-265,332,.85f,Muted);
+    }
+    else if (!Match->bLive || Rider->bShowRoster)
     {
         Rect(UW/2-300,164,600,324,Ink);
         Text(Match->bLive ? TEXT("POSITION GUIDE") : Match->Status,UW/2-275,184,1.4,Cream);

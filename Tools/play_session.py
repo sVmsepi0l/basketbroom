@@ -43,6 +43,14 @@ else:
         controller.set_control_rotation(unreal.Rotator(pitch=0,yaw=0,roll=0))
     elif operation=='screenshot':
         unreal.SystemLibrary.execute_console_command(world,'HighResShot 1600x900')
+    elif operation=='chase_screenshot':
+        # Presentation fixture on a PIE copy; no capture or score is injected.
+        target=next(a for a in balls if a.get_editor_property('Kind')==3)
+        focus=target.get_actor_location()
+        view=focus-unreal.Vector(1600,800,-180)
+        player.set_actor_location(view,False,True)
+        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(view,focus))
+        unreal.SystemLibrary.execute_console_command(world,'HighResShot 1600x900')
     def v(p): return [round(p.x,2),round(p.y,2),round(p.z,2)]
     RESULT={'operation':operation,'player':player.get_class().get_name(),
       'position':v(player.get_actor_location()),'velocity':v(player.get_velocity()),

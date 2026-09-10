@@ -1,32 +1,44 @@
-# Basketbroom — first playable training prototype
+# Basketbroom — UE5.8 broom sport
 
-A first-person broom sport training prototype built in **Unreal Engine 5.8**.
-Fly for Teal against Copper in an original open-crown arena with mounted riders,
-glowing balls, ballistic throws and a live scoreboard. The current milestone is
-a five-minute scrimmage that establishes flight, ball handling, scoring and basic
-opponents; the full Basketbroom rules remain a work in progress.
+A first-person broom sport alpha built in **Unreal Engine 5.8**. The active native
+game has a sixteen-rider roster, selectable positions, seven balls, broom flight,
+ballistic goals, continuous chase catches, and regulation match state in an
+original open-crown arena. The native Editor and Windows Development game build
+successfully. **35 native gameplay checks and 14 local network checks pass**;
+two packaged processes also connect and join successfully. Full regulation,
+remote multiplayer validation, and final art remain in development.
 
-![Actual Unreal gameplay: the arena, mounted riders and score HUD](Docs/Screenshots/training-flight.png)
+![Actual Unreal render of the retained training mode, with its training HUD](Docs/Screenshots/training-flight.png)
 
 The active project is `DevelopmentHarness/BasketbroomDev.uproject`. The folder
 name is historical: this is now a standalone UE5.8 game project. It is not an
 installable Hogwarts Legacy mod. Creator Kit research and the original mod
-scaffold remain in `Docs/` and `Mod/` for reference; UE5.8 assets are not compatible
+port remain in `Docs/` and `Mod/`; UE5.8 assets are not compatible
 with Hogwarts Legacy's Creator Kit engine.
 
 ## Play
 
 Double-click **Play.cmd**, or run the command below from this repository.
 The launcher prefers the latest local packaged Windows build, which does not
-require Unreal Editor. Build output is local and is not committed to Git.
+require Unreal Editor. The current package contains the native regulation alpha
+and the earlier training map. Build output is local and is not committed to Git.
 
 From a PowerShell terminal in this repository:
 
 ```powershell
 .\Play.ps1
+.\Play.ps1 -Practice
+.\Play.ps1 -Mode Training
 ```
 
-This opens the arena in a 1600 × 900 game window. If no local package exists,
+**Practice.cmd** opens the accelerated native match. **Local-Multiplayer.cmd**
+opens a packaged host and client on this computer with practice clocks.
+
+The default `-Mode Auto` uses the latest package and its native regulation map.
+`-Practice` uses accelerated native clocks: three-minute quarters and a Snitch
+release after one minute of live play. `-Mode Training` selects the retained
+five-minute Blueprint scrimmage described below. These open a 1600 × 900 game
+window. If no local package exists,
 the launcher uses an installed Unreal Engine **5.8** editor in game mode.
 Use `-EditorGame` to force that mode, or change the window size:
 
@@ -40,35 +52,90 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **W / A / S / D:** fly forward, left, backward and right.
 - **Mouse:** look and aim. Forward flight follows your view.
 - **Space / Left Ctrl:** rise and descend.
-- **E:** pick up a nearby Quaffle or Quark, including one carried by a bot.
+- **E:** pick up a nearby free ball permitted for your position.
 - **Left mouse button:** throw the ball along your aim; account for its drop.
-- **Hold E:** stay near a Snipe or Snitch for one continuous second to catch it.
-- **R:** restart the scrimmage.
+- **Hold E:** remain within **3.8 meters** of a Snipe or Snitch for **one continuous second** as a Ranger or Scout. Release any carried ball first; the HUD shows range and capture progress.
+- **1–6:** choose Netminder, Chaser, Trapper, Ranger, Hurleyback, or Scout during the lobby or a stoppage.
+- **T:** switch teams during the lobby or a stoppage. **Tab:** show the position guide.
+- **Enter:** host starts or resumes play. **P:** host calls a stoppage.
 
-You occupy Teal's Ranger slot. Teal attacks the far end from the opening spawn.
+You begin in a Ranger slot and can choose another position before play.
 Put the red-orange **Quaffle** through a large hoop for **13** points or a purple
-**Quark** through the small upper hoop for **37**. Catch the cyan **Snipe** for
-**69**; it returns after three minutes. The golden **Snitch** awards **150** and
-ends this training game. The scrimmage otherwise ends after **five minutes**.
+**Quark** through the small upper hoop for **37**. Catch the copper **Snipe** for
+**69**; it returns after three live minutes. The golden **Snitch** awards **150**
+in regulation or **300** in overtime; final results follow the rules engine's
+phase and review logic. Regulation retains four **44-minute quarters**, with
+the Snitch scheduled after **22 minutes** of live play. Practice releases it
+after **one minute**. The Snipe travels at 60% of the Snitch's speed.
+
+Capture progress resets on release or a range break. Ordinary scoring positions
+carry Quaffles and Quarks; Hurleybacks handle Bludgers; Rangers and Scouts chase.
+Role and team changes are locked while play is live.
 
 ## What is implemented
 
-The training slice contains sixteen riders: the player, seven Teal bots and eight
-Copper bots. Simple scoring bots pursue assigned balls, carry them, and shoot at
-real goal planes. Hurleybacks and Scouts currently patrol. There is one Quaffle,
-two Quarks, one Snipe and one Snitch. Goal checks account for ball clearance, and
-ordinary balls bounce off arena boundaries or return after a crown exit.
+`DevelopmentHarness/Source/BasketbroomRuntime/` now supplies the enabled native
+C++ runtime: CharacterMovement broom flight, authority-owned balls, the sixteen
+roster slots, position/team selection, host start/stoppage, goal and capture
+resolution, and replicated HUD state. It spawns one Quaffle, two Quarks, one
+Snipe, one scheduled Snitch, and two Bludgers. Goal checks require the whole ball
+to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
+returns are exercised by the native integration suite.
 
 The venue, team colors, riders, broom cockpit and HUD are generated original
-assets. Four original synthesized sounds provide throw, score, catch and bounce
-feedback. Python authors saved Unreal assets; the playable match runs in native
-Blueprints without Python ticking its gameplay.
+assets. Python authors saved Unreal assets; native matches run in C++. The
+retained training mode runs in compiled Blueprints and has four original
+synthesized sounds for throw, score, catch, and bounce feedback.
 
-This is an early playable training game, not the complete ruleset. There are no
-live Bludgers, spells, multiplayer, character animation, full officiating,
-regulation quarters, overtime, Donnybrook or substitutions yet. Training capture
-and role behavior are simplified, and both chase balls are available from the
-start. The rules reference's broader coverage does not imply runtime support.
+The current visual pass adds an original basalt texture, material variation,
+stadium masonry/seating, terrain, trees, metal goal rims and twilight lighting.
+Characters remain procedural placeholders; this is not an AAA art release.
+
+Full regulation still needs penalty-shot execution, wand gameplay, and complete
+officiating/adjudication flows. The rules engine has broader phase and penalty
+coverage than the current in-game presentation. Character animation, polished
+character assets, match balance, and audio integration/mixing need further work.
+Passing the focused native checks does not certify every regulation phase or
+autonomous match behavior.
+
+## Retained training mode
+
+Use `Play.ps1 -Mode Training` for `/Basketbroom/Maps/BB_Arena`. You occupy Teal's
+Ranger slot for a five-minute scrimmage with fifteen bots and five balls. Both
+chase balls are available immediately; the Snitch ends that training game.
+**R** restarts it. This mode uses simplified rules, permits training pickups
+from bots, and has no live Bludgers or position switching. Its Ranger HUD shows
+chase distances, hold progress, a projected target label, and an off-screen hint.
+Earlier standalone training packages remain available in the local build folder.
+
+## Native builds and multiplayer development
+
+The portable native rules engine passes **60 C++ scenarios**, including the
+54 reference cases. The separate native Unreal integration suite now passes
+**35/35** checks in one authority PIE world. Native Editor compilation and Win64
+Development compilation/cooking/packaging succeeded using Visual Studio 2026,
+MSVC **14.51.36257**, Windows SDK **26100**, and the .NET Framework **4.8 SDK**.
+The regulation map is staged and enabled. Packaged native startup and a
+two-process loopback connection passed. Native visual/input review is separate
+from these automated checks.
+
+To prepare another machine and rebuild the native editor target:
+
+```powershell
+.\Install-BuildTools.ps1
+.\Build-Native.ps1
+```
+
+Windows may require administrator approval for Microsoft's signed installer.
+After compilation, reopen the editor and run `Tools/stage_regulation.py` as
+needed. Use `Multiplayer.ps1 -Mode LocalTest` for a
+listen server and loopback client, `-Mode Host`, or `-Mode Join -Address <host>`.
+All fourteen same-process networking checks pass. The launcher prefers the
+native package; use `-EditorGame` to force Unreal's development game mode.
+Remote transport, latency, and gameplay across separate processes still need
+validation beyond the passing packaged connection check. LAN/direct IP
+comes first; Steam/Epic discovery, authentication, and invites are not implemented.
+See `Docs/native-validation.md`, `Docs/native-rules.md`, and `Docs/networking.md`.
 
 ## Open and rebuild
 
@@ -76,7 +143,8 @@ start. The rules reference's broader coverage does not imply runtime support.
 .\Open-Editor.ps1
 ```
 
-The arena map is `/Basketbroom/Maps/BB_Arena`. Generated assets are stored in
+The active native map is `/Basketbroom/Maps/BB_Regulation`; the training map is
+`/Basketbroom/Maps/BB_Arena`. Generated assets are stored in
 `DevelopmentHarness/Plugins/Basketbroom/Content/`, mounted as `/Basketbroom`.
 The project's Python and Editor Scripting Utilities plugins are enabled.
 These authoring plugins are restricted to Editor targets.
@@ -89,8 +157,8 @@ and run:
 import runpy; runpy.run_path(r"C:\Git\basketbroom\Tools\build_all.py", run_name="__main__")
 ```
 
-Adjust the path if you cloned elsewhere. This regenerates the owned gameplay
-Blueprints and arena content in dependency order:
+Adjust the path if you cloned elsewhere. This regenerates the owned training
+Blueprints and arena assets in dependency order:
 
 1. `build_audio`: original source WAVs and imported sound assets.
 2. `build_gameplay`: match, balls and player flight, including sound triggers.
@@ -104,6 +172,9 @@ The builder saves the assets and arena, and writes progress/results to
 `.local/build-all-results.json`. Generated Blueprint graphs are replaced;
 edit their Python sources to preserve changes across rebuilds. Arena builders
 replace their tagged actors and retain unrelated untagged venue actors.
+After training authoring, run `Tools/stage_regulation.py` to select and stage
+the native map again. Recompile C++ changes with `Build-Native.ps1`; the Python
+authoring pipeline does not compile native source.
 
 To package saved assets into a Windows executable:
 
@@ -111,8 +182,10 @@ To package saved assets into a Windows executable:
 .\Package.ps1
 ```
 
-Packaging uses UE5.8's installed content-only game binary and does not need a
-C++ compiler. Each run creates a new `.local/Build/Development-<timestamp>/Windows`
+With the native module enabled, packaging builds the native game target and
+cooks both regulation and training maps. The earlier content-only training
+packaging path uses UE5.8's installed game binary when the module is disabled.
+Each run creates a new `.local/Build/Development-<timestamp>/Windows`
 directory and updates the launcher's latest-package pointer on success. Keep
 the entire `Windows` folder together when copying a build. `-Plan` checks inputs
 without cooking; `-Configuration Shipping` selects a Shipping build.
@@ -126,29 +199,34 @@ python -m unittest discover -s Rules -v
 python -m compileall -q Tools Rules
 ```
 
-The latest completed checks passed **54 rule-reference tests**, **15 live
-Unreal gameplay tests**, **15 AI integration tests**, and **4 flight regression
-tests**. The reference tests validate the separate
-engine-independent model in `Rules/`; they do not test the playable Blueprints.
-`Tools/test_playable.py` exercises gameplay in Unreal Play In Editor, while
+Completed checks include **54 Python rule-reference tests**, **60 portable C++
+rules scenarios**, and **35 native Unreal integration checks**. The retained
+training mode also passed **15 gameplay**, **15 AI**, and **4 flight** checks;
+its final chase HUD rebuild was rechecked and packaged. These suites have
+different scopes: reference rules do not exercise Unreal actors, and authority
+PIE results do not establish remote networking.
+`Tools/test_playable.py` exercises training gameplay in Unreal Play In Editor, while
 `Tools/test_bots.py` provides separate AI integration checks for the roster,
-possession and native shooting behavior. `Tools/test_flight.py` reloads the saved
-map, checks spawn clearance, verifies the real player spawn, and measures native
-horizontal and vertical movement with collision enabled.
+possession and Blueprint shooting behavior. `Tools/test_flight.py` reloads the
+training map, checks spawn clearance, verifies the real player spawn, and measures
+horizontal and vertical pawn movement with collision enabled.
 
-Interactive checks verified E pickup, mouse release, a 13-point goal, and mouse
-aim. The packaged Windows executable starts and runs the match independently of
-the editor. Flight feel, chase capture difficulty, and the audio mix still need
-broader human playtesting. Local reports describe individual runs and do not
-guarantee that every future rebuild passes.
+`Tools/test_native_playable.py` verifies roster/roles, host controls, movement
+bounds, ball physics, goals, eligibility, and Snipe capture in the native map.
+Training interactive checks verified E pickup, mouse release, a 13-point goal,
+mouse aim, and packaged startup. Those observations are not native packaged
+validation. Flight feel, chase difficulty, and audio still need human playtesting.
+See `Docs/validation.md` for evidence and limits; local reports describe individual
+runs and do not guarantee that every later rebuild passes.
 
 - `Tools/`: Unreal authoring, staging and editor test scripts.
 - `SourceArt/Arena/`: deterministic source geometry and the arena manifest.
 - `SourceArt/Audio/`: original, reproducible synthesized WAV sources.
+- `SourceArt/Textures/`: original generated stone texture and provenance.
 - `Rules/`: executable rules reference and tests; see `Rules/README.md`.
 - `Docs/basketbroom_rules_bible_v0.1.md`: supplied design reference.
 - `DevelopmentHarness/`: active UE5.8 project and generated playable content.
-- `Mod/`: historical Creator Kit scaffold, separate from the active game.
+- `Mod/`: UE4.27 Creator Kit port sources and native assets, separate from the UE5.8 game. See `Docs/hogwarts-integration.md`; no playable/published mod is claimed.
 
 If `python` resolves to the Windows Store alias on this workstation, the bundled
 interpreter is at

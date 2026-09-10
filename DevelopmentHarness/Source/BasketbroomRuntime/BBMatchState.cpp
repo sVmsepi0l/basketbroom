@@ -72,9 +72,9 @@ void ABBMatchState::BeginPlay()
     SyncRules();
     Status = TEXT("LOBBY");
 }
-void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const
+void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Out);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ABBMatchState, TealScore); DOREPLIFETIME(ABBMatchState, CopperScore);
     DOREPLIFETIME(ABBMatchState, Quarter); DOREPLIFETIME(ABBMatchState, SecondsLeft);
     DOREPLIFETIME(ABBMatchState, Phase); DOREPLIFETIME(ABBMatchState, Status);
@@ -162,6 +162,9 @@ bool ABBMatchState::TryPossess(ABBRiderCharacter* R, ABBBall* B)
     if (!CanInteract(R,B) || B->IsChase() || B->Holder || B->Cooldown > 0 || FVector::DistSquared(R->GetActorLocation(),B->GetActorLocation()) > FMath::Square(425.f)) return false;
     if (!Rules->possess(R->RosterIndex, B->BallIndex, B->IsBludger())) return false;
     B->Holder = R; B->LastTouchTeam = R->TeamIndex; B->FlightVelocity = FVector::ZeroVector;
+    B->DistanceSinceReleaseCm = 0;
+    B->RecentThrower.Reset();
+    B->ThrowerIgnoreRemaining = B->ImpactCooldown = 0;
     B->ForceNetUpdate();
     return true;
 }
@@ -199,9 +202,37 @@ void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
         B->LastLocation = R->GetCarryLocation();
         B->SetActorLocation(B->LastLocation);
         B->FlightVelocity = Aim.IsNearlyZero() ? R->GetVelocity() : Aim.GetSafeNormal() * (B->IsBludger() ? 5000.f : 4400.f) + R->GetVelocity() * .4f;
+        B->DistanceSinceReleaseCm = 0;
+        B->RecentThrower = R;
+        B->ThrowerIgnoreRemaining = .15f;
+        B->ImpactCooldown = 0;
         B->Cooldown = .3f;
         B->ForceNetUpdate();
     }
+}
+void ABBMatchState::ObserveBludgerFlight(ABBBall* B, BB::Contact Contact)
+{
+    if (!HasAuthority() || !Rules || !bLive || !IsValid(B) || !Balls.Contains(B)
+        || !B->IsBludger() || B->BallIndex > 6 || B->Holder) return;
+    const auto& State = Rules->balls[B->BallIndex];
+    const auto& Hurley = Rules->hurleys[B->BallIndex - 5];
+    if (!State.live || State.controller >= 0 || Hurley.individual_reset) return;
+    const double DistanceFeet = B->DistanceSinceReleaseCm / 30.48;
+    if (Contact == BB::Contact::None && DistanceFeet < Rules->config.self_toss_reset_distance_ft) return;
+    // Contestability is established by the existing legal release policy.
+    // Merely observing an arena collision must not invent that evidence.
+    Rules->flight_evidence(B->BallIndex, DistanceFeet, Contact, Hurley.contestable);
+}
+double ABBMatchState::DevelopmentGetBludgerControlSeconds(int32 BallIndex) const
+{
+#if UE_BUILD_SHIPPING
+    return -1;
+#else
+    if (!HasAuthority() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE
+        || !Rules || BallIndex < 5 || BallIndex > 6 || Rules->balls[BallIndex].controller < 0) return -1;
+    const auto& Hurley = Rules->hurleys[BallIndex - 5];
+    return Hurley.individual_started < 0 ? -1 : (Rules->now_ms - Hurley.individual_started) / 1000.0;
+#endif
 }
 void ABBMatchState::NoCrown(ABBBall* B)
 {
@@ -210,6 +241,9 @@ void ABBMatchState::NoCrown(ABBBall* B)
     if (Rules->crown_exit(B->BallIndex, {P.X / 30.48, P.Y / 30.48, 138.0}))
     {
         B->Holder = nullptr; B->FlightVelocity = FVector::ZeroVector;
+        B->DistanceSinceReleaseCm = 0;
+        B->RecentThrower.Reset();
+        B->ThrowerIgnoreRemaining = B->ImpactCooldown = 0;
         B->SetActorLocation(FVector(P.X, P.Y, 4110.f));
         Say(B->DisplayName() + TEXT(" - NO CROWN. Returning below the roofline."));
         SyncRules();
@@ -325,7 +359,28 @@ void ABBMatchState::Tick(float Dt)
             if (State.dead_reason == "score" || State.dead_reason == "hurley_foul" || State.dead_reason == "penalty")
             {
                 ABBRiderCharacter* Receiver = nullptr;
-                for (ABBRiderCharacter* R : Riders) if (R->TeamIndex == State.restart_team && (I < 3 ? R->Position == 0 : R->Position == 4)) { Receiver = R; break; }
+                double NearestDistance = TNumericLimits<double>::Max();
+                for (ABBRiderCharacter* R : Riders)
+                {
+                    if (!IsValid(R) || R->TeamIndex != State.restart_team) continue;
+                    if (I < 3)
+                    {
+                        if (R->Position == 0) { Receiver = R; break; }
+                        continue;
+                    }
+                    if (R->Position != 4 || R->StunRemaining > 0 || !Rules->eligible(R->RosterIndex, I)) continue;
+                    bool bAlreadyHolding = false;
+                    for (const ABBBall* Other : Balls)
+                        if (IsValid(Other) && Other != B && Other->Holder == R) { bAlreadyHolding = true; break; }
+                    if (bAlreadyHolding) continue;
+                    const double Distance = FVector::DistSquared(R->GetActorLocation(), B->GetActorLocation());
+                    if (Distance < NearestDistance || (Distance == NearestDistance
+                        && Receiver && R->RosterIndex < Receiver->RosterIndex))
+                    {
+                        Receiver = R;
+                        NearestDistance = Distance;
+                    }
+                }
                 if (Receiver && Rules->restart(I,Receiver->RosterIndex))
                 {
                     const FVector Mark((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
@@ -336,7 +391,6 @@ void ABBMatchState::Tick(float Dt)
                             PlaceRider(Other, Mark + (Other->GetActorLocation()-Mark).GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector) * 450.f, Other->GetActorRotation().Yaw);
                 }
             }
-            if (I >= 5 && State.live && State.controller < 0 && B->FlightVelocity.Size() > 300) Rules->flight_evidence(I, (B->GetActorLocation()-B->LastLocation).Size()/30.48, BB::Contact::None, true);
         }
     }
     // The rules engine explicitly requires a stoppage for administration.

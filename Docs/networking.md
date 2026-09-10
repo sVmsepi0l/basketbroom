@@ -1,6 +1,6 @@
 # Basketbroom multiplayer implementation findings
 
-Inspected against the installed UE 5.8.1 source and reflected Python API on 2026-09-10. The existing playable training build is local gameplay. A separate native network runtime is under construction in `DevelopmentHarness/Source/BasketbroomRuntime`; source code alone does not establish working multiplayer. The helpers described here do not validate multiplayer, regulation rules, or Hogwarts Legacy network integration.
+Inspected and exercised in UE 5.8.1 on 2026-09-10. The native runtime in `DevelopmentHarness/Source/BasketbroomRuntime` passed all 14 same-process listen-server/client checks. Two separate packaged processes also completed a loopback connection, join, and regulation-map load. These are distinct, bounded checks; remote-machine play, latency, full matches, and Hogwarts Legacy multiplayer remain unverified. The retained training mode is local gameplay.
 
 ## What the installed authoring API supports
 
@@ -84,7 +84,7 @@ The rider replicates `TeamIndex`, `Position`, `RosterIndex`, `bInteractHeld`, an
 
 Owned reliable RPCs update the held interaction or forward discrete requests to `ABBMatchState::HandleAction`: 0 pickup, 1 throw, 2 position, 3 team, 4 ready, 5 official stoppage. The rider rejects non-finite/non-unit aim, invalid action/role/team ranges, stunned pickup/throw, and excessively rapid actions; MatchState enforces semantic rules and resolves continuous held capture on the server. Match start/stoppage requests are restricted to the local host, or the first connected participant on a dedicated server. Interaction stops are never throttled. The runtime still requires a successful native build and the separate-process proof below before being described as functioning multiplayer.
 
-Two development-only Blueprint calls submit input through these same request paths: `DevelopmentRequestAction` and `DevelopmentSetInteraction`. Both require a locally controlled PlayerController in a PIE world and reject Shipping builds. Their boolean result means the request was submitted, never that the server accepted the gameplay result. A held-interaction fixture must explicitly clear its hold during cleanup. No rules or score setter is exposed by this bridge.
+Two development-only Blueprint calls submit input through these same request paths: `DevelopmentRequestAction` and `DevelopmentSetInteraction`. Both require a locally controlled PlayerController in a PIE world and reject Shipping builds. Their boolean result means the input entered a bounded 32-entry FIFO, never that the server accepted the gameplay result. Native Rider Tick dispatches the FIFO in order through the ordinary input/RPC methods. This deferred dispatch is necessary because Python's `FEditorScriptExecutionGuard` forces Actor RPC callspace to local execution during reflected calls (`PyUtil.cpp:644`, `Actor.cpp:5469`); the test must leave that guard before sending network requests. Keyboard input remains immediate. A held-interaction fixture must explicitly clear its hold during cleanup, and unpossession/restart clears queued input. No rules or score setter is exposed by this bridge.
 
 ## Required runtime proof
 
@@ -96,6 +96,24 @@ Two development-only Blueprint calls submit input through these same request pat
 6. Expand to 16 participant slots and the complete regulation rules only after the two-player authoritative loop passes. Verify CPU substitution and match-end behavior on the server and every client.
 
 Passing the existing single-player, bot, or native-flight checks is not evidence of network correctness.
+
+## Same-process local network validation
+
+`Tools/test_native_network.py` adds 14 asynchronous checks. Run it through the UE5 editor bridge after compiling the native module and staging `BB_Regulation`, with all earlier PIE tests stopped. Results go to `.local/native-network-test-results.json`; `--list` outside Unreal only prints the plan. A `started` bridge response is not a pass: wait for the report's final status.
+
+The installed UE5.8 binary does not generate a Python wrapper for the net-mode enum; even reading `PlayNetMode` fails conversion. Record the current **Play Net Mode** in the editor UI, select **Play As Listen Server**, and pass `{"settings_already_configured": true}` to the bridge request. Restore that UI selection afterward. The suite leaves that enum untouched and reports the external restoration requirement. `Tools/probe_native_play_settings.py` provides a read-only diagnosis of the installed API.
+
+The suite temporarily changes the three publicly editable, readable `LevelEditorPlaySettings` properties `RunUnderOneProcess=true`, `PlayNumberOfClients=2`, and `bLaunchSeparateServer=false`. It keeps them stable through asynchronous startup and restores them during cleanup, including failed runs. `EditorLevelLibrary.get_pie_worlds` enumerates actual PIE world contexts, with startup observations written to the report. The test requires two distinct worlds, exactly one authoritative GameState, two distinct human PlayerState IDs, and matching sixteen-slot rosters. It never changes protected engine or gameplay fields.
+
+Owned client input goes through the native development hooks and ordinary reliable server RPCs. Checks observe a replicated pregame role change and held interaction, rejection of client start/pause requests, accepted host start/stoppage, and matching phases and clocks. A server-only free-ball fixture launches the Quaffle through a large hoop; ordinary native flight and scoring must award exactly 13 points and replicate that result once. The corresponding fixture call on the client must fail. CPU movement and other equipment are isolated only inside the disposable server PIE world to make this case deterministic. Cleanup ends both worlds and verifies restoration of the settings controlled by the script; the operator restores the net-mode UI selection separately.
+
+This is **local networking inside one editor process**, with a real client/server authority boundary. All 14 checks passed in 13.5 seconds on 2026-09-10. It does not establish LAN/internet, remote-machine, movement-prediction, packet-loss, late-join, 16-human, or Hogwarts Legacy multiplayer support. Keep the adverse-network scenarios above as remaining validation.
+
+## Packaged connection and launcher
+
+`Tools/test_packaged_network.ps1` starts two hidden native Development game processes with null rendering and audio, verifies the server actually binds only `127.0.0.1`, then requires server connection acceptance, a uniquely tagged join, successful join, client welcome, and completed regulation-map loading. It stops only its own processes after checking executable path and creation time. The 2026-09-10 run passed in 19.85 seconds with no logged engine/network errors; evidence is under `.local/packaged-network/20260910-084420-328-b2e359bd/`. This validates connection and travel, not interactive gameplay across processes.
+
+`Multiplayer.ps1` now prefers the latest native package, with `-EditorGame` available for development. `-Mode LocalTest -Practice` opens two visible windows on loopback and waits for the host's listening log before starting the client. `-Mode Host` and `-Mode Join -Address <host>` support direct addresses; remote connections remain to be tested. `Local-Multiplayer.cmd` opens the local practice pair. The host presses Enter after players choose positions.
 
 ## Hogwarts Legacy boundary
 

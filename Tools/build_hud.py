@@ -118,6 +118,69 @@ def build():
                      ScreenX=screen_x, ScreenY=position(y, "y", ya),
                      Font=font, Scale=text_scale, bScalePosition=False))
 
+    def metres(distance):
+        value = math("Divide_DoubleDouble", A=distance, B=100)
+        text = g.result(g.call(TEXT + "Conv_DoubleToText", Value=value,
+                               bUseGrouping=False, MinimumFractionalDigits=1, MaximumFractionalDigits=1))
+        return string("Concat_StrStr", A=g.result(g.call(TEXT + "Conv_TextToString", InText=text)), B=" m")
+
+    # Select during DrawHUD from the same per-ball samples as the individual
+    # labels. The manager's cached Target fields can precede ball ticks by one
+    # frame, which otherwise produces visibly contradictory distances.
+    chase = {prefix: {field: state(prefix + field) for field in ("Active", "Distance", "Progress", "Position")}
+             for prefix in ("Snipe", "Snitch")}
+    available = math("BooleanAND", A=math("BooleanOR", A=chase["Snipe"]["Active"], B=chase["Snitch"]["Active"]),
+                     B=math("Not_PreBool", A=state("MatchOver")))
+    pick_snipe = math("BooleanAND", A=chase["Snipe"]["Active"],
+                      B=math("BooleanOR", A=math("Not_PreBool", A=chase["Snitch"]["Active"]),
+                             B=math("Not_PreBool", A=math("Greater_DoubleDouble",
+                                    A=chase["Snipe"]["Distance"], B=chase["Snitch"]["Distance"]))))
+    target_name = math("SelectString", A="SNIPE", B="SNITCH", bPickA=pick_snipe)
+    target_distance = math("SelectFloat", A=chase["Snipe"]["Distance"], B=chase["Snitch"]["Distance"], bPickA=pick_snipe)
+    target_progress = math("SelectFloat", A=chase["Snipe"]["Progress"], B=chase["Snitch"]["Progress"], bPickA=pick_snipe)
+    target_progress = math("SelectFloat", A=target_progress, B=0, bPickA=available)
+    target_position = math("SelectVector", A=chase["Snipe"]["Position"], B=chase["Snitch"]["Position"], bPickA=pick_snipe)
+    nearest = string("Concat_StrStr", A=target_name, B="  /  ")
+    nearest = string("Concat_StrStr", A=nearest, B=metres(target_distance))
+    nearest = math("SelectString", A=nearest, B="NO ACTIVE CHASE TARGET", bPickA=available)
+
+    controller = g.result(g.call("/Script/Engine.GameplayStatics.GetPlayerController", PlayerIndex=0))
+    # UHT exposes this const callable as pure; it has no execution pins.
+    projected = g.call("/Script/Engine.PlayerController.ProjectWorldLocationToScreen",
+                       target=controller, WorldLocation=target_position, bPlayerViewportRelative=False)
+    point = g.call(MATH + "BreakVector2D", InVec=g.output(projected, "ScreenLocation"))
+    screen_x, screen_y = g.output(point, "X"), g.output(point, "Y")
+    on_screen = math("BooleanAND", A=g.output(projected, "ReturnValue"), B=math("BooleanAND",
+                     A=math("BooleanAND", A=math("Greater_DoubleDouble", A=screen_x, B=0),
+                            B=math("Less_DoubleDouble", A=screen_x, B=width)),
+                     B=math("BooleanAND", A=math("Greater_DoubleDouble", A=screen_y, B=0),
+                            B=math("Less_DoubleDouble", A=screen_y, B=height))))
+    # Draw the projected label first so the fixed panels cover it. Move a label
+    # that would cross the center aiming area just below the carry prompt.
+    marker_sequence = g.sequence(2)
+    g.exec(tail, marker_sequence)
+    marker = g.branch(math("BooleanAND", A=available, B=on_screen))
+    g.exec(marker_sequence, marker, out="then_0")
+    tail = g.output(marker, "then")
+    marker_scale = math("Multiply_DoubleDouble", A=scaled(0.72), B=font_base)
+    measure = g.call(HUD + "GetTextSize", Text=nearest, Font=font, Scale=marker_scale)
+    marker_y = math("Subtract_DoubleDouble", A=screen_y, B=scaled(44))
+    near_crosshair = math("BooleanAND",
+                          A=math("Less_DoubleDouble", A=math("Abs", A=math("Subtract_DoubleDouble", A=screen_x, B=half_w)), B=scaled(160)),
+                          B=math("Less_DoubleDouble", A=math("Abs", A=math("Subtract_DoubleDouble", A=marker_y, B=half_h)), B=scaled(48)))
+    marker_y = math("SelectFloat", A=math("Add_DoubleDouble", A=half_h, B=scaled(60)), B=marker_y, bPickA=near_crosshair)
+    marker_width = g.output(measure, "OutWidth")
+    marker_x = math("FClamp", Value=math("Subtract_DoubleDouble", A=screen_x,
+                    B=math("Multiply_DoubleDouble", A=marker_width, B=0.5)),
+                    Min=scaled(16), Max=math("Subtract_DoubleDouble", A=width,
+                    B=math("Add_DoubleDouble", A=marker_width, B=scaled(16))))
+    marker_y = math("FClamp", Value=marker_y, Min=scaled(16),
+                    Max=math("Subtract_DoubleDouble", A=height, B=scaled(40)))
+    queue(g.call(HUD + "DrawText", Text=nearest, TextColor=math("SelectColor", A=SNIPE, B=GOLD, bPickA=pick_snipe),
+                 ScreenX=marker_x,
+                 ScreenY=marker_y, Font=font, Scale=marker_scale, bScalePosition=False))
+    tail = g.output(marker_sequence, "then_1")
+
     # Identity and the top score card leave most of the arena unobstructed.
     rect(24, 24, 246, 66)
     rect(24, 24, 3, 66, GOLD)
@@ -162,37 +225,31 @@ def build():
 
     # The training player is the Ranger; capture feedback stays next to the
     # identity panel and leaves the aiming area clear.
-    def metres(distance):
-        value = math("Divide_DoubleDouble", A=distance, B=100)
-        text = g.result(g.call(TEXT + "Conv_DoubleToText", Value=value,
-                               bUseGrouping=False, MinimumFractionalDigits=1, MaximumFractionalDigits=1))
-        return string("Concat_StrStr", A=g.result(g.call(TEXT + "Conv_TextToString", InText=text)), B=" m")
-
-    rect(24, 132, 300, 186)
-    rect(24, 132, 3, 186, TEAL)
+    rect(24, 132, 300, 212)
+    rect(24, 132, 3, 212, TEAL)
     label("YOUR POSITION  /  RANGER", 42, 145, 0.65, TEAL)
-    nearest = string("Concat_StrStr", A=state("TargetName"), B="  /  ")
-    nearest = string("Concat_StrStr", A=nearest, B=metres(state("TargetDistance")))
-    nearest = math("SelectString", A=nearest, B="NO ACTIVE CHASE TARGET", bPickA=state("TargetAvailable"))
     label("NEAREST", 42, 173, 0.65, MUTED)
     label(nearest, 42, 194, 0.85)
     for prefix, x, color in (("Snipe", 42, SNIPE), ("Snitch", 180, GOLD)):
-        distance = math("SelectString", A=metres(state(prefix + "Distance")), B="RESTING", bPickA=state(prefix + "Active"))
+        distance = math("SelectString", A=metres(chase[prefix]["Distance"]), B="RESTING", bPickA=chase[prefix]["Active"])
         label(string("Concat_StrStr", A=prefix.upper() + "  ", B=distance), x, 223, 0.65, color)
     label("HOLD E WITHIN 3.8 m FOR 1 s", 42, 247, 0.65, MUTED)
     rect(42, 273, 264, 8, INK_LIGHT)
-    capture = math("FClamp", Value=state("CatchProgress"), Min=0, Max=1)
+    capture = math("FClamp", Value=target_progress, Min=0, Max=1)
     queue(g.call(HUD + "DrawRect", RectColor=TEAL, ScreenX=position(42),
                  ScreenY=position(273, "y"),
                  ScreenW=math("Multiply_DoubleDouble", A=scaled(264), B=capture), ScreenH=scaled(8)))
-    in_range = math("BooleanAND", A=state("TargetAvailable"),
-                    B=math("Not_PreBool", A=math("Greater_DoubleDouble", A=state("TargetDistance"), B=380)))
+    in_range = math("BooleanAND", A=available,
+                    B=math("Not_PreBool", A=math("Greater_DoubleDouble", A=target_distance, B=380)))
     capture_status = math("SelectString", A="IN REACH  /  HOLD E TO SECURE", B="CLOSE THE GAP TO START", bPickA=in_range)
     capture_status = math("SelectString", A="CAPTURING  /  KEEP E HELD", B=capture_status,
                           bPickA=math("Greater_DoubleDouble", A=capture, B=0))
-    capture_status = math("SelectString", A=capture_status, B="CHASE TARGETS UNAVAILABLE", bPickA=state("TargetAvailable"))
+    capture_status = math("SelectString", A=capture_status, B="CHASE TARGETS UNAVAILABLE", bPickA=available)
     capture_status = math("SelectString", A="RELEASE YOUR CARRIED BALL FIRST", B=capture_status, bPickA=state("HasBall"))
     label(capture_status, 42, 292, 0.65, TEAL)
+    direction_hint = math("SelectString", A="TARGET IN VIEW", B=string("Concat_StrStr", A="TURN TOWARD ", B=target_name), bPickA=on_screen)
+    direction_hint = math("SelectString", A=direction_hint, B="", bPickA=available)
+    label(direction_hint, 42, 319, 0.65, GOLD)
 
     # Center reticle: corners avoid covering a small target ball.
     for x, y, w, h in ((-13, -1, 7, 2), (6, -1, 7, 2), (-1, -13, 2, 7), (-1, 6, 2, 7)):

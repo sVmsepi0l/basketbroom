@@ -217,6 +217,28 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     {
         return;
     }
+#if !UE_BUILD_SHIPPING
+    if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentInputs.IsEmpty())
+    {
+        // Python reflected calls hold FEditorScriptExecutionGuard, which makes
+        // Actor RPC callspace local. Dispatch from normal native Tick so these
+        // requests take the same client/server transport path as keyboard input.
+        TArray<TPair<int32, int32>> Inputs = MoveTemp(PendingDevelopmentInputs);
+        for (const TPair<int32, int32>& Input : Inputs)
+        {
+            if (Input.Key == -1)
+            {
+                bDevelopmentInteractHeld = Input.Value != 0;
+                if (bDevelopmentInteractHeld) StartInteract();
+                else StopInteract();
+            }
+            else
+            {
+                SubmitAction(Input.Key, Input.Value);
+            }
+        }
+    }
+#endif
     // Reconcile held keys after focus changes and allow Ctrl+W/A/S/D regardless
     // of press order. A plain BindKey chord excludes active modifier keys.
     for (const FKey Key : {EKeys::W, EKeys::S, EKeys::A, EKeys::D, EKeys::SpaceBar, EKeys::LeftControl, EKeys::RightControl})
@@ -333,9 +355,10 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 5)
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 5
+        || PendingDevelopmentInputs.Num() >= MaxDevelopmentInputs)
         return false;
-    SubmitAction(Action, Value);
+    PendingDevelopmentInputs.Emplace(Action, Value);
     return true;
 #endif
 }
@@ -346,11 +369,10 @@ bool ABBRiderCharacter::DevelopmentSetInteraction(bool bHeld)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())))
+        || !IsValid(Cast<APlayerController>(GetController()))
+        || PendingDevelopmentInputs.Num() >= MaxDevelopmentInputs)
         return false;
-    bDevelopmentInteractHeld = bHeld;
-    if (bHeld) StartInteract();
-    else StopInteract();
+    PendingDevelopmentInputs.Emplace(-1, bHeld ? 1 : 0);
     return true;
 #endif
 }
@@ -459,6 +481,7 @@ void ABBRiderCharacter::ResetLocalInput()
     MovementKeys.Empty();
     bLocalInteractHeld = false;
     bDevelopmentInteractHeld = false;
+    PendingDevelopmentInputs.Reset();
     bShowRoster = false;
 }
 

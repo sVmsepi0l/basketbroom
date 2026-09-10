@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import re
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -105,6 +106,8 @@ def _editor():
     version = str(unreal.SystemLibrary.get_engine_version())
     if not re.match(r"^4\.27\.", version):
         raise RuntimeError("This importer requires Creator Kit UE4.27, got " + version)
+    if unreal.AssetRegistryHelpers.get_asset_registry().is_loading_assets():
+        raise RuntimeError("Creator Kit is still discovering assets; retry after the initial scan completes")
     project = Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.get_project_file_path()))
     if project.stem.lower() != "phoenix":
         raise RuntimeError("Run this helper in the Creator Kit Phoenix project")
@@ -129,7 +132,16 @@ def _journal(report):
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     temporary = REPORT.with_suffix(".tmp")
     temporary.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(REPORT)
+    # Windows readers may briefly hold the previous report without delete-share.
+    # Keep replacement atomic and retry only that transient sharing failure.
+    for attempt in range(6):
+        try:
+            temporary.replace(REPORT)
+            break
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def _owned(unreal, asset):
@@ -165,7 +177,9 @@ def _import(unreal, entry, force=False):
                        ("replace_existing_settings", True), ("save", False)):
         task.set_editor_property(key, value)
     if entry["asset_type"] == "StaticMesh":
-        task.set_editor_property("factory", unreal.FbxFactory())
+        factory = unreal.FbxFactory()
+        factory.set_editor_property("edit_after_new", False)
+        task.set_editor_property("factory", factory)
         options = unreal.FbxImportUI()
         for key, value in (("import_mesh", True), ("import_as_skeletal", False), ("import_materials", False),
                            ("import_textures", False), ("import_animations", False),
@@ -175,13 +189,21 @@ def _import(unreal, entry, force=False):
         data = options.get_editor_property("static_mesh_import_data")
         for key, value in (("combine_meshes", True), ("auto_generate_collision", False),
                            ("convert_scene", False), ("convert_scene_unit", False),
+                           ("import_translation", unreal.Vector(0, 0, 0)),
+                           ("import_rotation", unreal.Rotator(0, 0, 0)),
                            ("import_uniform_scale", 1.0), ("generate_lightmap_u_vs", False),
                            ("normal_import_method", unreal.FBXNormalImportMethod.FBXNIM_COMPUTE_NORMALS)):
             data.set_editor_property(key, value)
         task.set_editor_property("options", options)
-    else:
-        factory = unreal.TextureFactory() if entry["asset_type"] == "Texture2D" else unreal.SoundFactory()
+    elif entry["asset_type"] == "Texture2D":
+        factory = unreal.TextureFactory()
+        factory.set_editor_property("edit_after_new", False)
+        factory.set_editor_property("create_material", False)
         task.set_editor_property("factory", factory)
+    # Leave SoundWave factory selection to extension discovery. This Creator Kit
+    # rejects automated tasks with an explicit SoundFactory as "unknown wav"
+    # despite its valid WAV format declaration; discovery uses a different path.
+    # The installed sound factory defaults already disable cue creation/editing.
     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
     paths = [str(path) for path in task.get_editor_property("imported_object_paths")]
     if not paths or any(path.split(".")[0] != destination for path in paths):
@@ -241,11 +263,11 @@ def _material(unreal, name, values, texture, force=False):
     base = tint
     if name == "M_BB_Basalt":
         # Original OBJ meshes have no artist UVs. Project along all three world
-        # axes using vertex-normal weights; all nodes are stock UE4.27 classes.
+        # axes using surface-normal weights; all nodes are stock UE4.27 classes.
         position = node(unreal.MaterialExpressionWorldPosition)
         uv_scale = node(unreal.MaterialExpressionMultiply, const_b=1.0 / 220.0)
         wire(position, uv_scale, "A")
-        normal = node(unreal.MaterialExpressionVertexNormalWS)
+        normal = node(unreal.MaterialExpressionPixelNormalWS)
         absolute = node(unreal.MaterialExpressionAbs)
         wire(normal, absolute, "")
         samples, weights = [], []
@@ -253,7 +275,7 @@ def _material(unreal, name, values, texture, force=False):
             uv = node(unreal.MaterialExpressionComponentMask, r=axes[0], g=axes[1], b=axes[2], a=False)
             wire(uv_scale, uv, "")
             sample = node(unreal.MaterialExpressionTextureSample, texture=texture)
-            wire(uv, sample, "")
+            wire(uv, sample, "UVs")
             weight = node(unreal.MaterialExpressionComponentMask, r=axis == 0, g=axis == 1, b=axis == 2, a=False)
             wire(absolute, weight, "")
             weighted = node(unreal.MaterialExpressionMultiply)

@@ -65,18 +65,15 @@ TEST_NAMES = (
 )
 
 
-def prop(obj, name, value=...):
-    """Read reflected state; writes below are limited to physical fixtures."""
+def prop(obj, name):
+    """Observe reflected state without bypassing native gameplay authority."""
     aliases = [name, re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()]
     if name.startswith("b") and len(name) > 1 and name[1].isupper():
         aliases.append(re.sub(r"(?<!^)(?=[A-Z])", "_", name[1:]).lower())
     last_error = None
     for alias in aliases:
         try:
-            if value is ...:
-                return obj.get_editor_property(alias)
-            obj.set_editor_property(alias, value)
-            return value
+            return obj.get_editor_property(alias)
         except Exception as error:
             last_error = error
     raise last_error
@@ -95,6 +92,7 @@ class NativePlayableTests:
         self.started = time.monotonic()
         self.phase = "preflight"
         self.done = False
+        self.final_status = "not_run"
         self.handle = None
         self.owns_play = False
         self.world = self.match = self.pawn = self.controller = None
@@ -123,7 +121,7 @@ class NativePlayableTests:
             "not_covered": ["network transport, remote ownership and replication",
                             "physical keyboard/mouse bindings and flight feel",
                             "timed Snitch release and Snitch capture",
-                            "autonomous CPU decisions with all riders unstunned",
+                            "autonomous CPU decisions with all riders enabled",
                             "packaged builds, graphics performance and audio"],
         }
         if reason:
@@ -173,20 +171,41 @@ class NativePlayableTests:
         self.require(self.pawn.development_set_interaction(held), "PIE interaction bridge rejected request")
         self.event("interaction", held=held)
 
-    def wait(self, seconds, fixture=None):
-        return {"seconds": float(seconds), "fixture": fixture}
+    def wait(self, seconds, fixture=None, minimum_frames=1):
+        return {"seconds": float(seconds), "fixture": fixture,
+                "minimum_frames": minimum_frames, "predicate": None}
+
+    def wait_until(self, predicate, fixture=None, timeout=5.0):
+        # Inputs execute on the next native Tick, and MatchState may publish a
+        # ball's queued goal one tick later. A timeout still advances to the
+        # unchanged assertion, so an absent/wrong outcome cannot pass silently.
+        waiting = self.wait(timeout, fixture)
+        waiting["predicate"] = predicate
+        return waiting
 
     def move_pawn(self, location):
-        self.pawn.get_character_movement().stop_movement_immediately()
+        self.component(self.pawn, unreal.CharacterMovementComponent).stop_movement_immediately()
         self.pawn.set_actor_location(vector(location), False, True)
 
+    def component(self, actor, component_class):
+        # ACharacter's C++ convenience getters are not reflected UFUNCTIONs.
+        component = actor.get_component_by_class(component_class)
+        self.require(component is not None, "Missing component " + component_class.__name__)
+        return component
+
     def isolate(self):
-        # MatchState owns CPU decisions; merely disabling a rider tick would not
-        # stop its AI. Stun the other riders and clear movement as a fixture.
+        # MatchState still owns CPU decisions, so actor tick alone is not an AI
+        # freeze. Disable CharacterMovement too and park CPU copies beyond
+        # interaction range. Reapply after role swaps/restarts that move riders.
+        # The suite owns and destroys this PIE world; no editor actor is edited.
         for rider in self.riders:
             if rider != self.pawn:
-                prop(rider, "StunRemaining", 3600.0)
-                rider.get_character_movement().stop_movement_immediately()
+                movement = self.component(rider, unreal.CharacterMovementComponent)
+                movement.stop_movement_immediately()
+                movement.set_component_tick_enabled(False)
+                rider.set_actor_tick_enabled(False)
+                rider.consume_movement_input_vector()
+                rider.set_actor_location(vector((0, 14000 + int(prop(rider, "RosterIndex")) * 300, 1800)), False, True)
         for ball in self.balls.values():
             ball.set_actor_tick_enabled(False)
         self.controller.set_control_rotation(unreal.Rotator(pitch=0, yaw=0, roll=0))
@@ -196,8 +215,8 @@ class NativePlayableTests:
         ball = self.balls[index]
         self.require(prop(ball, "Holder") is None, "Fixture requires a free ball, index %d" % index)
         self.require(bool(prop(ball, "bActive")), "Fixture requires an active ball, index %d" % index)
-        ball.set_actor_location(vector(location), False, True)
-        prop(ball, "FlightVelocity", vector(velocity))
+        self.require(ball.development_set_flight_fixture(vector(location), vector(velocity)),
+                     "Native PIE ball fixture rejected transform/velocity")
         ball.set_actor_tick_enabled(True)
         self.event("physical_fixture", ball=index, position=list(location), velocity=list(velocity))
         return ball
@@ -207,8 +226,10 @@ class NativePlayableTests:
         self.move_pawn((-2000, -1200, 1800))
         self.seed_ball(index, (-1800, -1200, 1800))
 
-    def follow_snipe(self, distance=90.0):
+    def follow_snipe(self, distance=0.0):
         # This isolates hold/range/eligibility; it does not certify flight skill.
+        # Center the fixture: at background 3 FPS, Snipe moves about 340cm each
+        # tick. An extra 90cm offset can accidentally exceed the real 380cm range.
         point = self.balls[3].get_actor_location()
         self.move_pawn((point.x - distance, point.y, point.z))
 
@@ -221,14 +242,14 @@ class NativePlayableTests:
         self.interact(False)
         if prop(self.match, "bLive"):
             self.request(5)
-            yield self.wait(0.16)
+            yield self.wait_until(lambda: not prop(self.match, "bLive"))
         self.require(not prop(self.match, "bLive"), "Host could not stop play for role fixture")
         self.request(2, role)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == role)
         self.require(int(prop(self.pawn, "Position")) == role, "Host role fixture was rejected")
         self.isolate()
         self.request(4)
-        yield self.wait(0.35)
+        yield self.wait_until(lambda: bool(prop(self.match, "bLive")))
         self.require(prop(self.match, "bLive"), "Host could not resume role fixture")
 
     def begin(self):
@@ -253,6 +274,11 @@ class NativePlayableTests:
         if not all(callable(getattr(prototype, method, None)) for method in
                    ("development_request_action", "development_set_interaction")):
             self.finish("not_run", "The loaded module lacks the agreed PIE-only test bridge. Rebuild and restart the editor.")
+            return False
+        ball_prototype = unreal.get_default_object(self.classes["BBBall"])
+        if not all(callable(getattr(ball_prototype, method, None)) for method in
+                   ("development_set_flight_fixture", "get_flight_velocity")):
+            self.finish("not_run", "The loaded module lacks the guarded PIE ball fixture or read-only velocity diagnostic. Rebuild and restart the editor.")
             return False
         if self.level.is_in_play_in_editor():
             self.finish("not_run", "An existing PIE session is active. This test must own a fresh session.")
@@ -285,6 +311,7 @@ class NativePlayableTests:
         if len(self.riders) < 16 or len(equipment) < 7:
             return False
         self.require(len(self.balls) == len(equipment), "Duplicate BallIndex values in native world")
+        self.provenance["pie_world"] = self.world.get_path_name()
         self.isolate()
         self.sequence = self.scenarios()
         self.phase = "running_cases"
@@ -311,10 +338,12 @@ class NativePlayableTests:
                     and abs(float(prop(self.match, "SecondsLeft")) - seconds) < 0.02,
                     before=seconds, after=float(prop(self.match, "SecondsLeft")))
         self.request(2, 1)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == 1)
         self.record("host_selects_chaser_in_lobby", int(prop(self.pawn, "Position")) == 1 and self.roster_valid(), roster=self.roster())
+        self.isolate()
         self.request(4)
-        yield self.wait(0.3)
+        yield self.wait_until(lambda: bool(prop(self.match, "bLive"))
+                             and float(prop(self.match, "SecondsLeft")) < seconds)
         self.record("host_starts_live_clock", bool(prop(self.match, "bLive")) and float(prop(self.match, "SecondsLeft")) < seconds,
                     status=str(prop(self.match, "Status")), seconds=float(prop(self.match, "SecondsLeft")))
         self.require(prop(self.match, "bLive"), "Native host start failed")
@@ -324,7 +353,7 @@ class NativePlayableTests:
         self.record("live_role_change_rejected", int(prop(self.pawn, "Position")) == previous_role,
                     before=previous_role, after=int(prop(self.pawn, "Position")))
         self.request(5)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: not prop(self.match, "bLive"))
         seconds = float(prop(self.match, "SecondsLeft"))
         yield self.wait(0.25)
         self.record("host_stoppage_freezes_clock", not prop(self.match, "bLive")
@@ -333,13 +362,15 @@ class NativePlayableTests:
                     before=seconds, after=float(prop(self.match, "SecondsLeft")))
         team = 1 - int(prop(self.pawn, "TeamIndex"))
         self.request(3, team)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: int(prop(self.pawn, "TeamIndex")) == team)
         self.record("host_switches_team_at_stoppage", int(prop(self.pawn, "TeamIndex")) == team and self.roster_valid(), team=team, roster=self.roster())
         self.request(2, 3)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == 3)
         self.record("host_selects_ranger_at_stoppage", int(prop(self.pawn, "Position")) == 3 and self.roster_valid(), roster=self.roster())
+        self.isolate()
         self.request(4)
-        yield self.wait(0.3)
+        yield self.wait_until(lambda: bool(prop(self.match, "bLive"))
+                             and float(prop(self.match, "SecondsLeft")) < seconds)
         self.record("host_resumes_live_clock", bool(prop(self.match, "bLive")) and float(prop(self.match, "SecondsLeft")) < seconds,
                     status=str(prop(self.match, "Status")))
         self.require(prop(self.match, "bLive"), "Native host resume failed")
@@ -352,7 +383,7 @@ class NativePlayableTests:
                     and max(row[2] for row in flight_samples) > 4300,
                     max_height_cm=max((row[2] for row in flight_samples), default=0),
                     samples=len(flight_samples), input="AddMovementInput into native CharacterMovement")
-        capsule = self.pawn.get_capsule_component()
+        capsule = self.component(self.pawn, unreal.CapsuleComponent)
         ceiling = 6309.36 - capsule.get_scaled_capsule_half_height()
         self.move_pawn((0, 0, ceiling - 100))
         flight_samples = []
@@ -372,12 +403,12 @@ class NativePlayableTests:
         self.move_pawn((-3200, -2200, 1000))
         ball = self.seed_ball(2, (0, 3100, 1600), (0, 1000, 0))
         yield self.wait(0.16)
-        velocity = prop(ball, "FlightVelocity")
+        velocity = ball.get_flight_velocity()
         self.record("side_net_restitution", abs(velocity.y + 750) < 5 and ball.get_actor_location().y < 3136,
                     velocity=xyz(velocity), location=xyz(ball.get_actor_location()))
         ball = self.seed_ball(2, (0, 0, 80), (0, 0, -500))
         yield self.wait(0.20)
-        velocity = prop(ball, "FlightVelocity")
+        velocity = ball.get_flight_velocity()
         self.record("trampoline_floor_rebound", ball.get_actor_location().z >= 64.9 and velocity.z > 0,
                     velocity=xyz(velocity), location=xyz(ball.get_actor_location()))
         ball = self.seed_ball(2, (0, 0, 4190), (0, 0, 700))
@@ -392,7 +423,7 @@ class NativePlayableTests:
         self.close_ball(2)
         yield self.wait(0.35)
         self.interact(True)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: prop(ball, "Holder") == self.pawn)
         self.record("ranger_picks_up_scoring_ball", prop(ball, "Holder") == self.pawn,
                     held=prop(ball, "Holder") == self.pawn, role=int(prop(self.pawn, "Position")))
         self.require(prop(ball, "Holder") == self.pawn, "Carried No Crown fixture needs an actual pickup")
@@ -410,26 +441,35 @@ class NativePlayableTests:
 
         self.isolate()
         before = self.scores()
-        wrong = self.seed_ball(2, (6200, 0, 2103.12), (2000, 0, 0))
+        wrong = self.seed_ball(2, (6200, 1066.8, 2103.12), (2000, 0, 0))
         yield self.wait(0.22)
-        self.record("quark_wrong_hoop_rejected", self.scores() == before,
-                    delta=self.score_delta(before), location=xyz(wrong.get_actor_location()))
+        wrong_location = xyz(wrong.get_actor_location())
+        # Freeze the completed sweep and allow MatchState one more game tick to
+        # flush any pending award, including an incorrect one this test rejects.
         wrong.set_actor_tick_enabled(False)
-        reverse = self.seed_ball(0, (6585.8, 0, 2103.12), (-2000, 0, 0))
+        yield self.wait(0)
+        self.record("quark_wrong_hoop_rejected", self.scores() == before and wrong_location[0] > 6465.8,
+                    delta=self.score_delta(before), location=wrong_location)
+        # The outer hoop avoids the taller central mast behind the goal plane.
+        reverse = self.seed_ball(0, (6585.8, 1066.8, 2103.12), (-2000, 0, 0))
         yield self.wait(0.22)
-        self.record("quaffle_reverse_crossing_rejected", self.scores() == before,
+        reverse.set_actor_tick_enabled(False)
+        yield self.wait(0)
+        self.record("quaffle_reverse_crossing_rejected", self.scores() == before and reverse.get_actor_location().x < 6400.8,
                     delta=self.score_delta(before), location=xyz(reverse.get_actor_location()))
         rim = self.seed_ball(0, (6200, 350, 2103.12), (2000, 0, 0))
         yield self.wait(0.22)
-        self.record("quaffle_rim_hit_rebounds_without_score", self.scores() == before and prop(rim, "FlightVelocity").x < 0,
-                    delta=self.score_delta(before), velocity=xyz(prop(rim, "FlightVelocity")))
+        rim.set_actor_tick_enabled(False)
+        yield self.wait(0)
+        self.record("quaffle_rim_hit_rebounds_without_score", self.scores() == before and rim.get_flight_velocity().x < 0,
+                    delta=self.score_delta(before), velocity=xyz(rim.get_flight_velocity()))
         self.seed_ball(0, (6200, 0, 2103.12), (2000, 0, 0))
-        yield self.wait(0.3)
+        yield self.wait_until(lambda: self.scores() != before)
         self.record("quaffle_whole_ball_goal_awards_13", self.score_delta(before) == [13, 0], delta=self.score_delta(before))
         self.balls[0].set_actor_tick_enabled(False)
         before = self.scores()
         self.seed_ball(1, (-6200, 0, 3048), (-2000, 0, 0))
-        yield self.wait(0.3)
+        yield self.wait_until(lambda: self.scores() != before)
         self.record("quark_whole_ball_goal_awards_37", self.score_delta(before) == [0, 37], delta=self.score_delta(before))
 
         yield from self.switch_role(1)
@@ -438,9 +478,11 @@ class NativePlayableTests:
         self.follow_snipe()
         before = self.scores()
         self.interact(True)
+        yield self.wait_until(lambda: bool(prop(self.pawn, "bInteractHeld")), self.follow_snipe)
         yield self.wait(0.45, self.follow_snipe)
         self.record("chaser_cannot_capture_snipe", float(prop(snipe, "CaptureProgress")) == 0
-                    and prop(snipe, "CapturingRider") is None and self.scores() == before,
+                    and prop(snipe, "CapturingRider") is None and self.scores() == before
+                    and bool(prop(self.pawn, "bInteractHeld")),
                     progress=float(prop(snipe, "CaptureProgress")), delta=self.score_delta(before))
         self.interact(False)
         yield self.wait(0.12)
@@ -451,15 +493,16 @@ class NativePlayableTests:
         self.close_ball(0)
         yield self.wait(0.35)
         self.interact(True)
-        yield self.wait(0.16)
-        self.record("hurleyback_cannot_carry_quaffle", prop(self.balls[0], "Holder") is None,
+        yield self.wait_until(lambda: bool(prop(self.pawn, "bInteractHeld")))
+        self.record("hurleyback_cannot_carry_quaffle", prop(self.balls[0], "Holder") is None
+                    and bool(prop(self.pawn, "bInteractHeld")),
                     held=prop(self.balls[0], "Holder") is not None, role=int(prop(self.pawn, "Position")))
         self.interact(False)
         yield self.wait(0.12)
         self.close_ball(5)
         yield self.wait(0.35)
         self.interact(True)
-        yield self.wait(0.16)
+        yield self.wait_until(lambda: prop(self.balls[5], "Holder") == self.pawn)
         self.record("hurleyback_can_carry_bludger", prop(self.balls[5], "Holder") == self.pawn,
                     held=prop(self.balls[5], "Holder") == self.pawn)
         self.interact(False)
@@ -470,8 +513,9 @@ class NativePlayableTests:
         self.close_ball(0)
         yield self.wait(0.35)
         self.interact(True)
-        yield self.wait(0.16)
-        self.record("scout_cannot_carry_quaffle", prop(self.balls[0], "Holder") is None,
+        yield self.wait_until(lambda: bool(prop(self.pawn, "bInteractHeld")))
+        self.record("scout_cannot_carry_quaffle", prop(self.balls[0], "Holder") is None
+                    and bool(prop(self.pawn, "bInteractHeld")),
                     held=prop(self.balls[0], "Holder") is not None)
         self.interact(False)
         yield self.wait(0.12)
@@ -480,28 +524,34 @@ class NativePlayableTests:
         self.follow_snipe()
         before = self.scores()
         self.interact(True)
-        yield self.wait(0.35, self.follow_snipe)
+        yield self.wait_until(lambda: float(prop(snipe, "CaptureProgress")) >= 0.1, self.follow_snipe)
         progress = float(prop(snipe, "CaptureProgress"))
         self.record("snipe_progress_is_observable_before_catch", 0.1 <= progress < 0.9
                     and prop(snipe, "CapturingRider") == self.pawn and self.scores() == before,
                     progress=progress, delta=self.score_delta(before))
         self.interact(False)
-        yield self.wait(0.12, self.follow_snipe)
+        yield self.wait_until(lambda: not prop(self.pawn, "bInteractHeld")
+                             and float(prop(snipe, "CaptureProgress")) == 0, self.follow_snipe)
         self.record("snipe_release_resets_progress", float(prop(snipe, "CaptureProgress")) == 0
                     and prop(snipe, "CapturingRider") is None and self.scores() == before,
                     progress=float(prop(snipe, "CaptureProgress")), delta=self.score_delta(before))
         self.interact(True)
-        yield self.wait(0.3, self.follow_snipe)
+        yield self.wait_until(lambda: float(prop(snipe, "CaptureProgress")) >= 0.1, self.follow_snipe)
+        self.require(0.1 <= float(prop(snipe, "CaptureProgress")) < 0.9,
+                     "Range-break fixture needs an observed partial catch")
         self.follow_snipe(900)
-        yield self.wait(0.12, lambda: self.follow_snipe(900))
+        yield self.wait_until(lambda: float(prop(snipe, "CaptureProgress")) == 0
+                             and prop(snipe, "CapturingRider") is None, lambda: self.follow_snipe(900))
         self.record("snipe_range_break_resets_progress", float(prop(snipe, "CaptureProgress")) == 0
                     and prop(snipe, "CapturingRider") is None and self.scores() == before,
                     progress=float(prop(snipe, "CaptureProgress")), delta=self.score_delta(before))
         self.interact(False)
-        yield self.wait(0.12)
+        yield self.wait_until(lambda: not prop(self.pawn, "bInteractHeld"))
         self.follow_snipe()
         self.interact(True)
-        yield self.wait(1.35, self.follow_snipe)
+        yield self.wait_until(lambda: self.scores() != before
+                             and not prop(snipe, "bActive")
+                             and str(prop(snipe, "BallStatus")) == "timeout", self.follow_snipe)
         expected = [0, 0]
         expected[int(prop(self.pawn, "TeamIndex"))] = 69
         self.record("snipe_continuous_hold_awards_69", self.score_delta(before) == expected,
@@ -515,7 +565,9 @@ class NativePlayableTests:
     def advance(self):
         try:
             self.waiting = next(self.sequence)
-            self.waiting["until"] = self.now() + self.waiting["seconds"]
+            self.waiting["last_game_seconds"] = self.now()
+            self.waiting["game_frames"] = 0
+            self.waiting["until"] = self.waiting["last_game_seconds"] + self.waiting["seconds"]
             self.waiting["wall_started"] = time.monotonic()
         except StopIteration:
             complete = len(self.results) == len(TEST_NAMES)
@@ -538,7 +590,16 @@ class NativePlayableTests:
             if self.waiting:
                 if self.waiting["fixture"]:
                     self.waiting["fixture"]()
-                if self.now() >= self.waiting["until"]:
+                now = self.now()
+                if now > self.waiting["last_game_seconds"]:
+                    self.waiting["game_frames"] += 1
+                    self.waiting["last_game_seconds"] = now
+                predicate = self.waiting["predicate"]
+                ready = bool(predicate()) if predicate else False
+                expired = now >= self.waiting["until"]
+                if self.waiting["game_frames"] >= self.waiting["minimum_frames"] and (ready or expired):
+                    if predicate and expired and not ready:
+                        self.event("observation_timeout", limit_seconds=self.waiting["seconds"])
                     self.advance()
                 elif time.monotonic() - self.waiting["wall_started"] > 30:
                     raise TimeoutError("PIE world time stalled")
@@ -560,6 +621,7 @@ class NativePlayableTests:
             finally:
                 if self.level.is_in_play_in_editor():
                     self.level.editor_request_end_play()
+        self.final_status = status
         self.write_report(status, reason)
         if unreal:
             unreal.log("BASKETBROOM NATIVE TESTS %s: %s" % (status.upper(), REPORT))
@@ -576,7 +638,7 @@ def main():
         started = False
     if unreal and started:
         unreal._basketbroom_native_test = test
-    return {"status": "started" if started else "not_run", "report": str(REPORT), "planned_cases": len(TEST_NAMES)}
+    return {"status": "started" if started else test.final_status, "report": str(REPORT), "planned_cases": len(TEST_NAMES)}
 
 
 if __name__ == "__main__":

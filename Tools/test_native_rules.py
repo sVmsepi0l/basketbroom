@@ -135,7 +135,11 @@ def compiler_environment(vcvars):
             raise ValueError("--vcvars must point to an installed Windows vcvars64.bat")
         # Only the selected compiler's environment is imported into this child.
         command = 'call "%s" >nul && set' % str(Path(vcvars).resolve())
-        result = subprocess.run(["cmd.exe", "/d", "/s", "/c", command], capture_output=True, text=True, check=True)
+        # cmd.exe does not understand the backslash-escaped quotes produced by
+        # subprocess's list-to-command-line conversion. Preserve its /s /c
+        # outer quotes so installed compiler paths with spaces remain intact.
+        result = subprocess.run('cmd.exe /d /s /c "' + command + '"',
+                                capture_output=True, text=True, check=True)
         for line in result.stdout.splitlines():
             key, separator, value = line.partition("=")
             if separator and key:

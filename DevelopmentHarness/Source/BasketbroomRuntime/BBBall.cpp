@@ -108,9 +108,9 @@ void ABBBall::BeginPlay()
     ChaseTime = BallIndex * 2.4f;
     OnRep_Appearance();
 }
-void ABBBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const
+void ABBBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Out);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ABBBall, BallIndex); DOREPLIFETIME(ABBBall, Holder);
     DOREPLIFETIME(ABBBall, CapturingRider); DOREPLIFETIME(ABBBall, CaptureProgress);
     DOREPLIFETIME(ABBBall, bActive); DOREPLIFETIME(ABBBall, ReturnIn);
@@ -128,12 +128,34 @@ void ABBBall::OnRep_Appearance()
     if (BallMaterials.IsValidIndex(MaterialIndex)) Mesh->SetMaterial(0, BallMaterials[MaterialIndex]);
     SetActorHiddenInGame(!bActive);
 }
+bool ABBBall::DevelopmentSetFlightFixture(FVector Location, FVector Velocity)
+{
+#if UE_BUILD_SHIPPING
+    return false;
+#else
+    // The explicit runtime checks matter: DevelopmentOnly metadata alone is
+    // not an authorization boundary for a reflected callable function.
+    if (!HasAuthority() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE
+        || Holder || Location.ContainsNaN() || Velocity.ContainsNaN())
+        return false;
+    if (!SetActorLocation(Location, false, nullptr, ETeleportType::TeleportPhysics))
+        return false;
+    LastLocation = Location;
+    FlightVelocity = Velocity;
+    DistanceSinceReleaseCm = 0;
+    ForceNetUpdate();
+    return true;
+#endif
+}
 void ABBBall::ResetBall(FVector Location)
 {
     if (!HasAuthority() || Location.ContainsNaN()) return;
     SetActorLocation(Location);
     LastLocation = Location;
     FlightVelocity = FVector::ZeroVector;
+    DistanceSinceReleaseCm = 0;
+    RecentThrower.Reset();
+    ThrowerIgnoreRemaining = ImpactCooldown = 0;
     Holder = nullptr;
     CaptureProgress = 0;
     CapturingRider = nullptr;
@@ -209,6 +231,8 @@ void ABBBall::StepCapture(float DeltaSeconds)
 void ABBBall::StepFlight(float Dt)
 {
     if (!HasAuthority() || !IsValid(Match)) return;
+    ThrowerIgnoreRemaining = FMath::Max(0.f, ThrowerIgnoreRemaining - Dt);
+    ImpactCooldown = FMath::Max(0.f, ImpactCooldown - Dt);
     FVector Old = GetActorLocation();
     if (FlightVelocity.IsNearlyZero()) return;
     FlightVelocity.Z -= (IsBludger() ? 60.f : 380.f) * Dt;
@@ -223,9 +247,14 @@ void ABBBall::StepFlight(float Dt)
     float HitTime = bCollision ? WorldHit.Time : 1.f;
     FVector HitNormal = bCollision ? WorldHit.Normal : FVector::ZeroVector;
     ABBRiderCharacter* StruckRider = nullptr;
-    if (SweepRims(Old, P, R, HitTime, HitNormal)) bCollision = true;
-    if (IsBludger() && Cooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
+    const bool bRimHit = SweepRims(Old, P, R, HitTime, HitNormal);
+    if (bRimHit) bCollision = true;
+    BB::Contact Contact = bRimHit ? BB::Contact::Goal : BB::Contact::None;
+    if (IsBludger() && ImpactCooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
     {
+        // Pickup lockout must never grant nearby opponents impact immunity.
+        // Only the releasing rider receives a brief launch-clearance window.
+        if (ThrowerIgnoreRemaining > 0 && RecentThrower.IsValid()) Query.AddIgnoredActor(RecentThrower.Get());
         FCollisionObjectQueryParams PawnObjects;
         PawnObjects.AddObjectTypesToQuery(ECC_Pawn);
         FHitResult RiderHit;
@@ -251,11 +280,24 @@ void ABBBall::StepFlight(float Dt)
         if (IntoSurface < 0) FlightVelocity = (FlightVelocity - 2.0 * IntoSurface * HitNormal) * .75f;
         if (StruckRider)
         {
+            Contact = BB::Contact::Player;
             StruckRider->StunRemaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
             StruckRider->ForceNetUpdate();
             Match->Release(StruckRider, FVector::ZeroVector);
             Cooldown = .7f;
+            ImpactCooldown = .7f;
             Match->Say(TEXT("Bludger impact - rider recovers in 1.5 seconds"));
+        }
+        else if (!bRimHit)
+        {
+            const AActor* Surface = WorldHit.GetActor();
+            if (Surface && (Surface->ActorHasTag(TEXT("BB.Goal.Rim")) || Surface->ActorHasTag(TEXT("BB.Support"))))
+                Contact = BB::Contact::Goal;
+            else if ((Surface && Surface->ActorHasTag(TEXT("BB.Floor"))) || (HitNormal.Z > .5 && P.Z < R + 5.f))
+                Contact = BB::Contact::Floor;
+            else if ((Surface && Surface->ActorHasTag(TEXT("BB.Net")))
+                || FMath::Abs(P.X) >= 6850.8f - R - 5.f || FMath::Abs(P.Y) >= 3200.4f - R - 5.f)
+                Contact = BB::Contact::Net;
         }
         ForceNetUpdate();
     }
@@ -277,9 +319,11 @@ void ABBBall::StepFlight(float Dt)
             }
         }
     }
-    if (FMath::Abs(P.X) > 6850.8f - R) { P.X = FMath::Sign(P.X) * (6850.8f - R); FlightVelocity.X *= -.75f; }
-    if (FMath::Abs(P.Y) > 3200.4f - R) { P.Y = FMath::Sign(P.Y) * (3200.4f - R); FlightVelocity.Y *= -.75f; }
-    if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); }
+    if (FMath::Abs(P.X) > 6850.8f - R) { P.X = FMath::Sign(P.X) * (6850.8f - R); FlightVelocity.X *= -.75f; Contact = BB::Contact::Net; }
+    if (FMath::Abs(P.Y) > 3200.4f - R) { P.Y = FMath::Sign(P.Y) * (3200.4f - R); FlightVelocity.Y *= -.75f; Contact = BB::Contact::Net; }
+    if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); Contact = BB::Contact::Floor; }
+    DistanceSinceReleaseCm += FVector::Distance(Old, P);
     SetActorLocation(P);
+    if (IsBludger()) Match->ObserveBludgerFlight(this, Contact);
     if (P.Z > 4206.24f) Match->NoCrown(this);
 }

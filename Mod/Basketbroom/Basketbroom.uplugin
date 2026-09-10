@@ -1,9 +1,9 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "0.1.0-hlck-source",
+  "VersionName": "0.1.0-hlck-arena",
   "FriendlyName": "Basketbroom",
-  "Description": "Hogwarts Legacy Creator Kit 4.27 content-mod source scaffold. Native arena and gameplay assets are pending.",
+  "Description": "Original native Creator Kit arena, materials and audio. Match gameplay and dungeon integration are in development.",
   "Category": "UGC",
   "CreatedBy": "Joshua Coombs / bigdiction.energy",
   "CanContainContent": true,

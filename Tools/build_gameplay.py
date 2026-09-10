@@ -91,6 +91,7 @@ def make_manager():
     for name, kind, default in [('TealScore','int',0),('CopperScore','int',0),('HasBall','bool',False),
             ('MatchOver','bool',False),('SecondsLeft','double',300),('Elapsed','double',0),('Stun','double',0),
             ('SnipeDistance','double',0),('SnitchDistance','double',0),
+            ('SnipePosition','vector',(0,0,0)),('SnitchPosition','vector',(0,0,0)),
             ('SnipeProgress','double',0),('SnitchProgress','double',0),
             ('SnipeActive','bool',False),('SnitchActive','bool',False),
             ('TargetName','string','NO CHASE TARGET'),('TargetDistance','double',0),
@@ -255,7 +256,8 @@ def make_ball():
     for prefix,output in [('Snipe','then'),('Snitch','else')]:
         publish=ms(g,prefix+'Active',active)
         g.exec(report_snipe,publish,output)
-        g.chain(publish,ms(g,prefix+'Distance',chase_distance),ms(g,prefix+'Progress',capture_progress))
+        g.chain(publish,ms(g,prefix+'Distance',chase_distance),ms(g,prefix+'Progress',capture_progress),
+                ms(g,prefix+'Position',location(g)))
     g.compile(save=True)
     return bp
 

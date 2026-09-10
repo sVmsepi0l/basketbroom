@@ -16,7 +16,7 @@ public:
     virtual ~ABBMatchState() override;
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 TealScore = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 CopperScore = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 Quarter = 1;
@@ -39,6 +39,10 @@ public:
     bool TryCatch(ABBRiderCharacter* Rider, ABBBall* Ball);
     void Release(ABBRiderCharacter* Rider, FVector Aim);
     void NoCrown(ABBBall* Ball);
+    void ObserveBludgerFlight(ABBBall* Ball, BB::Contact Contact);
+    /** Read-only PIE diagnostic. -1 means unavailable or no current controller. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    double DevelopmentGetBludgerControlSeconds(int32 BallIndex) const;
     void Say(const FString& Text);
     static FString PositionName(int32 Position);
 private:

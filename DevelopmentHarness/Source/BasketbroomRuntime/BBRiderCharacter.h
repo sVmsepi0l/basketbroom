@@ -68,7 +68,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
     FVector GetCarryLocation() const;
 
-    /** PIE input bridge; true means submitted, not that the server accepted play. */
+    /** PIE input bridge; true means queued for native Tick, not accepted play. */
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     bool DevelopmentRequestAction(int32 Action, int32 Value = 0);
 
@@ -92,6 +92,10 @@ private:
     int32 LastVisualTeam = INDEX_NONE;
     bool bLocalInteractHeld = false;
     bool bDevelopmentInteractHeld = false;
+    // FIFO entries: ordinary action/value, or action -1 for held interaction.
+    // Never replicated or populated by packaged-game input.
+    TArray<TPair<int32, int32>> PendingDevelopmentInputs;
+    static constexpr int32 MaxDevelopmentInputs = 32;
     double LastServerActionTime = -1.0;
     double LastServerInteractTime = -1.0;
 
