@@ -28,6 +28,7 @@ except ImportError:
 
 REPO_ROOT = Path(os.environ.get("BASKETBROOM_REPO", r"C:\Git\basketbroom"))
 SOURCE_ROOT = REPO_ROOT / "SourceArt" / "Arena"
+TEXTURE_ROOT = REPO_ROOT / "SourceArt" / "Textures"
 MOUNT = "/Basketbroom"
 LEVEL_PATH = MOUNT + "/Maps/BB_Arena"
 ART_PATH = MOUNT + "/Art"
@@ -45,16 +46,20 @@ BACKSTOP_X = HALF_LENGTH + 450.0
 CAMERA_LOCATION = (-12400.0, -11400.0, 9400.0)
 CAMERA_ROTATION = (-25.0, 42.0, 0.0)
 SCENERY_TAG = "BB.Scenery"
-COURT_FLOOD_INTENSITY = 1000.0
+DETAIL_TAG = "BB.ArtDetail"
+COURT_FLOOD_INTENSITY = 650.0
 EXPOSURE_BRIGHTNESS = 0.6
 BLOOM_INTENSITY = 0.16
+DETAIL_MESHES = ("SM_BB_Terrain", "SM_BB_Treeline", "SM_BB_StoneDetail",
+                 "SM_BB_CopperDetail", "SM_BB_IronDetail", "SM_BB_TealSeats",
+                 "SM_BB_CopperSeats", "SM_BB_LargeHoopLight", "SM_BB_SmallHoopLight")
 
 # Keep these shared with polish_scene.py so an in-place refresh and a new build
 # render identically. Low net specularity is essential for readable goal rims.
 ARENA_PALETTE = (
     ("M_BB_Trampoline", (0.018, 0.036, 0.045), 0.98, 0.0, 0.0, False),
     ("M_BB_FloorAlternate", (0.023, 0.045, 0.052), 0.98, 0.0, 0.0, False),
-    ("M_BB_Basalt", (0.038, 0.046, 0.060), 0.90, 0.04, 0.0, False),
+    ("M_BB_Basalt", (0.067, 0.077, 0.088), 0.88, 0.0, 0.0, False),
     ("M_BB_Iron", (0.025, 0.042, 0.049), 0.65, 0.42, 0.0, False),
     ("M_BB_Copper", (0.47, 0.19, 0.061), 0.46, 0.60, 0.025, False),
     ("M_BB_Teal", (0.023, 0.29, 0.27), 0.50, 0.30, 0.035, False),
@@ -62,12 +67,14 @@ ARENA_PALETTE = (
     ("M_BB_TealLight", (0.035, 0.70, 0.49), 0.65, 0.0, 2.1, False),
     ("M_BB_CopperLight", (1.0, 0.30, 0.045), 0.65, 0.0, 2.1, False),
     ("M_BB_IvoryLight", (0.83, 0.57, 0.22), 0.65, 0.0, 1.45, False),
-    ("M_BB_Net", (0.027, 0.051, 0.061), 1.0, 0.0, 0.0, False),
+    ("M_BB_Net", (0.018, 0.032, 0.039), 1.0, 0.0, 1.0, True),
     ("M_BB_Sky", (0.010, 0.020, 0.046), 1.0, 0.0, 1.0, True),
     ("M_BB_Stars", (0.37, 0.51, 0.66), 1.0, 0.0, 1.6, True),
-    ("M_BB_Ground", (0.010, 0.020, 0.024), 1.0, 0.0, 1.0, True),
-    ("M_BB_Ridge", (0.014, 0.026, 0.040), 1.0, 0.0, 1.0, True),
-    ("M_BB_Pine", (0.009, 0.019, 0.024), 1.0, 0.0, 1.0, True),
+    ("M_BB_Ground", (0.028, 0.043, 0.030), 0.97, 0.0, 0.0, False),
+    ("M_BB_Ridge", (0.039, 0.049, 0.060), 0.94, 0.0, 0.0, False),
+    ("M_BB_Pine", (0.014, 0.030, 0.024), 0.98, 0.0, 0.02, False),
+    ("M_BB_SeatTeal", (0.025, 0.18, 0.16), 0.72, 0.0, 0.0, False),
+    ("M_BB_SeatCopper", (0.29, 0.11, 0.033), 0.72, 0.0, 0.0, False),
 )
 
 
@@ -84,6 +91,36 @@ class ObjMesh:
 
     def face(self, *indices):
         self.faces.append(indices)
+
+    def box(self, center, size):
+        first = len(self.vertices) + 1
+        for z in (-1, 1):
+            for x, y in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+                self.vertex((center[0] + x * size[0] / 2,
+                             center[1] + y * size[1] / 2,
+                             center[2] + z * size[2] / 2))
+        for indices in ((3, 2, 1, 0), (4, 5, 6, 7), (0, 1, 5, 4),
+                        (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+            self.face(*(first + i for i in indices))
+
+    def pine(self, center, height, seed):
+        # Layered asymmetric crown, more legible than a single cone silhouette.
+        x, y, z = center
+        self.rod((x, y, z), (x, y, z + height * 0.83), height * 0.016, 5)
+        for tier in range(6):
+            bottom = z + height * (0.19 + tier * 0.113)
+            radius = height * (0.25 - tier * 0.033)
+            apex = self.vertex((x + math.sin(seed + tier) * radius * 0.12, y,
+                                bottom + height * 0.35))
+            ring = []
+            for k in range(9):
+                angle = k * math.tau / 9 + seed * 0.7 + tier * 0.35
+                r = radius * (0.83 + 0.17 * math.sin(k * 2.3 + seed + tier))
+                ring.append(self.vertex((x + r * math.cos(angle), y + r * math.sin(angle),
+                                         bottom + math.sin(k * 3.1 + seed) * height * 0.038)))
+            for k in range(9):
+                self.face(ring[k], ring[(k + 1) % 9], apex)
+            self.face(*reversed(ring))
 
     def torus(self, inner_radius, tube_radius, segments=128, tube_segments=12):
         # Torus normal along X: goals face along the longitudinal pitch axis.
@@ -194,6 +231,8 @@ def generate_source_meshes():
                          32000.0 * height), 8.0 + (i % 4) * 4.0)
     meshes.append(mesh.save("SM_BB_Stars.obj"))
 
+    meshes.extend(generate_detail_meshes())
+
     manifest = {
         "units": "centimeters", "origin": "midfield, trampoline top",
         "pitch_goal_to_goal_cm": 2 * HALF_LENGTH, "pitch_width_cm": 2 * HALF_WIDTH,
@@ -210,6 +249,102 @@ def generate_source_meshes():
     }
     (SOURCE_ROOT / "arena_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest
+
+
+def terrain_height(radius, angle):
+    """Quiet approach terrain rises into an irregular, continuous far ridge."""
+    foothill = max(0.0, min(1.0, (radius - 10200.0) / 17500.0))
+    ridge = (3100.0 + 1600.0 * math.sin(angle * 5.0 + 0.7)
+             + 1050.0 * math.sin(angle * 11.0 + 1.3)
+             + 500.0 * math.sin(angle * 23.0))
+    radial = math.sin(min(1.0, max(0.0, (radius - 11500) / 24500)) * math.pi * 0.85)
+    return -580.0 + foothill ** 1.6 * ridge * radial + foothill * 220.0 * math.sin(radius / 1100 + angle * 9)
+
+
+def generate_detail_meshes():
+    """Decorative batches keep thousands of authored details to nine assets."""
+    SOURCE_ROOT.mkdir(parents=True, exist_ok=True)
+    result = []
+    terrain = ObjMesh()
+    rings, sectors = 34, 224
+    for ring in range(rings + 1):
+        radius = 9000.0 + ring * 29500.0 / rings
+        for sector in range(sectors):
+            a = sector * math.tau / sectors
+            terrain.vertex((radius * math.cos(a), radius * math.sin(a), terrain_height(radius, a)))
+    for ring in range(rings):
+        for sector in range(sectors):
+            n = (sector + 1) % sectors
+            a, b = ring * sectors + sector + 1, (ring + 1) * sectors + sector + 1
+            c, d = (ring + 1) * sectors + n + 1, ring * sectors + n + 1
+            terrain.face(a, b, c)
+            terrain.face(a, c, d)
+    result.append(terrain.save("SM_BB_Terrain.obj"))
+
+    forest = ObjMesh()
+    for i in range(148):
+        angle = i * 2.399963229728653
+        radius = 12300.0 + (i % 7) * 1040.0 + 230.0 * math.sin(i * 3.7)
+        height = 850.0 + 780.0 * (0.5 + 0.5 * math.sin(i * 1.73))
+        forest.pine((radius * math.cos(angle), radius * math.sin(angle), terrain_height(radius, angle)), height, i)
+    result.append(forest.save("SM_BB_Treeline.obj"))
+
+    stone, copper, iron, teal_seats, copper_seats = (ObjMesh() for _ in range(5))
+    # Modular stone coping, visible separation joints, railings and seat backs.
+    for side in (-1, 1):
+        for tier in range(5):
+            y = side * (HALF_WIDTH + 350 + tier * 280)
+            z = -30 + tier * 150
+            for section in range(-5, 6):
+                x = section * 1060
+                stone.box((x, y - side * 121, z + 76), (1028, 43, 29))
+                seats = teal_seats if section < 0 else copper_seats
+                for seat in range(7):
+                    sx = x + (seat - 3) * 121
+                    seats.box((sx, y + side * 49, z + 154), (105, 15, 113))
+                    seats.box((sx, y, z + 116), (105, 97, 15))
+                # Stair aisles stay open between the seating blocks.
+                iron.rod((x + 508, y - side * 125, z + 95),
+                         (x + 508, y + side * 125, z + 95), 5.5, 6)
+        rail_y = side * (HALF_WIDTH + 1810)
+        for x in range(-5850, 5851, 450):
+            iron.rod((x, rail_y, 705), (x, rail_y, 1040), 9, 6)
+        iron.rod((-6030, rail_y, 1040), (6030, rail_y, 1040), 11, 8)
+        iron.rod((-6030, rail_y, 835), (6030, rail_y, 835), 6, 6)
+        # Grandstand masonry courses break the silhouette into believable blocks.
+        for x in range(-5920, 5921, 370):
+            stone.box((x, side * (HALF_WIDTH + 1880), 72), (354, 245, 430))
+            stone.box((x, side * (HALF_WIDTH + 1880), 520), (354, 245, 430))
+        for index in range(-4, 5):
+            x = index * 1450
+            y = side * (HALF_WIDTH + 1960)
+            copper.box((x, y, 1750), (177, 202, 43))
+            copper.box((x, y, 1170), (177, 202, 43))
+            iron.rod((x, y, 1600), (x + 400, y - side * 460, 875), 18, 8)
+            iron.rod((x, y, 1600), (x - 400, y - side * 460, 875), 18, 8)
+        # Goal pedestals and clamps add manufactured detail outside apertures.
+        x = side * HALF_LENGTH
+        for y in (-GOAL_SPACING, 0, GOAL_SPACING):
+            sx = x + side * 120
+            for z in (640, 990, 1440, 1690):
+                copper.rod((sx, y, z - 12), (sx, y, z + 12), 37, 16)
+            for dy in (-102, 102):
+                copper.rod((sx, y + dy, 94), (sx, y + dy, 109), 13, 6)
+            iron.rod((sx, y, 460), (x + side * 285, y, 90), 17, 8)
+        for y in (-2300, 2300):
+            gx = side * (BACKSTOP_X + 620)
+            for z in (0, 275, 550, 825, 1100):
+                copper.box((gx, y, z), (490, 490, 13))
+            stone.box((gx, y, 1230), (595, 595, 105))
+
+    for name, mesh in (("StoneDetail", stone), ("CopperDetail", copper), ("IronDetail", iron),
+                       ("TealSeats", teal_seats), ("CopperSeats", copper_seats)):
+        result.append(mesh.save("SM_BB_" + name + ".obj"))
+    for name, inner in (("Large", LARGE_RADIUS + 16), ("Small", SMALL_RADIUS + 12)):
+        strip = ObjMesh()
+        strip.torus(inner, 4.0, segments=128, tube_segments=8)
+        result.append(strip.save("SM_BB_" + name + "HoopLight.obj"))
+    return result
 
 
 def _optional(obj, property_name, value):
@@ -270,6 +405,7 @@ class ArenaBuilder:
         self.meshes = {}
         self.actors = []
         self.physics = None
+        self.stone_texture = None
 
     def load_mesh(self, path):
         mesh = self.assets.load_asset(path)
@@ -314,6 +450,105 @@ class ArenaBuilder:
         self.meshes[name] = mesh
         return mesh
 
+    def import_stone_texture(self):
+        source = TEXTURE_ROOT / "T_BB_Basalt_Albedo.png"
+        if not source.exists():
+            raise RuntimeError("Missing original arena stone texture: " + str(source))
+        task = unreal.AssetImportTask()
+        for name, value in (("filename", str(source)), ("destination_path", ART_PATH + "/Textures"),
+                            ("destination_name", "T_BB_Basalt_Albedo"), ("automated", True),
+                            ("replace_existing", True), ("save", True)):
+            task.set_editor_property(name, value)
+        self.asset_tools.import_asset_tasks([task])
+        self.stone_texture = self.assets.load_asset(ART_PATH + "/Textures/T_BB_Basalt_Albedo")
+        if self.stone_texture is None:
+            raise RuntimeError("Original basalt texture import failed")
+        self.stone_texture.set_editor_property("srgb", True)
+        self.stone_texture.set_editor_property("max_texture_size", 2048)
+        # ImageGen supplied a 1254-square source. Let Unreal's texture build
+        # normalize it for a full streaming mip chain without padding seams.
+        self.stone_texture.set_editor_property("power_of_two_mode", unreal.TexturePowerOfTwoSetting.STRETCH_TO_POWER_OF_TWO)
+        self.assets.save_loaded_asset(self.stone_texture)
+        return self.stone_texture
+
+    def _surface_variation(self, mat, name, base, roughness):
+        """World-space stone projection and one-octave broad wear variation.
+
+        World coordinates retain a fixed physical texel scale on elongated
+        architecture. Stone uses three samples; no parallax/displacement cost.
+        """
+        stone = name in ("M_BB_Basalt", "M_BB_Ridge", "M_BB_Ground")
+        varied = stone or name in ("M_BB_Copper", "M_BB_Iron", "M_BB_Teal",
+                                   "M_BB_Trampoline", "M_BB_FloorAlternate")
+        if not varied:
+            return base, None
+        lib = unreal.MaterialEditingLibrary
+        def node(cls, **properties):
+            result = lib.create_material_expression(mat, cls, -1200, 450)
+            for key, value in properties.items():
+                result.set_editor_property(key, value)
+            return result
+        def wire(source, target, pin, output=""):
+            if pin in ("Input", "Coordinates"):
+                # These C++ members are unnamed or display as UVs in the editor.
+                # MaterialEditingLibrary resolves an empty name to input zero.
+                pin = ""
+            if not lib.connect_material_expressions(source, output, target, pin):
+                raise RuntimeError("Cannot connect arena surface node to %s; available inputs: %s" %
+                                   (pin, lib.get_material_expression_input_names(target)))
+        def multiply(a, b=None, constant=1.0):
+            result = node(unreal.MaterialExpressionMultiply, const_b=constant)
+            wire(a, result, "A")
+            if b is not None:
+                wire(b, result, "B")
+            return result
+        position = node(unreal.MaterialExpressionWorldPosition)
+        wear = node(unreal.MaterialExpressionNoise, scale=0.012 if stone else 0.018,
+                    quality=1, levels=1, output_min=0.0, output_max=1.0)
+        # UE5.8 exposes this pin as "World Position" rather than its C++ member.
+        wear_position_pin = str(lib.get_material_expression_input_names(wear)[0])
+        wire(position, wear, wear_position_pin)
+        # Roughness variation is restrained: details should not glitter in flight.
+        rough = node(unreal.MaterialExpressionAdd, const_b=max(0.08, roughness - 0.06))
+        wire(multiply(wear, constant=0.09), rough, "A")
+        rough_clamp = node(unreal.MaterialExpressionClamp, min_default=0.05, max_default=1.0)
+        wire(rough, rough_clamp, "Input")
+        if not stone:
+            tint = node(unreal.MaterialExpressionAdd, const_b=0.88)
+            wire(multiply(wear, constant=0.18), tint, "A")
+            return multiply(base, tint), rough_clamp
+        texture = self.stone_texture or self.assets.load_asset(ART_PATH + "/Textures/T_BB_Basalt_Albedo")
+        if texture is None:
+            raise RuntimeError("Import arena basalt texture before building stone materials")
+        scaled = multiply(position, constant=1.0 / (1500.0 if name == "M_BB_Ridge" else 220.0))
+        normal = node(unreal.MaterialExpressionVertexNormalWS)
+        absolute = node(unreal.MaterialExpressionAbs)
+        wire(normal, absolute, "Input")
+        weighted = []
+        weights = []
+        for axes, axis in (((True, True, False), 2), ((True, False, True), 1), ((False, True, True), 0)):
+            uv = node(unreal.MaterialExpressionComponentMask, r=axes[0], g=axes[1], b=axes[2], a=False)
+            wire(scaled, uv, "Input")
+            sample = node(unreal.MaterialExpressionTextureSample, texture=texture)
+            wire(uv, sample, "Coordinates")
+            mask = node(unreal.MaterialExpressionComponentMask, r=axis == 0, g=axis == 1, b=axis == 2, a=False)
+            wire(absolute, mask, "Input")
+            weighted.append(multiply(sample, mask))
+            weights.append(mask)
+        def add(a, b):
+            result = node(unreal.MaterialExpressionAdd)
+            wire(a, result, "A")
+            wire(b, result, "B")
+            return result
+        blend = node(unreal.MaterialExpressionDivide)
+        wire(add(add(weighted[0], weighted[1]), weighted[2]), blend, "A")
+        wire(add(add(weights[0], weights[1]), weights[2]), blend, "B")
+        # The generated neutral albedo provides mineral texture; Tint determines
+        # the venue palette without copying image lighting into the material.
+        detail = node(unreal.MaterialExpressionAdd, const_b=0.65)
+        wire(multiply(blend, constant=2.4), detail, "A")
+        return multiply(base, detail), rough_clamp
+
     def material(self, name, color, roughness=0.55, metallic=0.0, glow=0.0, unlit=False):
         path = ART_PATH + "/Materials/" + name
         mat = self.assets.load_asset(path)
@@ -326,10 +561,34 @@ class ArenaBuilder:
         base = library.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -650, -150)
         base.set_editor_property("parameter_name", "Tint")
         base.set_editor_property("default_value", unreal.LinearColor(*color, 1.0))
+        emissive_base = base
+        if name == "M_BB_Sky":
+            # A restrained atmospheric horizon, without another fullscreen sky
+            # system or volumetric cloud pass. Scene fog supplies depth in play.
+            position = library.create_material_expression(mat, unreal.MaterialExpressionWorldPosition, -1150, -500)
+            height = library.create_material_expression(mat, unreal.MaterialExpressionComponentMask, -950, -500)
+            for prop, value in (("r", False), ("g", False), ("b", True), ("a", False)):
+                height.set_editor_property(prop, value)
+            library.connect_material_expressions(position, "", height, "")
+            scaled = library.create_material_expression(mat, unreal.MaterialExpressionMultiply, -750, -500)
+            scaled.set_editor_property("const_b", 1.0 / 19000.0)
+            library.connect_material_expressions(height, "", scaled, "A")
+            fade = library.create_material_expression(mat, unreal.MaterialExpressionClamp, -550, -500)
+            library.connect_material_expressions(scaled, "", fade, "")
+            horizon = library.create_material_expression(mat, unreal.MaterialExpressionConstant3Vector, -700, -640)
+            horizon.set_editor_property("constant", unreal.LinearColor(0.043, 0.055, 0.082, 1.0))
+            emissive_base = library.create_material_expression(mat, unreal.MaterialExpressionLinearInterpolate, -350, -500)
+            library.connect_material_expressions(horizon, "", emissive_base, "A")
+            library.connect_material_expressions(base, "", emissive_base, "B")
+            library.connect_material_expressions(fade, "", emissive_base, "Alpha")
         if not unlit:
-            library.connect_material_property(base, "", unreal.MaterialProperty.MP_BASE_COLOR)
+            shaded, varied_roughness = self._surface_variation(mat, name, base, roughness)
+            library.connect_material_property(shaded, "", unreal.MaterialProperty.MP_BASE_COLOR)
             for pname, value, prop, pos in (("Roughness", roughness, unreal.MaterialProperty.MP_ROUGHNESS, 50),
                                             ("Metallic", metallic, unreal.MaterialProperty.MP_METALLIC, 170)):
+                if pname == "Roughness" and varied_roughness is not None:
+                    library.connect_material_property(varied_roughness, "", prop)
+                    continue
                 node = library.create_material_expression(mat, unreal.MaterialExpressionScalarParameter, -350, pos)
                 node.set_editor_property("parameter_name", pname)
                 node.set_editor_property("default_value", value)
@@ -338,7 +597,7 @@ class ArenaBuilder:
         strength.set_editor_property("parameter_name", "Glow")
         strength.set_editor_property("default_value", glow)
         multiply = library.create_material_expression(mat, unreal.MaterialExpressionMultiply, -250, -150)
-        library.connect_material_expressions(base, "", multiply, "A")
+        library.connect_material_expressions(emissive_base, "", multiply, "A")
         library.connect_material_expressions(strength, "", multiply, "B")
         library.connect_material_property(multiply, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
         library.recompile_material(mat)
@@ -357,7 +616,7 @@ class ArenaBuilder:
         self.actors.append(actor)
         return actor
 
-    def shape(self, label, mesh, material, location, scale=(1, 1, 1), rotation=(0, 0, 0), collision=False, tags=(), folder="Arena"):
+    def shape(self, label, mesh, material, location, scale=(1, 1, 1), rotation=(0, 0, 0), collision=False, tags=(), folder="Arena", shadow=None):
         actor = self.actor(unreal.StaticMeshActor, label, location, rotation, tags, folder)
         component = actor.static_mesh_component
         component.set_static_mesh(self.meshes[mesh])
@@ -370,7 +629,10 @@ class ArenaBuilder:
         if collision:
             if self.physics is not None:
                 component.set_phys_material_override(self.physics)
-        component.set_editor_property("cast_shadow", collision)
+        component.set_editor_property("cast_shadow", collision if shadow is None else shadow)
+        if folder.startswith("Atmosphere"):
+            _optional(component, "visible_in_ray_tracing", False)
+            _optional(component, "affect_distance_field_lighting", False)
         actor.set_actor_scale3d(unreal.Vector(*scale))
         return actor
 
@@ -395,6 +657,9 @@ class ArenaBuilder:
             self.meshes[primitive] = self.load_mesh("/Engine/BasicShapes/" + primitive)
         for name in ("SM_BB_LargeHoop", "SM_BB_SmallHoop", "SM_BB_CenterCircle", "SM_BB_ReboundNet", "SM_BB_Stars"):
             self.import_mesh(name)
+        for name in DETAIL_MESHES:
+            self.import_mesh(name)
+        self.import_stone_texture()
         for spec in ARENA_PALETTE:
             self.material(*spec)
         path = ART_PATH + "/Materials/PM_BB_Rebound"
@@ -442,7 +707,7 @@ class ArenaBuilder:
             glow = mat + "Light"
             for i, y in enumerate((-GOAL_SPACING, 0, GOAL_SPACING)):
                 label = "%s large hoop %s" % (team, i)
-                self.shape(label, "SM_BB_LargeHoop", glow, (x, y, LARGE_CENTER), tags=("BB.Goal", "BB.Goal.Large", "BB.Team." + team), folder="Goals")
+                self.shape(label, "SM_BB_LargeHoop", mat, (x, y, LARGE_CENTER), tags=("BB.Goal", "BB.Goal.Large", "BB.Team." + team), folder="Goals")
                 # Component collision uses external segmented padding, never a
                 # convex hull that would invisibly cap the scoring aperture.
                 for segment in range(64):
@@ -450,22 +715,26 @@ class ArenaBuilder:
                     radius = LARGE_RADIUS + 21
                     py = y + radius * math.cos(angle)
                     pz = LARGE_CENTER + radius * math.sin(angle)
-                    self.shape(label + " rim padding %02d" % segment, "Sphere", mat, (x, py, pz),
-                               (0.43, 0.43, 0.43), collision=True, tags=("BB.Goal.Rim", "BB.Rebound"), folder="Goals/Rim collision")
+                    padding = self.shape(label + " rim padding %02d" % segment, "Sphere", mat, (x, py, pz),
+                                         (0.43, 0.43, 0.43), collision=True, tags=("BB.Goal.Rim", "BB.Rebound"), folder="Goals/Rim collision")
+                    padding.set_actor_hidden_in_game(True)
+                    padding.static_mesh_component.set_visibility(False)
                 support_x = x + side * 120
                 self.cylinder(label + " tower", "M_BB_Iron", (support_x, y, LARGE_CENTER / 2 - 90), 24, LARGE_CENTER - 180,
                               collision=True, tags=("BB.Support", "BB.Rebound"), folder="Goals")
                 self.cylinder(label + " impact sleeve", mat, (support_x, y, 300), 54, 600, collision=True, folder="Goals")
                 self.cylinder(label + " foundation", "M_BB_Basalt", (support_x, y, 50), 160, 100, collision=True, folder="Goals")
                 self.box(label + " vertical light", glow, (support_x - side * 28, y, 670), (7, 15, 730), folder="Goals")
-            self.shape(team + " elevated quark hoop", "SM_BB_SmallHoop", "M_BB_IvoryLight", (x, 0, SMALL_CENTER),
+            self.shape(team + " elevated quark hoop", "SM_BB_SmallHoop", "M_BB_Copper", (x, 0, SMALL_CENTER),
                        tags=("BB.Goal", "BB.Goal.Small", "BB.Team." + team), folder="Goals")
             for segment in range(48):
                 a = segment * 2 * math.pi / 48
                 radius = SMALL_RADIUS + 16
-                self.shape(team + " quark rim padding %02d" % segment, "Sphere", mat,
-                           (x, radius * math.cos(a), SMALL_CENTER + radius * math.sin(a)), (0.33, 0.33, 0.33),
-                           collision=True, tags=("BB.Goal.Rim", "BB.Rebound"), folder="Goals/Rim collision")
+                padding = self.shape(team + " quark rim padding %02d" % segment, "Sphere", mat,
+                                     (x, radius * math.cos(a), SMALL_CENTER + radius * math.sin(a)), (0.33, 0.33, 0.33),
+                                     collision=True, tags=("BB.Goal.Rim", "BB.Rebound"), folder="Goals/Rim collision")
+                padding.set_actor_hidden_in_game(True)
+                padding.static_mesh_component.set_visibility(False)
             self.cylinder(team + " elevated mast", "M_BB_Iron", (x + side * 175, 0, SMALL_CENTER / 2), 19, SMALL_CENTER, collision=True, folder="Goals")
             self.box(team + " goals nameplate", "M_BB_Iron", (x + side * 220, 0, 3680), (70, 2500, 430), folder="Signage")
             self.text(team + " end identity", "B A S K E T B R O O M", (x + side * 174, 0, 3730),
@@ -527,27 +796,91 @@ class ArenaBuilder:
         self.text("Venue title", "B A S K E T B R O O M", (0, -HALF_WIDTH - 1958, 1600), (0, 90, 0), 198, (232, 191, 122))
         self.text("Venue subtitle", "T H E   R E B O U N D   G R O U N D S", (0, -HALF_WIDTH - 1958, 1340), (0, 90, 0), 83, (201, 169, 108))
 
+    def architecture_detail(self):
+        for suffix, material, shadow in (("StoneDetail", "M_BB_Basalt", True),
+                                        ("CopperDetail", "M_BB_Copper", False),
+                                        ("IronDetail", "M_BB_Iron", True),
+                                        ("TealSeats", "M_BB_SeatTeal", False),
+                                        ("CopperSeats", "M_BB_SeatCopper", False)):
+            self.shape("Crafted " + suffix, "SM_BB_" + suffix, material, (0, 0, 0),
+                       tags=(DETAIL_TAG,), folder="Architecture detail", shadow=shadow)
+        for side, team in ((-1, "Teal"), (1, "Copper")):
+            x = side * HALF_LENGTH - side * 23
+            for i, y in enumerate((-GOAL_SPACING, 0, GOAL_SPACING)):
+                self.shape(team + " inset hoop light %d" % i, "SM_BB_LargeHoopLight", "M_BB_" + team + "Light",
+                           (x, y, LARGE_CENTER), tags=(DETAIL_TAG,), folder="Goals/Lighting detail")
+            self.shape(team + " inset quark light", "SM_BB_SmallHoopLight", "M_BB_IvoryLight",
+                       (side * HALF_LENGTH - side * 19, 0, SMALL_CENTER), tags=(DETAIL_TAG,), folder="Goals/Lighting detail")
+
     def scenery(self):
-        """Original geometric scenery, kept outside the flying pitch envelope."""
-        # Broad, overlapping shapes read as distant ridgelines in silhouette.
-        # Dark unlit materials keep the surroundings below the court's contrast.
-        for index in range(18):
-            angle = index * math.tau / 18.0
-            radius = 26700.0 + 1600.0 * math.sin(index * 2.3)
-            height = 6300.0 + 2000.0 * math.sin(index * 1.7)
-            self.shape("Distant ridge %02d" % index, "Cone", "M_BB_Ridge",
-                       (radius * math.cos(angle), radius * math.sin(angle), height / 2.0 - 1600.0),
-                       (130.0 + 25.0 * math.cos(index), 105.0, height / 100.0),
-                       rotation=(0, index * 29.0, 0), tags=(SCENERY_TAG,), folder="Atmosphere/Scenery")
-        for index in range(44):
-            angle = index * math.tau / 44.0
-            radius = 17200.0 + 1300.0 * math.sin(index * 2.7)
-            x, y = radius * math.cos(angle), radius * math.sin(angle)
-            height = 1550.0 + 500.0 * math.sin(index * 1.3)
-            self.shape("Distant pine %02d" % index, "Cone", "M_BB_Pine",
-                       (x, y, height / 2.0 - 570.0),
-                       (height / 165.0, height / 165.0, height / 100.0),
-                       tags=(SCENERY_TAG,), folder="Atmosphere/Scenery")
+        """A continuous ridge and 148 layered trees in two nonblocking batches."""
+        self.shape("Distant continuous ridgeline", "SM_BB_Terrain", "M_BB_Ridge", (0, 0, 0),
+                   tags=(SCENERY_TAG,), folder="Atmosphere/Scenery", shadow=False)
+        self.shape("Distant layered conifer forest", "SM_BB_Treeline", "M_BB_Pine", (0, 0, 0),
+                   tags=(SCENERY_TAG,), folder="Atmosphere/Scenery", shadow=False)
+
+    def configure_key(self, light):
+        light.set_intensity(1.8)
+        light.set_light_color(unreal.LinearColor(0.76, 0.84, 1.0, 1.0))
+        _optional(light, "light_source_angle", 1.2)
+        _optional(light, "dynamic_shadow_distance_movable_light", 22000.0)
+        _optional(light, "volumetric_scattering_intensity", 0.6)
+
+    def configure_flood(self, component):
+        component.set_intensity(COURT_FLOOD_INTENSITY)
+        component.set_attenuation_radius(6000.0)
+        component.set_light_color(unreal.LinearColor(0.67, 0.80, 1.0, 1.0))
+        component.set_cast_shadows(False)
+        _optional(component, "source_radius", 160.0)
+        _optional(component, "soft_source_radius", 180.0)
+        _optional(component, "volumetric_scattering_intensity", 0.12)
+        _optional(component, "cast_volumetric_shadow", False)
+
+    def configure_fog(self, fog):
+        fog.set_fog_density(0.0018)
+        fog.set_fog_height_falloff(0.19)
+        fog.set_fog_inscattering_color(unreal.LinearColor(0.026, 0.045, 0.067, 1.0))
+        fog.set_start_distance(900.0)
+        fog.set_volumetric_fog(True)
+        fog.set_volumetric_fog_scattering_distribution(0.25)
+        fog.set_volumetric_fog_extinction_scale(0.45)
+        fog.set_volumetric_fog_distance(14500.0)
+        fog.set_volumetric_fog_start_distance(300.0)
+        fog.set_volumetric_fog_near_fade_in_distance(900.0)
+        fog.set_volumetric_fog_albedo(unreal.Color(185, 204, 220, 255))
+
+    def configure_presentation(self, pp):
+        pp.set_editor_property("unbound", True)
+        settings = pp.get_editor_property("settings")
+        for name, value in (("override_auto_exposure_min_brightness", True),
+                            ("override_auto_exposure_max_brightness", True),
+                            ("auto_exposure_min_brightness", EXPOSURE_BRIGHTNESS),
+                            ("auto_exposure_max_brightness", EXPOSURE_BRIGHTNESS),
+                            ("override_bloom_intensity", True), ("bloom_intensity", BLOOM_INTENSITY),
+                            ("override_vignette_intensity", True), ("vignette_intensity", 0.16),
+                            ("override_motion_blur_amount", True), ("motion_blur_amount", 0.0),
+                            ("override_ambient_occlusion_intensity", True), ("ambient_occlusion_intensity", 0.55),
+                            ("override_ambient_occlusion_radius", True), ("ambient_occlusion_radius", 120.0),
+                            ("override_screen_space_reflection_intensity", True), ("screen_space_reflection_intensity", 70.0),
+                            ("override_screen_space_reflection_quality", True), ("screen_space_reflection_quality", 50.0),
+                            ("override_screen_space_reflection_max_roughness", True), ("screen_space_reflection_max_roughness", 0.55)):
+            _optional(settings, name, value)
+        pp.set_editor_property("settings", settings)
+
+    def lantern_lighting(self):
+        for side in (-1, 1):
+            x = side * (BACKSTOP_X + 620)
+            for y in (-2300, 2300):
+                lamp = self.actor(unreal.PointLight, "Gate lantern glow %s %s" % (side, y),
+                                  (x, y, 1360), tags=(DETAIL_TAG,), folder="Lighting")
+                light = lamp.get_component_by_class(unreal.PointLightComponent)
+                light.set_mobility(unreal.ComponentMobility.MOVABLE)
+                light.set_intensity(85.0)
+                light.set_attenuation_radius(1450.0)
+                light.set_light_color(unreal.LinearColor(1.0, 0.46, 0.17, 1.0))
+                light.set_cast_shadows(False)
+                _optional(light, "volumetric_scattering_intensity", 0.08)
+                _optional(light, "cast_volumetric_shadow", False)
 
     def lighting(self):
         self.shape("Twilight dome", "Sphere", "M_BB_Sky", (0, 0, 0), (850, 850, 850), folder="Atmosphere")
@@ -556,41 +889,26 @@ class ArenaBuilder:
         key = self.actor(unreal.DirectionalLight, "Twilight amber key", (0, 0, 10000), (-28, -38, 0), folder="Lighting")
         light = key.get_component_by_class(unreal.DirectionalLightComponent)
         light.set_mobility(unreal.ComponentMobility.MOVABLE)
-        light.set_intensity(3.0)
-        light.set_light_color(unreal.LinearColor(1.0, 0.78, 0.55, 1.0))
-        _optional(light, "dynamic_shadow_distance_movable_light", 22000.0)
+        self.configure_key(light)
         sky = self.actor(unreal.SkyLight, "Blue twilight ambience", (0, 0, 9000), folder="Lighting")
         sky_component = sky.get_component_by_class(unreal.SkyLightComponent)
         sky_component.set_mobility(unreal.ComponentMobility.MOVABLE)
-        sky_component.set_intensity(2.2)
+        sky_component.set_intensity(1.75)
         _optional(sky_component, "lower_hemisphere_is_black", False)
         sky_component.recapture_sky()
         fog = self.actor(unreal.ExponentialHeightFog, "Aerial depth", (0, 0, -800), folder="Atmosphere")
         fog_component = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
-        fog_component.set_fog_density(0.0035)
-        fog_component.set_fog_height_falloff(0.17)
-        fog_component.set_fog_inscattering_color(unreal.LinearColor(0.032, 0.066, 0.105, 1.0))
+        self.configure_fog(fog_component)
         for index, x in enumerate((-4400, 0, 4400)):
             for side in (-1, 1):
                 lamp = self.actor(unreal.PointLight, "Court flood %s %s" % (side, index), (x, side * 2500, 3500), folder="Lighting")
                 component = lamp.get_component_by_class(unreal.PointLightComponent)
                 component.set_mobility(unreal.ComponentMobility.MOVABLE)
-                component.set_intensity(COURT_FLOOD_INTENSITY)
-                component.set_attenuation_radius(6000.0)
-                component.set_light_color(unreal.LinearColor(0.52, 0.73, 1.0, 1.0))
-                component.set_cast_shadows(False)
+                self.configure_flood(component)
         # Keep presentation exposure stable across the dark dome and bright rims.
         pp = self.actor(unreal.PostProcessVolume, "Arena presentation", folder="Lighting")
-        pp.set_editor_property("unbound", True)
-        settings = pp.get_editor_property("settings")
-        for name, value in (("override_auto_exposure_min_brightness", True),
-                            ("override_auto_exposure_max_brightness", True),
-                            ("auto_exposure_min_brightness", EXPOSURE_BRIGHTNESS),
-                            ("auto_exposure_max_brightness", EXPOSURE_BRIGHTNESS),
-                            ("override_bloom_intensity", True), ("bloom_intensity", BLOOM_INTENSITY),
-                            ("override_vignette_intensity", True), ("vignette_intensity", 0.22)):
-            _optional(settings, name, value)
-        pp.set_editor_property("settings", settings)
+        self.configure_presentation(pp)
+        self.lantern_lighting()
 
     def cameras(self):
         camera = self.actor(unreal.CameraActor, "BB Hero Camera", CAMERA_LOCATION, CAMERA_ROTATION,
@@ -622,6 +940,7 @@ class ArenaBuilder:
         self.goals()
         self.net_and_crown()
         self.stands()
+        self.architecture_detail()
         self.scenery()
         self.lighting()
         self.cameras()

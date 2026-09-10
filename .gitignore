@@ -46,6 +46,7 @@
 # Precompiled Assets
 SourceArt/**/*.png
 SourceArt/**/*.tga
+!SourceArt/Textures/T_BB_Basalt_Albedo.png
 
 # Binary Files
 Binaries/*

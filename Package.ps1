@@ -2,7 +2,8 @@
 .SYNOPSIS
 Cook and package the standalone Basketbroom game for Windows.
 .DESCRIPTION
-Uses UE 5.8's precompiled UnrealGame target for this Blueprint-only project.
+Uses UE 5.8's precompiled UnrealGame target for the training build, or builds
+BasketbroomDev when the native runtime module is enabled and staged.
 Development is the default so a playable build retains useful diagnostics.
 Every run receives fresh cook, stage, and archive directories; prior packages
 are preserved. Save the generated assets and stop Play In Editor first.
@@ -53,8 +54,12 @@ if ($engineVersion.MajorVersion -ne 5 -or $engineVersion.MinorVersion -ne 8) {
 }
 
 $projectDescriptor = Get-Content -LiteralPath $projectPath -Raw | ConvertFrom-Json
-if (@($projectDescriptor.Modules).Where({ $null -ne $_ }).Count -gt 0) {
-    throw 'This packaging script uses the precompiled content-only target. Native project modules require a C++ build and an installed compiler toolchain.'
+$native = @($projectDescriptor.Modules).Where({ $null -ne $_ }).Count -gt 0
+$cookMaps = '/Basketbroom/Maps/BB_Arena'
+if ($native) {
+    $nativeMap = Join-Path $repoRoot 'DevelopmentHarness\Plugins\Basketbroom\Content\Maps\BB_Regulation.umap'
+    if (-not (Test-Path -LiteralPath $nativeMap)) { throw 'Compile the native editor and run Tools/stage_regulation.py before packaging the native game.' }
+    $cookMaps += '+/Basketbroom/Maps/BB_Regulation'
 }
 $pythonPlugin = @($projectDescriptor.Plugins | Where-Object { $_.Name -eq 'PythonScriptPlugin' -and $_.Enabled })
 foreach ($pluginReference in $pythonPlugin) {
@@ -69,6 +74,12 @@ $archivePath = Join-Path $repoRoot ('.local\Build\' + $runName)
 $cookPath = Join-Path $workPath 'Cooked\Windows'
 $stagePath = Join-Path $workPath 'Stage'
 $logPath = Join-Path $workPath 'BuildCookRun.log'
+$cookProject = $projectPath
+if (-not $native) {
+    # UAT discovers *.Target.cs even before the new runtime module is enabled.
+    # A fresh source-free project cooks the working Blueprint build independently.
+    $cookProject = Join-Path $workPath 'Project\BasketbroomDev.uproject'
+}
 
 # BuildCookRun resolves content-only projects to the installed UnrealGame
 # executable. skipbuild avoids a native compile; Blueprint bytecode is cooked.
@@ -76,17 +87,17 @@ $logPath = Join-Path $workPath 'BuildCookRun.log'
 $uatArguments = @(
     '-nocompileuat',
     'BuildCookRun',
-    ('-project=' + $projectPath),
+    ('-project=' + $cookProject),
     '-nop4',
     '-utf8output',
     '-unattended',
     '-installed',
     '-platform=Win64',
     ('-clientconfig=' + $Configuration),
-    '-skipbuild',
+    $(if ($native) { '-build' } else { '-skipbuild' }),
     '-nocompileeditor',
     '-cook',
-    '-map=/Basketbroom/Maps/BB_Arena',
+    ('-map=' + $cookMaps),
     ('-CookOutputDir=' + $cookPath),
     '-stage',
     ('-stagingdirectory=' + $stagePath),
@@ -99,6 +110,7 @@ $uatArguments = @(
     '-archive',
     ('-archivedirectory=' + $archivePath)
 )
+if ($native) { $uatArguments += '-target=BasketbroomDev' }
 
 Write-Host ("UE {0}.{1}.{2} | Win64 {3}" -f $engineVersion.MajorVersion, $engineVersion.MinorVersion, $engineVersion.PatchVersion, $Configuration)
 Write-Host "Project: $projectPath"
@@ -115,6 +127,13 @@ foreach ($newPath in @($workPath, $archivePath)) {
         throw "Refusing to reuse an existing package directory: '$newPath'. Run again for a fresh destination."
     }
     New-Item -ItemType Directory -Path $newPath | Out-Null
+}
+if (-not $native) {
+    $cookProjectRoot = Split-Path -Parent $cookProject
+    New-Item -ItemType Directory -Path $cookProjectRoot | Out-Null
+    Copy-Item -LiteralPath $projectPath -Destination $cookProject
+    Copy-Item -LiteralPath (Join-Path $repoRoot 'DevelopmentHarness\Config') -Destination (Join-Path $cookProjectRoot 'Config') -Recurse
+    New-Item -ItemType Junction -Path (Join-Path $cookProjectRoot 'Plugins') -Target (Join-Path $repoRoot 'DevelopmentHarness\Plugins') | Out-Null
 }
 
 Write-Host 'Cooking the saved arena and packaging its game assets.'
@@ -142,6 +161,7 @@ $result = [ordered]@{
     Archive = $archivePath
     Executable = $gamePath
     Log = $logPath
+    NativeRuntime = $native
 }
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $workPath 'package-result.json') -Encoding UTF8
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $repoRoot '.local\latest-package.json') -Encoding UTF8

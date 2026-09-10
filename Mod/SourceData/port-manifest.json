@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "status": "source_scaffold_native_assets_not_created",
+  "target_engine": "Hogwarts Legacy Creator Kit licensee UE 4.27.2",
+  "compatible_changelist": 17155196,
+  "runtime_python": false,
+  "rules_source": "Rules/alpha_rules.json",
+  "rules_sha256": "0639e606aec939a6900f92e518ab424ca692443a71fa3e67a8edea49da316670",
+  "arena_source": "SourceArt/Arena/arena_manifest.json",
+  "arena_sha256": "a399594d12dbc6ee1690d520c82e2c362478a230f62f62d920a6cb0facc79e2a",
+  "source_imports": [
+    {
+      "source": "SourceArt/Arena/SM_BB_LargeHoop.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_LargeHoop",
+      "asset_type": "StaticMesh",
+      "sha256": "c722254585d46a8c494021a744b921c7c8a75fb963162b23f1acf29a06582e9c",
+      "validated": {
+        "vertices": 1536,
+        "polygons": 1536
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_SmallHoop.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_SmallHoop",
+      "asset_type": "StaticMesh",
+      "sha256": "268625d1f06dc7d6ff2637ce273c31384722226341b51b70211cde1994eba299",
+      "validated": {
+        "vertices": 1536,
+        "polygons": 1536
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_CenterCircle.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_CenterCircle",
+      "asset_type": "StaticMesh",
+      "sha256": "bc055a92b3a4cb192d71f1c686dc68768590d097d918e5534e0e57a1d4fd37cf",
+      "validated": {
+        "vertices": 1536,
+        "polygons": 1536
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_ReboundNet.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_ReboundNet",
+      "asset_type": "StaticMesh",
+      "sha256": "b09284c93055916555534e182cfeace5f2f7e513e5e69276bf2b6fe8ad96fd68",
+      "validated": {
+        "vertices": 2760,
+        "polygons": 1840
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_Stars.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_Stars",
+      "asset_type": "StaticMesh",
+      "sha256": "4fe97ac05740a6981b2fd42697fec431d1923562e568bd1a3d4f6433dfc0229c",
+      "validated": {
+        "vertices": 576,
+        "polygons": 768
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_Terrain.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_Terrain",
+      "asset_type": "StaticMesh",
+      "sha256": "bad802f148d3b560d1a53cf5705cfafd31616141b825b4352a93e78714df5f43",
+      "validated": {
+        "vertices": 7840,
+        "polygons": 15232
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_Treeline.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_Treeline",
+      "asset_type": "StaticMesh",
+      "sha256": "e7f2ce01d7584b9d8c7cec90e603bf50fbea6f7770305a6fd903b8807e9bfa50",
+      "validated": {
+        "vertices": 10360,
+        "polygons": 9916
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_StoneDetail.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_StoneDetail",
+      "asset_type": "StaticMesh",
+      "sha256": "01c965b4a61c5a2115456360eca6b115ad6c7549c70f3e62fc95ecaa36074c69",
+      "validated": {
+        "vertices": 1968,
+        "polygons": 1476
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_CopperDetail.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_CopperDetail",
+      "asset_type": "StaticMesh",
+      "sha256": "3d86679401fe03d9d3d886476e3c8b439de92fca21b8d2c16ec179caad146d7a",
+      "validated": {
+        "vertices": 1360,
+        "polygons": 864
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_IronDetail.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_IronDetail",
+      "asset_type": "StaticMesh",
+      "sha256": "48bb6ecb6e66351dbfd1785e19857ee4b6636b47c9cdc0b93e6a8c95e59449f2",
+      "validated": {
+        "vertices": 2696,
+        "polygons": 1768
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_TealSeats.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_TealSeats",
+      "asset_type": "StaticMesh",
+      "sha256": "761074a10f526d769341b4d1a84f10d5fa391c25b861c37efb87a00cf9a1c134",
+      "validated": {
+        "vertices": 5600,
+        "polygons": 4200
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_CopperSeats.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_CopperSeats",
+      "asset_type": "StaticMesh",
+      "sha256": "88a9c925cec0f724f2366157dadfa97b0370e278e2f302c576100b8ef45b27c8",
+      "validated": {
+        "vertices": 6720,
+        "polygons": 5040
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_LargeHoopLight.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_LargeHoopLight",
+      "asset_type": "StaticMesh",
+      "sha256": "06af7b9c8dce3d83ce8dad67254c7467b2fe013c5f1dadce1551fe3f7940c5ec",
+      "validated": {
+        "vertices": 1024,
+        "polygons": 1024
+      }
+    },
+    {
+      "source": "SourceArt/Arena/SM_BB_SmallHoopLight.obj",
+      "destination": "/Basketbroom/Art/Meshes/SM_BB_SmallHoopLight",
+      "asset_type": "StaticMesh",
+      "sha256": "753c1b6dea7c6511d5b5491172497e629f6a2c763c2b21a1eb14d415f06d4094",
+      "validated": {
+        "vertices": 1024,
+        "polygons": 1024
+      }
+    },
+    {
+      "source": "SourceArt/Audio/S_BB_Throw.wav",
+      "destination": "/Basketbroom/Audio/S_BB_Throw",
+      "asset_type": "SoundWave",
+      "sha256": "5ff3b265b1e6ff21a5f12c9785059fb399d81af9b0281c119f8d5fe474d3bdf6",
+      "validated": {
+        "sample_rate": 44100,
+        "frames": 7938,
+        "peak": 0.379974
+      }
+    },
+    {
+      "source": "SourceArt/Audio/S_BB_Score.wav",
+      "destination": "/Basketbroom/Audio/S_BB_Score",
+      "asset_type": "SoundWave",
+      "sha256": "a0d361ec7b43fef925af8e18ed35656e24e1d93fd5999e93e63b6898e4e3b787",
+      "validated": {
+        "sample_rate": 44100,
+        "frames": 28665,
+        "peak": 0.499969
+      }
+    },
+    {
+      "source": "SourceArt/Audio/S_BB_Catch.wav",
+      "destination": "/Basketbroom/Audio/S_BB_Catch",
+      "asset_type": "SoundWave",
+      "sha256": "b5ca88768b425b45a7ffee3e206024c296a5109231c10216e27c4220fd8d1fa5",
+      "validated": {
+        "sample_rate": 44100,
+        "frames": 22050,
+        "peak": 0.419983
+      }
+    },
+    {
+      "source": "SourceArt/Audio/S_BB_Bounce.wav",
+      "destination": "/Basketbroom/Audio/S_BB_Bounce",
+      "asset_type": "SoundWave",
+      "sha256": "22c3dd3657ea76fafd7a6b891ceeba7a91b4f02252bbacf0d98612fb00493062",
+      "validated": {
+        "sample_rate": 44100,
+        "frames": 3528,
+        "peak": 0.359985
+      }
+    },
+    {
+      "source": "SourceArt/Textures/T_BB_Basalt_Albedo.png",
+      "destination": "/Basketbroom/Art/Textures/T_BB_Basalt_Albedo",
+      "asset_type": "Texture2D",
+      "sha256": "c26468a6fbebcf988ee481d7421d1851698fb28443d008c3cf89a7368661fdd1",
+      "validated": {
+        "width": 1254,
+        "height": 1254
+      }
+    }
+  ],
+  "datatable_source": "Mod/SourceData/DT_BB_RuleConstants.csv",
+  "datatable_row_struct_to_create": {
+    "name": "ST_BB_RuleConstant",
+    "members": {
+      "Value": "Float",
+      "Unit": "String",
+      "RulePath": "String"
+    }
+  },
+  "template_to_create_in_kit": "Dungeon Mod",
+  "native_assets_pending": [
+    "/Basketbroom/Maps/BB_Arena",
+    "/Basketbroom/Data/DT_BB_RuleConstants",
+    "/Basketbroom/Data/DT_Basketbroom_DungeonsTable",
+    "/Basketbroom/Data/UI_DT_Basketbroom_MapSubdivisionTable",
+    "/Basketbroom/Blueprints/BP_Basketbroom_DataMutator",
+    "/Basketbroom/Blueprints/AC_BBMatch"
+  ],
+  "rules_needing_playtest": [
+    "All provisional geometry, including interpretation of 69 feet as hoop center height",
+    "Live-time clock semantics, 22-minute Snitch release, and 1-second chase capture",
+    "Three-second individual and six-second cumulative team Hurley control",
+    "Three-second No Crown re-entry target and delayed sanctions",
+    "Own-goal credit, simultaneous event grouping, and exact-tie capture tiebreak",
+    "Donnybrook participation, reset, and final point credit",
+    "Removal duration and ejection replacement timing"
+  ],
+  "network_status": "No official HL multiplayer capability established; external frameworks untested"
+}

@@ -90,13 +90,18 @@ def make_manager():
     bp, g = fresh('BP_BBMatch')
     for name, kind, default in [('TealScore','int',0),('CopperScore','int',0),('HasBall','bool',False),
             ('MatchOver','bool',False),('SecondsLeft','double',300),('Elapsed','double',0),('Stun','double',0),
+            ('SnipeDistance','double',0),('SnitchDistance','double',0),
+            ('SnipeProgress','double',0),('SnitchProgress','double',0),
+            ('SnipeActive','bool',False),('SnitchActive','bool',False),
+            ('TargetName','string','NO CHASE TARGET'),('TargetDistance','double',0),
+            ('CatchProgress','double',0),('TargetAvailable','bool',False),
             ('Message','string','TRAINING FLIGHT | Find a ball. Press E to carry it.')]:
         g.var(name,kind,default,editable=True)
     tick = g.event('ReceiveTick')
     dt = g.out(tick,'DeltaSeconds')
     elapsed = g.set('Elapsed',add(g,g.get('Elapsed'),dt))
     stun = g.set('Stun',math(g,'FMax',A=0,B=sub(g,g.get('Stun'),dt)))
-    seq = g.sequence(3)
+    seq = g.sequence(4)
     g.chain(tick,elapsed,stun,seq)
     live = g.branch(neg(g,g.get('MatchOver')))
     g.exec(seq,live,'then_0')
@@ -113,6 +118,19 @@ def make_manager():
     clamp = setloc(g,vec(g,math(g,'FClamp',Value=x,Min=-6710,Max=6710),
                         math(g,'FClamp',Value=y,Min=-3090,Max=3090),math(g,'FClamp',Value=z,Min=130,Max=6250)),pawn(g))
     g.exec(seq,clamp,'then_2')
+    # Each chase ball publishes its own sample; choosing here avoids tick-order
+    # races from both balls clearing or overwriting a shared nearest-distance.
+    available = both(g,either(g,g.get('SnipeActive'),g.get('SnitchActive')),neg(g,g.get('MatchOver')))
+    pick_snipe = both(g,g.get('SnipeActive'),either(g,neg(g,g.get('SnitchActive')),
+                       neg(g,gt(g,g.get('SnipeDistance'),g.get('SnitchDistance')))))
+    target_name = math(g,'SelectString',A='SNIPE',B='SNITCH',bPickA=pick_snipe)
+    target_distance = math(g,'SelectFloat',A=g.get('SnipeDistance'),B=g.get('SnitchDistance'),bPickA=pick_snipe)
+    target_progress = math(g,'SelectFloat',A=g.get('SnipeProgress'),B=g.get('SnitchProgress'),bPickA=pick_snipe)
+    target = g.set('TargetAvailable',available)
+    g.exec(seq,target,'then_3')
+    g.chain(target,g.set('TargetName',math(g,'SelectString',A=target_name,B='NO CHASE TARGET',bPickA=available)),
+            g.set('TargetDistance',math(g,'SelectFloat',A=target_distance,B=0,bPickA=available)),
+            g.set('CatchProgress',math(g,'SelectFloat',A=target_progress,B=0,bPickA=available)))
     g.compile(save=True)
     return bp
 
@@ -137,7 +155,9 @@ def make_ball():
     ready=g.branch(both(g,either(g,lt(g,g.get('Kind'),2),lt(g,g.get('Cooldown'),0.001)),neg(g,mg(g,'MatchOver'))))
     botheld=g.branch(math(g,'Greater_IntInt',A=g.get('BotOwner'),B=-1))
     classify=g.branch(lt(g,g.get('Kind'),2))
-    g.chain(tick,valid,cd,ready,botheld)
+    updates=g.sequence(2)
+    g.chain(tick,valid,cd,updates)
+    g.exec(updates,ready,'then_0'); g.exec(ready,botheld)
     g.exec(botheld,classify,'else')
     botfollow=setloc(g,g.get('BotPosition'))
     steal=g.branch(both(g,both(g,key(g,'E'),lt(g,math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g)))),425)),neg(g,mg(g,'HasBall'))))
@@ -209,19 +229,33 @@ def make_ball():
     apply=setloc(g,g.get('P')); g.exec(free,apply,'then_2')
     # Chase balls use deterministic paths and a full 1-second capture window.
     chase=g.sequence(2); g.exec(classify,chase,'else')
-    t=mg(g,'Elapsed'); phase=mul(g,g.get('Kind'),2.17)
+    # The Snipe traverses its route at 60% of the Snitch's path rate.
+    chase_rate=math(g,'SelectFloat',A=0.6,B=1.0,bPickA=eqi(g,g.get('Kind'),2))
+    t=mul(g,mg(g,'Elapsed'),chase_rate); phase=mul(g,g.get('Kind'),2.17)
     cx=mul(g,math(g,'Sin',A=add(g,mul(g,t,0.23),phase)),4300)
     cy=mul(g,math(g,'Cos',A=add(g,mul(g,t,0.41),phase)),2050)
     cz=add(g,2200,mul(g,math(g,'Sin',A=add(g,mul(g,t,0.32),phase)),950))
     g.exec(chase,setloc(g,vec(g,cx,cy,cz)),'then_0')
-    near=both(g,lt(g,math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g)))),380),both(g,key(g,'E',True),neg(g,mg(g,'HasBall'))))
+    near=both(g,neg(g,gt(g,math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g)))),380)),both(g,key(g,'E',True),neg(g,mg(g,'HasBall'))))
     catch=g.branch(near); g.exec(chase,catch,'then_1')
-    accumulate=g.set('CatchTime',add(g,g.get('CatchTime'),dt)); captured=g.branch(gt(g,g.get('CatchTime'),1))
+    accumulate=g.set('CatchTime',add(g,g.get('CatchTime'),dt)); captured=g.branch(neg(g,lt(g,g.get('CatchTime'),1)))
     g.chain(catch,accumulate,captured); g.exec(catch,g.set('CatchTime',0),'else')
     is_snipe=g.branch(eqi(g,g.get('Kind'),2)); g.chain(captured,sound(g,'Catch'),is_snipe)
     g.chain(is_snipe,ms(g,'TealScore',math(g,'Add_IntInt',A=mg(g,'TealScore'),B=69)),g.set('Cooldown',180),g.set('CatchTime',0),setloc(g,(0,0,-3000)),ms(g,'Message','SNIPE +69 | Returns in three minutes'))
     snitch=ms(g,'TealScore',math(g,'Add_IntInt',A=mg(g,'TealScore'),B=150))
     g.exec(is_snipe,snitch,'else'); g.chain(snitch,ms(g,'MatchOver',True),ms(g,'Message','SNITCH +150 | Training complete. Press R to restart.'))
+    # Run after the gameplay branch even during cooldown, so a caught Snipe
+    # cannot leave a stale target or capture meter visible for three minutes.
+    report=g.branch(either(g,eqi(g,g.get('Kind'),2),eqi(g,g.get('Kind'),3)))
+    g.exec(updates,report,'then_1')
+    report_snipe=g.branch(eqi(g,g.get('Kind'),2)); g.exec(report,report_snipe)
+    active=both(g,lt(g,g.get('Cooldown'),0.001),neg(g,mg(g,'MatchOver')))
+    chase_distance=math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g))))
+    capture_progress=math(g,'SelectFloat',A=math(g,'FClamp',Value=g.get('CatchTime'),Min=0,Max=1),B=0,bPickA=active)
+    for prefix,output in [('Snipe','then'),('Snitch','else')]:
+        publish=ms(g,prefix+'Active',active)
+        g.exec(report_snipe,publish,output)
+        g.chain(publish,ms(g,prefix+'Distance',chase_distance),ms(g,prefix+'Progress',capture_progress))
     g.compile(save=True)
     return bp
 

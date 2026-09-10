@@ -87,7 +87,7 @@ def setup_materials(builder):
     for name, color, roughness, metallic, glow in (
             ("M_BB_BallQuaffle", (0.95, 0.105, 0.045), 0.38, 0.18, 0.6),
             ("M_BB_BallQuark", (0.42, 0.055, 0.95), 0.24, 0.3, 1.3),
-            ("M_BB_BallSnipe", (0.035, 0.70, 0.88), 0.28, 0.6, 1.8),
+            ("M_BB_BallSnipe", (0.80, 0.28, 0.095), 0.28, 0.6, 1.8),
             ("M_BB_BallSnitch", (1.0, 0.60, 0.065), 0.2, 0.8, 1.7),
             ("M_BB_BroomWood", (0.13, 0.055, 0.022), 0.50, 0.06, 0.0),
             ("M_BB_BroomLeather", (0.031, 0.054, 0.052), 0.76, 0.03, 0.0)):

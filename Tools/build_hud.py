@@ -25,10 +25,10 @@ TEAL = "(R=0.15,G=0.88,B=0.76,A=1)"
 COPPER = "(R=1,G=0.48,B=0.24,A=1)"
 GOLD = "(R=0.96,G=0.74,B=0.32,A=1)"
 # Ball identity is independent of team identity. These match stage_game.py's
-# orange Quaffle, violet Quarks, cyan Snipe and gold Snitch, lifted for text.
+# orange Quaffle, violet Quarks, copper Snipe and gold Snitch, lifted for text.
 QUAFFLE = "(R=1,G=0.30,B=0.13,A=1)"
 QUARK = "(R=0.70,G=0.38,B=1,A=1)"
-SNIPE = "(R=0.13,G=0.86,B=1,A=1)"
+SNIPE = "(R=0.95,G=0.49,B=0.25,A=1)"
 
 
 def build():
@@ -159,6 +159,40 @@ def build():
     label("69", -63, 212, 0.65, SNIPE, xa="end")
     label("SNITCH", -204, 235, 0.55, GOLD, xa="end")
     label("150", -74, 234, 0.65, GOLD, xa="end")
+
+    # The training player is the Ranger; capture feedback stays next to the
+    # identity panel and leaves the aiming area clear.
+    def metres(distance):
+        value = math("Divide_DoubleDouble", A=distance, B=100)
+        text = g.result(g.call(TEXT + "Conv_DoubleToText", Value=value,
+                               bUseGrouping=False, MinimumFractionalDigits=1, MaximumFractionalDigits=1))
+        return string("Concat_StrStr", A=g.result(g.call(TEXT + "Conv_TextToString", InText=text)), B=" m")
+
+    rect(24, 132, 300, 186)
+    rect(24, 132, 3, 186, TEAL)
+    label("YOUR POSITION  /  RANGER", 42, 145, 0.65, TEAL)
+    nearest = string("Concat_StrStr", A=state("TargetName"), B="  /  ")
+    nearest = string("Concat_StrStr", A=nearest, B=metres(state("TargetDistance")))
+    nearest = math("SelectString", A=nearest, B="NO ACTIVE CHASE TARGET", bPickA=state("TargetAvailable"))
+    label("NEAREST", 42, 173, 0.65, MUTED)
+    label(nearest, 42, 194, 0.85)
+    for prefix, x, color in (("Snipe", 42, SNIPE), ("Snitch", 180, GOLD)):
+        distance = math("SelectString", A=metres(state(prefix + "Distance")), B="RESTING", bPickA=state(prefix + "Active"))
+        label(string("Concat_StrStr", A=prefix.upper() + "  ", B=distance), x, 223, 0.65, color)
+    label("HOLD E WITHIN 3.8 m FOR 1 s", 42, 247, 0.65, MUTED)
+    rect(42, 273, 264, 8, INK_LIGHT)
+    capture = math("FClamp", Value=state("CatchProgress"), Min=0, Max=1)
+    queue(g.call(HUD + "DrawRect", RectColor=TEAL, ScreenX=position(42),
+                 ScreenY=position(273, "y"),
+                 ScreenW=math("Multiply_DoubleDouble", A=scaled(264), B=capture), ScreenH=scaled(8)))
+    in_range = math("BooleanAND", A=state("TargetAvailable"),
+                    B=math("Not_PreBool", A=math("Greater_DoubleDouble", A=state("TargetDistance"), B=380)))
+    capture_status = math("SelectString", A="IN REACH  /  HOLD E TO SECURE", B="CLOSE THE GAP TO START", bPickA=in_range)
+    capture_status = math("SelectString", A="CAPTURING  /  KEEP E HELD", B=capture_status,
+                          bPickA=math("Greater_DoubleDouble", A=capture, B=0))
+    capture_status = math("SelectString", A=capture_status, B="CHASE TARGETS UNAVAILABLE", bPickA=state("TargetAvailable"))
+    capture_status = math("SelectString", A="RELEASE YOUR CARRIED BALL FIRST", B=capture_status, bPickA=state("HasBall"))
+    label(capture_status, 42, 292, 0.65, TEAL)
 
     # Center reticle: corners avoid covering a small target ball.
     for x, y, w, h in ((-13, -1, 7, 2), (6, -1, 7, 2), (-1, -13, 2, 7), (-1, 6, 2, 7)):
