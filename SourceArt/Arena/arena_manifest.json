@@ -1,0 +1,71 @@
+{
+  "units": "centimeters",
+  "origin": "midfield, trampoline top",
+  "pitch_goal_to_goal_cm": 12801.6,
+  "pitch_width_cm": 6400.8,
+  "goal_planes_x_cm": [
+    -6400.8,
+    6400.8
+  ],
+  "large_goal_centers_y_cm": [
+    -1066.8,
+    0,
+    1066.8
+  ],
+  "large_goal_z_cm": 2103.12,
+  "large_goal_inner_radius_cm": 335.28000000000003,
+  "small_goal_z_cm": 3048.0,
+  "small_goal_inner_radius_cm": 198.12,
+  "roofline_z_cm": 4206.24,
+  "chase_ceiling_z_cm": 6309.36,
+  "end_net_x_cm": [
+    -6850.8,
+    6850.8
+  ],
+  "side_net_y_cm": [
+    -3200.4,
+    3200.4
+  ],
+  "backstop_note": "450cm catch bay behind each goal plane; 420ft remains goal-to-goal.",
+  "restitution": 0.75,
+  "level": "/Basketbroom/Maps/BB_Arena",
+  "screenshot_camera": {
+    "location": [
+      -12400.0,
+      -11400.0,
+      9400.0
+    ],
+    "rotation_pitch_yaw_roll": [
+      -25.0,
+      42.0,
+      0.0
+    ]
+  },
+  "meshes": [
+    {
+      "file": "SM_BB_LargeHoop.obj",
+      "vertices": 1536,
+      "polygons": 1536
+    },
+    {
+      "file": "SM_BB_SmallHoop.obj",
+      "vertices": 1536,
+      "polygons": 1536
+    },
+    {
+      "file": "SM_BB_CenterCircle.obj",
+      "vertices": 1536,
+      "polygons": 1536
+    },
+    {
+      "file": "SM_BB_ReboundNet.obj",
+      "vertices": 2760,
+      "polygons": 1840
+    },
+    {
+      "file": "SM_BB_Stars.obj",
+      "vertices": 576,
+      "polygons": 768
+    }
+  ]
+}

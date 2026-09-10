@@ -1,0 +1,12 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0-dev",
+  "FriendlyName": "Basketbroom",
+  "Description": "Eight-a-side arena broom sport. Work in development.",
+  "Category": "UGC",
+  "CreatedBy": "Joshua Coombs / bigdiction.energy",
+  "CanContainContent": true,
+  "EnabledByDefault": true,
+  "IsBetaVersion": true
+}

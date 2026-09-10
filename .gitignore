@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+!SourceArt/**/*.obj
 
 # Precompiled Headers
 *.gch
@@ -73,3 +74,12 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Local tooling, editor state and extracted licensed reference files
+.local/
+**/__pycache__/
+**/Saved/
+**/Intermediate/
+**/DerivedDataCache/
+**/Binaries/
+*.log
