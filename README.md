@@ -17,6 +17,12 @@ installable Hogwarts Legacy mod. Creator Kit research and the original mod
 port remain in `Docs/` and `Mod/`; UE5.8 assets are not compatible
 with Hogwarts Legacy's Creator Kit engine.
 
+The Creator Kit port now has a saved dungeon, native return actor and registered
+entrance SQL. Launching the Kit through Epic resolved its WB sign-in failure.
+A normal Play session displayed the Hogwarts character standing in the arena;
+the automated runtime checks remain incomplete. See
+[Hogwarts integration](Docs/hogwarts-integration.md) for the evidence and next steps.
+
 ## Play
 
 Double-click **Play.cmd**, or run the command below from this repository.
@@ -218,10 +224,10 @@ python -m unittest discover -s Rules -v
 python -m compileall -q Tools Rules
 ```
 
-Completed checks include **54 Python rule-reference tests**, **60 portable C++
+Completed checks include **54 Python rule-reference tests**, **68 portable C++
 rules scenarios**, **35 native gameplay checks**, **19 practice Snitch/rematch
 checks**, **11 opening-layout checks**, **9 Bludger checks**, **17 local network
-checks**, and **11 native audio checks**. The retained
+checks**, **7 admission checks**, **7 disconnect checks**, and **11 native audio checks**. The retained
 training mode also passed **15 gameplay**, **15 AI**, and **4 flight** checks;
 its final chase HUD rebuild was rechecked and packaged. These suites have
 different scopes: reference rules do not exercise Unreal actors, and authority
@@ -249,10 +255,13 @@ Quark goals. `Tools/test_native_bludgers.py` checks control-clock resets, impact
 clearance, and opposing-Hurleyback restarts in isolated PIE fixtures.
 Training interactive checks verified E pickup, mouse release, a 13-point goal,
 mouse aim, and packaged startup. Those observations are not native packaged
-validation. In a Sep12 native packaged practice build, physical **6** selected
-Scout, **T** switched to Copper, and **Enter** started a live 2:59 practice clock;
-those observations preceded the latest opening changes. Physical P/Tab checks remain pending. Flight feel,
-chase difficulty, and audio still need human playtesting.
+validation. September 12 native packaged checks exercised physical **6/T**
+position/team selection, **Tab** help, and host **P/Enter** stoppage/resume.
+The final package also passed two-process loopback checks for client **5**
+Hurleyback selection, host-only controls, matching final results and stoppage
+state, host rematch, and continued play after a graceful client departure.
+Manual chase capture, remote networking, flight feel and the audio mix still
+need further playtesting.
 See `Docs/validation.md` for evidence and limits; local reports describe individual
 runs and do not guarantee that every later rebuild passes.
 

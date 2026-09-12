@@ -1,7 +1,10 @@
 """Local, file-based editor development bridge. Never included in cooked gameplay.
 
 Only executes scripts located inside this repository's Tools directory.
-Launch editor with -ExecCmds="py <absolute path to this file>".
+For UE5, launch with -ExecCmds="py <absolute path to this file>".
+For Creator Kit, launch through signed-in Epic Games Launcher first, then run
+py "C:/Git/basketbroom/Tools/editor_bridge.py" in its editor console. A direct
+UE4Editor.exe relaunch omits the launcher authentication needed by ModAuth.
 """
 import unreal
 import pathlib
