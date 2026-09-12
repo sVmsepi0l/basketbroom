@@ -4,6 +4,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/CollisionProfile.h"
@@ -174,6 +175,100 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         Part(FName(*FString::Printf(TEXT("CockpitGripWrap%d"), Index)), Cylinder.Object, Metal.Object,
              FVector(47 + Index * 6.5, 30, -56), FVector(.111, .111, .012), FRotator(90, 0, 0), true);
     }
+
+    // Original provisional Basketbroom tool, about 103 cm overall and 36 cm
+    // across the head. The current oversized Bludger is not a physical fit;
+    // this pass adds appearance only, without collision or striking behavior.
+    // Four instanced mesh layers per view keep the open head/lacing inexpensive.
+    for (const bool bCockpit : {false, true})
+    {
+        const FString Prefix = bCockpit ? TEXT("CockpitHurley") : TEXT("RiderHurley");
+        // The owner's presentation sits below the ball cards and to the right
+        // of the reticle. Remote equipment retains its authored world scale.
+        const FVector Base = bCockpit ? FVector(82, 47, -80) : FVector(48, 25, -10);
+        const FRotator Pose = bCockpit ? FRotator(-15, 0, 0) : FRotator(-20, 0, 0);
+        auto Layer = [this, bCockpit, &Prefix, Base, Pose](const TCHAR* Suffix, UStaticMesh* Shape, UMaterialInterface* Material)
+        {
+            UInstancedStaticMeshComponent* Component = CreateDefaultSubobject<UInstancedStaticMeshComponent>(FName(*(Prefix + Suffix)));
+            Component->SetupAttachment(bCockpit ? static_cast<USceneComponent*>(Camera.Get()) : GetMesh());
+            Component->SetStaticMesh(Shape);
+            Component->SetMaterial(0, Material);
+            Component->SetRelativeLocation(Base);
+            Component->SetRelativeRotation(Pose);
+            Component->SetRelativeScale3D(bCockpit ? FVector(.72) : FVector::OneVector);
+            Component->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+            Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Component->SetGenerateOverlapEvents(false);
+            Component->SetCanEverAffectNavigation(false);
+            Component->SetOnlyOwnerSee(bCockpit);
+            Component->SetOwnerNoSee(!bCockpit);
+            Component->SetCastShadow(!bCockpit);
+            Component->SetVisibility(false);
+            Component->ComponentTags.Add(TEXT("BB.Hurley"));
+            Component->ComponentTags.Add(bCockpit ? TEXT("BB.Hurley.Owner") : TEXT("BB.Hurley.Remote"));
+            HurleyParts.Add(Component);
+            return Component;
+        };
+        UInstancedStaticMeshComponent* Frame = Layer(TEXT("Frame"), Cylinder.Object, Wood.Object);
+        UInstancedStaticMeshComponent* Rounded = Layer(TEXT("RoundedFace"), Sphere.Object, Wood.Object);
+        UInstancedStaticMeshComponent* Grip = Layer(TEXT("PaddedGrip"), Sphere.Object, Leather.Object);
+        UInstancedStaticMeshComponent* Lacing = Layer(TEXT("OpenPocket"), Cylinder.Object, Ivory.Object);
+        auto Ellipsoid = [](UInstancedStaticMeshComponent* Component, const FVector& Center, const FVector& Dimensions)
+        {
+            Component->AddInstance(FTransform(FQuat::Identity, Center, Dimensions / 100.0));
+        };
+        auto Rod = [](UInstancedStaticMeshComponent* Component, const FVector& A, const FVector& B, double Diameter)
+        {
+            const FVector Axis = B - A;
+            const FQuat Rotation = FQuat::FindBetweenNormals(FVector::UpVector, Axis.GetSafeNormal());
+            Component->AddInstance(FTransform(Rotation, (A + B) * .5, FVector(Diameter / 100.0, Diameter / 100.0, Axis.Size() / 100.0)));
+        };
+
+        // The oval shaft blends into a solid, rounded, offset lower face.
+        Frame->AddInstance(FTransform(FQuat::Identity, FVector(0, 0, 38), FVector(.032, .043, .72)));
+        Ellipsoid(Rounded, FVector(0, 1.2, 71), FVector(4.0, 30, 19));
+        Ellipsoid(Grip, FVector(0, 0, 20), FVector(4.5, 6.0, 29));
+        Ellipsoid(Grip, FVector(0, 0, 2.5), FVector(5.0, 6.5, 5.0));
+
+        auto Outline = [](double Angle)
+        {
+            return FVector(0, 4 + 16 * FMath::Sin(Angle) + 3 * FMath::Cos(Angle), 84 + 17 * FMath::Cos(Angle));
+        };
+        constexpr int32 RimSegments = 20;
+        for (int32 I = 0; I < RimSegments; ++I)
+        {
+            const FVector A = Outline(2.0 * PI * I / RimSegments);
+            const FVector B = Outline(2.0 * PI * (I + 1) / RimSegments);
+            Rod(Frame, A, B, 2.6);
+            // Rounded overlaps cover every segment junction; no projecting ends.
+            Ellipsoid(Rounded, A, FVector(2.6));
+        }
+
+        // Sparse ivory lacing leaves the upper pocket visibly open. Its deepest
+        // point is just 3.2 cm behind the sidewall plane; there is no closed cup.
+        for (double Z : {80.0, 86.0, 92.0, 98.0})
+        {
+            const double T = (Z - 84.0) / 17.0;
+            const double CenterY = 4.0 + 3.0 * T;
+            const double HalfWidth = 16.0 * FMath::Sqrt(1.0 - T * T);
+            const FVector Center(3.2, CenterY, Z);
+            Rod(Lacing, FVector(0, CenterY - HalfWidth, Z), Center, .75);
+            Rod(Lacing, Center, FVector(0, CenterY + HalfWidth, Z), .75);
+        }
+        for (double T : {-.55, 0.0, .55})
+        {
+            const double Top = FMath::Sqrt(1.0 - T * T);
+            const FVector Low(0, 4.0 + 16.0 * T - 12.0 / 17.0, 80);
+            const FVector Middle(3.2, 4.0 + 16.0 * T + 18.0 / 17.0, 90);
+            const FVector High(0, 4.0 + 16.0 * T + 3.0 * Top, 84.0 + 17.0 * Top);
+            Rod(Lacing, Low, Middle, .75);
+            Rod(Lacing, Middle, High, .75);
+        }
+        // Paired face stripes identify the solid striking area without symbols
+        // borrowed from living sporting traditions.
+        Rod(Lacing, FVector(-2.05, -6, 70), FVector(-2.05, 8, 72), 1.1);
+        Rod(Lacing, FVector(-2.05, -5, 73), FVector(-2.05, 9, 75), 1.1);
+    }
 }
 
 void ABBRiderCharacter::BeginPlay()
@@ -184,6 +279,7 @@ void ABBRiderCharacter::BeginPlay()
         GetCharacterMovement()->SetMovementMode(MOVE_Flying);
     }
     RefreshUniform();
+    RefreshHurley();
 }
 
 void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -211,6 +307,7 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     {
         RefreshUniform();
     }
+    RefreshHurley();
 
     APlayerController* Player = Cast<APlayerController>(Controller);
     if (!Player || !Player->IsLocalController())
@@ -467,6 +564,16 @@ void ABBRiderCharacter::RefreshUniform()
 }
 
 void ABBRiderCharacter::OnRep_TeamIndex() { RefreshUniform(); }
+
+void ABBRiderCharacter::RefreshHurley()
+{
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    const bool bShouldShow = Position == 4 && (!Match || Match->Phase != TEXT("DONNYBROOK"));
+    if (bHurleyVisible == bShouldShow) return;
+    bHurleyVisible = bShouldShow;
+    for (UStaticMeshComponent* Part : HurleyParts)
+        if (Part) Part->SetVisibility(bShouldShow);
+}
 
 void ABBRiderCharacter::OnRep_StunRemaining()
 {

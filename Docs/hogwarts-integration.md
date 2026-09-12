@@ -1,12 +1,12 @@
 # Basketbroom: Hogwarts Legacy integration
 
-Verified 2026-09-10 against the installed Creator Kit, the supplied tutorial snapshots, and current publisher/CurseForge documentation.
+Local editor evidence updated 2026-09-12 against the installed Creator Kit. Compatibility notes also use the supplied tutorial snapshots and publisher/CurseForge documentation.
 
 **The UE 5.8 game and a Hogwarts Legacy mod are separate builds.** The practical Creator Kit route is a single-player arena content mod with Blueprint gameplay and bots. A full networked Hogwarts Legacy match is not a verified capability of the official kit. This repository contains original port sources and native Creator Kit art assets; it does not yet contain a playable or published Hogwarts Legacy Basketbroom match.
 
 ## Engine and runtime boundary
 
-The standalone game uses `DevelopmentHarness/BasketbroomDev.uproject`, Unreal 5.8.1, and native Blueprint assets under that project's `Plugins/Basketbroom`. Its packaged executable runs independently of Hogwarts Legacy.
+The standalone game uses `DevelopmentHarness/BasketbroomDev.uproject`, Unreal 5.8.1, native C++ gameplay, and generated Blueprint/art assets under that project's `Plugins/Basketbroom`. Its packaged executable runs independently of Hogwarts Legacy.
 
 The installed Creator Kit is at `C:/Program Files/HogwartsLegacyCreatorKit`. Its `Engine/Build/Build.version` reports **4.27.2**, `IsLicenseeVersion=1`, branch `++UE4+Release-4.27`, and compatible changelist `17155196`. Its project is `PhoenixGame/Phoenix.uproject`; its editor is `Engine/Binaries/Win64/UE4Editor.exe`. This is a game-specific engine and project, not stock UE 4.27.
 
@@ -37,9 +37,9 @@ Those are **authoring APIs**. They support imports, inspection, defaults, compon
 
 `Mod/Basketbroom/Basketbroom.uplugin` is a content-only Win64 descriptor. `Mod/Tools/prepare_sources.py` produces a hashed source import manifest and `DT_BB_RuleConstants.csv`; it creates no native assets. Refresh those files after rules/source-art changes. The CSV's required Blueprint row structure is documented in `Mod/README.md`. It is data for a future DataTable, not an implementation of the sport.
 
-1. In the Creator Kit, create a **Dungeon Mod** named Basketbroom and preserve its wizard-generated metadata. Let the kit create/duplicate the template packages; do not copy the standalone asset directory into it.
-2. Rebuild a small arena map, import the original OBJ/WAV sources, create the constants structure/DataTable, and author a minimal score/catch graph. Compile and test using the kit's player and game state.
-3. Use the generated dungeon table's level reference and matching arena row name. Add/register a `BP_DungeonEntrance` in the chosen Overland location and a `BP_WorldTeleport` return in the arena. The dungeon template supplies travel integration even for an outdoor arena. [Official level guide](https://support.curseforge.com/support/solutions/articles/9000259716-hogwarts-legacy-creators-level-design-environment).
+1. Select the **existing Basketbroom** plugin with the Creator Kit's **Set Active Mod** control. The repo plugin is already mounted and its native dungeon template assets are staged; do not create another Basketbroom plugin or overwrite them with the wizard. Preserve any account/platform metadata the kit subsequently creates.
+2. Imported art and a native arena are complete. Create the constants structure/DataTable and author a minimal score/catch graph next. Compile and test using the kit's player and game state.
+3. The staged dungeon table already references `Basketbroom_DungeonMap`, with the same row name; its subdivision entry and data-mutator bindings are also verified. Choose an Overland entrance location and confirm registration writes to this mod, then place/register the entrance and add the staged `BP_WorldTeleport` return in the arena. Generate and validate navigation/minimap data. The dungeon template supplies travel integration even for an outdoor arena. [Official level guide](https://support.curseforge.com/support/solutions/articles/9000259716-hogwarts-legacy-creators-level-design-environment).
 4. Add a mod-owned match ActorComponent/manager through the gameplay template and scope it to the arena. Inspect the game's broom Blueprint interfaces before binding flight, possession, input, or HUD. Port the complete rules state machine and fixtures independently of the UE 5.8 pawn. This is a proposed integration design, not a completed adapter.
 5. Compile, run PEEVES/data validation, and verify entering, playing, exiting, and loading a modded save. Mod-owned duplicates/mutators matter: changing base assets can work in PIE yet fail in the installed game. [Official validation/debugging guide](https://support.curseforge.com/support/solutions/articles/9000259708-hogwarts-legacy-creators-advanced-modding-features).
 6. Upload for cloud processing, then install the unpublished mod for in-game testing. Official testing supports the author and up to five selected collaborators. That is distribution access, not a multiplayer player limit. Public publishing and moderation are subsequent steps. [Official pre-publication testing](https://support.curseforge.com/support/solutions/articles/9000258593-hogwarts-legacy-creators-testing-your-mod-before-publishing-it).
@@ -55,6 +55,12 @@ Audio import was recovered and all four original WAVs are saved as native SoundW
 The next gameplay proof remains a small compiled 4.27 score/catch graph in PIE, followed by dungeon travel and cloud-cooked in-game validation. Imported art alone does not establish that integration.
 
 The kit also built and saved `/Basketbroom/Maps/BB_Arena_Port` with 900 generated actors, 18 dedicated arena materials, and a rebound physical material. All nine loaded-scene inspections passed, including goal/crown dimensions, owned asset references, and nonblocking detail/scenery profiles. Its actual hero-camera render is `Docs/Screenshots/hlck-arena.png`. Lighting is darker than the standalone build and still needs an art pass. This venue has no match manager or registered dungeon travel yet; these checks do not claim a playable Hogwarts match.
+
+On 2026-09-12, [the guarded dungeon staging helper](../Tools/stage_hlck_dungeon.py) saved the separate native map `/Basketbroom/Maps/Basketbroom_DungeonMap` and duplicated five supported assets into the repo mod: the dungeon and subdivision DataTables, `BP_Basketbroom_DataMutator`, `BP_Basketbroom_DungeonEntrance`, and `BP_Basketbroom_DungeonExit`. The dungeon row preserves every template default except its map reference and matching row key. The subdivision row matches the inspected native wizard: the map-name key and `DungeonName`, with native defaults for the remaining fields. In particular, `OwnerName` remains empty; base-game area identifiers were not invented or copied. The native empty mission name is an FName sentinel whose Python text is `None`.
+
+The mutator retains both native table extensions after Blueprint compilation, and the compiled entrance default retains its mod-owned dungeon-row handle. [Read-only dungeon inspection](../Tools/inspect_hlck_dungeon.py) passed **20/20 checks** in the running kit, including all nine arena geometry checks, saved-asset ownership, both table contracts, mutator bindings, the entrance handle, and the unchanged original arena SHA-256. Reports are `.local/hlck/dungeon-stage-result.json`, `dungeon-inspection.json`, and `dungeon-geometry-inspection.json`.
+
+Staging does not place entrance/exit actors, modify Overland, invoke `RegisterDungeon`, switch the active mod, or travel. The observed active-mod name is still empty. Actual entry/return, navigation/minimap generation, a compiled match adapter, and cloud-cooked in-game operation remain unverified. Successful table/geometry checks establish authoring correctness for these staged assets only.
 
 ## Multiplayer: supported facts and unresolved work
 

@@ -2,6 +2,7 @@
 #include "BBBall.h"
 #include "BBRiderCharacter.h"
 #include "CollisionQueryParams.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,12 +14,42 @@
 namespace
 {
 constexpr int32 Roles[8] = {0, 1, 1, 2, 3, 4, 4, 5};
-FVector StartLocation(int32 Slot)
+FVector StartLocation(int32 Slot, bool bDonnybrook = false, float CapsuleRadius = 34.f)
 {
     const int32 Local = Slot % 8;
     const float Sign = Slot < 8 ? -1.f : 1.f;
-    return FVector(Sign * (Local == 0 ? 5400.f : 3700.f - Local * 260.f),
-                   (Local % 3 - 1) * 950.f, Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f);
+    // The whole capsule starts behind its own 105ft quarter line. Donnybrook
+    // instead lines every available rider up behind its own goal plane.
+    const float Clearance = CapsuleRadius + 12.f;
+    if (bDonnybrook)
+        return FVector(Sign * (6400.8f + Clearance), (Local - 3.5f) * 650.f, 1400.f + (Local % 2) * 180.f);
+    if (Local == 0) return FVector(Sign * 5400.f, 0, 2103.12f);
+    // Provisional tactical spacing staggers the second row so teammates do not
+    // obstruct the first-person view while waiting for the opening horn.
+    const int32 Row = (Local - 1) / 3;
+    return FVector(Sign * (3200.4f + Clearance + Row * 650.f),
+                   Local == 7 ? 0.f : ((Local - 1) % 3 - 1) * 950.f + (Row == 1 ? 450.f : 0.f),
+                   Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f);
+}
+
+FVector OpeningBallLocation(int32 Index)
+{
+    // Bible 5.2 supplies the lateral marks and Snipe altitude. The 1500cm
+    // scoring/Bludger launch altitude is a provisional implementation choice;
+    // it is not a stated rule. Snitch uses the 100ft center launch in section 6.
+    const FVector Marks[] = {FVector(0,0,1500), FVector(0,-1066.8,1500), FVector(0,1066.8,1500),
+        FVector(0,0,670.56), FVector(0,0,3048), FVector(0,-2133.6,1500), FVector(0,2133.6,1500)};
+    return Marks[FMath::Clamp(Index, 0, 6)];
+}
+
+FVector CrownRestartLocation(const BB::Ball& Ball)
+{
+    // A safe mark directly below the recorded exit. The 4m vertical clearance
+    // and 3m edge clearance are provisional physical implementation margins.
+    // The carry point projects 175cm ahead plus the scoring ball's 65cm radius.
+    return FVector(FMath::Clamp(Ball.crown_mark[0] * 30.48, -6550.8, 6550.8),
+                   FMath::Clamp(Ball.crown_mark[1] * 30.48, -2900.4, 2900.4),
+                   FMath::Clamp(Ball.crown_mark[2] * 30.48 - 400.0, 250.0, 3806.24));
 }
 
 void PlaceRider(ABBRiderCharacter* Rider, const FVector& Location, float Yaw)
@@ -34,6 +65,28 @@ void PlaceRider(ABBRiderCharacter* Rider, const FVector& Location, float Yaw)
     }
     Rider->ForceNetUpdate();
 }
+
+void ClearCrownRestartSpace(ABBRiderCharacter* Rider, const FVector& Mark)
+{
+    const FVector Previous = Rider->GetActorLocation();
+    const float Radius = Rider->GetCapsuleComponent()->GetScaledCapsuleRadius();
+    const double LimitX = 6850.8 - Radius, LimitY = 3200.4 - Radius;
+    FVector Direction = (Previous - Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector);
+    auto PointAlong = [&Mark, &Previous](const FVector& Along)
+    { return FVector(Mark.X + Along.X * 450.0, Mark.Y + Along.Y * 450.0, Previous.Z); };
+    auto Inside = [LimitX, LimitY](const FVector& Point)
+    { return FMath::Abs(Point.X) <= LimitX && FMath::Abs(Point.Y) <= LimitY; };
+    FVector Destination = PointAlong(Direction);
+    if (!Inside(Destination)) Destination = PointAlong(-Direction);
+    if (!Inside(Destination)) Destination = PointAlong((-Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector));
+    // This moves only the rider's position. In particular, preserve downward
+    // aim and altitude so an official cannot lift another carried ball through
+    // the roof by forcing pitch zero or pushing the rider upward.
+    Rider->GetCharacterMovement()->StopMovementImmediately();
+    Rider->ConsumeMovementInputVector();
+    Rider->SetActorLocation(Destination, false, nullptr, ETeleportType::TeleportPhysics);
+    Rider->ForceNetUpdate();
+}
 }
 ABBMatchState::ABBMatchState()
 {
@@ -47,15 +100,10 @@ void ABBMatchState::BeginPlay()
     Super::BeginPlay();
     if (!HasAuthority()) return;
     bPractice = GetWorld()->URL.HasOption(TEXT("Practice"));
-    BB::Config Config;
-    if (bPractice) { Config.quarter_ms = 180000; Config.snitch_release_ms = 60000; Config.overtime_ms = 120000; }
-    Rules = std::make_unique<BB::Match>(Config);
-    Rules->pause("pregame selection");
-    const FVector Homes[] = {FVector(-2000,0,1500), FVector(-500,-850,1800), FVector(500,850,1800),
-        FVector(0,0,2103.12), FVector(0,0,3048), FVector(1000,-1400,1900), FVector(-1000,1400,1900)};
+    ResetMatchRules();
     for (int32 I = 0; I < 7; ++I)
     {
-        FTransform Transform(FRotator::ZeroRotator, Homes[I]);
+        FTransform Transform(FRotator::ZeroRotator, OpeningBallLocation(I));
         ABBBall* Ball = GetWorld()->SpawnActorDeferred<ABBBall>(ABBBall::StaticClass(), Transform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
         if (!Ball)
         {
@@ -72,6 +120,46 @@ void ABBMatchState::BeginPlay()
     SyncRules();
     Status = TEXT("LOBBY");
 }
+void ABBMatchState::ResetMatchRules()
+{
+    if (!HasAuthority()) return;
+    BB::Config Config;
+    if (bPractice) { Config.quarter_ms = 180000; Config.snitch_release_ms = 60000; Config.overtime_ms = 120000; }
+    Rules = std::make_unique<BB::Match>(Config);
+    Rules->pause("pregame selection");
+    MillisecondCarry = 0;
+    BotAccumulator = ReviewDelay = 0;
+    LastLogIndex = 0;
+    PendingPoints.clear();
+    bInitialized = false;
+    bLive = false;
+    for (ABBRiderCharacter* R : Riders)
+        if (IsValid(R)) { R->StunRemaining = 0; R->bInteractHeld = false; R->ForceNetUpdate(); }
+}
+void ABBMatchState::ResetOpeningLayout()
+{
+    if (!HasAuthority() || !Rules) return;
+    const bool bDonnybrook = Rules->phase == BB::Phase::Donnybrook;
+    for (ABBRiderCharacter* R : Riders)
+    {
+        if (!IsValid(R) || R->RosterIndex < 0 || R->RosterIndex >= 16) continue;
+        const auto& Player = Rules->players[R->RosterIndex];
+        if (Player.ejected || Player.donnybrook_excluded || Player.removed_until >= 0) continue;
+        R->bInteractHeld = false;
+        PlaceRider(R, StartLocation(R->RosterIndex, bDonnybrook, R->GetCapsuleComponent()->GetScaledCapsuleRadius()),
+                   R->TeamIndex ? 180.f : 0.f);
+    }
+    for (ABBBall* B : Balls)
+    {
+        if (!IsValid(B)) continue;
+        // A delayed Crown award takes priority over the neutral period layout.
+        if (Rules->balls[B->BallIndex].crown_restart_penalty > 0) continue;
+        B->Home = OpeningBallLocation(B->BallIndex);
+        B->LastTouchTeam = -1;
+        B->ChaseTime = B->BallIndex * 2.4f;
+        B->ResetBall(B->Home);
+    }
+}
 void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -81,6 +169,7 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, Announcement); DOREPLIFETIME(ABBMatchState, bPractice);
     DOREPLIFETIME(ABBMatchState, bLive); DOREPLIFETIME(ABBMatchState, Winner);
     DOREPLIFETIME(ABBMatchState, LiveSeconds);
+    DOREPLIFETIME(ABBMatchState, PendingPenaltyCount); DOREPLIFETIME(ABBMatchState, PendingPenaltySummary);
 }
 FString ABBMatchState::PositionName(int32 Position)
 {
@@ -203,7 +292,8 @@ void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
         B->SetActorLocation(B->LastLocation);
         B->FlightVelocity = Aim.IsNearlyZero() ? R->GetVelocity() : Aim.GetSafeNormal() * (B->IsBludger() ? 5000.f : 4400.f) + R->GetVelocity() * .4f;
         B->DistanceSinceReleaseCm = 0;
-        B->RecentThrower = R;
+        // A forced zero-aim drop is not a deliberate propulsive act.
+        B->RecentThrower = Aim.IsNearlyZero() ? nullptr : R;
         B->ThrowerIgnoreRemaining = .15f;
         B->ImpactCooldown = 0;
         B->Cooldown = .3f;
@@ -234,11 +324,38 @@ double ABBMatchState::DevelopmentGetBludgerControlSeconds(int32 BallIndex) const
     return Hurley.individual_started < 0 ? -1 : (Rules->now_ms - Hurley.individual_started) / 1000.0;
 #endif
 }
+TArray<int32> ABBMatchState::DevelopmentGetCrownPenaltyState(int32 BallIndex) const
+{
+    TArray<int32> State = {0, 0, 0, -1, -1, -1};
+#if !UE_BUILD_SHIPPING
+    if (HasAuthority() && GetWorld() && GetWorld()->WorldType == EWorldType::PIE && Rules)
+        for (const auto& Penalty : Rules->penalties)
+            if (Penalty.reason == "No Crown" && Penalty.ball == BallIndex)
+            {
+                ++State[0]; State[1] += Penalty.pending ? 1 : 0;
+                State[2] += Penalty.crown_restoration_pending ? 1 : 0;
+                State[3] = Penalty.player; State[4] = Penalty.crown_restoration_receiver;
+                State[5] = Penalty.id;
+            }
+#endif
+    return State;
+}
 void ABBMatchState::NoCrown(ABBBall* B)
 {
     if (!HasAuthority() || !Rules || !bLive || !IsValid(B) || !Balls.Contains(B) || B->IsChase()) return;
     const FVector P = B->GetActorLocation();
-    if (Rules->crown_exit(B->BallIndex, {P.X / 30.48, P.Y / 30.48, 138.0}))
+    ABBRiderCharacter* Responsible = IsValid(B->Holder) ? B->Holder.Get() : B->RecentThrower.Get();
+    int32 ResponsibleSlot = -1;
+    if (IsValid(Responsible) && Riders.Contains(Responsible) && Responsible->RosterIndex >= 0 && Responsible->RosterIndex < 16)
+    {
+        const auto& Player = Rules->players[Responsible->RosterIndex];
+        if (!Player.ejected && !Player.donnybrook_excluded && Player.removed_until < 0)
+            ResponsibleSlot = Responsible->RosterIndex;
+    }
+    // Unknown or no-longer-available attribution never prevents neutral return.
+    // Incidental grazes/banks do not replace RecentThrower; intentional releases
+    // and current carried control are the deliberate acts modeled by this alpha.
+    if (Rules->crown_exit(B->BallIndex, {P.X / 30.48, P.Y / 30.48, 138.0}, ResponsibleSlot))
     {
         B->Holder = nullptr; B->FlightVelocity = FVector::ZeroVector;
         B->DistanceSinceReleaseCm = 0;
@@ -258,7 +375,8 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
     const auto& CurrentPlayer = Rules->players[R->RosterIndex];
     auto HasPendingPenalty = [this](int32 Slot)
     {
-        for (const auto& Penalty : Rules->penalties) if (Penalty.player == Slot && Penalty.pending) return true;
+        for (const auto& Penalty : Rules->penalties)
+            if (Penalty.player == Slot && (Penalty.pending || Penalty.crown_restoration_pending)) return true;
         return false;
     };
     if (CurrentPlayer.ejected || CurrentPlayer.donnybrook_excluded || CurrentPlayer.removed_until >= 0)
@@ -302,7 +420,13 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
             bCanStart = R->GetPlayerState() && R->GetPlayerState()->GetPlayerId() == FirstPlayerId;
         }
         if (!bCanStart) return;
-        if (Rules->status == BB::Status::Complete) return;
+        const bool bRematch = Rules->status == BB::Status::Complete && Action == 4;
+        if (bRematch)
+        {
+            ResetMatchRules();
+            FillRoster();
+        }
+        else if (Rules->status == BB::Status::Complete) return;
         if (Action == 5)
         {
             // Finish already observed goals/catches before stopping the clock.
@@ -316,7 +440,15 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
             SyncRules();
             return;
         }
-        if (!bLive && Rules->status != BB::Status::Review && Rules->resume()) { bInitialized = true; Say(TEXT("LIVE - play your position. Hold E within 3.8m to secure a chase ball.")); SyncRules(); }
+        const bool bOpening = !bInitialized || Rules->status == BB::Status::QuarterBreak || Rules->status == BB::Status::PhaseBreak;
+        if (!bLive && Rules->status != BB::Status::Review && Rules->resume())
+        {
+            if (bOpening) ResetOpeningLayout();
+            bInitialized = true;
+            SyncRules();
+            Say(bRematch ? TEXT("REMATCH LIVE - new regulation match. Teams and positions retained.")
+                         : TEXT("LIVE - play your position. Hold E within 3.8m to secure a chase ball."));
+        }
         return;
     }
     if (!bLive || R->StunRemaining > 0) return;
@@ -356,24 +488,26 @@ void ABBMatchState::Tick(float Dt)
             auto& State = Rules->balls[I];
             ABBBall* B = Balls[I];
             if (State.dead_reason == "crown" && State.crown_deadline - Rules->now_ms <= 2000) { Rules->crown_return(I); B->FlightVelocity = FVector(0,0,-100); }
-            if (State.dead_reason == "score" || State.dead_reason == "hurley_foul" || State.dead_reason == "penalty")
+            if (State.dead_reason == "score" || State.dead_reason == "hurley_foul" || State.dead_reason == "penalty" || State.dead_reason == "crown_restart")
             {
+                const bool bCrownRestart = State.dead_reason == "crown_restart";
+                const FVector SearchMark = bCrownRestart ? CrownRestartLocation(State) : B->GetActorLocation();
                 ABBRiderCharacter* Receiver = nullptr;
                 double NearestDistance = TNumericLimits<double>::Max();
                 for (ABBRiderCharacter* R : Riders)
                 {
                     if (!IsValid(R) || R->TeamIndex != State.restart_team) continue;
-                    if (I < 3)
+                    if (I < 3 && !bCrownRestart)
                     {
                         if (R->Position == 0) { Receiver = R; break; }
                         continue;
                     }
-                    if (R->Position != 4 || R->StunRemaining > 0 || !Rules->eligible(R->RosterIndex, I)) continue;
+                    if (R->StunRemaining > 0 || !Rules->eligible(R->RosterIndex, I)) continue;
                     bool bAlreadyHolding = false;
                     for (const ABBBall* Other : Balls)
                         if (IsValid(Other) && Other != B && Other->Holder == R) { bAlreadyHolding = true; break; }
                     if (bAlreadyHolding) continue;
-                    const double Distance = FVector::DistSquared(R->GetActorLocation(), B->GetActorLocation());
+                    const double Distance = FVector::DistSquared(R->GetActorLocation(), SearchMark);
                     if (Distance < NearestDistance || (Distance == NearestDistance
                         && Receiver && R->RosterIndex < Receiver->RosterIndex))
                     {
@@ -383,12 +517,15 @@ void ABBMatchState::Tick(float Dt)
                 }
                 if (Receiver && Rules->restart(I,Receiver->RosterIndex))
                 {
-                    const FVector Mark((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
+                    const FVector Mark = bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
                     PlaceRider(Receiver, Mark, Receiver->TeamIndex ? 180.f : 0.f);
                     B->ResetBall(Mark + FVector(0,0,80));
                     for (ABBRiderCharacter* Other : Riders)
                         if (Other->TeamIndex != Receiver->TeamIndex && FVector::DistSquared(Other->GetActorLocation(),Mark) < FMath::Square(396.24f))
-                            PlaceRider(Other, Mark + (Other->GetActorLocation()-Mark).GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector) * 450.f, Other->GetActorRotation().Yaw);
+                        {
+                            if (bCrownRestart) ClearCrownRestartSpace(Other, Mark);
+                            else PlaceRider(Other, Mark + (Other->GetActorLocation()-Mark).GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector) * 450.f, Other->GetActorRotation().Yaw);
+                        }
                 }
             }
         }
@@ -397,7 +534,13 @@ void ABBMatchState::Tick(float Dt)
     // Resolve before certification/resume, including penalties that caused it.
     if (Rules->status != BB::Status::Live)
         for (auto& Penalty : Rules->penalties)
-            if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic)
+            if (Penalty.reason == "No Crown" && Penalty.crown_restoration_pending)
+            {
+                if (Rules->prepare_crown_restart(Penalty.id)
+                    && Rules->balls[Penalty.ball].crown_restart_penalty == Penalty.id)
+                    Balls[Penalty.ball]->ResetBall(CrownRestartLocation(Rules->balls[Penalty.ball]) + FVector(0,0,80));
+            }
+            else if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic)
                 Rules->resolve_penalty(Penalty.id,"automatic rules enforcement",true);
     if (Rules->status == BB::Status::Review)
     {
@@ -418,7 +561,24 @@ void ABBMatchState::SyncRules()
 {
     if (!Rules) return;
     TealScore = static_cast<int32>(Rules->scores[0]); CopperScore = static_cast<int32>(Rules->scores[1]);
+    const bool bWasLive = bLive;
     Quarter = Rules->quarter; Winner = Rules->winner; bLive = Rules->status == BB::Status::Live;
+    if (bWasLive && !bLive)
+        for (ABBBall* B : Balls) if (IsValid(B)) B->RecentThrower.Reset();
+    PendingPenaltyCount = 0; PendingPenaltySummary.Empty();
+    for (const auto& Penalty : Rules->penalties)
+        if (Penalty.pending || Penalty.crown_restoration_pending)
+        {
+            ++PendingPenaltyCount;
+            if (PendingPenaltySummary.IsEmpty())
+            {
+                const int32 Team = Rules->players[Penalty.player].team;
+                PendingPenaltySummary = FString::Printf(TEXT("%s | %s %s | %s"),
+                    UTF8_TO_TCHAR(Penalty.reason.c_str()), Team == 0 ? TEXT("TEAL") : TEXT("COPPER"),
+                    *PositionName(static_cast<int32>(Rules->players[Penalty.player].role)),
+                    Penalty.pending ? TEXT("PENDING STOPPAGE") : TEXT("RESTART DUE"));
+            }
+        }
     LiveSeconds = Rules->now_ms / 1000.f;
     Phase = Rules->phase == BB::Phase::Regulation ? TEXT("REGULATION") : Rules->phase == BB::Phase::Overtime ? TEXT("OVERTIME") : TEXT("DONNYBROOK");
     SecondsLeft = Rules->phase == BB::Phase::Donnybrook ? 0.f : FMath::Max(0.f, (Rules->phase == BB::Phase::Regulation ? Rules->config.quarter_ms : Rules->config.overtime_ms) / 1000.f - Rules->period_elapsed_ms / 1000.f);

@@ -41,6 +41,7 @@ struct Ball {
     std::string dead_reason;
     Millis timeout_until = -1, crown_deadline = -1, protection_until = -1;
     int restart_team = -1;
+    int crown_restart_penalty = -1;
     std::array<double, 3> crown_mark{{0, 0, 0}};
 };
 struct Hurley {
@@ -64,6 +65,9 @@ struct Penalty {
     Severity severity = Severity::Minor;
     Millis committed_ms = 0;
     bool pending = true;
+    bool crown_restoration_pending = false;
+    int crown_restoration_receiver = -1;
+    std::array<double, 3> crown_mark{{0, 0, 0}};
 };
 struct Adjustment {
     int team = -1;
@@ -109,6 +113,10 @@ public:
     bool crown_exit(int ball, const std::array<double, 3>& mark, int responsible_player = -1,
                     bool deliberate_delay = false);
     bool crown_return(int ball);
+    // Records ordinary No Crown administration at a stoppage. The ball stays
+    // dead for an eligible opposing restart after resume; later same-ball
+    // remedies remain queued for the following stoppage.
+    bool prepare_crown_restart(int penalty_id);
     bool recall_chase(int ball);
     // Returns positive penalty id, or -1 on rejection. -1 committed_ms means now.
     int record_penalty(int player, const std::string& reason, Severity severity,

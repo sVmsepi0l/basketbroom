@@ -28,12 +28,23 @@ void ABBHUD::DrawHUD()
     Text(TEXT("TEAL"),UW/2-294,32,1,Teal); Text(TEXT("COPPER"),UW/2+191,32,1,Copper);
     Text(FString::FromInt(Match->TealScore),UW/2-294,59,2,Cream);
     Text(FString::FromInt(Match->CopperScore),UW/2+191,59,2,Cream);
-    const int32 Seconds = FMath::Max(0,FMath::CeilToInt(Match->SecondsLeft));
+    // Ignore sub-millisecond conversion noise at exact clock boundaries.
+    const int32 Seconds = FMath::Max(0,FMath::CeilToInt(Match->SecondsLeft-.001f));
     const FString Clock = Match->Phase == TEXT("DONNYBROOK") ? TEXT("SUDDEN DEATH") : FString::Printf(TEXT("%02d:%02d"),Seconds/60,Seconds%60);
     Text(Clock,UW/2-55,35,1.5f,Cream);
     Text(Match->Phase + (Match->Phase == TEXT("REGULATION") ? FString::Printf(TEXT("  Q%d/4"),Match->Quarter) : TEXT("")),UW/2-78,79,.78,Muted);
     Text(Match->bPractice ? TEXT("PRACTICE CLOCKS") : TEXT("REGULATION CLOCKS"),24,23,.78,Muted);
     Text(GetNetMode() == NM_Standalone ? TEXT("LOCAL SCRIMMAGE") : GetNetMode() == NM_Client ? TEXT("NETWORK CLIENT") : TEXT("LISTEN SERVER"),24,45,.78,Muted);
+    if (Match->PendingPenaltyCount > 0)
+    {
+        Rect(22,142,420,117,Ink);
+        Rect(22,142,4,117,Gold);
+        Text(FString::Printf(TEXT("PENALTIES DUE  %d"),Match->PendingPenaltyCount),40,155,.88f,Gold);
+        TArray<FString> Details;
+        Match->PendingPenaltySummary.ParseIntoArray(Details,TEXT(" | "),false);
+        for (int32 I=0;I<FMath::Min(Details.Num(),3);++I)
+            Text(Details[I].ToUpper().Left(48),40,181+I*23,.76f,I==0?Cream:Muted);
+    }
     Rect(22,UH-108,420,82,Ink);
     Rect(22,UH-108,4,82,Rider->TeamIndex ? Copper : Teal);
     Text((Rider->TeamIndex ? TEXT("COPPER  /  ") : TEXT("TEAL  /  ")) + ABBMatchState::PositionName(Rider->Position).ToUpper(),40,UH-99,1,Cream);
@@ -65,7 +76,7 @@ void ABBHUD::DrawHUD()
             BallState = (B->Holder->TeamIndex ? TEXT("COPPER / ") : TEXT("TEAL / ")) + ABBMatchState::PositionName(B->Holder->Position).ToUpper();
         else if (B->ReturnIn > 0)
         {
-            const int32 ReturnSeconds = FMath::CeilToInt(B->ReturnIn);
+            const int32 ReturnSeconds = FMath::Max(0,FMath::CeilToInt(B->ReturnIn-.001f));
             BallState = FString::Printf(TEXT("%s %d:%02d"), B->BallStatus == TEXT("scheduled_release") ? TEXT("RELEASE IN") : TEXT("RETURNS IN"), ReturnSeconds/60, ReturnSeconds%60);
         }
         else if (B->BallStatus == TEXT("crown")) BallState = TEXT("NO CROWN / RETURNING");
@@ -76,9 +87,10 @@ void ABBHUD::DrawHUD()
             const float D = FVector::Distance(Rider->GetActorLocation(),B->GetActorLocation());
             if (CanChase && B->bActive && D < BestDist) { BestDist = D; ChaseTarget = B; }
         }
-        if (!B->bActive || B->Holder == Rider) continue;
+        if (!Match->bLive || Rider->bShowRoster || !B->bActive || B->Holder == Rider) continue;
         FVector2D Screen;
-        if (PlayerOwner->ProjectWorldLocationToScreen(B->GetActorLocation(), Screen) && Screen.X > 30 && Screen.X < W-100 && Screen.Y > 125*S && Screen.Y < H-175*S)
+        if (PlayerOwner->ProjectWorldLocationToScreen(B->GetActorLocation(), Screen) && Screen.X > 30 && Screen.X < W-100 && Screen.Y > 125*S && Screen.Y < H-175*S
+            && !(Screen.X+170*S > W-252*S && Screen.Y < 510*S))
         {
             FLinearColor Color = B->BallIndex == 0 ? Copper : B->BallIndex < 3 ? Violet : B->BallIndex == 3 ? Copper : B->BallIndex == 4 ? Gold : Muted;
             float D = FVector::Dist(Rider->GetActorLocation(),B->GetActorLocation())/100.f;
@@ -109,7 +121,8 @@ void ABBHUD::DrawHUD()
         {
             const FVector To = ChaseTarget->GetActorLocation()-Rider->GetActorLocation();
             const float Side = FVector::DotProduct(To,FRotationMatrix(PlayerOwner->GetControlRotation()).GetUnitAxis(EAxis::Y));
-            Text(Side < 0 ? TEXT("< CHASE TARGET") : TEXT("CHASE TARGET >"), Side < 0 ? 28 : UW-185,UH/2,1,Color);
+            // Keep directional guidance below the seven equipment cards.
+            Text(Side < 0 ? TEXT("< CHASE TARGET") : TEXT("CHASE TARGET >"), Side < 0 ? 28 : UW-224,FMath::Max(UH/2,530.f),1,Color);
         }
     }
     if (Rider->StunRemaining > 0)
@@ -125,14 +138,14 @@ void ABBHUD::DrawHUD()
         Rect(UW/2-300,188,600,4,bFinal ? ResultColor : Gold);
         Text(bFinal ? (Match->Winner == 0 ? TEXT("TEAL WINS") : TEXT("COPPER WINS")) : TEXT("RESULT UNDER REVIEW"),UW/2-265,216,1.8f,bFinal ? ResultColor : Gold);
         Text(FString::Printf(TEXT("TEAL  %d     /     COPPER  %d"),Match->TealScore,Match->CopperScore),UW/2-265,273,1.2f,Cream);
-        Text(bFinal ? TEXT("Certified result. Close and relaunch to play again.") : TEXT("Resolving the final play and outstanding decisions."),UW/2-265,332,.85f,Muted);
+        Text(bFinal ? TEXT("Certified result. Host: ENTER to play again.") : TEXT("Resolving the final play and outstanding decisions."),UW/2-265,332,.85f,Muted);
     }
     else if (!Match->bLive || Rider->bShowRoster)
     {
         Rect(UW/2-300,164,600,324,Ink);
         Text(Match->bLive ? TEXT("POSITION GUIDE") : Match->Status,UW/2-275,184,1.4,Cream);
         Text(Match->bLive ? TEXT("Position changes unlock at stoppages.") : TEXT("Choose a position. T switches team. Host: ENTER to start."),UW/2-275,221,.85,Muted);
-        const TCHAR* Descriptions[] = {TEXT("Defend goals. Take protected scoring-ball restarts."),TEXT("Carry and shoot Quaffles and Quarks."),TEXT("Intercept, carry and shoot scoring balls."),TEXT("Scoring balls + chase. Release before catching."),TEXT("Use your Hurley to control and strike Bludgers."),TEXT("Chase Snipe and Snitch. No scoring-ball possession.")};
+        const TCHAR* Descriptions[] = {TEXT("Defend goals. Take protected scoring-ball restarts."),TEXT("Carry and shoot Quaffles and Quarks."),TEXT("Intercept, carry and shoot scoring balls."),TEXT("Scoring balls + chase. Release before catching."),TEXT("Control Bludgers. Throw before the control limit."),TEXT("Chase Snipe and Snitch. No scoring-ball possession.")};
         for (int32 I=0;I<6;++I)
         {
             const float Y=258+I*32;

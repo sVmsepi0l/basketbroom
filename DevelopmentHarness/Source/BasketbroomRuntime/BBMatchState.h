@@ -28,6 +28,8 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly) bool bLive = false;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 Winner = -1;
     UPROPERTY(Replicated, BlueprintReadOnly) float LiveSeconds = 0;
+    UPROPERTY(Replicated, BlueprintReadOnly) int32 PendingPenaltyCount = 0;
+    UPROPERTY(Replicated, BlueprintReadOnly) FString PendingPenaltySummary;
     UPROPERTY() TArray<TObjectPtr<ABBRiderCharacter>> Riders;
     UPROPERTY() TArray<TObjectPtr<ABBBall>> Balls;
     void HandleAction(ABBRiderCharacter* Rider, int32 Action, int32 Value = 0, FVector Aim = FVector::ZeroVector);
@@ -43,6 +45,10 @@ public:
     /** Read-only PIE diagnostic. -1 means unavailable or no current controller. */
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     double DevelopmentGetBludgerControlSeconds(int32 BallIndex) const;
+    /** PIE-only, read-only: total, pending adjudication, unserved restoration,
+     * last responsible slot, last receiver slot, latest penalty ID. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<int32> DevelopmentGetCrownPenaltyState(int32 BallIndex) const;
     void Say(const FString& Text);
     static FString PositionName(int32 Position);
 private:
@@ -53,6 +59,8 @@ private:
     bool bInitialized = false;
     size_t LastLogIndex = 0;
     std::vector<BB::PointEvent> PendingPoints;
+    void ResetMatchRules();
+    void ResetOpeningLayout();
     void SyncRules();
     void UpdateBots(float DeltaSeconds);
     void ChangePosition(ABBRiderCharacter* Rider, int32 NewPosition, int32 NewTeam);

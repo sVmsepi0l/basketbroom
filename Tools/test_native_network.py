@@ -102,7 +102,7 @@ class NativeNetworkTests:
                 if self.provenance.get("net_mode_configured_in_editor") else [],
             "not_covered": ["separate processes or remote machines", "internet/LAN discovery and sessions",
                             "latency, packet loss, disconnect or reconnect", "late joining",
-                            "16 human connections", "client movement prediction and reconciliation",
+                            "16 human connections", "movement reconciliation under adverse latency or loss",
                             "contested possession", "Hogwarts Legacy multiplayer"],
         }
         REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -347,6 +347,7 @@ class NativeNetworkTests:
         self.record(TESTS[6], both_live() and float(prop(self.host["match"], "SecondsLeft")) < before,
                     server=self.snapshot(self.host), client=self.snapshot(self.client))
         self.require(both_live(), "Host could not start both network worlds")
+        self.isolate_server()  # Kickoff moves CPU riders back to their legal marks.
         before_pause = float(prop(self.host["match"], "SecondsLeft"))
         self.request(self.client, 5)
         yield self.wait(1)
@@ -370,18 +371,34 @@ class NativeNetworkTests:
                     input="client AddMovementInput through CharacterMovement saved moves")
         self.require(travelled > 150, "Client movement never reached authority")
 
+        # Wait for both predicted movement and its authority to settle before
+        # placing pickup equipment. This also works under editor throttling.
+        settled = lambda: remote.get_velocity().length() < 5 and client_pawn.get_velocity().length() < 5
+        yield self.wait(5, settled)
+        self.require(settled(), "Client movement did not settle before the pickup fixture")
+        server_position = remote.get_actor_location()
+
         # Place an unheld Quark nearby on authority, then request ordinary
         # pickup and throw from its owning client. Never set Holder directly.
         quark, client_quark = self.host["balls"][1], self.client["balls"][1]
         self.require(prop(quark,"Holder") is None and prop(quark,"bActive"), "Pickup needs free active Quark")
         self.require(quark.development_set_flight_fixture(server_position + vec(-200,0,0), vec(0,0,0)), "Quark fixture rejected")
+        # Opening ResetBall sets a pickup grace period. Let normal ball Tick
+        # expire it; freezing all equipment would otherwise preserve it forever.
+        quark.set_actor_tick_enabled(True)
         yield self.wait(.4)
         self.require(client_pawn.development_set_interaction(True), "Client pickup input rejected")
         owned = lambda: prop(quark,"Holder") == remote and prop(client_quark,"Holder") == client_pawn
         yield self.wait(6, owned)
         self.record("client_pickup_replicates_possession", owned(),
                     server_holder_matches=prop(quark,"Holder") == remote,
-                    client_holder_matches=prop(client_quark,"Holder") == client_pawn)
+                    client_holder_matches=prop(client_quark,"Holder") == client_pawn,
+                    server_distance_cm=(quark.get_actor_location()-remote.get_actor_location()).length(),
+                    server_interact=bool(prop(remote,"bInteractHeld")),
+                    client_interact=bool(prop(client_pawn,"bInteractHeld")),
+                    server_role=int(prop(remote,"Position")),
+                    ball_active=bool(prop(quark,"bActive")),
+                    ball_status=str(prop(quark,"BallStatus")))
         self.require(owned(), "Client pickup did not replicate possession")
         client_pawn.development_set_interaction(False)
         yield self.wait(.4, lambda: not prop(remote,"bInteractHeld"))

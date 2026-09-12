@@ -1,10 +1,12 @@
-"""Focused native Snitch release/catch/result checks in disposable practice PIE.
+"""Native Snitch release/catch/result/rematch checks in disposable practice PIE.
 
 Run in the staged BB_Regulation UE5.8 editor with PIE stopped. If this engine
 omits the PlayNetMode Python enum, select Play As Listen Server in the UI and
 pass settings_already_configured=True, as with test_native_network.py. The suite
-sets AdditionalServerGameOptions='?Practice=1' and one in-process player, then
-restores all settings it changed. It verifies the resulting bPractice flag.
+sets the live EditorEngine's editable InEditorGameURLOptions to include
+'?Practice=1' and one in-process player, then restores all settings it changed.
+AdditionalServerGameOptions only reaches new-process launches in UE5.8.
+The suite verifies the resulting bPractice flag before exercising the Snitch.
 
 Only the owned PIE world's time dilation changes: 8x to approach the release,
 1x across 60 live seconds, 0.1x during capture sampling, 1x for certification.
@@ -34,6 +36,9 @@ TESTS = (
     "release_does_not_award_points", "snitch_partial_hold_progress",
     "snitch_release_resets_hold", "snitch_continuous_catch_awards_150",
     "snitch_catch_enters_review", "review_certifies_correct_winner",
+    "host_enter_starts_practice_rematch", "rematch_resets_scores_and_clocks",
+    "rematch_preserves_actor_roster_identities", "rematch_clears_held_and_stun_state",
+    "rematch_reschedules_snitch",
     "play_settings_restored_and_pie_ended",
 )
 
@@ -55,6 +60,10 @@ class NativeSnitchTests(NativePlayableTests):
         self.settings = None
         self.saved_settings = {}
         self.settings_restored = False
+        self.editor_engine = None
+        self.editor_url_key = None
+        self.original_editor_url = None
+        self.editor_url_restored = False
         self.original_dilation = None
         self.dilation_restored = False
         self.reason = None
@@ -84,6 +93,7 @@ class NativeSnitchTests(NativePlayableTests):
             "release_boundary_samples": self.release_samples,
             "capture_max_game_step_seconds": round(self.capture_max_step, 4),
             "settings_restored": self.settings_restored, "dilation_restored": self.dilation_restored,
+            "editor_url_restored": self.editor_url_restored,
             "reason": self.reason,
             "external_restore_required": ["Restore the previous editor UI Play Net Mode"]
                 if self.provenance.get("net_mode_configured_in_editor") else [],
@@ -122,7 +132,7 @@ class NativeSnitchTests(NativePlayableTests):
         self.require(cls is not None, "LevelEditorPlaySettings is not reflected")
         self.settings = unreal.get_default_object(cls)
         wanted = {"RunUnderOneProcess": True, "PlayNumberOfClients": 1,
-                  "bLaunchSeparateServer": False, "AdditionalServerGameOptions": "?Practice=1"}
+                  "bLaunchSeparateServer": False}
         net_mode = getattr(getattr(unreal, "PlayNetMode", None), "PIE_LISTEN_SERVER", None)
         if net_mode is not None:
             wanted["PlayNetMode"] = net_mode
@@ -137,10 +147,28 @@ class NativeSnitchTests(NativePlayableTests):
             key, old = setting_slot(self.settings, name)
             self.saved_settings[key] = old
             resolved[key] = value
+        # GameInstance.cpp calls the live EditorEngine's BuildPlayWorldURL for
+        # in-process PIE; PlayLevel.cpp appends this public EditAnywhere string.
+        # A settings CDO or AdditionalServerGameOptions does not feed that path.
+        engine_class = unreal.load_class(None, "/Script/UnrealEd.EditorEngine")
+        self.require(engine_class is not None, "EditorEngine is not reflected")
+        engines = [obj for obj in unreal.ObjectIterator(engine_class)
+                   if obj.get_path_name().startswith("/Engine/Transient.")
+                   and not obj.get_name().startswith("Default__")]
+        self.require(len(engines) == 1, "Expected one live EditorEngine, found " + str(len(engines)))
+        self.editor_engine = engines[0]
+        self.editor_url_key, self.original_editor_url = setting_slot(self.editor_engine, "InEditorGameURLOptions")
+        requested_url = str(self.original_editor_url) + "?Practice=1"
+        self.provenance.update(editor_engine=self.editor_engine.get_path_name(),
+                               original_editor_game_url_options=self.original_editor_url,
+                               requested_editor_game_url_options=requested_url)
         self.provenance.update(original_play_settings=dict(self.saved_settings), requested_play_settings=resolved)
         for key, value in resolved.items():
             self.settings.set_editor_property(key, value)
             self.require(self.settings.get_editor_property(key) == value, "PIE setting did not change: " + key)
+        self.editor_engine.set_editor_property(self.editor_url_key, requested_url)
+        self.require(self.editor_engine.get_editor_property(self.editor_url_key) == requested_url,
+                     "Editable PIE game URL did not change")
         return super().begin()
 
     def setup_world(self):
@@ -177,11 +205,34 @@ class NativeSnitchTests(NativePlayableTests):
         point = self.balls[4].get_actor_location()
         self.move_pawn((point.x, point.y, point.z))
 
+    def actor_roster_identity(self):
+        riders = unreal.GameplayStatics.get_all_actors_of_class(self.world, self.classes["BBRiderCharacter"])
+        balls = unreal.GameplayStatics.get_all_actors_of_class(self.world, self.classes["BBBall"])
+        states = unreal.GameplayStatics.get_all_actors_of_class(self.world, self.classes["BBMatchState"])
+        pawn = unreal.GameplayStatics.get_player_pawn(self.world, 0)
+        controller = unreal.GameplayStatics.get_player_controller(self.world, 0)
+        mode = unreal.GameplayStatics.get_game_mode(self.world)
+        return {
+            "world": self.world.get_path_name(), "game_mode": mode.get_path_name() if mode else None,
+            "match_states": sorted(state.get_path_name() for state in states),
+            "pawn": pawn.get_path_name() if pawn else None,
+            "controller": controller.get_path_name() if controller else None,
+            "riders": sorted((rider.get_path_name(), int(prop(rider, "RosterIndex")),
+                              int(prop(rider, "TeamIndex")), int(prop(rider, "Position"))) for rider in riders),
+            "balls": sorted((ball.get_path_name(), int(prop(ball, "BallIndex"))) for ball in balls),
+        }
+
+    def isolate_after_live(self):
+        # First kickoff/rematch repositions the roster. Reapply only the
+        # disposable CPU/ball fixture after observing that native transition.
+        if prop(self.match, "bLive"):
+            self.isolate()
+
     def scenarios(self):
         practice = bool(prop(self.match, "bPractice"))
         self.record(TESTS[0], practice and abs(float(prop(self.match, "SecondsLeft")) - 180) < 0.01,
                     practice=practice, quarter_seconds=float(prop(self.match, "SecondsLeft")))
-        self.require(practice, "The AdditionalServerGameOptions practice URL did not reach the native world")
+        self.require(practice, "The InEditorGameURLOptions practice URL did not reach the native world")
         self.record(TESTS[1], len(self.riders) == 16 and self.roster_valid() and sorted(self.balls) == list(range(7)))
         snitch = self.balls[4]
         self.record(TESTS[2], not prop(snitch, "bActive") and str(prop(snitch, "BallStatus")) == "scheduled_release"
@@ -190,11 +241,15 @@ class NativeSnitchTests(NativePlayableTests):
         self.request(2, 5)
         yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == 5)
         self.record(TESTS[3], int(prop(self.pawn, "Position")) == 5 and self.roster_valid())
+        original_identity = self.actor_roster_identity()
         self.isolate()
         self.request(4)
-        yield self.wait_until(lambda: bool(prop(self.match, "bLive")) and float(prop(self.match, "LiveSeconds")) > 0)
+        yield self.wait_until(lambda: bool(prop(self.match, "bLive")) and float(prop(self.match, "LiveSeconds")) > 0,
+                             self.isolate_after_live)
         self.record(TESTS[4], bool(prop(self.match, "bLive")) and float(prop(self.match, "LiveSeconds")) > 0)
         self.require(prop(self.match, "bLive"), "Native host could not start practice")
+        self.isolate()
+        yield self.wait(0.12)
         before = self.scores()
         self.dilation(8.0)
         self.sample_release()
@@ -251,6 +306,54 @@ class NativeSnitchTests(NativePlayableTests):
                     winner=int(prop(self.match, "Winner")), catching_team=team,
                     observed_review_wait_game_seconds=self.now() - review_started, scores=self.scores())
 
+        self.require(str(prop(self.match, "Status")) == "FINAL", "Rematch must follow an actual certified result")
+        # Ordinary held input makes the reset check non-vacuous. No state field
+        # is written; the host's normal Enter action must clear this hold.
+        self.interact(True)
+        yield self.wait_until(lambda: bool(prop(self.pawn, "bInteractHeld")))
+        self.require(prop(self.pawn, "bInteractHeld"), "Rematch held-input fixture was not applied")
+        final_live_seconds = float(prop(self.match, "LiveSeconds"))
+        final_scores = self.scores()
+        self.event("certified_final_before_rematch", scores=final_scores,
+                   live_seconds=final_live_seconds, host_interact_held=True)
+        self.request(4)
+        yield self.wait_until(lambda: bool(prop(self.match, "bLive"))
+                             and str(prop(self.match, "Status")) == "LIVE", self.isolate_after_live)
+        self.isolate()
+        yield self.wait(0.12)
+        self.record(TESTS[13], bool(prop(self.match, "bPractice")) and bool(prop(self.match, "bLive"))
+                    and int(prop(self.match, "Quarter")) == 1 and int(prop(self.match, "Winner")) == -1
+                    and str(prop(self.match, "Phase")) == "REGULATION" and str(prop(self.match, "Status")) == "LIVE",
+                    practice=bool(prop(self.match, "bPractice")), live=bool(prop(self.match, "bLive")),
+                    quarter=int(prop(self.match, "Quarter")), winner=int(prop(self.match, "Winner")),
+                    phase=str(prop(self.match, "Phase")), status=str(prop(self.match, "Status")))
+        live = float(prop(self.match, "LiveSeconds"))
+        seconds_left = float(prop(self.match, "SecondsLeft"))
+        self.record(TESTS[14], self.scores() == [0, 0] and 0 < live < 5 and live < final_live_seconds
+                    and abs(seconds_left + live - 180) < 0.02,
+                    final_scores=final_scores, rematch_scores=self.scores(), previous_live_seconds=final_live_seconds,
+                    live_seconds=live, seconds_left=seconds_left, expected_quarter_seconds=180)
+        rematch_identity = self.actor_roster_identity()
+        self.record(TESTS[15], rematch_identity == original_identity and self.roster_valid()
+                    and len(rematch_identity["riders"]) == 16 and len(rematch_identity["balls"]) == 7,
+                    before=original_identity, after=rematch_identity)
+        flags = [{"actor": rider.get_path_name(), "held": bool(prop(rider, "bInteractHeld")),
+                  "stun_seconds": float(prop(rider, "StunRemaining"))} for rider in self.riders]
+        equipment = [{"ball": index, "holder": prop(ball, "Holder") is not None,
+                      "capture_owner": prop(ball, "CapturingRider") is not None,
+                      "capture_progress": float(prop(ball, "CaptureProgress"))} for index, ball in sorted(self.balls.items())]
+        self.record(TESTS[16], all(not row["held"] and row["stun_seconds"] == 0 for row in flags)
+                    and all(not row["holder"] and not row["capture_owner"] and row["capture_progress"] == 0
+                            for row in equipment),
+                    host_held_before_rematch=True, riders=flags, balls=equipment)
+        return_in = float(prop(snitch, "ReturnIn"))
+        self.record(TESTS[17], not prop(snitch, "bActive")
+                    and str(prop(snitch, "BallStatus")) == "scheduled_release"
+                    and abs(return_in + live - 60) < 0.02 and bool(prop(self.balls[3], "bActive")),
+                    active=bool(prop(snitch, "bActive")), status=str(prop(snitch, "BallStatus")),
+                    return_seconds=return_in, live_seconds=live, snipe_active=bool(prop(self.balls[3], "bActive")))
+        self.interact(False)
+
     def advance(self):
         try:
             self.waiting = next(self.sequence)
@@ -263,24 +366,55 @@ class NativeSnitchTests(NativePlayableTests):
     def tick(self, delta):
         if self.done:
             return
-        if self.phase == "ending_pie":
-            if not self.level.is_in_play_in_editor():
-                self.complete()
-            elif time.monotonic() - self.cleanup_started > 20:
-                self.final_status = "error"
-                self.reason = (self.reason or "") + " PIE did not end within 20 seconds."
-                self.complete()
-            return
-        if self.capture_sampling:
-            step = self.now() - self.capture_last_time
-            self.capture_last_time = self.now()
-            self.capture_max_step = max(self.capture_max_step, step)
-            if step > 0.2:
-                self.finish("not_run", "Capture sampling excluded: a PIE game-time step exceeded 0.2 seconds "
-                            "despite 0.1 world dilation, so following cannot reliably stay within 380cm. "
-                            "Earlier release observations remain recorded; catch/result checks are incomplete.")
+        try:
+            if self.phase == "ending_pie":
+                if not self.level.is_in_play_in_editor():
+                    self.complete()
+                elif time.monotonic() - self.cleanup_started > 20:
+                    self.final_status = "error"
+                    self.reason = (self.reason or "") + " PIE did not end within 20 seconds."
+                    self.complete()
                 return
-        super().tick(delta)
+            elapsed = time.monotonic() - self.started
+            if elapsed > float(ARGS.get("max_wall_seconds", 240)):
+                raise TimeoutError("Native Snitch integration exceeded its wall-time limit")
+            if self.phase == "waiting_for_native_world":
+                if not self.setup_world() and elapsed > 30:
+                    self.finish("not_run", "No complete native world appeared. Stage BB_Regulation, rebuild, and restart the editor.")
+                return
+            if not self.level.is_in_play_in_editor():
+                raise RuntimeError("PIE ended before native Snitch checks completed")
+            now = self.now()
+            if self.capture_sampling:
+                step = now - self.capture_last_time
+                self.capture_last_time = now
+                self.capture_max_step = max(self.capture_max_step, step)
+                if step > 0.2:
+                    self.finish("not_run", "Capture sampling excluded: a PIE game-time step exceeded 0.2 seconds "
+                                "despite 0.1 world dilation, so following cannot reliably stay within 380cm. "
+                                "Earlier release observations remain recorded; catch/result checks are incomplete.")
+                    return
+            if self.waiting:
+                if self.waiting["fixture"]:
+                    self.waiting["fixture"]()
+                if now > self.waiting["last_game_seconds"]:
+                    self.waiting["game_frames"] += 1
+                    self.waiting["last_game_seconds"] = now
+                    # A four-game-second deadline takes forty wall seconds at
+                    # 0.1x. Only a lack of game-time progress counts as a stall.
+                    self.waiting["wall_started"] = time.monotonic()
+                predicate = self.waiting["predicate"]
+                started = self.waiting["until"] - self.waiting["seconds"]
+                ready = (bool(predicate()) and now - started >= self.waiting.get("minimum_seconds", 0)) if predicate else False
+                expired = now >= self.waiting["until"]
+                if self.waiting["game_frames"] >= self.waiting["minimum_frames"] and (ready or expired):
+                    if predicate and expired and not ready:
+                        self.event("observation_timeout", limit_seconds=self.waiting["seconds"])
+                    self.advance()
+                elif time.monotonic() - self.waiting["wall_started"] > 30:
+                    raise TimeoutError("PIE world time stopped advancing for 30 wall seconds")
+        except Exception:
+            self.finish("error", traceback.format_exc())
 
     def finish(self, status, reason=None):
         self.final_status, self.reason = status, reason
@@ -298,6 +432,12 @@ class NativeSnitchTests(NativePlayableTests):
                 self.pawn.development_set_interaction(False)
         except Exception:
             errors.append("Interaction: " + traceback.format_exc())
+        if self.editor_engine and self.editor_url_key is not None:
+            try:
+                self.editor_engine.set_editor_property(self.editor_url_key, self.original_editor_url)
+                self.editor_url_restored = self.editor_engine.get_editor_property(self.editor_url_key) == self.original_editor_url
+            except Exception:
+                errors.append("Editor game URL: " + traceback.format_exc())
         if self.settings:
             for key, value in self.saved_settings.items():
                 try:
@@ -305,8 +445,9 @@ class NativeSnitchTests(NativePlayableTests):
                 except Exception:
                     errors.append("Setting " + key + ": " + traceback.format_exc())
             try:
-                self.settings_restored = all(self.settings.get_editor_property(key) == value
-                                             for key, value in self.saved_settings.items())
+                self.settings_restored = (all(self.settings.get_editor_property(key) == value
+                                              for key, value in self.saved_settings.items())
+                                          and (self.editor_url_key is None or self.editor_url_restored))
             except Exception:
                 errors.append("Settings readback: " + traceback.format_exc())
         if errors:
@@ -325,7 +466,7 @@ class NativeSnitchTests(NativePlayableTests):
             ended = not self.level.is_in_play_in_editor()
             self.record(TESTS[-1], ended and self.settings_restored and self.dilation_restored,
                         no_pie_session=ended, settings_restored=self.settings_restored,
-                        dilation_restored=self.dilation_restored)
+                        dilation_restored=self.dilation_restored, editor_url_restored=self.editor_url_restored)
             if not (ended and self.settings_restored and self.dilation_restored):
                 self.final_status = "error"
         self.done = True

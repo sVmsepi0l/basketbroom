@@ -2,16 +2,20 @@
 
 Editor bridge examples (all mutations are confined to PIE copies):
   {"operation": "start", "start_live": true}
+  {"operation": "start", "position": 4, "start_live": false}
   {"operation": "inspect"}
   {"operation": "capture", "filename": "Docs/Screenshots/native-flight.png",
    "presentation": {"location": [-4300, -1500, 1800], "rotation": [0, 12, 0]}}
+  {"operation": "capture", "position": 5, "filename": "Docs/Screenshots/native-scout.png"}
   {"operation": "stop"}
 
 Optional presentation.camera_actor_label selects an existing PIE CameraActor;
 otherwise the location/rotation fixture moves the native rider's point of view.
 Capture waits two actual game-time frames after preparation/live-start, requests
 HighResShot, and verifies a fresh complete PNG. A written file still needs visual
-review. The helper never changes scores, clocks, ball states, roles, or rules.
+review. Optional position (0..5) selects a lobby/stoppage role through ordinary
+queued native input and waits for actual acceptance before starting/capturing.
+The helper never assigns scores, clocks, ball states, role fields, or rules.
 It does not load/save editor maps: BB_Regulation must already be selected.
 """
 
@@ -32,6 +36,7 @@ REPORT = ROOT / ".local/native-play-session.json"
 ARGS = globals().get("BRIDGE_ARGS", {})
 RUNNER_NAME = "_basketbroom_native_play_session"
 TEST_RUNNERS = ("_basketbroom_native_test", "_basketbroom_native_network_test", "_basketbroom_native_snitch_test",
+                "_basketbroom_native_opening_test", "_basketbroom_bludger_test", "_basketbroom_native_audio_test",
                 "_basketbroom_playable_test", "_basketbroom_bot_test")
 
 
@@ -137,6 +142,12 @@ class SessionOperation:
         self.phase = "waiting_for_world"
         self.prepared = False
         self.live_requested = False
+        self.position = self.args.get("position")
+        self.position_confirmed = self.position is None
+        self.position_request_time = None
+        self.position_observed_time = None
+        self.role_settle_start = None
+        self.live_request_time = None
         self.last_game_time = None
         self.game_frames = 0
         self.capture_baseline = None
@@ -144,10 +155,12 @@ class SessionOperation:
         self.data = {"status": "requested", "operation": operation,
                      "engine": unreal.SystemLibrary.get_engine_version(),
                      "requested_utc": datetime.now(timezone.utc).isoformat(),
-                     "scope": "native authority PIE session; presentation only",
+                     "scope": "native authority PIE session; optional ordinary role/start input and presentation",
                      "report": str(REPORT), "presentation_fixture": None}
 
     def begin(self):
+        if self.position is not None and (type(self.position) is not int or not 0 <= self.position <= 5):
+            raise ValueError("position must be an integer from 0 through 5")
         levels, editor = subsystems()
         if not levels.is_in_play_in_editor():
             if self.operation != "start":
@@ -226,6 +239,49 @@ class SessionOperation:
                                               "before_rider": before["rider"], "before_camera": before["camera"],
                                               "note": "PIE transform/view fixture; no score, clock, ball or rule state changed"}
 
+    def select_position(self, match, pawn, game_time):
+        if self.position_confirmed:
+            # A confirmed queued role request has just used the shared native
+            # action throttle. Give it 0.1 game seconds before queuing ready.
+            return self.position_observed_time is None or game_time - self.position_observed_time >= .1
+        actual = int(prop(pawn, "Position"))
+        if actual == self.position:
+            self.position_confirmed = True
+            self.position_observed_time = game_time
+            self.data["position_selection"] = {
+                **self.data.get("position_selection", {}), "requested": self.position, "observed": actual,
+                "status": "confirmed", "confirmed_game_seconds": game_time,
+                "request_queued": self.position_request_time is not None,
+            }
+            self.phase = "waiting_after_position"
+            self.publish()
+            return False
+        status = str(prop(match, "Status"))
+        if prop(match, "bLive") or status not in ("LOBBY", "STOPPAGE"):
+            raise RuntimeError("Position selection requires the lobby or an ordinary stoppage; observed " + status)
+        if self.position_request_time is None:
+            if self.role_settle_start is None:
+                self.role_settle_start = game_time
+                self.phase = "waiting_to_request_position"
+                self.data["position_selection"] = {"requested": self.position, "before": actual,
+                                                   "status": "waiting for input spacing"}
+                self.publish()
+                return False
+            if game_time - self.role_settle_start < .1:
+                return False
+            if not pawn.development_request_action(2, self.position):
+                raise RuntimeError("Native position request was not queued")
+            self.position_request_time = game_time
+            self.phase = "waiting_for_position"
+            self.data["position_selection"].update(status="queued through native ordinary input bridge",
+                                                    queued_game_seconds=game_time)
+            self.publish()
+            return False
+        if game_time - self.position_request_time > 5:
+            raise RuntimeError("Native position selection was not accepted within five game seconds; observed role "
+                               + str(actual) + ", announcement: " + str(prop(match, "Announcement")))
+        return False
+
     def tick(self, delta):
         if self.done:
             return
@@ -238,24 +294,32 @@ class SessionOperation:
                 if self.phase == "waiting_for_world" and time.monotonic() - self.started < 20:
                     return
                 raise
+            game_time = float(unreal.GameplayStatics.get_time_seconds(world))
+            if not self.select_position(match, pawn, game_time):
+                return
             if not self.prepared:
-                self.prepare(world, pawn, controller)
-                self.prepared = True
                 if self.args.get("start_live", self.operation == "start") and not prop(match, "bLive"):
+                    if self.live_requested:
+                        if game_time - self.live_request_time > 5:
+                            raise RuntimeError("Native host start request was not accepted within five game seconds")
+                        return
                     if not pawn.development_request_action(4, 0):
                         raise RuntimeError("Native host start request was not queued")
                     self.live_requested = True
+                    self.live_request_time = game_time
                     self.data["host_start"] = "queued through native ordinary input bridge"
-                self.phase = "waiting_for_live" if self.live_requested else "waiting_for_camera_frames"
-                self.last_game_time = float(unreal.GameplayStatics.get_time_seconds(world))
+                    self.phase = "waiting_for_live"
+                    self.publish()
+                    return
+                # Kickoff changes native opening positions. Apply the camera
+                # fixture after live-start acceptance so it is not overwritten.
+                self.prepare(world, pawn, controller)
+                self.prepared = True
+                self.phase = "waiting_for_camera_frames"
+                self.last_game_time = game_time
+                self.game_frames = 0
                 self.publish()
                 return
-            if self.phase == "waiting_for_live":
-                if not prop(match, "bLive"):
-                    return
-                self.phase = "waiting_for_camera_frames"
-                self.last_game_time = float(unreal.GameplayStatics.get_time_seconds(world))
-                self.game_frames = 0
             if self.phase == "waiting_for_camera_frames":
                 game_time = float(unreal.GameplayStatics.get_time_seconds(world))
                 if game_time > self.last_game_time:
@@ -298,6 +362,8 @@ def main():
     operation = ARGS.get("operation", "inspect")
     if operation not in ("start", "stop", "inspect", "capture"):
         raise ValueError("Expected operation start, stop, inspect, or capture")
+    if "position" in ARGS and operation not in ("start", "capture"):
+        raise ValueError("position is supported only for start or capture")
     if operation != "inspect":
         for name in TEST_RUNNERS:
             runner = getattr(unreal, name, None)

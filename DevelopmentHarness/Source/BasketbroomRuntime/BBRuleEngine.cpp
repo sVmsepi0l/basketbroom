@@ -348,15 +348,24 @@ bool Match::restart(int ball, int player) {
     if (!available(player)) return reject("player is unavailable");
     auto& b = balls[ball]; const auto& p = players[player];
     if (status != Status::Live || !b.phase_active ||
-        (b.dead_reason != "score" && b.dead_reason != "hurley_foul" && b.dead_reason != "penalty"))
+        (b.dead_reason != "score" && b.dead_reason != "hurley_foul" && b.dead_reason != "penalty" && b.dead_reason != "crown_restart"))
         return reject("ball is not awaiting a possession restart");
     if (p.team != b.restart_team || !eligible(player, ball)) return reject("invalid restart receiver");
     if (b.dead_reason == "score" && phase != Phase::Donnybrook && p.role != Role::Netminder)
         return reject("scoring-ball restart belongs to defending Netminder");
     if (scoring(b.type) && carries_scoring_ball(player)) return reject("restart receiver must first release the carried ball");
     if (scoring(b.type) && !sum_valid(now_ms, config.restart_protection_ms)) return reject("clock overflow");
+    const int crown_penalty = b.crown_restart_penalty;
     release_ball(ball);
     if (scoring(b.type)) { possess(player, ball); b.protection_until = now_ms + config.restart_protection_ms; }
+    if (crown_penalty > 0 && crown_penalty <= static_cast<int>(penalties.size())) {
+        auto& penalty = penalties[crown_penalty - 1];
+        penalty.crown_restoration_pending = false;
+        penalty.crown_restoration_receiver = player;
+        penalty.disposition = "ordinary No Crown restorative restart served";
+        emit("crown_restoration_served", player, ball, p.team, 0, "", crown_penalty);
+    }
+    b.crown_restart_penalty = -1;
     emit("protected_restart", player, ball); last_error.clear(); return true;
 }
 bool Match::crown_exit(int ball, const std::array<double, 3>& mark, int responsible_player, bool deliberate_delay) {
@@ -367,14 +376,50 @@ bool Match::crown_exit(int ball, const std::array<double, 3>& mark, int responsi
     if (!sum_valid(now_ms, config.crown_return_ms)) return reject("clock overflow");
     dead(ball, "crown"); balls[ball].crown_mark = mark; balls[ball].crown_deadline = now_ms + config.crown_return_ms;
     if (balls[ball].type == BallType::Bludger) hurleys[ball - 5] = Hurley{};
-    if (responsible_player >= 0) record_penalty(responsible_player, deliberate_delay ? "Dead-Roof Delay" : "No Crown",
-                                               deliberate_delay ? Severity::Moderate : Severity::Minor, ball);
+    if (responsible_player >= 0) {
+        const int id = record_penalty(responsible_player, deliberate_delay ? "Dead-Roof Delay" : "No Crown",
+                                      deliberate_delay ? Severity::Moderate : Severity::Minor, ball);
+        if (id > 0 && !deliberate_delay) {
+            penalties[id - 1].crown_restoration_pending = true;
+            penalties[id - 1].crown_mark = mark;
+        }
+    }
     emit("crown_exit", responsible_player, ball); last_error.clear(); return true;
 }
 bool Match::crown_return(int ball) {
     if (!valid_ || !ball_index(ball)) return reject("unknown ball");
     if (status != Status::Live || balls[ball].dead_reason != "crown") return reject("ball is not awaiting neutral crown return");
     release_ball(ball); emit("crown_return", -1, ball); last_error.clear(); return true;
+}
+bool Match::prepare_crown_restart(int penalty_id) {
+    if (!valid_ || status == Status::Live || status == Status::Complete || penalty_id <= 0 ||
+        penalty_id > static_cast<int>(penalties.size())) return reject("ordinary Crown administration requires a stoppage");
+    auto& penalty = penalties[penalty_id - 1];
+    if (penalty.reason != "No Crown" || penalty.severity != Severity::Minor ||
+        !penalty.crown_restoration_pending || !ball_index(penalty.ball))
+        return reject("penalty has no outstanding ordinary Crown restoration");
+    auto& ball = balls[penalty.ball];
+    if (!ball.phase_active) return reject("removed ball cannot receive a Crown restart");
+    if (ball.crown_restart_penalty == penalty_id) return reject("Crown restart is already reserved");
+    // One physical ball cannot serve two opposing possession awards at once.
+    // Keep later infringements recorded and due until a following stoppage.
+    const bool first_administration = penalty.pending;
+    penalty.pending = false;
+    penalty.disposition = "ordinary No Crown recorded; restorative restart queued";
+    const bool earlier_due = std::any_of(penalties.begin(), penalties.end(), [&](const Penalty& earlier) {
+        return earlier.id < penalty.id && earlier.ball == penalty.ball && earlier.crown_restoration_pending;
+    });
+    if (ball.crown_restart_penalty < 0 && !earlier_due) {
+        dead(penalty.ball, "crown_restart");
+        ball.crown_deadline = -1;
+        ball.crown_mark = penalty.crown_mark;
+        ball.crown_restart_penalty = penalty.id;
+        ball.restart_team = 1 - players[penalty.player].team;
+        if (ball.type == BallType::Bludger) hurleys[penalty.ball - 5] = Hurley{};
+        emit("crown_restoration_reserved", penalty.player, penalty.ball, ball.restart_team, 0, "", penalty.id);
+    }
+    if (first_administration) emit("penalty_resolved", penalty.player, penalty.ball, -1, 0, penalty.disposition, penalty.id);
+    last_error.clear(); return true;
 }
 bool Match::recall_chase(int ball) {
     if (!live_ball(ball)) return false;
@@ -407,6 +452,9 @@ bool Match::resolve_penalty(int id, const std::string& disposition, bool apply_r
         if (phase == Phase::Donnybrook) { p.donnybrook_excluded = true; p.removed_until = -1; }
     } else if (penalty.severity == Severity::Severe) p.ejected = true;
     penalty.pending = false; penalty.disposition = disposition;
+    // An explicit official disposition may decline ordinary restorative
+    // possession after advantage; the historical foul remains in the ledger.
+    penalty.crown_restoration_pending = false;
     emit("penalty_resolved", penalty.player, penalty.ball, -1, 0, disposition, id); last_error.clear(); return true;
 }
 bool Match::certify(const std::vector<Adjustment>& adjustments) {
@@ -453,7 +501,16 @@ void Match::enter_phase(Phase next) {
     for (int i = 0; i < 7; ++i) {
         auto& b = balls[i];
         b.phase_active = phase == Phase::Overtime || b.type == BallType::Quark || b.type == BallType::Snipe;
-        b.timeout_until = b.crown_deadline = -1; dead(i, b.phase_active ? "stoppage" : "removed");
+        b.timeout_until = b.crown_deadline = -1;
+        if (!b.phase_active) {
+            for (auto& penalty : penalties) if (penalty.ball == i && penalty.crown_restoration_pending) {
+                penalty.crown_restoration_pending = false;
+                penalty.disposition = "unserved ordinary possession remedy expired when ball left the phase";
+                emit("crown_restoration_expired", penalty.player, i, -1, 0, penalty.disposition, penalty.id);
+            }
+            b.crown_restart_penalty = -1;
+        }
+        dead(i, b.phase_active ? (b.crown_restart_penalty > 0 ? "crown_restart" : "stoppage") : "removed");
     }
     hurleys = {};
     if (phase == Phase::Donnybrook)
@@ -461,6 +518,13 @@ void Match::enter_phase(Phase next) {
     emit("phase_change", -1, -1, -1, static_cast<int>(phase));
 }
 void Match::finish(int winning_team) {
-    status = Status::Complete; winner = winning_team; secure_balls(); emit("match_certified", reckoner, -1, winner);
+    status = Status::Complete; winner = winning_team; secure_balls();
+    for (auto& penalty : penalties) if (penalty.crown_restoration_pending) {
+        penalty.crown_restoration_pending = false;
+        penalty.disposition = "unserved ordinary possession remedy expired with the certified match";
+        emit("crown_restoration_expired", penalty.player, penalty.ball, -1, 0, penalty.disposition, penalty.id);
+    }
+    for (auto& ball : balls) ball.crown_restart_penalty = -1;
+    emit("match_certified", reckoner, -1, winner);
 }
 } // namespace BB

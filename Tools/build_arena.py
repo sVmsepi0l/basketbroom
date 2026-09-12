@@ -557,6 +557,10 @@ class ArenaBuilder:
         library = unreal.MaterialEditingLibrary
         library.delete_all_material_expressions(mat)
         mat.set_editor_property("two_sided", True)
+        if name in ("M_BB_BroomWood", "M_BB_BroomLeather", "M_BB_RiderIvory"):
+            # The native Hurley reuses these original materials in instanced
+            # components. Persist the shader usage in every authoring rebuild.
+            mat.set_editor_property("used_with_instanced_static_meshes", True)
         mat.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT if unlit else unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
         base = library.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -650, -150)
         base.set_editor_property("parameter_name", "Tint")

@@ -62,6 +62,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|HUD")
     bool bShowRoster = false;
 
+    /** Cosmetic equipment only; role 4 outside Donnybrook, with owner-view filtering. */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Equipment")
+    bool bHurleyVisible = false;
+
     UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
     FVector GetAimDirection() const;
 
@@ -81,6 +85,9 @@ protected:
 private:
     UPROPERTY()
     TArray<TObjectPtr<UStaticMeshComponent>> UniformParts;
+
+    UPROPERTY()
+    TArray<TObjectPtr<UStaticMeshComponent>> HurleyParts;
 
     UPROPERTY()
     TObjectPtr<UMaterialInterface> TealMaterial;
@@ -113,6 +120,7 @@ private:
     void ToggleRoster();
     void SubmitAction(int32 Action, int32 Value = 0);
     void RefreshUniform();
+    void RefreshHurley();
     void ResetLocalInput();
 
     UFUNCTION()

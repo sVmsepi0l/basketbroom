@@ -4,8 +4,8 @@ A first-person broom sport alpha built in **Unreal Engine 5.8**. The active nati
 game has a sixteen-rider roster, selectable positions, seven balls, broom flight,
 ballistic goals, continuous chase catches, and regulation match state in an
 original open-crown arena. The native Editor and Windows Development game build
-successfully. **35 native gameplay checks and 14 local network checks pass**;
-two packaged processes also connect and join successfully. Full regulation,
+successfully. Focused gameplay, opening, rematch, Bludger, local networking,
+and audio suites pass; two packaged processes also connect and join. Full regulation,
 remote multiplayer validation, and final art remain in development.
 
 ![Actual Unreal render of the retained training mode, with its training HUD](Docs/Screenshots/training-flight.png)
@@ -57,7 +57,7 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **Hold E:** remain within **3.8 meters** of a Snipe or Snitch for **one continuous second** as a Ranger or Scout. Release any carried ball first; the HUD shows range and capture progress.
 - **1–6:** choose Netminder, Chaser, Trapper, Ranger, Hurleyback, or Scout during the lobby or a stoppage.
 - **T:** switch teams during the lobby or a stoppage. **Tab:** show the position guide.
-- **Enter:** host starts or resumes play. **P:** host calls a stoppage.
+- **Enter:** host starts/resumes play, or starts a new match after the certified final result. **P:** host calls a stoppage.
 
 You begin in a Ranger slot and can choose another position before play.
 Put the red-orange **Quaffle** through a large hoop for **13** points or a purple
@@ -71,6 +71,9 @@ after **one minute**. The Snipe travels at 60% of the Snitch's speed.
 Capture progress resets on release or a range break. Ordinary scoring positions
 carry Quaffles and Quarks; Hurleybacks handle Bludgers; Rangers and Scouts chase.
 Role and team changes are locked while play is live.
+Rematches retain teams and selected positions while resetting scores, clocks,
+equipment, and the opening layout. Ordinary stoppages preserve field positions;
+new quarters and phases use their defined opening layouts.
 
 ## What is implemented
 
@@ -83,18 +86,23 @@ to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
 returns are exercised by the native integration suite.
 
 The venue, team colors, riders, broom cockpit and HUD are generated original
-assets. Python authors saved Unreal assets; native matches run in C++. The
-retained training mode runs in compiled Blueprints and has four original
-synthesized sounds for throw, score, catch, and bounce feedback.
+assets. Python authors saved Unreal assets; native matches run in C++. Native
+pickup, throw, goal, and Snipe-catch events trigger original synthesized sounds.
+The retained training mode runs in compiled Blueprints and has four original
+sounds for throw, score, catch, and bounce feedback.
 
 The current visual pass adds an original basalt texture, material variation,
 stadium masonry/seating, terrain, trees, metal goal rims and twilight lighting.
 Characters remain procedural placeholders; this is not an AAA art release.
+An original Hurley prop compiles in the native runtime and awaits rendering
+checks. Its approximately 103 cm overall length and open shallow
+pocket are provisional: the current oversized Bludger does not physically fit.
+This visual addition does not implement striking or certify equipment dimensions.
 
 Full regulation still needs penalty-shot execution, wand gameplay, and complete
 officiating/adjudication flows. The rules engine has broader phase and penalty
 coverage than the current in-game presentation. Character animation, polished
-character assets, match balance, and audio integration/mixing need further work.
+character assets, match balance, and audio mixing need further work.
 Passing the focused native checks does not certify every regulation phase or
 autonomous match behavior.
 
@@ -130,7 +138,8 @@ Windows may require administrator approval for Microsoft's signed installer.
 After compilation, reopen the editor and run `Tools/stage_regulation.py` as
 needed. Use `Multiplayer.ps1 -Mode LocalTest` for a
 listen server and loopback client, `-Mode Host`, or `-Mode Join -Address <host>`.
-All fourteen same-process networking checks pass. The launcher prefers the
+All seventeen same-process networking checks pass, including client flight,
+pickup, and throw replication. The launcher prefers the
 native package; use `-EditorGame` to force Unreal's development game mode.
 Remote transport, latency, and gameplay across separate processes still need
 validation beyond the passing packaged connection check. LAN/direct IP
@@ -200,7 +209,9 @@ python -m compileall -q Tools Rules
 ```
 
 Completed checks include **54 Python rule-reference tests**, **60 portable C++
-rules scenarios**, and **35 native Unreal integration checks**. The retained
+rules scenarios**, **35 native gameplay checks**, **19 practice Snitch/rematch
+checks**, **11 opening-layout checks**, **9 Bludger checks**, **17 local network
+checks**, and **11 native audio checks**. The retained
 training mode also passed **15 gameplay**, **15 AI**, and **4 flight** checks;
 its final chase HUD rebuild was rechecked and packaged. These suites have
 different scopes: reference rules do not exercise Unreal actors, and authority
@@ -213,9 +224,25 @@ horizontal and vertical pawn movement with collision enabled.
 
 `Tools/test_native_playable.py` verifies roster/roles, host controls, movement
 bounds, ball physics, goals, eligibility, and Snipe capture in the native map.
+`Tools/test_native_network.py` exercises two PIE worlds in one editor process.
+`Tools/test_native_audio.py` observes sound assets, gameplay-triggered audio
+components, suppression of repeated cues, and component cleanup; it does not
+verify speaker output or the subjective mix. `Tools/test_native_snitch.py`
+passed its separate practice release/catch/result/rematch suite: timed release
+at 60 live seconds, hold/reset behavior, a 150-point catch, winner certification,
+and a clean host rematch that retains the roster. That
+suite slows PIE time to 0.1x and follows the Snitch during capture; it does not
+validate normal-speed physical chasing or the 22-minute regulation release.
+`Tools/test_native_openings.py` follows actual practice clocks through four
+quarters, overtime, and Donnybrook, carrying a 37–37 tie created by two real
+Quark goals. `Tools/test_native_bludgers.py` checks control-clock resets, impact
+clearance, and opposing-Hurleyback restarts in isolated PIE fixtures.
 Training interactive checks verified E pickup, mouse release, a 13-point goal,
 mouse aim, and packaged startup. Those observations are not native packaged
-validation. Flight feel, chase difficulty, and audio still need human playtesting.
+validation. In a Sep12 native packaged practice build, physical **6** selected
+Scout, **T** switched to Copper, and **Enter** started a live 2:59 practice clock;
+those observations preceded the latest opening changes. Physical P/Tab checks remain pending. Flight feel,
+chase difficulty, and audio still need human playtesting.
 See `Docs/validation.md` for evidence and limits; local reports describe individual
 runs and do not guarantee that every later rebuild passes.
 

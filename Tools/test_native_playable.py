@@ -181,6 +181,10 @@ class NativePlayableTests:
         # unchanged assertion, so an absent/wrong outcome cannot pass silently.
         waiting = self.wait(timeout, fixture)
         waiting["predicate"] = predicate
+        # A fast foreground editor can satisfy a role request in ~20ms. Keep
+        # sequential fixture actions outside the real 60ms server rate limit.
+        # At low FPS the next observed frame naturally exceeds this minimum.
+        waiting["minimum_seconds"] = 0.09
         return waiting
 
     def move_pawn(self, location):
@@ -244,6 +248,17 @@ class NativePlayableTests:
             self.request(5)
             yield self.wait_until(lambda: not prop(self.match, "bLive"))
         self.require(not prop(self.match, "bLive"), "Host could not stop play for role fixture")
+        crown_state = getattr(self.match, "development_get_crown_penalty_state", None)
+        if callable(crown_state):
+            crown_due = lambda: any(crown_state(index)[2] > 0 for index in (0, 1, 2, 5, 6))
+            if crown_due():
+                # A previous roof-exit fixture now has a real possession remedy.
+                # Serve it through normal play before asking to swap its offender.
+                self.request(4)
+                yield self.wait_until(lambda: bool(prop(self.match, "bLive")) and not crown_due())
+                self.require(not crown_due(), "Outstanding Crown restart did not serve before role fixture")
+                self.request(5)
+                yield self.wait_until(lambda: not prop(self.match, "bLive"))
         self.request(2, role)
         yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == role)
         self.require(int(prop(self.pawn, "Position")) == role, "Host role fixture was rejected")
@@ -347,6 +362,7 @@ class NativePlayableTests:
         self.record("host_starts_live_clock", bool(prop(self.match, "bLive")) and float(prop(self.match, "SecondsLeft")) < seconds,
                     status=str(prop(self.match, "Status")), seconds=float(prop(self.match, "SecondsLeft")))
         self.require(prop(self.match, "bLive"), "Native host start failed")
+        self.isolate()  # Kickoff restores the regulation opening positions.
         previous_role = int(prop(self.pawn, "Position"))
         self.request(2, 5)
         yield self.wait(0.16)
@@ -595,7 +611,8 @@ class NativePlayableTests:
                     self.waiting["game_frames"] += 1
                     self.waiting["last_game_seconds"] = now
                 predicate = self.waiting["predicate"]
-                ready = bool(predicate()) if predicate else False
+                started = self.waiting["until"] - self.waiting["seconds"]
+                ready = bool(predicate()) and now - started >= self.waiting.get("minimum_seconds", 0) if predicate else False
                 expired = now >= self.waiting["until"]
                 if self.waiting["game_frames"] >= self.waiting["minimum_frames"] and (ready or expired):
                     if predicate and expired and not ready:
