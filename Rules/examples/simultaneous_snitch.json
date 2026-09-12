@@ -1,0 +1,14 @@
+{
+  "description": "Two early B goals; at release A captures Snitch while B scores a Quark. All simultaneous points count before certification. A wins 150-87 and its Scout receives Reckoner.",
+  "commands": [
+    {"method": "process_batch", "args": [1000, [
+      {"kind": "goal", "ball": "quaffle", "attacking_team": "B", "hoop": "large", "entire_ball": true, "forward": true},
+      {"kind": "goal", "ball": "quark_1", "attacking_team": "B", "hoop": "small", "entire_ball": true, "forward": true}
+    ]]},
+    {"method": "process_batch", "args": [1321000, [
+      {"kind": "catch", "ball": "snitch", "player": "A_scout_1", "secure_ms": 1000, "by_hand": true, "mounted": true, "inside_envelope": true},
+      {"kind": "goal", "ball": "quark_2", "attacking_team": "B", "hoop": "small", "entire_ball": true, "forward": true}
+    ]]},
+    {"method": "certify"}
+  ]
+}

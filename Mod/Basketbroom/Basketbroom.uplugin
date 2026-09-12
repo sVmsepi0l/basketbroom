@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0-hlck-arena",
+  "FriendlyName": "Basketbroom",
+  "Description": "Original native Creator Kit arena, materials and audio. Match gameplay and dungeon integration are in development.",
+  "Category": "UGC",
+  "CreatedBy": "Joshua Coombs / bigdiction.energy",
+  "CanContainContent": true,
+  "EnabledByDefault": true,
+  "IsBetaVersion": true,
+  "SupportedTargetPlatforms": ["Win64"]
+}

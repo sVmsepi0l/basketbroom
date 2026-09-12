@@ -1,0 +1,9 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0-dev",
+  "FriendlyName": "Basketbroom",
+  "Description": "Original arena, riders and Blueprint gameplay for the standalone Unreal Engine 5.8 game.",
+  "CanContainContent": true,
+  "EnabledByDefault": true
+}
