@@ -194,7 +194,14 @@ package into a fresh 0–0 practice lobby. Packaged GameInput initialized
 successfully with runtime `3.1.26100.6879`, and its prerequisite MSI was staged.
 Receipts are `.local/controller-package.log` and
 `.local/controller-packaged-backend-startup.json`.
-Windows Security then covered the game with its network-access prompt; dismissal
-was requested from the user before continuing the final manual input check.
-Physical USB/Bluetooth input is still unverified. See the
+After the user clicked Allow on Windows Security's network-access prompt, the
+packaged manual check completed: Scout selection, spellbook opening/closing,
+live kickoff, Protego with a clear reticle, Basic Cast with a wand-tip beam and
+miss feedback, and stoppage/resume all responded to ordinary keyboard input.
+CPU scoring advanced. Alt+F4 closed the game normally and its log recorded a
+clean exit. Launching the desktop shortcut again produced a fresh 0–0 Ranger
+lobby with a 3:00 practice clock and no repeated Windows prompt.
+`.local/controller-packaged-smoke.json` records this separate smoke
+check; it adds no cases to the automated total. Physical USB/Bluetooth input is
+still unverified. See the
 [controller playtest](controller-support.md) for the complete control layout.

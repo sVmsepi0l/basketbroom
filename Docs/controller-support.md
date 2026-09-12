@@ -144,8 +144,13 @@ practice lobby. `.local/controller-packaged-backend-startup.json` records
 successful packaged `IGameInput` initialization using runtime
 `3.1.26100.6879` and the gamepad callback. The package contains
 `Windows/Engine/Extras/Redist/en-us/GameInputRedist.msi`.
-The Windows network-access prompt interrupted the manual packaged input check;
-the existing live PIE visual inspection remains separate evidence.
+After the user clicked Allow on the Windows network-access prompt, ordinary
+keyboard input verified Scout selection, spellbook opening/closing, match start,
+Protego, Basic Cast, and stoppage/resume in this package. The shield kept the
+reticle clear and the cast originated at the visible wand tip. CPU scoring
+continued. Alt+F4 closed the game normally, with a clean exit in its log.
+`.local/controller-packaged-smoke.json` records the observations and limits.
+This manual smoke check adds no cases to the 229 automated-check total.
 
 No connected gamepad was found in the initial Windows device check. Physical
 USB/Bluetooth input, pairing, disconnect/reconnect notifications, focus changes,
