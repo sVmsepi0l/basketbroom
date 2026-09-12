@@ -1,6 +1,7 @@
 #include "BBRiderCharacter.h"
 
 #include "BBMatchState.h"
+#include "BBSpellCatalog.h"
 #include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -8,6 +9,7 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
@@ -15,19 +17,22 @@
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
 float UBBFlyingMovementComponent::GetMaxSpeed() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
-    return Rider && Rider->StunRemaining > 0.0f ? 0.0f : Super::GetMaxSpeed();
+    if (Rider && Rider->StunRemaining > 0.f) return 0.f;
+    return Super::GetMaxSpeed() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
 float UBBFlyingMovementComponent::GetMaxAcceleration() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
-    return Rider && Rider->StunRemaining > 0.0f ? 0.0f : Super::GetMaxAcceleration();
+    if (Rider && Rider->StunRemaining > 0.f) return 0.f;
+    return Super::GetMaxAcceleration() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
 void UBBFlyingMovementComponent::PhysFlying(float DeltaTime, int32 Iterations)
@@ -210,6 +215,89 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
     Part(TEXT("CockpitCollar"), Cylinder.Object, Metal.Object, FVector(152, 30, -56), FVector(.124, .124, .065), FRotator(90, 0, 0), true);
     Part(TEXT("CockpitCharmMount"), Cube.Object, Iron.Object, FVector(145, 30, -48), FVector(.17, .14, .08), FRotator::ZeroRotator, true);
     Part(TEXT("CockpitFlightCharm"), Sphere.Object, Light.Object, FVector(145, 30, -42), FVector(.12, .11, .065), FRotator::ZeroRotator, true);
+
+    // Original 44 cm wand: tapered wood, padded grip and copper collar.
+    // Cosmetic owner/remote copies use the existing equipment filtering.
+    for (bool bCockpit : {false, true})
+    {
+        const FString Prefix = bCockpit ? TEXT("CockpitWand") : TEXT("RiderWand");
+        const FVector Start = bCockpit ? FVector(45, 38, -29) : FVector(43, 10, 14);
+        const FVector Direction = (bCockpit ? FVector(42, -8, 12) : FVector(44, 2, 7)).GetSafeNormal();
+        const FRotator Rotation = FRotationMatrix::MakeFromZ(Direction).Rotator();
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Wood"))), Cone.Object, Wood.Object,
+            Start + Direction * 25.f, FVector(.021, .021, .38), Rotation, bCockpit));
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Grip"))), Cylinder.Object, Leather.Object,
+            Start + Direction * 5.f, FVector(.031, .031, .10), Rotation, bCockpit));
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Collar"))), Cylinder.Object, Metal.Object,
+            Start + Direction * 11.f, FVector(.035, .035, .018), Rotation, bCockpit));
+    }
+    WandLight = Part(TEXT("WandLumos"), Sphere.Object, Light.Object, FVector(87, 30, -17),
+        FVector(.045), FRotator::ZeroRotator, true);
+    WandLight->SetVisibility(false);
+    WandLamp = CreateDefaultSubobject<UPointLightComponent>(TEXT("WandLumosLamp"));
+    WandLamp->SetupAttachment(GetMesh());
+    WandLamp->SetRelativeLocation(FVector(88, 12, 21));
+    WandLamp->SetLightColor(FLinearColor(.68f, .87f, 1.f));
+    WandLamp->SetIntensity(600.f);
+    WandLamp->SetAttenuationRadius(450.f);
+    WandLamp->SetCastShadows(false);
+    WandLamp->SetVisibility(false);
+    ShieldVisual = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("ProtegoArcs"));
+    ShieldVisual->SetupAttachment(GetMesh());
+    ShieldVisual->SetStaticMesh(Cylinder.Object);
+    // Ivory already carries the cooked instanced-mesh usage flag. Its shared
+    // Tint/Glow parameters supply the blue energy without runtime shader edits.
+    ShieldVisual->SetMaterial(0, Ivory.Object);
+    ShieldVisual->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+    ShieldVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ShieldVisual->SetGenerateOverlapEvents(false);
+    ShieldVisual->SetCanEverAffectNavigation(false);
+    ShieldVisual->SetCastShadow(false);
+    ShieldVisual->SetOwnerNoSee(true);
+    ShieldVisual->SetOnlyOwnerSee(false);
+    ShieldVisual->SetVisibility(false);
+    ShieldVisual->ComponentTags.Add(TEXT("BB.Spell.Shield"));
+    // Other riders see the surrounding shield. Its world-space great circles
+    // must not become large vertical bars through the owner's camera.
+    for (int32 Plane = 0; Plane < 3; ++Plane)
+        for (int32 Segment = 0; Segment < 16; ++Segment)
+        {
+            const float A = Segment * UE_TWO_PI / 16.f, B = A + UE_TWO_PI / 20.f;
+            auto Point = [Plane](float Angle)
+            {
+                const float C = FMath::Cos(Angle) * 112.f, S = FMath::Sin(Angle) * 112.f;
+                return FVector(Plane == 0 ? 0.f : C, Plane == 1 ? 0.f : (Plane == 0 ? C : S),
+                    12.f + (Plane == 2 ? 0.f : S));
+            };
+            const FVector APos = Point(A), BPos = Point(B), Axis = BPos - APos;
+            ShieldVisual->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Axis).ToQuat(),
+                (APos + BPos) * .5f, FVector(.022, .022, Axis.Size() / 100.f)));
+        }
+    CockpitShieldVisual = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("CockpitProtegoArcs"));
+    CockpitShieldVisual->SetupAttachment(Camera);
+    CockpitShieldVisual->SetStaticMesh(Cylinder.Object);
+    CockpitShieldVisual->SetMaterial(0, Ivory.Object);
+    CockpitShieldVisual->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+    CockpitShieldVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CockpitShieldVisual->SetGenerateOverlapEvents(false);
+    CockpitShieldVisual->SetCanEverAffectNavigation(false);
+    CockpitShieldVisual->SetCastShadow(false);
+    CockpitShieldVisual->SetOnlyOwnerSee(true);
+    CockpitShieldVisual->SetOwnerNoSee(false);
+    CockpitShieldVisual->SetVisibility(false);
+    CockpitShieldVisual->ComponentTags.Add(TEXT("BB.Spell.Shield.Cockpit"));
+    // Four fine corner arcs at the edge of the 92-degree camera view. Neither
+    // a diameter nor an arc crosses the reticle, in any look direction.
+    for (int32 Corner = 0; Corner < 4; ++Corner)
+        for (int32 Segment = 0; Segment < 6; ++Segment)
+        {
+            const float A = Corner * UE_PI / 2.f + UE_PI / 12.f + Segment * UE_PI / 18.f;
+            const float B = A + UE_PI / 24.f;
+            auto Point = [](float Angle) { return FVector(100.f, FMath::Cos(Angle) * 92.f, FMath::Sin(Angle) * 48.f); };
+            const FVector APos = Point(A), BPos = Point(B), Axis = BPos - APos;
+            CockpitShieldVisual->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Axis).ToQuat(),
+                (APos + BPos) * .5f, FVector(.006, .006, Axis.Size() / 100.f)));
+        }
     Part(TEXT("CockpitBristles"), Cone.Object, Bristles.Object, FVector(-55, 30, -56), FVector(.4, .4, .75), FRotator(-90, 0, 0), true);
     for (int32 Index = 0; Index < 6; ++Index)
     {
@@ -315,12 +403,18 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
 void ABBRiderCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    RegisterControllerInputLifecycle();
     if (HasAuthority() || IsLocallyControlled())
     {
         GetCharacterMovement()->SetMovementMode(MOVE_Flying);
     }
     RefreshUniform();
     RefreshHurley();
+    ShieldMaterial = ShieldVisual->CreateDynamicMaterialInstance(0);
+    if (ShieldMaterial) ShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.18f, .58f, 1.f));
+    CockpitShieldMaterial = CockpitShieldVisual->CreateDynamicMaterialInstance(0);
+    if (CockpitShieldMaterial) CockpitShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.10f, .40f, .72f));
+    RefreshSpellVisuals();
 }
 
 void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -331,6 +425,12 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ABBRiderCharacter, RosterIndex);
     DOREPLIFETIME(ABBRiderCharacter, bInteractHeld);
     DOREPLIFETIME(ABBRiderCharacter, StunRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, SpellCooldownRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, ShieldRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, ImpedimentRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, DisarmRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, Vitality);
+    DOREPLIFETIME(ABBRiderCharacter, LumosRemaining);
 }
 
 void ABBRiderCharacter::Tick(float DeltaSeconds)
@@ -338,7 +438,8 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     if (HasAuthority())
     {
-        StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
+        const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
+        if (!Match || Match->bLive) StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
     }
     if (StunRemaining > 0.0f)
     {
@@ -349,12 +450,43 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
         RefreshUniform();
     }
     RefreshHurley();
+    RefreshSpellVisuals();
 
     APlayerController* Player = Cast<APlayerController>(Controller);
     if (!Player || !Player->IsLocalController())
     {
         return;
     }
+    TickControllerInput(Player);
+    // Normal-client delivery: HUD marks its draw before a later Tick replies.
+    // This does not prove human attention or prevent a modified client withholding.
+    const double FeedbackNow = GetWorld()->GetTimeSeconds();
+    PendingSpellNotices.RemoveAll([FeedbackNow](const FSpellNotice& Notice)
+        { return FeedbackNow - Notice.QueuedAt >= SpellNoticeDeadline; });
+    if (ActiveImpedimentAttackId && FeedbackNow - ActiveSpellNoticeQueuedAt >= SpellNoticeDeadline)
+    {
+        // An expired/unshown notice must never manufacture a confirmation.
+        ActiveImpedimentAttackId = 0;
+        SpellFeedbackRemaining = 0.f;
+    }
+    if (ActiveImpedimentAttackId && SpellFeedbackDisplayedAt >= 0.0
+        && FeedbackNow - SpellFeedbackDisplayedAt >= .25)
+    {
+        if (!AcknowledgedImpediments.Contains(ActiveImpedimentAttackId))
+        {
+            AcknowledgedImpediments.Add(ActiveImpedimentAttackId);
+            ServerAcknowledgeImpediment(ActiveImpedimentAttackId);
+        }
+        ActiveImpedimentAttackId = 0;
+        // Drain another critical notice immediately after this one's display
+        // obligation, rather than making it wait the full ordinary toast time.
+        if (PendingSpellNotices.ContainsByPredicate([](const FSpellNotice& Notice) { return Notice.AttackId != 0; }))
+            SpellFeedbackRemaining = 0.f;
+    }
+    if (SpellFeedbackDisplayedAt >= 0.0 || !ActiveImpedimentAttackId)
+        SpellFeedbackRemaining = FMath::Max(0.f, SpellFeedbackRemaining - DeltaSeconds);
+    if (SpellFeedbackRemaining <= 0.f && ActiveImpedimentAttackId == 0)
+        ShowNextSpellNotice();
 #if !UE_BUILD_SHIPPING
     if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentInputs.IsEmpty())
     {
@@ -390,7 +522,8 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
             MovementKeys.Remove(Key);
         }
     }
-    if (bLocalInteractHeld && !bDevelopmentInteractHeld && !Player->IsInputKeyDown(EKeys::E))
+    if (bLocalInteractHeld && !bDevelopmentInteractHeld && !Player->IsInputKeyDown(EKeys::E)
+        && (bGamepadRequiresNeutral || !Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Left)))
     {
         StopInteract();
     }
@@ -398,20 +531,25 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     {
         return;
     }
-    const float Forward = float(MovementKeys.Contains(EKeys::W)) - float(MovementKeys.Contains(EKeys::S));
-    const float Right = float(MovementKeys.Contains(EKeys::D)) - float(MovementKeys.Contains(EKeys::A));
+    const float Forward = FMath::Clamp(float(MovementKeys.Contains(EKeys::W)) - float(MovementKeys.Contains(EKeys::S))
+        + ControllerAxis(EKeys::Gamepad_LeftY), -1.f, 1.f);
+    const float Right = FMath::Clamp(float(MovementKeys.Contains(EKeys::D)) - float(MovementKeys.Contains(EKeys::A))
+        + ControllerAxis(EKeys::Gamepad_LeftX), -1.f, 1.f);
     const float Up = float(MovementKeys.Contains(EKeys::SpaceBar))
-        - float(MovementKeys.Contains(EKeys::LeftControl) || MovementKeys.Contains(EKeys::RightControl));
+        - float(MovementKeys.Contains(EKeys::LeftControl) || MovementKeys.Contains(EKeys::RightControl))
+        + (bGamepadRequiresNeutral ? 0.f : float(Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Bottom))
+            - float(Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Right)));
     const FRotator AimRotation = GetControlRotation();
     AddMovementInput(AimRotation.Vector(), Forward);
     AddMovementInput(FRotationMatrix(FRotator(0, AimRotation.Yaw, 0)).GetUnitAxis(EAxis::Y), Right);
-    AddMovementInput(FVector::UpVector, Up);
+    AddMovementInput(FVector::UpVector, FMath::Clamp(Up, -1.f, 1.f));
 }
 
 void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
     check(Input);
+    BindControllerInput(Input);
     for (const FKey Key : {EKeys::W, EKeys::S, EKeys::A, EKeys::D, EKeys::SpaceBar, EKeys::LeftControl, EKeys::RightControl})
     {
         Input->BindKey(Key, IE_Pressed, this, &ABBRiderCharacter::MovementPressed);
@@ -425,8 +563,10 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
         for (bool bControl : {false, true})
         {
             Input->BindKey(FInputChord(EKeys::E, bShift, bControl, false, false), IE_Pressed, this, &ABBRiderCharacter::StartInteract);
-            Input->BindKey(FInputChord(EKeys::E, bShift, bControl, false, false), IE_Released, this, &ABBRiderCharacter::StopInteract);
+            Input->BindKey(FInputChord(EKeys::E, bShift, bControl, false, false), IE_Released, this, &ABBRiderCharacter::ReleaseInteractInput);
             Input->BindKey(FInputChord(EKeys::LeftMouseButton, bShift, bControl, false, false), IE_Pressed, this, &ABBRiderCharacter::ReleaseBall);
+            Input->BindKey(FInputChord(EKeys::Q, bShift, bControl, false, false), IE_Pressed, this, &ABBRiderCharacter::CastSelectedSpell);
+            Input->BindKey(FInputChord(EKeys::R, bShift, bControl, false, false), IE_Pressed, this, &ABBRiderCharacter::RequestShield);
         }
     }
     for (const FKey Key : {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six})
@@ -437,12 +577,18 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindKey(EKeys::Enter, IE_Pressed, this, &ABBRiderCharacter::RequestReady);
     Input->BindKey(EKeys::P, IE_Pressed, this, &ABBRiderCharacter::RequestStoppage);
     Input->BindKey(EKeys::Tab, IE_Pressed, this, &ABBRiderCharacter::ToggleRoster);
+    Input->BindKey(EKeys::Z, IE_Pressed, this, &ABBRiderCharacter::PreviousSpell);
+    Input->BindKey(EKeys::X, IE_Pressed, this, &ABBRiderCharacter::NextSpell);
+    Input->BindKey(EKeys::B, IE_Pressed, this, &ABBRiderCharacter::RequestBloodbroom);
+    Input->BindKey(EKeys::V, IE_Pressed, this, &ABBRiderCharacter::ToggleSpellbook);
+    Input->BindKey(EKeys::F7, IE_Pressed, this, &ABBRiderCharacter::RequestPossessionAward);
+    Input->BindKey(EKeys::F9, IE_Pressed, this, &ABBRiderCharacter::RequestEjection);
 }
 
-void ABBRiderCharacter::MovementPressed(FKey Key) { MovementKeys.Add(Key); }
+void ABBRiderCharacter::MovementPressed(FKey Key) { bUsingGamepad = false; MovementKeys.Add(Key); }
 void ABBRiderCharacter::MovementReleased(FKey Key) { MovementKeys.Remove(Key); }
-void ABBRiderCharacter::LookYaw(float Value) { AddControllerYawInput(Value); }
-void ABBRiderCharacter::LookPitch(float Value) { AddControllerPitchInput(-Value); }
+void ABBRiderCharacter::LookYaw(float Value) { if (!FMath::IsNearlyZero(Value)) bUsingGamepad = false; AddControllerYawInput(Value); }
+void ABBRiderCharacter::LookPitch(float Value) { if (!FMath::IsNearlyZero(Value)) bUsingGamepad = false; AddControllerPitchInput(-Value); }
 
 void ABBRiderCharacter::StartInteract()
 {
@@ -477,7 +623,15 @@ void ABBRiderCharacter::RequestPosition(FKey Key)
 void ABBRiderCharacter::RequestTeam() { SubmitAction(3, TeamIndex == 0 ? 1 : 0); }
 void ABBRiderCharacter::RequestReady() { SubmitAction(4); }
 void ABBRiderCharacter::RequestStoppage() { SubmitAction(5); }
-void ABBRiderCharacter::ToggleRoster() { bShowRoster = !bShowRoster; }
+void ABBRiderCharacter::ToggleRoster() { bShowRoster = !bShowRoster; if (bShowRoster) bShowSpellbook = false; }
+void ABBRiderCharacter::ToggleSpellbook() { bShowSpellbook = !bShowSpellbook; if (bShowSpellbook) bShowRoster = false; }
+void ABBRiderCharacter::PreviousSpell() { SelectedSpell = (SelectedSpell + FMath::Max(1, BBSpellCatalog::Count()) - 1) % FMath::Max(1, BBSpellCatalog::Count()); }
+void ABBRiderCharacter::NextSpell() { SelectedSpell = (SelectedSpell + 1) % FMath::Max(1, BBSpellCatalog::Count()); }
+void ABBRiderCharacter::CastSelectedSpell() { SubmitAction(6, SelectedSpell); }
+void ABBRiderCharacter::RequestShield() { SubmitAction(7); }
+void ABBRiderCharacter::RequestBloodbroom() { SubmitAction(8); }
+void ABBRiderCharacter::RequestPossessionAward() { SubmitAction(9); }
+void ABBRiderCharacter::RequestEjection() { SubmitAction(11); }
 
 void ABBRiderCharacter::SubmitAction(int32 Action, int32 Value)
 {
@@ -493,7 +647,10 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 5
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11 || Action == 10
+        || (Action == 2 && (Value < 0 || Value > 5))
+        || (Action == 3 && (Value < 0 || Value > 1))
+        || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count()))
         || PendingDevelopmentInputs.Num() >= MaxDevelopmentInputs)
         return false;
     PendingDevelopmentInputs.Emplace(Action, Value);
@@ -548,7 +705,7 @@ void ABBRiderCharacter::ServerStopInteract_Implementation()
 
 void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, FVector Aim)
 {
-    if (!HasAuthority() || !Controller || Action < 0 || Action > 5)
+    if (!HasAuthority() || !Controller || Action < 0 || Action > 11 || Action == 10)
     {
         return;
     }
@@ -559,7 +716,8 @@ void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, F
     }
     if ((Action <= 1 && StunRemaining > 0.0f)
         || (Action == 2 && (Value < 0 || Value > 5))
-        || (Action == 3 && (Value < 0 || Value > 1)))
+        || (Action == 3 && (Value < 0 || Value > 1))
+        || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count())))
     {
         return;
     }
@@ -612,6 +770,101 @@ void ABBRiderCharacter::RefreshUniform()
 
 void ABBRiderCharacter::OnRep_TeamIndex() { RefreshUniform(); }
 
+void ABBRiderCharacter::NotifySpellResult(const FString& Message, uint64 ImpedimentAttackId)
+{
+    if (HasAuthority() && IsValid(Cast<APlayerController>(GetController())))
+        ClientSpellResult(Message.Left(256), ImpedimentAttackId);
+}
+
+void ABBRiderCharacter::ClientSpellResult_Implementation(const FString& Message, uint64 ImpedimentAttackId)
+{
+    if (!GetWorld()) return;
+    if (ImpedimentAttackId && (AcknowledgedImpediments.Contains(ImpedimentAttackId)
+        || ActiveImpedimentAttackId == ImpedimentAttackId
+        || PendingSpellNotices.ContainsByPredicate([ImpedimentAttackId](const FSpellNotice& Notice)
+            { return Notice.AttackId == ImpedimentAttackId; }))) return;
+    const double Now = GetWorld()->GetTimeSeconds();
+    PendingSpellNotices.RemoveAll([Now](const FSpellNotice& Notice)
+        { return Now - Notice.QueuedAt >= SpellNoticeDeadline; });
+    if (ImpedimentAttackId)
+    {
+        // Critical feedback preempts ordinary traffic immediately. Preserve
+        // the interrupted, unacknowledged ID with its original deadline.
+        PendingSpellNotices.RemoveAll([](const FSpellNotice& Notice) { return Notice.AttackId == 0; });
+        if (ActiveImpedimentAttackId && Now - ActiveSpellNoticeQueuedAt < SpellNoticeDeadline)
+            PendingSpellNotices.Insert({SpellFeedback, ActiveImpedimentAttackId, ActiveSpellNoticeQueuedAt}, 0);
+        PendingSpellNotices.Insert({Message.Left(256), ImpedimentAttackId, Now}, 0);
+        // The normal server rate is well below this burst ceiling. On overflow
+        // discard the oldest receipt without ACK, never invent proof for it.
+        while (PendingSpellNotices.Num() > MaxCriticalSpellNotices)
+        {
+            int32 Oldest = 0;
+            for (int32 I = 1; I < PendingSpellNotices.Num(); ++I)
+                if (PendingSpellNotices[I].QueuedAt < PendingSpellNotices[Oldest].QueuedAt) Oldest = I;
+            PendingSpellNotices.RemoveAt(Oldest);
+        }
+        ActiveImpedimentAttackId = 0;
+        SpellFeedbackRemaining = 0.f;
+        ShowNextSpellNotice();
+        return;
+    }
+    // Ordinary repeats have no proof obligation. Keep only recent unique
+    // notices, and never let them interrupt a pending critical receipt.
+    PendingSpellNotices.RemoveAll([&Message](const FSpellNotice& Notice)
+        { return Notice.AttackId == 0 && Notice.Message == Message; });
+    if (!ActiveImpedimentAttackId && SpellFeedbackRemaining > 0.f && SpellFeedback == Message) return;
+    int32 OrdinaryCount = 0;
+    for (const FSpellNotice& Notice : PendingSpellNotices) OrdinaryCount += Notice.AttackId == 0 ? 1 : 0;
+    while (OrdinaryCount >= MaxOrdinarySpellNotices)
+    {
+        const int32 Oldest = PendingSpellNotices.IndexOfByPredicate([](const FSpellNotice& Notice) { return Notice.AttackId == 0; });
+        if (Oldest == INDEX_NONE) break;
+        PendingSpellNotices.RemoveAt(Oldest);
+        --OrdinaryCount;
+    }
+    PendingSpellNotices.Add({Message.Left(256), 0, Now});
+    if (SpellFeedbackRemaining <= 0.f && !ActiveImpedimentAttackId) ShowNextSpellNotice();
+}
+
+void ABBRiderCharacter::ShowNextSpellNotice()
+{
+    SpellFeedback.Empty();
+    SpellFeedbackDisplayedAt = -1.0;
+    if (PendingSpellNotices.IsEmpty()) return;
+    FSpellNotice Notice = MoveTemp(PendingSpellNotices[0]);
+    PendingSpellNotices.RemoveAt(0);
+    SpellFeedback = MoveTemp(Notice.Message);
+    ActiveImpedimentAttackId = Notice.AttackId;
+    ActiveSpellNoticeQueuedAt = Notice.QueuedAt;
+    SpellFeedbackRemaining = 2.25f;
+}
+
+void ABBRiderCharacter::MarkSpellFeedbackDisplayed()
+{
+    if (IsLocallyControlled() && SpellFeedbackRemaining > 0.f && SpellFeedbackDisplayedAt < 0.0 && GetWorld())
+        SpellFeedbackDisplayedAt = GetWorld()->GetTimeSeconds();
+}
+
+void ABBRiderCharacter::ServerAcknowledgeImpediment_Implementation(uint64 ImpedimentAttackId)
+{
+    if (!HasAuthority() || !Controller || ImpedimentAttackId == 0) return;
+    if (ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>())
+        Match->ConfirmImpediment(this, ImpedimentAttackId);
+}
+
+void ABBRiderCharacter::RefreshSpellVisuals()
+{
+    for (UStaticMeshComponent* Part : WandParts) if (Part) Part->SetVisibility(DisarmRemaining <= 0.f);
+    if (WandLight) WandLight->SetVisibility(LumosRemaining > 0.f && DisarmRemaining <= 0.f);
+    if (WandLamp) WandLamp->SetVisibility(LumosRemaining > 0.f && DisarmRemaining <= 0.f);
+    if (ShieldVisual) ShieldVisual->SetVisibility(ShieldRemaining > 0.f);
+    if (CockpitShieldVisual) CockpitShieldVisual->SetVisibility(ShieldRemaining > 0.f);
+    if (ShieldMaterial && ShieldRemaining > 0.f)
+        ShieldMaterial->SetScalarParameterValue(TEXT("Glow"), 1.5f + .35f * FMath::Sin(GetWorld()->GetTimeSeconds() * 6.f));
+    if (CockpitShieldMaterial && ShieldRemaining > 0.f)
+        CockpitShieldMaterial->SetScalarParameterValue(TEXT("Glow"), .65f + .10f * FMath::Sin(GetWorld()->GetTimeSeconds() * 6.f));
+}
+
 void ABBRiderCharacter::RefreshHurley()
 {
     const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
@@ -632,11 +885,26 @@ void ABBRiderCharacter::OnRep_StunRemaining()
 
 void ABBRiderCharacter::ResetLocalInput()
 {
+    if (APlayerController* Player = Cast<APlayerController>(Controller))
+        if (Player->IsLocalController()) Player->FlushPressedKeys();
+    PendingControllerInputs.Reset();
+    GamepadRefereeChoice = 0;
+    bGamepadRequiresNeutral = false;
+    bObservedViewportFocus = false;
+    GetCharacterMovement()->StopMovementImmediately();
+    ConsumeMovementInputVector();
     MovementKeys.Empty();
     bLocalInteractHeld = false;
     bDevelopmentInteractHeld = false;
     PendingDevelopmentInputs.Reset();
     bShowRoster = false;
+    bShowSpellbook = false;
+    PendingSpellNotices.Reset();
+    ActiveImpedimentAttackId = 0;
+    SpellFeedback.Empty();
+    SpellFeedbackRemaining = 0.f;
+    SpellFeedbackDisplayedAt = -1.0;
+    ActiveSpellNoticeQueuedAt = 0.0;
 }
 
 void ABBRiderCharacter::UnPossessed()

@@ -337,7 +337,13 @@ bool Match::pause(const std::string& reason) {
 bool Match::resume() {
     if (!valid_ || (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak))
         return reject("there is no resumable stoppage");
-    for (const auto& p : penalties) if (p.pending) return reject("administer pending penalties before the next horn");
+    for (const auto& ball : balls) if (ball.conduct_restart_penalty >= 0) {
+        const int id = ball.conduct_restart_penalty;
+        if (id == 0 || id > static_cast<int>(penalties.size()) || !valid_conduct_award(penalties[id - 1]))
+            return reject("invalid queued conduct possession award");
+    }
+    for (const auto& p : penalties) if (p.pending && !valid_conduct_award(p))
+        return reject("administer pending penalties before the next horn");
     if (status == Status::QuarterBreak) { ++quarter; period_elapsed_ms = 0; }
     status = Status::Live;
     for (int i = 0; i < 7; ++i) if (balls[i].phase_active && balls[i].dead_reason == "stoppage") release_ball(i);
@@ -355,6 +361,13 @@ bool Match::restart(int ball, int player) {
         return reject("scoring-ball restart belongs to defending Netminder");
     if (scoring(b.type) && carries_scoring_ball(player)) return reject("restart receiver must first release the carried ball");
     if (scoring(b.type) && !sum_valid(now_ms, config.restart_protection_ms)) return reject("clock overflow");
+    const int conduct_penalty = b.conduct_restart_penalty;
+    if (conduct_penalty >= 0) {
+        int reserved_ball = -1;
+        if (conduct_penalty == 0 || conduct_penalty > static_cast<int>(penalties.size()) ||
+            !valid_conduct_award(penalties[conduct_penalty - 1], &reserved_ball) || reserved_ball != ball)
+            return reject("invalid queued conduct possession award");
+    }
     const int crown_penalty = b.crown_restart_penalty;
     release_ball(ball);
     if (scoring(b.type)) { possess(player, ball); b.protection_until = now_ms + config.restart_protection_ms; }
@@ -366,6 +379,14 @@ bool Match::restart(int ball, int player) {
         emit("crown_restoration_served", player, ball, p.team, 0, "", crown_penalty);
     }
     b.crown_restart_penalty = -1;
+    if (conduct_penalty > 0) {
+        auto& penalty = penalties[conduct_penalty - 1];
+        penalty.pending = false;
+        penalty.disposition = "conduct possession award served by protected restart";
+        b.conduct_restart_penalty = -1;
+        emit("conduct_possession_award_served", player, ball, p.team, 0, penalty.disposition, conduct_penalty);
+        emit("penalty_resolved", penalty.player, penalty.ball, p.team, 0, penalty.disposition, conduct_penalty);
+    }
     emit("protected_restart", player, ball); last_error.clear(); return true;
 }
 bool Match::crown_exit(int ball, const std::array<double, 3>& mark, int responsible_player, bool deliberate_delay) {
@@ -400,6 +421,7 @@ bool Match::prepare_crown_restart(int penalty_id) {
         return reject("penalty has no outstanding ordinary Crown restoration");
     auto& ball = balls[penalty.ball];
     if (!ball.phase_active) return reject("removed ball cannot receive a Crown restart");
+    if (ball.conduct_restart_penalty >= 0) return reject("ball already has a conduct possession award");
     if (ball.crown_restart_penalty == penalty_id) return reject("Crown restart is already reserved");
     // One physical ball cannot serve two opposing possession awards at once.
     // Keep later infringements recorded and due until a following stoppage.
@@ -419,6 +441,54 @@ bool Match::prepare_crown_restart(int penalty_id) {
         emit("crown_restoration_reserved", penalty.player, penalty.ball, ball.restart_team, 0, "", penalty.id);
     }
     if (first_administration) emit("penalty_resolved", penalty.player, penalty.ball, -1, 0, penalty.disposition, penalty.id);
+    last_error.clear(); return true;
+}
+bool Match::valid_conduct_award(const Penalty& penalty, int* award_ball) const {
+    if (!penalty.pending || penalty.severity != Severity::Moderate ||
+        penalty.id <= 0 || penalty.id > static_cast<int>(penalties.size()) ||
+        penalties[penalty.id - 1].id != penalty.id || !player_index(penalty.player) ||
+        !team_index(players[penalty.player].team) || penalty.crown_restoration_pending ||
+        penalty.disposition != "conduct possession award queued") return false;
+    int found = -1;
+    for (int i = 0; i < 7; ++i) {
+        const auto& ball = balls[i];
+        if (ball.conduct_restart_penalty != penalty.id) continue;
+        if (found >= 0 || i > 2 || !scoring(ball.type) || !ball.phase_active || ball.live ||
+            ball.dead_reason != "penalty" || ball.restart_team != 1 - players[penalty.player].team ||
+            ball.crown_restart_penalty >= 0 || ball.crown_deadline >= 0 || ball.timeout_until >= 0 ||
+            ball.controller >= 0) return false;
+        for (const auto& other : penalties)
+            if (other.ball == i && other.crown_restoration_pending) return false;
+        found = i;
+    }
+    if (found < 0) return false;
+    if (award_ball) *award_ball = found;
+    return true;
+}
+bool Match::queue_conduct_possession_award(int penalty_id, int ball, int team) {
+    if (!valid_ || status == Status::Live || status == Status::Complete ||
+        penalty_id <= 0 || penalty_id > static_cast<int>(penalties.size()) ||
+        ball < 0 || ball > 2 || !team_index(team))
+        return reject("conduct possession award requires a valid stoppage, penalty, scoring ball and team");
+    auto& penalty = penalties[penalty_id - 1];
+    if (penalty.id != penalty_id || !penalty.pending || penalty.severity != Severity::Moderate ||
+        !player_index(penalty.player) || !team_index(players[penalty.player].team) ||
+        team != 1 - players[penalty.player].team || penalty.crown_restoration_pending)
+        return reject("only a pending Moderate penalty may award possession to the offender's opponents");
+    auto& selected = balls[ball];
+    if (!selected.phase_active || !scoring(selected.type) || selected.live ||
+        selected.dead_reason != "stoppage" || selected.crown_restart_penalty >= 0 ||
+        selected.conduct_restart_penalty >= 0 || selected.crown_deadline >= 0 || selected.timeout_until >= 0)
+        return reject("the scoring ball must have no existing dead-ball remedy");
+    for (const auto& other : balls) if (other.conduct_restart_penalty == penalty_id)
+        return reject("the conduct possession award is already queued");
+    for (const auto& other : penalties) if (other.ball == ball && other.crown_restoration_pending)
+        return reject("an outstanding Crown remedy already owns this ball");
+    dead(ball, "penalty");
+    selected.restart_team = team;
+    selected.conduct_restart_penalty = penalty_id;
+    penalty.disposition = "conduct possession award queued";
+    emit("conduct_possession_award_queued", penalty.player, ball, team, 0, penalty.disposition, penalty_id);
     last_error.clear(); return true;
 }
 bool Match::recall_chase(int ball) {
@@ -442,6 +512,8 @@ int Match::record_penalty(int player, const std::string& reason, Severity severi
 bool Match::resolve_penalty(int id, const std::string& disposition, bool apply_removal) {
     if (!valid_ || id <= 0 || id > static_cast<int>(penalties.size()) || disposition.empty() || status == Status::Live ||
         !penalties[id - 1].pending) return reject("resolve a pending penalty at a stoppage with a disposition");
+    for (const auto& ball : balls) if (ball.conduct_restart_penalty == id)
+        return reject("serve the queued conduct possession award through an actual protected restart");
     auto& penalty = penalties[id - 1]; auto& p = players[penalty.player];
     if (!apply_removal && (penalty.severity == Severity::Serious || penalty.severity == Severity::Severe))
         return reject("removal and ejection cannot be declined");

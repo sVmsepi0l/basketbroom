@@ -3,6 +3,7 @@
 #include "GameFramework/GameStateBase.h"
 #include <memory>
 #include "BBRuleEngine.h"
+#include "BBCombatRules.h"
 #include "BBMatchState.generated.h"
 class ABBRiderCharacter;
 class ABBBall;
@@ -30,6 +31,11 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly) float LiveSeconds = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 PendingPenaltyCount = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) FString PendingPenaltySummary;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bBloodbroom = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) int32 ConductFoulCount = 0;
+    UPROPERTY(Replicated, BlueprintReadOnly) FString LastConductCall;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bConductReviewPending = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) FString ConductReviewStatus;
     UPROPERTY() TArray<TObjectPtr<ABBRiderCharacter>> Riders;
     UPROPERTY() TArray<TObjectPtr<ABBBall>> Balls;
     void HandleAction(ABBRiderCharacter* Rider, int32 Action, int32 Value = 0, FVector Aim = FVector::ZeroVector);
@@ -40,6 +46,10 @@ public:
     bool TryPossess(ABBRiderCharacter* Rider, ABBBall* Ball);
     bool TryCatch(ABBRiderCharacter* Rider, ABBBall* Ball);
     void Release(ABBRiderCharacter* Rider, FVector Aim);
+    void CastSpell(ABBRiderCharacter* Rider, int32 SpellIndex, FVector Aim);
+    void ConfirmImpediment(ABBRiderCharacter* Rider, uint64 AttackId);
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<int32> DevelopmentGetConductState() const;
     /** Server GameMode teardown only; clears custody, never historical sanctions. */
     void ReleaseDepartedSlot(int32 RosterIndex);
     void NoCrown(ABBBall* Ball);
@@ -55,6 +65,20 @@ public:
     static FString PositionName(int32 Position);
 private:
     std::unique_ptr<BB::Match> Rules;
+    std::unique_ptr<BB::CombatPolicy> Combat;
+    TMap<int32, TWeakObjectPtr<ABBRiderCharacter>> CombatOccupants;
+    int32 CombatPhase = -1;
+    int32 ConductOffender = -1;
+    int32 ConductVictimTeam = -1;
+    int32 ConductRestartBall = -1;
+    FVector ConductMark = FVector::ZeroVector;
+    uint64 LastConductAttack = 0;
+    int32 LastConductViolations = 0;
+    void SyncCombatRoster();
+    int32 CombatIndex(const ABBRiderCharacter* Rider) const;
+    void TickSpells(float LiveDelta);
+    void ReviewConduct(ABBRiderCharacter* Referee, bool bEject);
+    bool CanOfficiate(const ABBRiderCharacter* Rider) const;
     double MillisecondCarry = 0;
     float BotAccumulator = 0;
     float ReviewDelay = 0;

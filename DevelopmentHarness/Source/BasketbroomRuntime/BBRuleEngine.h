@@ -42,6 +42,7 @@ struct Ball {
     Millis timeout_until = -1, crown_deadline = -1, protection_until = -1;
     int restart_team = -1;
     int crown_restart_penalty = -1;
+    int conduct_restart_penalty = -1;
     std::array<double, 3> crown_mark{{0, 0, 0}};
 };
 struct Hurley {
@@ -117,6 +118,9 @@ public:
     // dead for an eligible opposing restart after resume; later same-ball
     // remedies remain queued for the following stoppage.
     bool prepare_crown_restart(int penalty_id);
+    // Queue a Moderate scoring-ball possession remedy at a stoppage. The
+    // penalty remains pending until an eligible opponent takes restart().
+    bool queue_conduct_possession_award(int penalty_id, int ball, int team);
     bool recall_chase(int ball);
     // Returns positive penalty id, or -1 on rejection. -1 committed_ms means now.
     int record_penalty(int player, const std::string& reason, Severity severity,
@@ -149,6 +153,7 @@ private:
     bool available(int player) const;
     bool live_ball(int ball);
     bool carries_scoring_ball(int player) const;
+    bool valid_conduct_award(const Penalty& penalty, int* award_ball = nullptr) const;
     bool process_batch_impl(Millis at_ms, const std::vector<PointEvent>& events);
     void emit(const std::string& kind, int player = -1, int ball = -1, int team = -1,
               std::int64_t value = 0, const std::string& reason = "", int penalty_id = -1);

@@ -41,6 +41,13 @@ From a PowerShell terminal in this repository:
 **Practice.cmd** opens the accelerated native match. **Local-Multiplayer.cmd**
 opens a packaged host and client on this computer with practice clocks.
 
+For a desktop launcher, run `./Install-DesktopShortcut.ps1` in PowerShell. It
+creates **Basketbroom** on your current Windows Desktop and opens Practice mode
+through this checkout's `Play.ps1`, so later completed local packages are used
+automatically. Run it again to refresh the shortcut and package icon. Keep this
+checkout in place; unrelated same-named shortcuts are preserved, and the
+installer does not change Windows security settings.
+
 The default `-Mode Auto` uses the latest package and its native regulation map.
 `-Practice` uses accelerated native clocks: three-minute quarters and a Snitch
 release after one minute of live play. `-Mode Training` selects the retained
@@ -65,6 +72,13 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **1–6:** choose Netminder, Chaser, Trapper, Ranger, Hurleyback, or Scout during the lobby or a stoppage.
 - **T:** switch teams during the lobby or a stoppage. **Tab:** show the position guide.
 - **Enter:** host starts/resumes play, or starts a new match after the certified final result. **P:** host calls a stoppage.
+- **Q:** cast. **Z / X:** select a spell. **R:** Protego. **V:** spellbook.
+- **B:** host selects Bloodbroom in the initial lobby. **F7 / F9:** host serves a pending BB-0 call with a possession award or ejection in the limited playtest referee interface.
+
+Gamepad bindings and their validation status are documented in
+[controller support](Docs/controller-support.md). The post-MVP promotional
+gameplay video is planned as actual **3840 × 2160, 16:9** footage; see the
+[gameplay promo brief](Docs/gameplay-promo.md).
 
 You begin in a Ranger slot and can choose another position before play.
 Put the red-orange **Quaffle** through a large hoop for **13** points or a purple
@@ -83,6 +97,12 @@ equipment, and the opening layout. Ordinary stoppages preserve field positions;
 new quarters and phases use their defined opening layouts.
 
 ## What is implemented
+
+The [BB-0 wandplay adapter](Docs/native-wandplay.md) adds eighteen sporting spell
+effects, a spellbook, vitality, wand/shield visuals and conduct review after
+applied hits. The complete base-game repertoire is cataloged; remaining spell
+adapters are explicitly marked pending. Bloodbroom waives Unforgivables and
+headshots only. Its penalty choices and spell tuning remain provisional.
 
 `DevelopmentHarness/Source/BasketbroomRuntime/` now supplies the enabled native
 C++ runtime: CharacterMovement broom flight, authority-owned balls, the sixteen
@@ -262,6 +282,8 @@ Hurleyback selection, host-only controls, matching final results and stoppage
 state, host rematch, and continued play after a graceful client departure.
 Manual chase capture, remote networking, flight feel and the audio mix still
 need further playtesting.
+The requested [4K landscape gameplay promo](Docs/gameplay-promo.md) is a later
+milestone, following the prototype MVP playtest; no social publishing is authorized.
 See `Docs/validation.md` for evidence and limits; local reports describe individual
 runs and do not guarantee that every later rebuild passes.
 

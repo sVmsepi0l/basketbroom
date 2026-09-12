@@ -3,6 +3,8 @@
 #include "BBAdmission.h"
 #include "BBGameMode.h"
 #include "BBRiderCharacter.h"
+#include "BBSpellCatalog.h"
+#include "BBSpellVisual.h"
 #include "CollisionQueryParams.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
@@ -102,6 +104,7 @@ void ABBMatchState::BeginPlay()
     Super::BeginPlay();
     if (!HasAuthority()) return;
     bPractice = GetWorld()->URL.HasOption(TEXT("Practice"));
+    bBloodbroom = GetWorld()->URL.HasOption(TEXT("Bloodbroom"));
     ResetMatchRules();
     for (int32 I = 0; I < 7; ++I)
     {
@@ -128,6 +131,14 @@ void ABBMatchState::ResetMatchRules()
     BB::Config Config;
     if (bPractice) { Config.quarter_ms = 180000; Config.snitch_release_ms = 60000; Config.overtime_ms = 120000; }
     Rules = std::make_unique<BB::Match>(Config);
+    if (!Combat) Combat = std::make_unique<BB::CombatPolicy>();
+    Combat->reset_match(bBloodbroom ? BB::CombatVariant::Bloodbroom : BB::CombatVariant::Regulation);
+    Combat->set_live(false);
+    CombatOccupants.Empty(); CombatPhase = -1;
+    ConductFoulCount = 0; LastConductCall.Empty();
+    bConductReviewPending = false; ConductReviewStatus.Empty();
+    ConductOffender = ConductVictimTeam = ConductRestartBall = -1;
+    LastConductAttack = 0; LastConductViolations = 0;
     Rules->pause("pregame selection");
     MillisecondCarry = 0;
     BotAccumulator = ReviewDelay = 0;
@@ -136,7 +147,12 @@ void ABBMatchState::ResetMatchRules()
     bInitialized = false;
     bLive = false;
     for (ABBRiderCharacter* R : Riders)
-        if (IsValid(R)) { R->StunRemaining = 0; R->bInteractHeld = false; R->ForceNetUpdate(); }
+        if (IsValid(R))
+        {
+            R->StunRemaining = R->SpellCooldownRemaining = R->ShieldRemaining = 0;
+            R->ImpedimentRemaining = R->DisarmRemaining = R->LumosRemaining = 0;
+            R->Vitality = 100.f; R->bInteractHeld = false; R->ForceNetUpdate();
+        }
 }
 void ABBMatchState::ResetOpeningLayout()
 {
@@ -155,7 +171,8 @@ void ABBMatchState::ResetOpeningLayout()
     {
         if (!IsValid(B)) continue;
         // A delayed Crown award takes priority over the neutral period layout.
-        if (Rules->balls[B->BallIndex].crown_restart_penalty > 0) continue;
+        if (Rules->balls[B->BallIndex].crown_restart_penalty > 0
+            || Rules->balls[B->BallIndex].conduct_restart_penalty > 0) continue;
         B->Home = OpeningBallLocation(B->BallIndex);
         B->LastTouchTeam = -1;
         B->ChaseTime = B->BallIndex * 2.4f;
@@ -172,6 +189,9 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, bLive); DOREPLIFETIME(ABBMatchState, Winner);
     DOREPLIFETIME(ABBMatchState, LiveSeconds);
     DOREPLIFETIME(ABBMatchState, PendingPenaltyCount); DOREPLIFETIME(ABBMatchState, PendingPenaltySummary);
+    DOREPLIFETIME(ABBMatchState, bBloodbroom); DOREPLIFETIME(ABBMatchState, ConductFoulCount);
+    DOREPLIFETIME(ABBMatchState, LastConductCall); DOREPLIFETIME(ABBMatchState, bConductReviewPending);
+    DOREPLIFETIME(ABBMatchState, ConductReviewStatus);
 }
 FString ABBMatchState::PositionName(int32 Position)
 {
@@ -193,6 +213,8 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
         if (bHuman) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
         Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->StunRemaining > 0;
     }
+    if (bConductReviewPending && ConductOffender >= 0 && ConductOffender < 16)
+        Occupied[ConductOffender] = true;
     const int32 Team = Counts[0] <= Counts[1] ? 0 : 1;
     // The first local login can precede GameState::BeginPlay. There cannot be
     // historical penalties yet; use the clean default roster for that one path.
@@ -401,6 +423,7 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || NewPosition < 0 || NewPosition > 5 || NewTeam < 0 || NewTeam > 1) return;
     if (bLive) { Say(TEXT("Positions are locked during live play. Choose at the next stoppage.")); return; }
+    if (bConductReviewPending) { Say(TEXT("Resolve the BB-0 conduct call before changing positions.")); return; }
     if (Rules->status == BB::Status::Review || Rules->status == BB::Status::Complete) return;
     if (R->Position == NewPosition && R->TeamIndex == NewTeam) return;
     const auto& CurrentPlayer = Rules->players[R->RosterIndex];
@@ -437,22 +460,29 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
     if (!HasAuthority() || !Rules || !IsValid(R) || !Riders.Contains(R) || R->RosterIndex < 0 || R->RosterIndex >= 16) return;
     if (Action == 2) { ChangePosition(R, Value, R->TeamIndex); return; }
     if (Action == 3) { ChangePosition(R, R->Position, Value); return; }
+    if (Action == 8)
+    {
+        if (CanOfficiate(R) && !bInitialized && Status == TEXT("LOBBY"))
+        {
+            bBloodbroom = !bBloodbroom;
+            Combat->reset_match(bBloodbroom ? BB::CombatVariant::Bloodbroom : BB::CombatVariant::Regulation);
+            Combat->set_live(false);
+            Say(bBloodbroom ? TEXT("BLOODBROOM - Unforgivables and headshots permitted. Other BB-0 rules apply.")
+                           : TEXT("BB-0 - No Unforgivables, headshots, mobbing, double-taps or holding."));
+        }
+        return;
+    }
+    if (Action == 9 || Action == 11) { ReviewConduct(R, Action == 11); return; }
     if (Action == 4 || Action == 5)
     {
         // Listen-server period control belongs to the host. A dedicated server
         // delegates it to the first connected participant below.
-        bool bCanStart = R->IsLocallyControlled();
-        if (GetNetMode() == NM_DedicatedServer)
+        if (!CanOfficiate(R)) return;
+        if (bConductReviewPending)
         {
-            // A dedicated server has no local player. Give its first connected
-            // participant period control, with stable PlayerState ordering.
-            int32 FirstPlayerId = MAX_int32;
-            for (ABBRiderCharacter* Other : Riders)
-                if (IsValid(Other) && Other->IsPlayerControlled() && Other->GetPlayerState())
-                    FirstPlayerId = FMath::Min(FirstPlayerId, Other->GetPlayerState()->GetPlayerId());
-            bCanStart = R->GetPlayerState() && R->GetPlayerState()->GetPlayerId() == FirstPlayerId;
+            R->NotifySpellResult(TEXT("Resolve the BB-0 call: F7 possession award or F9 ejection (playtest referee)."));
+            return;
         }
-        if (!bCanStart) return;
         const bool bRematch = Rules->status == BB::Status::Complete && Action == 4;
         if (bRematch)
         {
@@ -485,6 +515,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         return;
     }
     if (!bLive || R->StunRemaining > 0) return;
+    if (Action == 6 || Action == 7) { CastSpell(R, Action == 7 ? 1 : Value, Aim); return; }
     if (Action == 0)
     {
         ABBBall* Nearest = nullptr; float Distance = FMath::Square(425.f);
@@ -515,7 +546,12 @@ void ABBMatchState::Tick(float Dt)
         MillisecondCarry += FMath::Max(0.f, Dt) * 1000.0;
         const BB::Millis Whole = static_cast<BB::Millis>(MillisecondCarry);
         MillisecondCarry -= Whole;
-        Rules->advance(Whole);
+        const BB::Millis Consumed = Rules->advance(Whole);
+        if (Consumed > 0)
+        {
+            Combat->advance(Consumed);
+            TickSpells(Consumed / 1000.f);
+        }
         for (int32 I=0; I<7; ++I)
         {
             auto& State = Rules->balls[I];
@@ -524,13 +560,13 @@ void ABBMatchState::Tick(float Dt)
             if (State.dead_reason == "score" || State.dead_reason == "hurley_foul" || State.dead_reason == "penalty" || State.dead_reason == "crown_restart")
             {
                 const bool bCrownRestart = State.dead_reason == "crown_restart";
-                const FVector SearchMark = bCrownRestart ? CrownRestartLocation(State) : B->GetActorLocation();
+                const FVector SearchMark = I == ConductRestartBall ? ConductMark : bCrownRestart ? CrownRestartLocation(State) : B->GetActorLocation();
                 ABBRiderCharacter* Receiver = nullptr;
                 double NearestDistance = TNumericLimits<double>::Max();
                 for (ABBRiderCharacter* R : Riders)
                 {
                     if (!IsValid(R) || R->TeamIndex != State.restart_team) continue;
-                    if (I < 3 && !bCrownRestart)
+                    if (I < 3 && !bCrownRestart && I != ConductRestartBall)
                     {
                         if (R->Position == 0) { Receiver = R; break; }
                         continue;
@@ -550,15 +586,17 @@ void ABBMatchState::Tick(float Dt)
                 }
                 if (Receiver && Rules->restart(I,Receiver->RosterIndex))
                 {
-                    const FVector Mark = bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
+                    const bool bConductRestart = I == ConductRestartBall;
+                    const FVector Mark = bConductRestart ? ConductMark : bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
                     PlaceRider(Receiver, Mark, Receiver->TeamIndex ? 180.f : 0.f);
                     B->ResetBall(Mark + FVector(0,0,80));
                     for (ABBRiderCharacter* Other : Riders)
                         if (Other->TeamIndex != Receiver->TeamIndex && FVector::DistSquared(Other->GetActorLocation(),Mark) < FMath::Square(396.24f))
                         {
-                            if (bCrownRestart) ClearCrownRestartSpace(Other, Mark);
+                            if (bCrownRestart || bConductRestart) ClearCrownRestartSpace(Other, Mark);
                             else PlaceRider(Other, Mark + (Other->GetActorLocation()-Mark).GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector) * 450.f, Other->GetActorRotation().Yaw);
                         }
+                    if (bConductRestart) ConductRestartBall = -1;
                 }
             }
         }
@@ -574,8 +612,12 @@ void ABBMatchState::Tick(float Dt)
                     Balls[Penalty.ball]->ResetBall(CrownRestartLocation(Rules->balls[Penalty.ball]) + FVector(0,0,80));
             }
             else if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic)
-                Rules->resolve_penalty(Penalty.id,"automatic rules enforcement",true);
-    if (Rules->status == BB::Status::Review)
+            {
+                bool bQueuedConductAward = false;
+                for (const auto& Ball : Rules->balls) bQueuedConductAward |= Ball.conduct_restart_penalty == Penalty.id;
+                if (!bQueuedConductAward) Rules->resolve_penalty(Penalty.id,"automatic rules enforcement",true);
+            }
+    if (Rules->status == BB::Status::Review && !bConductReviewPending)
     {
         ReviewDelay += Dt;
         if (ReviewDelay >= 2.f) { Rules->certify(); ReviewDelay = 0; }
@@ -596,6 +638,7 @@ void ABBMatchState::SyncRules()
     TealScore = static_cast<int32>(Rules->scores[0]); CopperScore = static_cast<int32>(Rules->scores[1]);
     const bool bWasLive = bLive;
     Quarter = Rules->quarter; Winner = Rules->winner; bLive = Rules->status == BB::Status::Live;
+    SyncCombatRoster();
     if (bWasLive && !bLive)
         for (ABBBall* B : Balls) if (IsValid(B)) B->RecentThrower.Reset();
     PendingPenaltyCount = 0; PendingPenaltySummary.Empty();
