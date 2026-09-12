@@ -1,7 +1,7 @@
 # Basketbroom — UE5.8 broom sport
 
 A first-person broom sport alpha built in **Unreal Engine 5.8**. The active native
-game has a sixteen-rider roster, selectable positions, seven balls, broom flight,
+game has two, opposing eight-rider teams, selectable positions, seven balls, broom flight,
 ballistic goals, continuous chase catches, and regulation match state in an
 original open-crown arena. The native Editor and Windows Development game build
 successfully. Focused gameplay, opening, rematch, Bludger, local networking,
