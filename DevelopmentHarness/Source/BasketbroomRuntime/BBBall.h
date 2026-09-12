@@ -5,6 +5,7 @@
 class ABBRiderCharacter;
 class ABBMatchState;
 class UStaticMeshComponent;
+class UStaticMesh;
 class UMaterialInterface;
 UCLASS()
 class BASKETBROOMRUNTIME_API ABBBall : public AActor
@@ -16,6 +17,10 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Mesh;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> LeftWing;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> RightWing;
+    UPROPERTY() TArray<TObjectPtr<UStaticMesh>> ChaseWingMeshes;
+    UPROPERTY() TObjectPtr<UMaterialInterface> SnitchWingMaterial;
     UPROPERTY(ReplicatedUsing=OnRep_Appearance, BlueprintReadOnly) int32 BallIndex = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) TObjectPtr<ABBRiderCharacter> Holder;
     UPROPERTY(Replicated, BlueprintReadOnly) TObjectPtr<ABBRiderCharacter> CapturingRider;
@@ -53,6 +58,8 @@ public:
     bool DevelopmentSetFlightFixture(FVector Location, FVector Velocity);
     void ResetBall(FVector Location);
 private:
+    FVector PreviousVisualLocation = FVector::ZeroVector;
+    void UpdateChaseVisual(float DeltaSeconds);
     void StepFlight(float DeltaSeconds);
     void StepCapture(float DeltaSeconds);
 };

@@ -66,6 +66,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Equipment")
     bool bHurleyVisible = false;
 
+    /** Cosmetic stock skeletal body with an authored Basketbroom seated loop. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Basketbroom|Art")
+    bool bSkeletalRiderEnabled = false;
+
     UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
     FVector GetAimDirection() const;
 
@@ -94,6 +98,12 @@ private:
 
     UPROPERTY()
     TObjectPtr<UMaterialInterface> CopperMaterial;
+
+    UPROPERTY()
+    TArray<TObjectPtr<UMaterialInterface>> SkeletalTealMaterials;
+
+    UPROPERTY()
+    TArray<TObjectPtr<UMaterialInterface>> SkeletalCopperMaterials;
 
     TSet<FKey> MovementKeys;
     int32 LastVisualTeam = INDEX_NONE;

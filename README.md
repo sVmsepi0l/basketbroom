@@ -1,20 +1,27 @@
 # Basketbroom — UE5.8 broom sport
 
 A first-person broom sport alpha built in **Unreal Engine 5.8**. The active native
-game has two, opposing eight-rider teams, selectable positions, seven balls, broom flight,
+game has two opposing eight-rider teams, selectable positions, seven balls, broom flight,
 ballistic goals, continuous chase catches, and regulation match state in an
 original open-crown arena. The native Editor and Windows Development game build
 successfully. Focused gameplay, opening, rematch, Bludger, local networking,
-and audio suites pass; two packaged processes also connect and join. Full regulation,
+and audio suites pass. Two packaged processes also share role changes, scores,
+stoppages, certified results and host rematches in local play. Full regulation,
 remote multiplayer validation, and final art remain in development.
 
-![Actual Unreal render of the retained training mode, with its training HUD](Docs/Screenshots/training-flight.png)
+![Actual UE5.8 native Scout flight with the regulation HUD](Docs/Screenshots/native-flight.png)
 
 The active project is `DevelopmentHarness/BasketbroomDev.uproject`. The folder
 name is historical: this is now a standalone UE5.8 game project. It is not an
 installable Hogwarts Legacy mod. Creator Kit research and the original mod
 port remain in `Docs/` and `Mod/`; UE5.8 assets are not compatible
 with Hogwarts Legacy's Creator Kit engine.
+
+The Creator Kit port now has a saved dungeon, native return actor and registered
+entrance SQL. Launching the Kit through Epic resolved its WB sign-in failure.
+A normal Play session displayed the Hogwarts character standing in the arena;
+the automated runtime checks remain incomplete. See
+[Hogwarts integration](Docs/hogwarts-integration.md) for the evidence and next steps.
 
 ## Play
 
@@ -85,24 +92,28 @@ Snipe, one scheduled Snitch, and two Bludgers. Goal checks require the whole bal
 to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
 returns are exercised by the native integration suite.
 
-The venue, team colors, riders, broom cockpit and HUD are generated original
-assets. Python authors saved Unreal assets; native matches run in C++. Native
+The venue, team colors, broom cockpit and HUD use generated original assets.
+Riders now use Epic's locally staged Quinn mannequin with an authored seated
+flight animation and team materials. Python authors saved Unreal assets; native matches run in C++. Native
 pickup, throw, goal, and Snipe-catch events trigger original synthesized sounds.
 The retained training mode runs in compiled Blueprints and has four original
 sounds for throw, score, catch, and bounce feedback.
 
 The current visual pass adds an original basalt texture, material variation,
 stadium masonry/seating, terrain, trees, metal goal rims and twilight lighting.
-Characters remain procedural placeholders; this is not an AAA art release.
-An original Hurley prop compiles in the native runtime and awaits rendering
-checks. Its approximately 103 cm overall length and open shallow
+The latest pass adds animated skeletal riders and original flapping copper
+Snipe and ivory Snitch wings. Both teams and both chase balls have been rendered
+and inspected in the native game. See `Docs/skeletal-rider-art.md` and
+`Docs/chase-equipment-art.md` for reproducible asset setup and current limits.
+The original Hurley prop has also passed native rendering checks. Its
+approximately 103 cm overall length and open shallow
 pocket are provisional: the current oversized Bludger does not physically fit.
 This visual addition does not implement striking or certify equipment dimensions.
 
 Full regulation still needs penalty-shot execution, wand gameplay, and complete
 officiating/adjudication flows. The rules engine has broader phase and penalty
-coverage than the current in-game presentation. Character animation, polished
-character assets, match balance, and audio mixing need further work.
+coverage than the current in-game presentation. Sport-specific animation,
+finished character assets, match balance, and audio mixing need further work.
 Passing the focused native checks does not certify every regulation phase or
 autonomous match behavior.
 
@@ -118,9 +129,11 @@ Earlier standalone training packages remain available in the local build folder.
 
 ## Native builds and multiplayer development
 
-The portable native rules engine passes **60 C++ scenarios**, including the
+The portable native rules engine passes **68 C++ scenarios**, including the
 54 reference cases. The separate native Unreal integration suite now passes
-**35/35** checks in one authority PIE world. Native Editor compilation and Win64
+**35/35** checks in one authority PIE world. The latest combined native run passed
+**96/96** checks across gameplay, admission, disconnect, networking, opening and
+Snitch suites. Native Editor compilation and Win64
 Development compilation/cooking/packaging succeeded using Visual Studio 2026,
 MSVC **14.51.36257**, Windows SDK **26100**, and the .NET Framework **4.8 SDK**.
 The regulation map is staged and enabled. Packaged native startup and a
@@ -136,7 +149,10 @@ To prepare another machine and rebuild the native editor target:
 
 Windows may require administrator approval for Microsoft's signed installer.
 After compilation, reopen the editor and run `Tools/stage_regulation.py` as
-needed. Use `Multiplayer.ps1 -Mode LocalTest` for a
+needed. Reproduce the locally staged Epic mannequin dependencies and authored
+rider assets using `Tools/stage_skeletal_rider.py` as described in
+`Docs/skeletal-rider-art.md`; those stock dependencies are not stored in Git.
+Use `Multiplayer.ps1 -Mode LocalTest` for a
 listen server and loopback client, `-Mode Host`, or `-Mode Join -Address <host>`.
 All seventeen same-process networking checks pass, including client flight,
 pickup, and throw replication. The launcher prefers the
@@ -208,10 +224,10 @@ python -m unittest discover -s Rules -v
 python -m compileall -q Tools Rules
 ```
 
-Completed checks include **54 Python rule-reference tests**, **60 portable C++
+Completed checks include **54 Python rule-reference tests**, **68 portable C++
 rules scenarios**, **35 native gameplay checks**, **19 practice Snitch/rematch
 checks**, **11 opening-layout checks**, **9 Bludger checks**, **17 local network
-checks**, and **11 native audio checks**. The retained
+checks**, **7 admission checks**, **7 disconnect checks**, and **11 native audio checks**. The retained
 training mode also passed **15 gameplay**, **15 AI**, and **4 flight** checks;
 its final chase HUD rebuild was rechecked and packaged. These suites have
 different scopes: reference rules do not exercise Unreal actors, and authority
@@ -239,10 +255,13 @@ Quark goals. `Tools/test_native_bludgers.py` checks control-clock resets, impact
 clearance, and opposing-Hurleyback restarts in isolated PIE fixtures.
 Training interactive checks verified E pickup, mouse release, a 13-point goal,
 mouse aim, and packaged startup. Those observations are not native packaged
-validation. In a Sep12 native packaged practice build, physical **6** selected
-Scout, **T** switched to Copper, and **Enter** started a live 2:59 practice clock;
-those observations preceded the latest opening changes. Physical P/Tab checks remain pending. Flight feel,
-chase difficulty, and audio still need human playtesting.
+validation. September 12 native packaged checks exercised physical **6/T**
+position/team selection, **Tab** help, and host **P/Enter** stoppage/resume.
+The final package also passed two-process loopback checks for client **5**
+Hurleyback selection, host-only controls, matching final results and stoppage
+state, host rematch, and continued play after a graceful client departure.
+Manual chase capture, remote networking, flight feel and the audio mix still
+need further playtesting.
 See `Docs/validation.md` for evidence and limits; local reports describe individual
 runs and do not guarantee that every later rebuild passes.
 

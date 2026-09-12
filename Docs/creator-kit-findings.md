@@ -6,7 +6,7 @@ Verified locally on 2026-09-10. These are implementation findings, not instructi
 
 - The installed Hogwarts Legacy Creator Kit is Unreal **4.27.2**, licensee branch `++UE4+Release-4.27`, compatible changelist `17155196`. The installed `Engine/Build/Build.version` is authoritative for this mod; stock Unreal 5.8 is a separate toolchain.
 - Project: `C:/Program Files/HogwartsLegacyCreatorKit/PhoenixGame/Phoenix.uproject`.
-- Executable: `C:/Program Files/HogwartsLegacyCreatorKit/Engine/Binaries/Win64/UE4Editor.exe`.
+- Authenticated launch: use the signed-in Epic Games Launcher, which starts `C:/Program Files/HogwartsLegacyCreatorKit/Engine/Binaries/Win64/HogwartsLegacyCreatorKit.exe`. Direct `UE4Editor.exe` launching omitted Epic authentication and caused native WB login failure; Epic launching resolved it on 2026-09-12. See [the verified login path](hogwarts-integration.md#authenticated-creator-kit-launch).
 - The project enables `PythonScriptPlugin`, `EditorScriptingUtilities`, `PhoenixUGC` dependencies and the game's Blueprint systems. `AdditionalPluginDirectories` contains `Mods`.
 - Game and editor modules are precompiled. The distributed `PhoenixGame/Source` contains editor resources, not the game C++ source.
 

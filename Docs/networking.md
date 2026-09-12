@@ -1,6 +1,6 @@
 # Basketbroom multiplayer implementation findings
 
-Inspected and exercised in UE 5.8.1. The native runtime in `DevelopmentHarness/Source/BasketbroomRuntime` passed all 17 same-process listen-server/client checks on 2026-09-12, including client flight, pickup, and throw replication. Two separate packaged processes also completed a loopback connection, join, and regulation-map load on 2026-09-12. These are distinct, bounded checks; remote-machine play, latency, full matches, and Hogwarts Legacy multiplayer remain unverified. The retained training mode is local gameplay.
+Inspected and exercised in UE 5.8.1. The native runtime in `DevelopmentHarness/Source/BasketbroomRuntime` passed all 17 same-process listen-server/client checks on 2026-09-12, including client flight, pickup, and throw replication. Two separate packaged processes also passed physical loopback checks for role selection, host authority, shared result/rematch, matching stoppage state and graceful client departure. These are distinct, bounded checks; remote-machine play, latency, full regulation matches, and Hogwarts Legacy multiplayer remain unverified. The retained training mode is local gameplay.
 
 ## What the installed authoring API supports
 
@@ -78,15 +78,15 @@ The passing results below use the compiled module, with connection smoke also ru
 
 ## Native rider implementation
 
-`BBRiderCharacter.h/.cpp` now implement the agreed native route. `ABBRiderCharacter` uses `MOVE_Flying`, a 2100 cm/s maximum speed, 3600 cm/s² acceleration, a capsule, a local camera/cockpit, and original mounted-rider primitives attached to the Character mesh for remote movement smoothing. `UBBFlyingMovementComponent` preserves CharacterMovement's native protocol and constrains maximum speed/acceleration while the replicated stun is active. Its `PhysFlying` also enforces the end/side bounds and 207-foot ceiling on both authority and predicted owner, with a controlled rebound; physical lower nets still collide normally. The Character owns the server's stun countdown.
+`BBRiderCharacter.h/.cpp` now implement the agreed native route. `ABBRiderCharacter` uses `MOVE_Flying`, a 2100 cm/s maximum speed, 3600 cm/s² acceleration, a capsule, a local camera/cockpit, and an animated stock Quinn body with original broom/equipment attached to the Character mesh for remote movement smoothing. The authored seated loop and team materials are documented in `skeletal-rider-art.md`. `UBBFlyingMovementComponent` preserves CharacterMovement's native protocol and constrains maximum speed/acceleration while the replicated stun is active. Its `PhysFlying` also enforces the end/side bounds and 207-foot ceiling on both authority and predicted owner, with a controlled rebound; physical lower nets still collide normally. The Character owns the server's stun countdown.
 
 The rider replicates `TeamIndex`, `Position`, `RosterIndex`, `bInteractHeld`, and `StunRemaining`. Team changes refresh visible uniform materials. Key bindings need no project input mapping: WASD, Space/Ctrl, mouse, E press/release, left click, 1–6, T, Enter, P, and Tab. P requests an official stoppage; Tab only changes local help visibility.
 
-Owned reliable RPCs update the held interaction or forward discrete requests to `ABBMatchState::HandleAction`: 0 pickup, 1 throw, 2 position, 3 team, 4 ready, 5 official stoppage. The rider rejects non-finite/non-unit aim, invalid action/role/team ranges, stunned pickup/throw, and excessively rapid actions; MatchState enforces semantic rules and resolves continuous held capture on the server. Match start/stoppage requests are restricted to the local host, or the first connected participant on a dedicated server. Interaction stops are never throttled. Native builds and the bounded local checks pass; full gameplay across separate processes remains to be exercised as described below.
+Owned reliable RPCs update the held interaction or forward discrete requests to `ABBMatchState::HandleAction`: 0 pickup, 1 throw, 2 position, 3 team, 4 ready, 5 official stoppage. The rider rejects non-finite/non-unit aim, invalid action/role/team ranges, stunned pickup/throw, and excessively rapid actions; MatchState enforces semantic rules and resolves continuous held capture on the server. Match start/stoppage requests are restricted to the local host, or the first connected participant on a dedicated server. Interaction stops are never throttled. Native builds and bounded interactive checks across two packaged processes pass; manual ball contests and the adverse-network scenarios below still need validation.
 
 Two development-only Blueprint calls submit input through these same request paths: `DevelopmentRequestAction` and `DevelopmentSetInteraction`. Both require a locally controlled PlayerController in a PIE world and reject Shipping builds. Their boolean result means the input entered a bounded 32-entry FIFO, never that the server accepted the gameplay result. Native Rider Tick dispatches the FIFO in order through the ordinary input/RPC methods. This deferred dispatch is necessary because Python's `FEditorScriptExecutionGuard` forces Actor RPC callspace to local execution during reflected calls (`PyUtil.cpp:644`, `Actor.cpp:5469`); the test must leave that guard before sending network requests. Keyboard input remains immediate. A held-interaction fixture must explicitly clear its hold during cleanup, and unpossession/restart clears queued input. No rules or score setter is exposed by this bridge.
 
-## Required runtime proof
+## Remaining runtime proof
 
 1. Host plus one separate client: each possesses a different Character, both move, and each sees the other's movement. Repeat as separate packaged processes rather than relying only on one-process PIE.
 2. Simultaneous pickup requests for one ball: exactly one server-approved holder; rejection arrives without client-side score or possession divergence.
@@ -107,13 +107,79 @@ The suite temporarily changes the three publicly editable, readable `LevelEditor
 
 Owned client input goes through the native development hooks and ordinary reliable server RPCs. Checks observe a replicated pregame role change and held interaction, rejection of client start/pause requests, accepted host start/stoppage, and matching phases and clocks. A server-only free-ball fixture launches the Quaffle through a large hoop; ordinary native flight and scoring must award exactly 13 points and replicate that result once. The corresponding fixture call on the client must fail. Client `AddMovementInput` then travels through CharacterMovement saved moves: the latest observed server displacement was 1,236.07 cm, with a 94.94 cm client/server difference at the sampled frame (the check requires less than 150 cm). The fixture then waits for movement to settle. Client pickup produces matching possession in both worlds, and client throw releases that possession with an observed 4,407.29 cm/s flight velocity in both worlds. These measurements do not establish precise reconciliation or correction under latency. CPU movement and other equipment are isolated only inside the disposable server PIE world to make these cases deterministic. Cleanup ends both worlds and verifies restoration of the settings controlled by the script; the operator restores the net-mode UI selection separately.
 
-This is **local networking inside one editor process**, with a real client/server authority boundary. All 17 checks passed in 20.468 seconds on 2026-09-12. The corrected pickup fixture enables native ball Tick for 0.4 seconds so the 0.25-second kickoff cooldown expires normally; frozen equipment had kept that grace period active indefinitely. That failure was in fixture timing and did not establish a replication defect. This suite does not establish LAN/internet, remote-machine, movement prediction or reconciliation under latency, packet-loss, late-join, 16-human, or Hogwarts Legacy multiplayer support. Keep the adverse-network scenarios above as remaining validation. The separate eleven passing native audio checks establish local event/component behavior; they do not validate remote audio timing or packet-loss behavior.
+This is **local networking inside one editor process**, with a real client/server authority boundary. All 17 checks passed in 9.625 seconds on 2026-09-12 after the combined art and admission/disconnect build. The corrected pickup fixture enables native ball Tick for 0.4 seconds so the 0.25-second kickoff cooldown expires normally; frozen equipment had kept that grace period active indefinitely. That failure was in fixture timing and did not establish a replication defect. This suite does not establish LAN/internet, remote-machine, movement prediction or reconciliation under latency, packet-loss, late-join, 16-human, or Hogwarts Legacy multiplayer support. Keep the adverse-network scenarios above as remaining validation. The separate eleven passing native audio checks establish local event/component behavior; they do not validate remote audio timing or packet-loss behavior.
+
+## Admission and departure evidence
+
+New humans receive a balanced, unrestricted CPU slot. The admission policy
+excludes pending/restorative penalties, removal, ejection, Donnybrook exclusion
+and physical stun. If every available slot is restricted, the newcomer becomes
+a spectator. Historical sanctions and the opponent's remedies remain on their
+original slots. Ten portable policy cases pass through actual rule transitions.
+
+`Tools/test_native_admission.py` passed **7/7 in 30.984 seconds** on 2026-09-12.
+Public local-player creation/removal and actual Crown/Bludger interactions
+verified unique CPU refill, clean-slot selection, allowed role changes, retention
+and eventual restoration of the original Crown remedy, and spectator-only
+admission when all remaining CPU slots were unavailable. The owned PIE world,
+its time dilation and temporary local players were cleaned up.
+
+`Tools/test_native_disconnect.py` passed **7/7 in 6.110 seconds** on the same
+combined build. A real local client changed its role (slot 12 to 9), incurred a
+Crown foul through a released Quark, picked up a second Quark and executed
+Unreal's ordinary `disconnect`. The server retained sixteen unique slots,
+replaced the departing human with a CPU, released the held ball and preserved
+the earlier foul/remedy and scores. The remaining host then acquired the
+released ball through the actual rules/input path, proving core custody was
+cleared as well as its replicated visual holder. GameMode remembers the current
+slot through swaps because Unreal can destroy/unpossess the pawn before Logout.
+
+Reports are `.local/native-admission-test-results.json`,
+`.local/native-disconnect-test-results.json` and
+`.local/native-admission-rules/results.json`. These are local lifecycle checks;
+they do not establish persistent account identity, remote-machine reconnection,
+abrupt transport loss/timeout, host migration or Hogwarts Legacy multiplayer.
 
 ## Packaged connection and launcher
 
-`Tools/test_packaged_network.ps1` starts two hidden native Development game processes with null rendering and audio, verifies the server actually binds only `127.0.0.1`, then requires server connection acceptance, a uniquely tagged join, successful join, client welcome, and completed regulation-map loading. It stops only its own processes after checking executable path and creation time. The 2026-09-12 run passed in 20.464 seconds with no logged engine/network errors; evidence is under `.local/packaged-network/20260912-044752-237-a72f28c4/`. This validates connection and travel, not interactive gameplay across processes.
+`Tools/test_packaged_network.ps1` starts two hidden native Development game processes with null rendering and audio, verifies the server actually binds only `127.0.0.1`, then requires server connection acceptance, a uniquely tagged join, successful join, client welcome, and completed regulation-map loading. It stops only its own processes after checking executable path and creation time. The 2026-09-12 combined native package `Development-20260912-092259-936` passed in 24.004 seconds with no logged engine/network errors; evidence is under `.local/packaged-network/20260912-092514-172-15e37b37/`. Both owned processes were stopped successfully. This automated smoke covers connection and travel; the subsequent interactive run has its own evidence below.
 
 `Multiplayer.ps1` now prefers the latest native package, with `-EditorGame` available for development. `-Mode LocalTest -Practice` opens two visible windows on loopback and waits for the host's listening log before starting the client. `-Mode Host` and `-Mode Join -Address <host>` support direct addresses; remote connections remain to be tested. `Local-Multiplayer.cmd` opens the local practice pair. The host presses Enter after players choose positions.
+
+## Physical two-process gameplay evidence
+
+Package **`Development-20260912-093008-251`** was exercised through two visible
+native processes on September 12. The local practice run is
+`.local/Multiplayer/20260912-093603-884`, using loopback port **18780**.
+`.local/packaged-multiplayer-controls-20260912.json` records the physical keyboard
+and visible UI observations, with no gameplay-state injection:
+
+- Client **5** selected Copper/Hurleyback; the host saw the replicated role
+  message. Client **Enter** did not start the lobby. Host **Enter** did, and the
+  client received LIVE clock, equipment and score state. Client **P** did not
+  stop live play.
+- Both views reached the same certified Copper win, **Teal 113–Copper 417**, in
+  quarter one at **01:45**. Client **Enter** did not rematch. Host **Enter**
+  started a live rematch; the host view showed **0–0, 03:00, LIVE**. The client's
+  initial reset frame was not directly observed.
+- Host **P** then stopped at **02:54**, **Teal 87–Copper 0**. The client matched
+  the stoppage status, clock and scores, and retained Copper/Hurleyback.
+- Client **Alt+F4** disconnected cleanly. The host still showed **02:54, 87–0**;
+  host **Enter** resumed play, reaching **02:47, Teal 87–Copper 69**, before the
+  host also exited with **Alt+F4**.
+
+Both logs contain normal viewport-close exit requests, object-system shutdown
+and final exit lines. The host logged connection cleanup when the client left.
+Final exits were **09:43:14 client** and **09:43:44 host** local time. The log
+review found no engine/network errors or network warnings. Logs corroborate
+connection/process lifecycle; displayed role, authority and score observations
+come from the physical UI pass.
+
+This establishes the listed interactive behavior across two real local processes.
+It does not establish manual pickup/throw/catch, a held-ball departure in the
+packaged run, remote-machine connectivity, adverse-network behavior, full-length
+regulation, sixteen human participants or sustained performance. Held-ball
+departure and remedy preservation remain separately scoped PIE evidence above.
 
 ## Hogwarts Legacy boundary
 

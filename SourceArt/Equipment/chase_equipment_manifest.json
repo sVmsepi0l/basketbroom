@@ -1,0 +1,84 @@
+{
+  "generator": "Basketbroom.ChaseWings.v1",
+  "original_geometry": true,
+  "decorative_only": true,
+  "physics_radius_unchanged": true,
+  "assets": [
+    {
+      "name": "SM_BB_SnipeWingLeft",
+      "file": "C:\\Git\\basketbroom\\SourceArt\\Equipment\\SM_BB_SnipeWingLeft.obj",
+      "vertices": 360,
+      "polygons": 306,
+      "sha256": "8b7f6e8a948e80480432a47d1326efc6ccbcce86427edd5139e0c1be7931f6c2",
+      "bounds_cm": [
+        [
+          -31.920854917835218,
+          -0.14836363636363636,
+          -1.3575
+        ],
+        [
+          12.261298701298701,
+          82.84702378431113,
+          3.2675
+        ]
+      ]
+    },
+    {
+      "name": "SM_BB_SnipeWingRight",
+      "file": "C:\\Git\\basketbroom\\SourceArt\\Equipment\\SM_BB_SnipeWingRight.obj",
+      "vertices": 360,
+      "polygons": 306,
+      "sha256": "5671db778fe2b76d97a71da1e000d8ca7360c5b19983837edd065ea68cd2d5b5",
+      "bounds_cm": [
+        [
+          -31.920854917835218,
+          -82.84702378431113,
+          -1.3575
+        ],
+        [
+          12.261298701298701,
+          0.14836363636363636,
+          3.2675
+        ]
+      ]
+    },
+    {
+      "name": "SM_BB_SnitchWingLeft",
+      "file": "C:\\Git\\basketbroom\\SourceArt\\Equipment\\SM_BB_SnitchWingLeft.obj",
+      "vertices": 360,
+      "polygons": 306,
+      "sha256": "c5be579942824811de1165f7c077f7a740f04cee5dd162021a9cfb21453a4b5a",
+      "bounds_cm": [
+        [
+          -21.630268327828,
+          -0.1156538359830558,
+          -1.3575
+        ],
+        [
+          12.272603973845433,
+          105.07259475951527,
+          3.2675
+        ]
+      ]
+    },
+    {
+      "name": "SM_BB_SnitchWingRight",
+      "file": "C:\\Git\\basketbroom\\SourceArt\\Equipment\\SM_BB_SnitchWingRight.obj",
+      "vertices": 360,
+      "polygons": 306,
+      "sha256": "1898bbc34d822c78a813a3d1bb7522e8ee8eed84f1da9981909d64575fca9ecc",
+      "bounds_cm": [
+        [
+          -21.630268327828,
+          -105.07259475951527,
+          -1.3575
+        ],
+        [
+          12.272603973845433,
+          0.1156538359830558,
+          3.2675
+        ]
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 #include "BBRiderCharacter.h"
 
 #include "BBMatchState.h"
+#include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -9,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
@@ -95,11 +97,39 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
     Camera->bUsePawnControlRotation = true;
     Camera->FieldOfView = 92.0f;
 
-    // The Character mesh component also carries native remote-proxy smoothing.
-    // Original primitive body parts attached here inherit that smoothing.
+    // Keep the Character mesh origin/facing unchanged: equipment and the body
+    // share native remote-proxy smoothing. The baked flight pose already fits it.
     GetMesh()->SetRelativeLocation(FVector::ZeroVector);
     GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
     GetMesh()->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GetMesh()->SetGenerateOverlapEvents(false);
+    GetMesh()->SetCanEverAffectNavigation(false);
+
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> RiderMesh(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> FlightPose(TEXT("/Basketbroom/Art/Characters/A_BB_SeatedFlight_Quinn.A_BB_SeatedFlight_Quinn"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> BodyTeal1(TEXT("/Basketbroom/Art/Characters/MI_BB_Quinn_Teal_01.MI_BB_Quinn_Teal_01"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> BodyTeal2(TEXT("/Basketbroom/Art/Characters/MI_BB_Quinn_Teal_02.MI_BB_Quinn_Teal_02"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> BodyCopper1(TEXT("/Basketbroom/Art/Characters/MI_BB_Quinn_Copper_01.MI_BB_Quinn_Copper_01"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> BodyCopper2(TEXT("/Basketbroom/Art/Characters/MI_BB_Quinn_Copper_02.MI_BB_Quinn_Copper_02"));
+    bSkeletalRiderEnabled = RiderMesh.Succeeded() && FlightPose.Succeeded() &&
+        BodyTeal1.Succeeded() && BodyTeal2.Succeeded() && BodyCopper1.Succeeded() && BodyCopper2.Succeeded();
+    if (bSkeletalRiderEnabled)
+    {
+        SkeletalTealMaterials = {BodyTeal1.Object, BodyTeal2.Object};
+        SkeletalCopperMaterials = {BodyCopper1.Object, BodyCopper2.Object};
+        GetMesh()->SetSkeletalMeshAsset(RiderMesh.Object);
+        // This persists single-node animation data safely through registration.
+        GetMesh()->OverrideAnimationData(FlightPose.Object, true, true, 0.f, 1.f);
+        GetMesh()->SetOwnerNoSee(true);
+        GetMesh()->SetOnlyOwnerSee(false);
+        GetMesh()->SetCastShadow(true);
+        GetMesh()->bEnableUpdateRateOptimizations = true;
+        GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+        GetMesh()->SetMaterial(0, BodyTeal1.Object);
+        GetMesh()->SetMaterial(1, BodyTeal2.Object);
+        GetMesh()->ComponentTags.Add(TEXT("BB.SkeletalRider"));
+    }
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
@@ -146,16 +176,27 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         return Component;
     };
 
-    Part(TEXT("Tunic"), Sphere.Object, Teal.Object, FVector(8, 0, 33), FVector(.42, .46, .69), FRotator(-12, 0, 0), false, true);
-    Part(TEXT("Head"), Sphere.Object, Face.Object, FVector(23, 0, 81), FVector(.27, .25, .31), FRotator::ZeroRotator, false);
-    Part(TEXT("Helmet"), Sphere.Object, Teal.Object, FVector(21, 0, 92), FVector(.30, .28, .19), FRotator::ZeroRotator, false, true);
-    Part(TEXT("ChestMark"), Sphere.Object, Ivory.Object, FVector(30, 0, 40), FVector(.027, .17, .24), FRotator(-12, 0, 0), false);
+    if (!bSkeletalRiderEnabled)
+    {
+        Part(TEXT("Tunic"), Sphere.Object, Teal.Object, FVector(8, 0, 33), FVector(.42, .46, .69), FRotator(-12, 0, 0), false, true);
+        Part(TEXT("Head"), Sphere.Object, Face.Object, FVector(23, 0, 81), FVector(.27, .25, .31), FRotator::ZeroRotator, false);
+        Part(TEXT("Helmet"), Sphere.Object, Teal.Object, FVector(21, 0, 92), FVector(.30, .28, .19), FRotator::ZeroRotator, false, true);
+        Part(TEXT("ChestMark"), Sphere.Object, Ivory.Object, FVector(30, 0, 40), FVector(.027, .17, .24), FRotator(-12, 0, 0), false);
+    }
     Part(TEXT("BroomShaft"), Cylinder.Object, Wood.Object, FVector(25, 0, -8), FVector(.07, .07, 2.70), FRotator(90, 0, 0), false);
     Part(TEXT("BroomBristles"), Cone.Object, Bristles.Object, FVector(-148, 0, -8), FVector(.39, .39, 1.03), FRotator(-90, 0, 0), false);
     Part(TEXT("BroomBinding"), Cylinder.Object, Ivory.Object, FVector(-95, 0, -8), FVector(.115, .115, .13), FRotator(90, 0, 0), false);
     Part(TEXT("BroomNose"), Sphere.Object, Wood.Object, FVector(160, 0, -8), FVector(.13, .079, .079), FRotator::ZeroRotator, false);
+    if (bSkeletalRiderEnabled)
+    {
+        // Raised original grip supports the authored wrist/finger positions.
+        // This is visible equipment; no steering or collision behavior is added.
+        Part(TEXT("BroomGripStem"), Cylinder.Object, Wood.Object, FVector(43, 0, -.5), FVector(.045, .045, .155), FRotator::ZeroRotator, false);
+        Part(TEXT("BroomRaisedGrip"), Cylinder.Object, Leather.Object, FVector(43, 0, 7), FVector(.065, .065, .34), FRotator(0, 0, 90), false);
+    }
     for (int32 Side : {-1, 1})
     {
+        if (bSkeletalRiderEnabled) continue;
         const FString Prefix = Side < 0 ? TEXT("Left") : TEXT("Right");
         Part(FName(*(Prefix + TEXT("Arm"))), Sphere.Object, Teal.Object, FVector(32, Side * 24, 32), FVector(.66, .15, .17), FRotator(-40, 0, 0), false, true);
         Part(FName(*(Prefix + TEXT("Glove"))), Sphere.Object, Leather.Object, FVector(56, Side * 21, 11), FVector(.17, .14, .15), FRotator::ZeroRotator, false);
@@ -549,6 +590,12 @@ FVector ABBRiderCharacter::GetCarryLocation() const
 
 void ABBRiderCharacter::RefreshUniform()
 {
+    if (bSkeletalRiderEnabled)
+    {
+        const TArray<TObjectPtr<UMaterialInterface>>& Materials = TeamIndex == 0 ? SkeletalTealMaterials : SkeletalCopperMaterials;
+        for (int32 Index = 0; Index < Materials.Num(); ++Index)
+            if (Materials[Index]) GetMesh()->SetMaterial(Index, Materials[Index]);
+    }
     UMaterialInterface* Material = TeamIndex == 0 ? TealMaterial.Get() : CopperMaterial.Get();
     if (Material)
     {

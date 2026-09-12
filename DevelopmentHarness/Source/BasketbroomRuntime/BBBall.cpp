@@ -91,6 +91,31 @@ ABBBall::ABBBall()
     Mesh->SetStaticMesh(Sphere.Object);
     Mesh->SetCollisionProfileName(TEXT("NoCollision"));
     Mesh->SetCastShadow(true);
+    LeftWing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftWing"));
+    RightWing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightWing"));
+    for (UStaticMeshComponent* Wing : {LeftWing.Get(), RightWing.Get()})
+    {
+        // Follow the smoothed ball mesh, retaining authored centimeter scale.
+        Wing->SetupAttachment(Mesh);
+        Wing->SetAbsolute(false, false, true);
+        Wing->SetMobility(EComponentMobility::Movable);
+        Wing->SetCollisionProfileName(TEXT("NoCollision"));
+        Wing->SetGenerateOverlapEvents(false);
+        Wing->SetCanEverAffectNavigation(false);
+        Wing->SetVisibility(false);
+    }
+    LeftWing->SetRelativeLocation(FVector(0, -50, 0));
+    RightWing->SetRelativeLocation(FVector(0, 50, 0));
+    for (const TCHAR* Path : {TEXT("/Basketbroom/Art/Equipment/SM_BB_SnipeWingLeft"),
+         TEXT("/Basketbroom/Art/Equipment/SM_BB_SnipeWingRight"),
+         TEXT("/Basketbroom/Art/Equipment/SM_BB_SnitchWingLeft"),
+         TEXT("/Basketbroom/Art/Equipment/SM_BB_SnitchWingRight")})
+    {
+        ConstructorHelpers::FObjectFinder<UStaticMesh> WingMesh(Path);
+        ChaseWingMeshes.Add(WingMesh.Object);
+    }
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> WingIvory(TEXT("/Basketbroom/Art/Materials/M_BB_Cream"));
+    SnitchWingMaterial = WingIvory.Object;
     for (const TCHAR* Path : {TEXT("/Basketbroom/Art/Materials/M_BB_BallQuaffle"),
          TEXT("/Basketbroom/Art/Materials/M_BB_BallQuark"), TEXT("/Basketbroom/Art/Materials/M_BB_Copper"),
          TEXT("/Basketbroom/Art/Materials/M_BB_BallSnitch"), TEXT("/Basketbroom/Art/Materials/M_BB_Iron")})
@@ -105,6 +130,7 @@ void ABBBall::BeginPlay()
     Match = GetWorld()->GetGameState<ABBMatchState>();
     Home = GetActorLocation();
     LastLocation = Home;
+    PreviousVisualLocation = Home;
     ChaseTime = BallIndex * 2.4f;
     OnRep_Appearance();
 }
@@ -126,7 +152,41 @@ void ABBBall::OnRep_Appearance()
     Mesh->SetRelativeScale3D(FVector(Radius() / 50.f));
     const int32 MaterialIndex = IsBludger() ? 4 : Kind();
     if (BallMaterials.IsValidIndex(MaterialIndex)) Mesh->SetMaterial(0, BallMaterials[MaterialIndex]);
+    const int32 WingIndex = BallIndex == 3 ? 0 : 2;
+    const bool bWingsReady = IsChase() && ChaseWingMeshes.IsValidIndex(WingIndex + 1)
+        && ChaseWingMeshes[WingIndex] && ChaseWingMeshes[WingIndex + 1];
+    LeftWing->SetVisibility(bWingsReady);
+    RightWing->SetVisibility(bWingsReady);
+    if (bWingsReady)
+    {
+        LeftWing->SetStaticMesh(ChaseWingMeshes[WingIndex]);
+        RightWing->SetStaticMesh(ChaseWingMeshes[WingIndex + 1]);
+        UMaterialInterface* WingMaterial = BallIndex == 4 ? SnitchWingMaterial.Get()
+            : (BallMaterials.IsValidIndex(2) ? BallMaterials[2].Get() : nullptr);
+        LeftWing->SetMaterial(0, WingMaterial);
+        RightWing->SetMaterial(0, WingMaterial);
+    }
     SetActorHiddenInGame(!bActive);
+}
+void ABBBall::UpdateChaseVisual(float DeltaSeconds)
+{
+    if (!IsChase()) return;
+    const FVector Location = Mesh->GetComponentLocation();
+    const FVector Travel = Location - PreviousVisualLocation;
+    PreviousVisualLocation = Location;
+    // Cosmetic heading and flap only: neither actor transforms nor the
+    // authority's capture sphere, flight velocity, or custody are modified.
+    if (Travel.SizeSquared2D() > 1 && Travel.SizeSquared() < FMath::Square(1800.f))
+    {
+        const FRotator Heading(0, Travel.Rotation().Yaw, 0);
+        Mesh->SetWorldRotation(FMath::RInterpTo(Mesh->GetComponentRotation(), Heading, DeltaSeconds, 7.f));
+    }
+    const bool bFlying = Match && Match->bLive && bActive;
+    const float Frequency = bFlying ? (BallIndex == 3 ? 5.f : 7.f) : 1.4f;
+    BobTime = FMath::Fmod(BobTime + DeltaSeconds * Frequency * UE_TWO_PI, UE_TWO_PI);
+    const float Flap = FMath::Sin(BobTime) * (bFlying ? 34.f : 10.f);
+    LeftWing->SetRelativeRotation(FRotator(0, 0, -Flap));
+    RightWing->SetRelativeRotation(FRotator(0, 0, Flap));
 }
 bool ABBBall::DevelopmentSetFlightFixture(FVector Location, FVector Velocity)
 {
@@ -166,6 +226,7 @@ void ABBBall::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!Match) Match = GetWorld()->GetGameState<ABBMatchState>();
+    UpdateChaseVisual(DeltaSeconds);
     if (!HasAuthority())
     {
         // Interpolate only presentation: the actor root remains the replicated
