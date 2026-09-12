@@ -1,7 +1,8 @@
 """Start/stop/inspect/capture the native regulation PIE session.
 
-Editor bridge examples (all mutations are confined to PIE copies):
+Editor bridge examples:
   {"operation": "start", "start_live": true}
+  {"operation": "start", "practice": true, "position": 5, "start_live": true}
   {"operation": "start", "position": 4, "start_live": false}
   {"operation": "inspect"}
   {"operation": "capture", "filename": "Docs/Screenshots/native-flight.png",
@@ -15,6 +16,12 @@ Capture waits two actual game-time frames after preparation/live-start, requests
 HighResShot, and verifies a fresh complete PNG. A written file still needs visual
 review. Optional position (0..5) selects a lobby/stoppage role through ordinary
 queued native input and waits for actual acceptance before starting/capturing.
+Optional practice must be a boolean and is supported only by start. For a new
+session it temporarily replaces Practice in the live EditorEngine's PIE URL,
+restores the exact original URL once the native context exists (also on error,
+finish, or stop), and verifies the match's actual bPractice before continuing.
+An existing session must already match the requested mode. No persistent editor
+settings or time dilation change; presentation/input mutations target PIE copies.
 The helper never assigns scores, clocks, ball states, role fields, or rules.
 It does not load/save editor maps: BB_Regulation must already be selected.
 """
@@ -152,11 +159,76 @@ class SessionOperation:
         self.game_frames = 0
         self.capture_baseline = None
         self.output = None
+        self.practice = self.args.get("practice")
+        self.practice_confirmed = "practice" not in self.args
+        self.editor_engine = None
+        self.editor_url_key = None
+        self.original_editor_url = None
+        self.editor_url_pending = False
         self.data = {"status": "requested", "operation": operation,
                      "engine": unreal.SystemLibrary.get_engine_version(),
                      "requested_utc": datetime.now(timezone.utc).isoformat(),
                      "scope": "native authority PIE session; optional ordinary role/start input and presentation",
                      "report": str(REPORT), "presentation_fixture": None}
+        if not self.practice_confirmed:
+            self.data["practice_launch"] = {"requested": self.practice, "url_override_applied": False}
+
+    def configure_practice_url(self):
+        if self.practice_confirmed:
+            return
+        # In-process PIE reads BuildPlayWorldURL on the live EditorEngine, not
+        # the settings CDO or AdditionalServerGameOptions (verified by Snitch QA).
+        engine_class = unreal.load_class(None, "/Script/UnrealEd.EditorEngine")
+        if engine_class is None:
+            raise RuntimeError("EditorEngine is not reflected")
+        engines = [obj for obj in unreal.ObjectIterator(engine_class)
+                   if obj.get_path_name().startswith("/Engine/Transient.")
+                   and not obj.get_name().startswith("Default__")]
+        if len(engines) != 1:
+            raise RuntimeError("Expected one live EditorEngine, found " + str(len(engines)))
+        self.editor_engine = engines[0]
+        for key in ("InEditorGameURLOptions", "in_editor_game_url_options", "in_editor_game_u_r_l_options"):
+            try:
+                original = self.editor_engine.get_editor_property(key)
+            except Exception:
+                continue
+            self.editor_url_key, self.original_editor_url = key, original
+            break
+        else:
+            raise RuntimeError("Editable InEditorGameURLOptions is not exposed")
+        cleaned = re.sub(r"(?i)(^|\?)Practice(?:=[^?]*)?(?=\?|$)", "", str(self.original_editor_url))
+        requested_url = cleaned + ("?Practice=1" if self.practice else "?Practice=0")
+        self.data["practice_launch"].update(
+            editor_engine=self.editor_engine.get_path_name(), original_url=self.original_editor_url,
+            requested_url=requested_url, url_restored=False)
+        # Mark pending before the setter so partial failure also triggers cleanup.
+        self.editor_url_pending = True
+        self.editor_engine.set_editor_property(self.editor_url_key, requested_url)
+        if self.editor_engine.get_editor_property(self.editor_url_key) != requested_url:
+            raise RuntimeError("Editable PIE game URL did not change")
+        self.data["practice_launch"]["url_override_applied"] = True
+
+    def restore_practice_url(self):
+        if not self.editor_url_pending:
+            return
+        self.editor_engine.set_editor_property(self.editor_url_key, self.original_editor_url)
+        if self.editor_engine.get_editor_property(self.editor_url_key) != self.original_editor_url:
+            raise RuntimeError("Original PIE game URL was not restored")
+        self.editor_url_pending = False
+        self.data["practice_launch"]["url_restored"] = True
+
+    def confirm_practice(self, match):
+        # Release the launch override as soon as context() returns, before any
+        # queued role/start input or presentation changes.
+        self.restore_practice_url()
+        if self.practice_confirmed:
+            return
+        actual = bool(prop(match, "bPractice"))
+        self.data["practice_launch"]["observed"] = actual
+        if actual != self.practice:
+            raise RuntimeError("Native bPractice does not match the requested mode; stop PIE and start a fresh session")
+        self.practice_confirmed = True
+        self.data["practice_launch"]["confirmed"] = True
 
     def begin(self):
         if self.position is not None and (type(self.position) is not int or not 0 <= self.position <= 5):
@@ -170,9 +242,11 @@ class SessionOperation:
                 raise RuntimeError("Select BB_Regulation before starting; the helper does not load maps")
             if unreal.load_class(None, "/Script/BasketbroomRuntime.BBGameMode") is None:
                 raise RuntimeError("The compiled native module must be loaded")
+            self.configure_practice_url()
             levels.editor_request_begin_play()
         else:
-            context()
+            _, match, _, _, _ = context()
+            self.confirm_practice(match)
         if self.operation == "capture":
             self.output = Path(self.args.get("filename", "Docs/Screenshots/native-flight.png"))
             if not self.output.is_absolute():
@@ -198,6 +272,11 @@ class SessionOperation:
 
     def finish(self, status, reason=None):
         self.done = True
+        try:
+            self.restore_practice_url()
+        except Exception:
+            status = "error"
+            reason = (reason or "") + "\nPIE launch URL restoration failed:\n" + traceback.format_exc()
         if self.handle is not None:
             unreal.unregister_slate_post_tick_callback(self.handle)
             self.handle = None
@@ -294,6 +373,7 @@ class SessionOperation:
                 if self.phase == "waiting_for_world" and time.monotonic() - self.started < 20:
                     return
                 raise
+            self.confirm_practice(match)
             game_time = float(unreal.GameplayStatics.get_time_seconds(world))
             if not self.select_position(match, pawn, game_time):
                 return
@@ -364,6 +444,11 @@ def main():
         raise ValueError("Expected operation start, stop, inspect, or capture")
     if "position" in ARGS and operation not in ("start", "capture"):
         raise ValueError("position is supported only for start or capture")
+    if "practice" in ARGS:
+        if operation != "start":
+            raise ValueError("practice is supported only for start")
+        if type(ARGS["practice"]) is not bool:
+            raise ValueError("practice must be an explicit boolean")
     if operation != "inspect":
         for name in TEST_RUNNERS:
             runner = getattr(unreal, name, None)
@@ -372,9 +457,13 @@ def main():
     previous = getattr(unreal, RUNNER_NAME, None)
     if previous and not previous.done and operation != "stop":
         raise RuntimeError("A native session operation is still running; read its report first")
+    if previous and previous.done and getattr(previous, "editor_url_pending", False):
+        previous.restore_practice_url()
     if operation == "stop":
         if previous and not previous.done:
             previous.finish("cancelled", "Explicit stop requested")
+            if getattr(previous, "editor_url_pending", False):
+                previous.restore_practice_url()
         levels, _ = subsystems()
         data = {"operation": operation, "status": "already_stopped"}
         if levels.is_in_play_in_editor():

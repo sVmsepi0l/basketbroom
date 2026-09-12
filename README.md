@@ -8,7 +8,7 @@ successfully. Focused gameplay, opening, rematch, Bludger, local networking,
 and audio suites pass; two packaged processes also connect and join. Full regulation,
 remote multiplayer validation, and final art remain in development.
 
-![Actual Unreal render of the retained training mode, with its training HUD](Docs/Screenshots/training-flight.png)
+![Actual UE5.8 native Scout flight with the regulation HUD](Docs/Screenshots/native-flight.png)
 
 The active project is `DevelopmentHarness/BasketbroomDev.uproject`. The folder
 name is historical: this is now a standalone UE5.8 game project. It is not an
@@ -85,24 +85,28 @@ Snipe, one scheduled Snitch, and two Bludgers. Goal checks require the whole bal
 to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
 returns are exercised by the native integration suite.
 
-The venue, team colors, riders, broom cockpit and HUD are generated original
-assets. Python authors saved Unreal assets; native matches run in C++. Native
+The venue, team colors, broom cockpit and HUD use generated original assets.
+Riders now use Epic's locally staged Quinn mannequin with an authored seated
+flight animation and team materials. Python authors saved Unreal assets; native matches run in C++. Native
 pickup, throw, goal, and Snipe-catch events trigger original synthesized sounds.
 The retained training mode runs in compiled Blueprints and has four original
 sounds for throw, score, catch, and bounce feedback.
 
 The current visual pass adds an original basalt texture, material variation,
 stadium masonry/seating, terrain, trees, metal goal rims and twilight lighting.
-Characters remain procedural placeholders; this is not an AAA art release.
-An original Hurley prop compiles in the native runtime and awaits rendering
-checks. Its approximately 103 cm overall length and open shallow
+The latest pass adds animated skeletal riders and original flapping copper
+Snipe and ivory Snitch wings. Both teams and both chase balls have been rendered
+and inspected in the native game. See `Docs/skeletal-rider-art.md` and
+`Docs/chase-equipment-art.md` for reproducible asset setup and current limits.
+The original Hurley prop has also passed native rendering checks. Its
+approximately 103 cm overall length and open shallow
 pocket are provisional: the current oversized Bludger does not physically fit.
 This visual addition does not implement striking or certify equipment dimensions.
 
 Full regulation still needs penalty-shot execution, wand gameplay, and complete
 officiating/adjudication flows. The rules engine has broader phase and penalty
-coverage than the current in-game presentation. Character animation, polished
-character assets, match balance, and audio mixing need further work.
+coverage than the current in-game presentation. Sport-specific animation,
+finished character assets, match balance, and audio mixing need further work.
 Passing the focused native checks does not certify every regulation phase or
 autonomous match behavior.
 
@@ -118,9 +122,11 @@ Earlier standalone training packages remain available in the local build folder.
 
 ## Native builds and multiplayer development
 
-The portable native rules engine passes **60 C++ scenarios**, including the
+The portable native rules engine passes **68 C++ scenarios**, including the
 54 reference cases. The separate native Unreal integration suite now passes
-**35/35** checks in one authority PIE world. Native Editor compilation and Win64
+**35/35** checks in one authority PIE world. The latest combined native run passed
+**96/96** checks across gameplay, admission, disconnect, networking, opening and
+Snitch suites. Native Editor compilation and Win64
 Development compilation/cooking/packaging succeeded using Visual Studio 2026,
 MSVC **14.51.36257**, Windows SDK **26100**, and the .NET Framework **4.8 SDK**.
 The regulation map is staged and enabled. Packaged native startup and a
@@ -136,7 +142,10 @@ To prepare another machine and rebuild the native editor target:
 
 Windows may require administrator approval for Microsoft's signed installer.
 After compilation, reopen the editor and run `Tools/stage_regulation.py` as
-needed. Use `Multiplayer.ps1 -Mode LocalTest` for a
+needed. Reproduce the locally staged Epic mannequin dependencies and authored
+rider assets using `Tools/stage_skeletal_rider.py` as described in
+`Docs/skeletal-rider-art.md`; those stock dependencies are not stored in Git.
+Use `Multiplayer.ps1 -Mode LocalTest` for a
 listen server and loopback client, `-Mode Host`, or `-Mode Join -Address <host>`.
 All seventeen same-process networking checks pass, including client flight,
 pickup, and throw replication. The launcher prefers the

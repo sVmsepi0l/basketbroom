@@ -1,5 +1,7 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
+#include "BBAdmission.h"
+#include "BBGameMode.h"
 #include "BBRiderCharacter.h"
 #include "CollisionQueryParams.h"
 #include "Components/CapsuleComponent.h"
@@ -183,22 +185,29 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
     Riders.RemoveAll([](const ABBRiderCharacter* R) { return !IsValid(R); });
     if (Riders.Contains(Rider) && Rider->RosterIndex >= 0 && Rider->RosterIndex < 16) return;
     int32 Counts[2] = {0, 0};
-    for (ABBRiderCharacter* R : Riders) if (IsValid(R) && R != Rider && R->IsPlayerControlled()) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
-    const int32 Team = Counts[0] <= Counts[1] ? 0 : 1;
-    int32 Slot = Team * 8 + 4; // Ranger is the most flexible opening position.
-    auto HumanInSlot = [this, Rider](int32 Index) { for (ABBRiderCharacter* R : Riders) if (IsValid(R) && R != Rider && R->RosterIndex == Index && R->IsPlayerControlled()) return true; return false; };
-    if (HumanInSlot(Slot))
+    std::array<bool, 16> Occupied{};
+    for (ABBRiderCharacter* R : Riders)
     {
-        Slot = INDEX_NONE;
-        for (int32 Offset = 0; Offset < 16; ++Offset)
-        {
-            const int32 Candidate = (Team * 8 + Offset) % 16;
-            if (!HumanInSlot(Candidate)) { Slot = Candidate; break; }
-        }
+        if (!IsValid(R) || R == Rider || R->RosterIndex < 0 || R->RosterIndex >= 16) continue;
+        const bool bHuman = R->IsPlayerControlled();
+        if (bHuman) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
+        Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->StunRemaining > 0;
     }
+    const int32 Team = Counts[0] <= Counts[1] ? 0 : 1;
+    // The first local login can precede GameState::BeginPlay. There cannot be
+    // historical penalties yet; use the clean default roster for that one path.
+    const BB::Match InitialRules;
+    const BB::Match* AdmissionRules = Rules ? Rules.get() : (HasActorBegunPlay() ? nullptr : &InitialRules);
+    const int32 Slot = AdmissionRules ? BB::SelectAdmissionSlot(*AdmissionRules, Occupied, Team) : INDEX_NONE;
     if (Slot == INDEX_NONE)
     {
-        if (APlayerController* Player = Cast<APlayerController>(Rider->GetController())) Player->StartSpectatingOnly();
+        if (APlayerController* Player = Cast<APlayerController>(Rider->GetController()))
+        {
+            Player->StartSpectatingOnly();
+            Player->ClientMessage(TEXT("Spectating: no unrestricted player position is available. Rejoin after a position clears or the next match starts."));
+        }
+        UE_LOG(LogTemp, Display, TEXT("Basketbroom newcomer is spectating: no unrestricted roster slot is available."));
+        Riders.Remove(Rider);
         Rider->Destroy();
         return;
     }
@@ -300,6 +309,28 @@ void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
         B->ForceNetUpdate();
     }
 }
+void ABBMatchState::ReleaseDepartedSlot(int32 RosterIndex)
+{
+    if (!HasAuthority() || !Rules || RosterIndex < 0 || RosterIndex >= 16) return;
+    Riders.RemoveAll([](const ABBRiderCharacter* R) { return !IsValid(R); });
+    for (ABBBall* B : Balls)
+    {
+        if (!IsValid(B) || B->BallIndex < 0 || B->BallIndex >= 7
+            || Rules->balls[B->BallIndex].controller != RosterIndex) continue;
+        if (!Rules->release(RosterIndex, B->BallIndex, true)) continue;
+        // The last authoritative ball transform is safe even after its former
+        // rider has been destroyed. This is a neutral drop, not a new throw.
+        B->Holder = nullptr;
+        B->FlightVelocity = FVector::ZeroVector;
+        B->DistanceSinceReleaseCm = 0;
+        B->RecentThrower = nullptr;
+        B->ThrowerIgnoreRemaining = 0;
+        B->ImpactCooldown = 0;
+        B->Cooldown = .3f;
+        B->ForceNetUpdate();
+    }
+    SyncRules();
+}
 void ABBMatchState::ObserveBludgerFlight(ABBBall* B, BB::Contact Contact)
 {
     if (!HasAuthority() || !Rules || !bLive || !IsValid(B) || !Balls.Contains(B)
@@ -387,7 +418,7 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
         if (IsValid(Other) && Other != R && Other->TeamIndex == NewTeam && Other->Position == NewPosition && !Other->IsPlayerControlled()
             && !Rules->players[Other->RosterIndex].ejected && !Rules->players[Other->RosterIndex].donnybrook_excluded
             && Rules->players[Other->RosterIndex].removed_until < 0 && !HasPendingPenalty(Other->RosterIndex)) { Swap = Other; break; }
-    if (!Swap) { Say(TEXT("That position is occupied by another player.")); return; }
+    if (!Swap) { Say(TEXT("That position is occupied or currently restricted.")); return; }
     const int32 OldIndex = R->RosterIndex;
     R->RosterIndex = Swap->RosterIndex; Swap->RosterIndex = OldIndex;
     for (ABBRiderCharacter* Changed : {R, Swap})
@@ -396,6 +427,8 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
         Changed->Position = Roles[Changed->RosterIndex % 8];
         Changed->bInteractHeld = false;
         PlaceRider(Changed, StartLocation(Changed->RosterIndex), Changed->TeamIndex ? 180.f : 0.f);
+        if (ABBGameMode* GameMode = GetWorld()->GetAuthGameMode<ABBGameMode>())
+            GameMode->TrackAssignedRider(Changed);
     }
     Say(FString::Printf(TEXT("%s selected %s. ENTER resumes play."), R->TeamIndex ? TEXT("Copper") : TEXT("Teal"), *PositionName(R->Position)));
 }
