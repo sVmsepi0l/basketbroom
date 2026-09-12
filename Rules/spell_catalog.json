@@ -1,0 +1,1144 @@
+{
+  "schema_version": 1,
+  "catalog_id": "hogwarts_legacy_base_game_player_actions",
+  "verified_on": "2026-09-12",
+  "scope": "Base-game player spell repertoire after relevant unlocks. Enemy, unused, debug and mod-added spells are not admitted merely because an internal asset exists.",
+  "counting": {
+    "spells": 29,
+    "ancient_magic_actions": 2,
+    "spell_menu_tools": 3,
+    "combined_spell_menu_actions": 34,
+    "slottable_spells": 23
+  },
+  "integration_boundary": "Names and behavior categories are catalogued; this file does not claim the UE5 game or the HL mod implements every interaction. Native IDs and paths are evidence, not a public casting API.",
+  "behavior_tags_authority": "Editorial behavior categories for planning; not damage, duration, cooldown, target-eligibility or penalty rules.",
+  "local_evidence": {
+    "engine": "Hogwarts Legacy Creator Kit 4.27.2",
+    "database": {
+      "relative_to_phoenix_content": "SQLiteDB/PhoenixGameData.sqlite",
+      "sha256": "ba341a88a904145932ee6f643e2ecd781f6eb0da00bfc06e8edf0eff4868ab55",
+      "access": "SQLite URI mode=ro&immutable=1",
+      "tables": [
+        "SpellKnowledge",
+        "SpellDefinition"
+      ],
+      "hash_unchanged_after_read": true
+    },
+    "localization": {
+      "relative_to_phoenix_content": "Localization/WIN64/MAIN-enUS.bin",
+      "notes": "English display keys and gameplay/tutorial strings were inspected read-only. Descriptions here are paraphrased.",
+      "sha256": "1209b53b343b747e510d741a84fe684a0f9614085967015a49318af13fe6956e"
+    },
+    "selection_notes": [
+      "SpellKnowledge.AllowInUI alone is not a player-roster filter: contextual essentials are hidden there, while several individual Ancient Magic finisher variants are visible.",
+      "Player display names distinguish Bombarda/Expulso, Imperio/Imperius, Altering Spell/Transformation, combat Transformation/TransformationOverland, Evanesco/Vanishment and Ancient Magic Throw/Oppugno.",
+      "No installed files were edited; the Creator Kit remained closed."
+    ]
+  },
+  "web_sources": [
+    {
+      "id": "official_game_faq",
+      "url": "https://www.harrypotter.com/features/questions-answered-about-hogwarts-legacy-game",
+      "supports": "The game permits learning Imperio, Crucio and Avada Kedavra."
+    },
+    {
+      "id": "avalanche_gameplay",
+      "url": "https://blog.playstation.com/?p=362688",
+      "supports": "Developer descriptions of Accio, Incendio, stealth, Disillusionment and Petrificus Totalus."
+    },
+    {
+      "id": "avalanche_controls",
+      "url": "https://blog.playstation.com/?p=364995",
+      "supports": "Developer descriptions of Basic Cast and Protego."
+    },
+    {
+      "id": "official_impedimenta",
+      "url": "https://www.harrypotter.com/fact-file/spells/the-impediment-jinx",
+      "supports": "Impedimenta is the separate Impediment Jinx in lore; this is not evidence of base-game availability."
+    },
+    {
+      "id": "official_arresto",
+      "url": "https://www.harrypotter.com/fact-file/spells/the-braking-charm",
+      "supports": "Arresto Momentum is the Braking Charm in lore."
+    }
+  ],
+  "confirmed_bb0_rules": {
+    "source": "User direction 2026-09-12; later than the original bible's provisional alpha spell whitelist.",
+    "all_base_game_spells_available_offensively_and_defensively": true,
+    "unforgivables_prohibited": true,
+    "max_teammates_mobbing_one_opponent": 3,
+    "stun_after_visibly_confirmed_impediment_prohibited": true,
+    "headshots_prohibited": true,
+    "physical_holding_prohibited": true,
+    "bloodbroom_exceptions": [
+      "unforgivables_prohibition",
+      "headshot_prohibition"
+    ],
+    "bloodbroom_preserves": [
+      "mobbing_limit",
+      "post_impediment_stun_prohibition",
+      "physical_holding_prohibition"
+    ],
+    "illegal_hit_enforcement_order": [
+      "resolve_actual_hit_effect",
+      "apply_penalty"
+    ],
+    "unresolved": [
+      "Meaning and active membership window of mobbing",
+      "Which effects count as an impediment hit",
+      "Whose visual confirmation qualifies and when it begins/ends",
+      "Which non-Stupefy effects count as stun",
+      "Head hit-volume and ricochet/area-hit attribution",
+      "Concrete physical-holding detection",
+      "Penalty severity and duration mapping",
+      "Exact treatment of Ancient Magic and non-spell tools"
+    ]
+  },
+  "spells": [
+    {
+      "id": "basic_cast",
+      "name": "Basic Cast",
+      "category": "essential",
+      "activation": "basic_cast",
+      "behavior_tags": [
+        "direct_damage"
+      ],
+      "summary": "A repeatable light wand attack.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Stupefy"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "The installed BasicCast UI uses the {Stupefy} input token; do not conflate the display action with the stunning counter.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "Stupefy",
+            "SpellCategory": null,
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Stupefy_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "protego",
+      "name": "Protego",
+      "category": "essential",
+      "activation": "guard",
+      "behavior_tags": [
+        "shield",
+        "timed_counter"
+      ],
+      "summary": "Guards against supported incoming attacks; timing can produce a stronger counter.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Protego"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Protego",
+            "SpellCategory": null,
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Protego_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "stupefy",
+      "name": "Stupefy",
+      "category": "essential",
+      "activation": "protego_counter",
+      "behavior_tags": [
+        "stun",
+        "counterattack"
+      ],
+      "summary": "A stunning counterattack triggered by maintaining Protego after a successful block.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Stupefy",
+          "StupefyHeavy",
+          "StupefyLight"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "The database contains several Stupefy-family IDs. Counter-to-native-record binding still needs live reflection; these are evidence candidates, not a verified cast API.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "Stupefy",
+            "SpellCategory": null,
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Stupefy_Base"
+          },
+          {
+            "SpellTypeID": "StupefyHeavy",
+            "SpellCategory": null,
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_StupefyHeavy_Base"
+          },
+          {
+            "SpellTypeID": "StupefyLight",
+            "SpellCategory": null,
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_StupefyLight_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "revelio",
+      "name": "Revelio",
+      "category": "essential",
+      "activation": "dedicated_action",
+      "behavior_tags": [
+        "reveal"
+      ],
+      "summary": "Reveals nearby discoverable objects and relevant targets.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Revelio"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Revelio",
+            "SpellCategory": "Tool",
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Revelio_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "alohomora",
+      "name": "Alohomora",
+      "category": "essential",
+      "activation": "contextual_interaction",
+      "behavior_tags": [
+        "unlock"
+      ],
+      "summary": "Opens eligible locks through its contextual interaction.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Alohomora"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "Upgrade levels II/III are the same spell, not additional spells.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "Alohomora",
+            "SpellCategory": "Tool",
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Alohomora_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "petrificus_totalus",
+      "name": "Petrificus Totalus",
+      "category": "essential",
+      "activation": "contextual_stealth",
+      "behavior_tags": [
+        "stealth_takedown",
+        "immobilize"
+      ],
+      "summary": "Performs a close stealth takedown on eligible unaware targets.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Petrificus"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "A contextual stealth action; ordinary spell-slot selection is not required.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "Petrificus",
+            "SpellCategory": "CC",
+            "AllowInUI": 0,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Petrificus_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "accio",
+      "name": "Accio",
+      "category": "force",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "pull",
+        "object_movement"
+      ],
+      "summary": "Pulls eligible targets toward the caster.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Accio"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Accio",
+            "SpellCategory": "Forceful",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Accio_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "depulso",
+      "name": "Depulso",
+      "category": "force",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "push",
+        "object_movement"
+      ],
+      "summary": "Pushes eligible targets away.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Depulso"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Depulso",
+            "SpellCategory": "Forceful",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Depulso_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "descendo",
+      "name": "Descendo",
+      "category": "force",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "slam",
+        "vertical_displacement"
+      ],
+      "summary": "Drives an eligible target downward.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Descendo"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Descendo",
+            "SpellCategory": "Forceful",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Descendo_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "flipendo",
+      "name": "Flipendo",
+      "category": "force",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "flip",
+        "disorient",
+        "object_movement"
+      ],
+      "summary": "Flips eligible targets and objects.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Flipendo"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Flipendo",
+            "SpellCategory": "Forceful",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Flipendo_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "arresto_momentum",
+      "name": "Arresto Momentum",
+      "category": "control",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "slow",
+        "movement_impediment"
+      ],
+      "summary": "Slows eligible moving targets and objects.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "ArrestoMomentum"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "ArrestoMomentum",
+            "SpellCategory": "CC",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_ArrestoMomentum_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "glacius",
+      "name": "Glacius",
+      "category": "control",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "freeze",
+        "damage_vulnerability"
+      ],
+      "summary": "Freezes an eligible target, creating an opening for follow-up damage.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Glacius"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Glacius",
+            "SpellCategory": "CC",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Glacius_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "levioso",
+      "name": "Levioso",
+      "category": "control",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "levitate",
+        "movement_impediment"
+      ],
+      "summary": "Suspends eligible targets in the air.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Levioso"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Levioso",
+            "SpellCategory": "CC",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Levioso_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "transformation",
+      "name": "Transformation",
+      "category": "control",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "transfigure_target"
+      ],
+      "summary": "Changes eligible targets into alternate forms.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "TransformationOverland"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "Combat Transformation uses TransformationOverland; Transformation alone is the Room of Requirement Altering Spell.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "TransformationOverland",
+            "SpellCategory": "CC",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_TransformationOverland_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "incendio",
+      "name": "Incendio",
+      "category": "damage",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "fire",
+        "short_range_damage"
+      ],
+      "summary": "Produces a short-range fire attack.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Incendio"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Incendio",
+            "SpellCategory": "Heavy",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Incendio_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "confringo",
+      "name": "Confringo",
+      "category": "damage",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "fire",
+        "ranged_damage"
+      ],
+      "summary": "Fires a long-range blasting attack.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Confringo"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Confringo",
+            "SpellCategory": "Heavy",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Confringo_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "diffindo",
+      "name": "Diffindo",
+      "category": "damage",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "cutting",
+        "direct_damage"
+      ],
+      "summary": "Cuts eligible targets with a damaging slash.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Diffindo"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Diffindo",
+            "SpellCategory": "Heavy",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Diffindo_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "expelliarmus",
+      "name": "Expelliarmus",
+      "category": "damage",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "disarm",
+        "direct_damage"
+      ],
+      "summary": "Disarms eligible armed targets and deals damage.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Expelliarmus"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Expelliarmus",
+            "SpellCategory": "Heavy",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Expelliarmus_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "bombarda",
+      "name": "Bombarda",
+      "category": "damage",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "explosion",
+        "area_damage"
+      ],
+      "summary": "Creates a damaging explosion and breaks eligible obstacles.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Expulso"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Expulso",
+            "SpellCategory": "Heavy",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Expulso_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "lumos",
+      "name": "Lumos",
+      "category": "utility",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "light"
+      ],
+      "summary": "Illuminates the wand and enables light-based interactions.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Lumos"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Lumos",
+            "SpellCategory": "Tool",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Lumos_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "disillusionment",
+      "name": "Disillusionment",
+      "category": "utility",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "conceal_caster",
+        "stealth"
+      ],
+      "summary": "Conceals the caster for stealth; it is not unrestricted invisibility.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Disillusionment"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Disillusionment",
+            "SpellCategory": "Tool",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Disillusionment_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "wingardium_leviosa",
+      "name": "Wingardium Leviosa",
+      "category": "utility",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "levitate_object",
+        "position_object"
+      ],
+      "summary": "Lets the caster move eligible levitated objects.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Wingardium"
+        ],
+        "binding_verified_in_pie": false,
+        "note": "Accio can transition into Wingardium Leviosa on supported objects; this does not create a second roster entry.",
+        "database_evidence": [
+          {
+            "SpellTypeID": "Wingardium",
+            "SpellCategory": "Tool",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Wingardium_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "reparo",
+      "name": "Reparo",
+      "category": "utility",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "repair_object"
+      ],
+      "summary": "Repairs objects designed to support this interaction.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Reparo"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Reparo",
+            "SpellCategory": "Tool",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Reparo_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "conjuring_spell",
+      "name": "Conjuring Spell",
+      "category": "room_of_requirement",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "conjure_furnishing"
+      ],
+      "summary": "Creates permitted Room of Requirement furnishings.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Conjuration"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Conjuration",
+            "SpellCategory": "Sanctuary",
+            "AllowInUI": 1,
+            "NurtureOnly": 1,
+            "UpgradeID0": "Spell_Conjuration_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "altering_spell",
+      "name": "Altering Spell",
+      "category": "room_of_requirement",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "alter_furnishing"
+      ],
+      "summary": "Changes permitted Room of Requirement furnishing properties.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Transformation"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Transformation",
+            "SpellCategory": "Sanctuary",
+            "AllowInUI": 1,
+            "NurtureOnly": 1,
+            "UpgradeID0": "Spell_Transformation_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "evanesco",
+      "name": "Evanesco",
+      "category": "room_of_requirement",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "vanish_furnishing"
+      ],
+      "summary": "Removes permitted conjured furnishings.",
+      "unforgivable": false,
+      "ordinary_bb0": "available_subject_to_contact_rules",
+      "bloodbroom": "available_subject_to_remaining_contact_rules",
+      "native": {
+        "database_spell_ids": [
+          "Vanishment"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Vanishment",
+            "SpellCategory": "Sanctuary",
+            "AllowInUI": 1,
+            "NurtureOnly": 1,
+            "UpgradeID0": "Spell_Vanishment_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "avada_kedavra",
+      "name": "Avada Kedavra",
+      "category": "unforgivable",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "killing_curse"
+      ],
+      "summary": "A killing curse against eligible targets.",
+      "unforgivable": true,
+      "ordinary_bb0": "prohibited_unforgivable",
+      "bloodbroom": "unforgivable_exception_applies_other_contact_rules_remain",
+      "native": {
+        "database_spell_ids": [
+          "AvadaKedavra"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "AvadaKedavra",
+            "SpellCategory": "DarkArts",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_AvadaKedavra_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "crucio",
+      "name": "Crucio",
+      "category": "unforgivable",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "pain",
+        "damage_over_time",
+        "curse"
+      ],
+      "summary": "Inflicts a painful curse on an eligible target.",
+      "unforgivable": true,
+      "ordinary_bb0": "prohibited_unforgivable",
+      "bloodbroom": "unforgivable_exception_applies_other_contact_rules_remain",
+      "native": {
+        "database_spell_ids": [
+          "Crucio"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Crucio",
+            "SpellCategory": "DarkArts",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Crucio_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    },
+    {
+      "id": "imperio",
+      "name": "Imperio",
+      "category": "unforgivable",
+      "activation": "spell_slot",
+      "behavior_tags": [
+        "mind_control",
+        "curse"
+      ],
+      "summary": "Temporarily turns an eligible enemy into an ally.",
+      "unforgivable": true,
+      "ordinary_bb0": "prohibited_unforgivable",
+      "bloodbroom": "unforgivable_exception_applies_other_contact_rules_remain",
+      "native": {
+        "database_spell_ids": [
+          "Imperius"
+        ],
+        "binding_verified_in_pie": false,
+        "database_evidence": [
+          {
+            "SpellTypeID": "Imperius",
+            "SpellCategory": "DarkArts",
+            "AllowInUI": 1,
+            "NurtureOnly": 0,
+            "UpgradeID0": "Spell_Imperius_Base"
+          }
+        ],
+        "localization_display_name_present": true
+      },
+      "base_game_player_castable": true
+    }
+  ],
+  "ancient_magic_actions": [
+    {
+      "id": "ancient_magic",
+      "name": "Ancient Magic",
+      "category": "ancient_magic",
+      "activation": "meter_finisher",
+      "behavior_tags": [
+        "high_impact_finisher"
+      ],
+      "summary": "A meter-funded native magical finisher; animation variants are not separate selectable spells.",
+      "native": {
+        "localization_key": "Spell_Finishers",
+        "database_family": "Finisher*",
+        "binding_verified_in_pie": false
+      },
+      "bb0": "catalogued_separately_exact_sport_treatment_unresolved"
+    },
+    {
+      "id": "ancient_magic_throw",
+      "name": "Ancient Magic Throw",
+      "category": "ancient_magic",
+      "activation": "contextual_throw",
+      "behavior_tags": [
+        "throw_object",
+        "environmental_damage"
+      ],
+      "summary": "Throws eligible environmental objects or supported caught/disarmed projectiles.",
+      "native": {
+        "database_spell_ids": [
+          "Oppugno"
+        ],
+        "binding_verified_in_pie": false
+      },
+      "bb0": "catalogued_separately_exact_sport_treatment_unresolved"
+    }
+  ],
+  "spell_menu_tools": [
+    {
+      "id": "beast_petting_brush",
+      "name": "Beast Petting Brush",
+      "category": "beast_tool",
+      "behavior_tags": [
+        "groom_beast"
+      ],
+      "native": {
+        "asset": "/Game/Gameplay/Nurturing/Creatures/Blueprints/Petting/DA_CreaturePettingBrushToolRecord",
+        "asset_file_present": true
+      },
+      "bb0": "equipment_admission_not_set_by_all_spells_rule"
+    },
+    {
+      "id": "beast_feed",
+      "name": "Beast Feed",
+      "category": "beast_tool",
+      "behavior_tags": [
+        "feed_beast"
+      ],
+      "native": {
+        "asset": "/Game/Gameplay/ToolSet/Items/InventoryItems/CreatureFeed/DA_CreatureFeedToolRecord",
+        "asset_file_present": true
+      },
+      "bb0": "equipment_admission_not_set_by_all_spells_rule"
+    },
+    {
+      "id": "nab_sack",
+      "name": "Nab-Sack",
+      "category": "beast_tool",
+      "behavior_tags": [
+        "rescue_beast"
+      ],
+      "native": {
+        "asset": "/Game/Gameplay/Nurturing/Creatures/Blueprints/CreatureCapture/CaptureDevice/DA_CaptureDeviceToolRecord",
+        "asset_file_present": true
+      },
+      "bb0": "equipment_admission_not_set_by_all_spells_rule"
+    }
+  ],
+  "other_actions_not_spells": {
+    "note": "Not counted in the 34 spell-menu entries. An all-spells direction does not settle consumable, equipment, mount or travel rules.",
+    "examples": [
+      "Dodge and Swift dodge talent",
+      "Broom and beast-mount actions",
+      "Floo travel",
+      "Chinese Chomping Cabbage",
+      "Mandrake",
+      "Venomous Tentacula",
+      "Wiggenweld, Edurus, Maxima, Focus, Thunderbrew and Invisibility potions",
+      "Gear traits and talent upgrades"
+    ]
+  },
+  "impedimenta_gap": {
+    "base_game_player_spell": false,
+    "evidence": "No Impedimenta record in inspected SpellKnowledge or SpellDefinition; no matching text in inspected MAIN-enUS.bin or ordinary spell asset directory.",
+    "distinction": "Official lore treats Impedimenta and Arresto Momentum as separate spells.",
+    "implementation_status": "unresolved",
+    "proposal_not_adopted": "Use Arresto Momentum as the first prototype movement-impediment effect, or separately implement an explicitly named Impedimenta adapter. Do not silently alias the spells or call a mod-added spell base game.",
+    "database_matching_rows": {
+      "SpellKnowledge": 0,
+      "SpellDefinition": 0
+    }
+  },
+  "excluded_examples": [
+    {
+      "name": "Reducto",
+      "native_id": "Reducto",
+      "reason": "Internal/NPC record; not an ordinary learnable player spell in the verified roster."
+    },
+    {
+      "name": "Confundo",
+      "native_id": "Confundo",
+      "reason": "Internal hidden record; its presence does not establish ordinary player availability."
+    },
+    {
+      "name": "Aguamenti",
+      "native_id": "Aguamenti",
+      "reason": "Internal hidden record; not an ordinary selectable player spell."
+    },
+    {
+      "name": "Expecto Patronum",
+      "native_id": "ExpectoPatronum",
+      "reason": "Internal hidden record; not an ordinary learnable player spell."
+    },
+    {
+      "name": "Fiendfyre",
+      "native_id": "FiendFyre",
+      "reason": "Internal hidden record; not an ordinary learnable player spell."
+    },
+    {
+      "name": "Maxima, MT, DH and finisher subvariants",
+      "reason": "Internal variants and encounter implementations are not additional player repertoire entries."
+    }
+  ]
+}

@@ -45,7 +45,7 @@ std::string fingerprint(const Match& m) {
  s<<int(m.phase)<<','<<int(m.status)<<','<<m.quarter<<','<<m.now_ms<<','<<m.period_elapsed_ms<<','<<m.scores[0]<<','<<m.scores[1]<<','<<m.winner<<','<<m.reckoner<<';';
  const auto& e=m.ending; s<<e.active<<','<<e.reason<<','<<e.at_ms<<','<<e.catching_team<<','<<e.catcher<<','<<e.winning_team<<','<<e.catch_points<<';';
  for(const auto& p:m.players) s<<p.team<<','<<int(p.role)<<','<<p.removed_until<<','<<p.ejected<<','<<p.donnybrook_excluded<<';';
- for(const auto& b:m.balls) { s<<int(b.type)<<','<<b.phase_active<<','<<b.live<<','<<b.controller<<','<<b.dead_reason<<','<<b.timeout_until<<','<<b.crown_deadline<<','<<b.protection_until<<','<<b.restart_team<<','<<b.crown_restart_penalty; for(auto v:b.crown_mark)s<<','<<v; s<<';'; }
+ for(const auto& b:m.balls) { s<<int(b.type)<<','<<b.phase_active<<','<<b.live<<','<<b.controller<<','<<b.dead_reason<<','<<b.timeout_until<<','<<b.crown_deadline<<','<<b.protection_until<<','<<b.restart_team<<','<<b.crown_restart_penalty<<','<<b.conduct_restart_penalty; for(auto v:b.crown_mark)s<<','<<v; s<<';'; }
  for(const auto& h:m.hurleys) s<<h.last_player<<','<<h.team<<','<<h.individual_started<<','<<h.team_ms<<','<<h.flight_started<<','<<h.contestable<<','<<h.individual_reset<<','<<h.warned<<';';
  for(const auto& p:m.penalties) { s<<p.id<<','<<p.player<<','<<p.ball<<','<<p.reason<<','<<p.disposition<<','<<int(p.severity)<<','<<p.committed_ms<<','<<p.pending<<','<<p.crown_restoration_pending<<','<<p.crown_restoration_receiver; for(auto v:p.crown_mark)s<<','<<v; s<<';'; }
  for(const auto& l:m.log) s<<l.sequence<<','<<l.at_ms<<','<<l.kind<<','<<l.reason<<','<<l.player<<','<<l.ball<<','<<l.team<<','<<l.penalty_id<<','<<l.value<<';';

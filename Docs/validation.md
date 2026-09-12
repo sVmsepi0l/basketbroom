@@ -2,15 +2,17 @@
 
 Validated locally with Unreal Engine 5.8.1 and Windows 11; native gameplay, practice transitions/rematch, local networking, and physical two-process packaged role/authority/result/rematch/stoppage/departure were checked on 2026-09-12, with the recorded audio evidence below from 2026-09-10. The active project uses the compiled native runtime and `/Basketbroom/Maps/BB_Regulation`. The earlier Blueprint training mode remains available as `/Basketbroom/Maps/BB_Arena`.
 
+The later **BB-0 partial wandplay milestone passed 212 checks: 130 portable C++ and 82 native PIE**, including 17 regulation spell, 3 Bloodbroom and 10 spell-network checks. See the [wandplay validation receipt](native-wandplay-validation.md) for exact runs, engine/build provenance, 18 implemented versus 13 pending adapters, and the separate package/UI outcome. Named package observations below belong to their earlier builds.
+
 ## Native alpha milestone
 
 - Native Editor and Win64 Development game compilation succeeded using Visual Studio 2026, MSVC **14.51.36257**, Windows SDK **26100**, and the .NET Framework **4.8 SDK**.
 - The regulation map was staged, saved, and enabled with `BBGameMode`.
-- **35 native PIE integration checks passed**, with 0 failed and 0 not run. The latest combined-build run took 13.344 seconds and exercised the compiled native GameMode, GameState, rider, and ball classes. The harness waits for observable state and separates queued requests to respect the server's input throttle.
+- **35 native PIE integration checks passed**, with 0 failed and 0 not run. The latest BB-0 regression run took 12.969 seconds and exercised the compiled native GameMode, GameState, rider, and ball classes. The harness waits for observable state and separates queued requests to respect the server's input throttle.
 - The checks cover the sixteen-slot roster and seven balls; lobby/live/stoppage clocks; host team and position selection; live position locks; flight through the open crown and envelope limits; floor/net rebounds; free/carried No Crown; wrong/reverse/rim goal rejection; actual 13/37-point goals; role eligibility; and continuous Snipe progress, reset, 69-point award, and timeout.
 - Native Win64 Development cooking, staging, packaging, and archiving succeeded. `.local/latest-package.json` records a completed native package. Both regulation and training maps are included.
 
-All **17 same-process network checks passed** in 9.625 seconds, including client RPCs, host-only control, score replication, client flight reaching the server, and pickup/throw possession replication. The pickup fixture now lets native ball Tick expire the 0.25-second kickoff grace period; freezing that tick had prevented pickup and was a fixture error, not a demonstrated replication failure.
+All **17 same-process network checks passed** in the latest BB-0 regression run, taking 8.735 seconds, including client RPCs, host-only control, score replication, client flight reaching the server, and pickup/throw possession replication. The pickup fixture now lets native ball Tick expire the 0.25-second kickoff grace period; freezing that tick had prevented pickup and was a fixture error, not a demonstrated replication failure.
 
 On September 12, package **`Development-20260912-092259-936`** passed a two-process loopback connection, join and regulation-map-load smoke test in **24.004 seconds**. The report at `.local/packaged-network/20260912-092514-172-15e37b37/result.json` records no engine/network errors and cleanup of both owned processes. This headless test used `-nullrhi` and `-nosound`; it did not test rendering, audio, role selection or score replication between the packaged processes. The subsequent message-corrected package **`Development-20260912-093008-251`** received the separate physical two-process gameplay pass below. `.local/latest-package.json` follows the most recent build; each observation here identifies its tested package. See [native validation](native-validation.md) for fixture boundaries and [networking](networking.md) for network scope.
 
@@ -42,7 +44,7 @@ This adds actual packaged two-process role/authority, result/rematch, stoppage a
 
 The **54 Python rule-reference tests** passed. They exercise the separate engine-independent model, including rules beyond the playable scene's current scope. The portable C++ engine passed **68 scenarios**, including those 54 reference cases and ordinary Crown restoration cases. Its test executable was compiled independently of Unreal. Neither suite certifies Unreal collisions, presentation, or networking.
 
-Full regulation still has penalty-shot execution, wand gameplay, and officiating/adjudication gaps. Native phase logic in source and portable rule coverage do not mean every phase has received end-to-end gameplay validation.
+Full regulation still has penalty-shot execution, final officiating/adjudication and spell-parity gaps. [Partial native wandplay](native-wandplay-validation.md) now has tested hits, control effects, host referee dispositions and local replication; thirteen contextual adapters remain pending. Native phase logic and portable rule coverage do not mean every phase has received end-to-end gameplay validation.
 
 ## Retained training evidence
 
@@ -66,4 +68,4 @@ The original Hurley has been reviewed in the [native Hurleyback render](Screensh
 
 Four original training sounds and their Blueprint event wiring were built. Native audio event integration passed its focused suite; a listening pass remains pending.
 
-Reports in `.local/` describe individual runs and are regenerated. Re-run `Tools/test_native_playable.py`, `test_native_admission.py`, `test_native_disconnect.py`, `test_native_snitch.py`, `test_native_openings.py`, `test_native_bludgers.py`, `test_native_network.py`, and `test_native_audio.py` after relevant native changes; use `test_playable.py`, `test_bots.py`, and `test_flight.py` for the retained training mode. Rebuilding or launching a package does not automatically repeat these checks. Read the README for play commands and the implemented scope.
+Reports in `.local/` describe individual runs and are regenerated. Re-run the relevant native gameplay, admission/disconnect, chase, openings, Bludger, network and audio suites after related changes; add `Tools/test_native_spells.py` in both variants and `Tools/test_native_spell_network.py` for wandplay. Use `test_playable.py`, `test_bots.py`, and `test_flight.py` for the retained training mode. Rebuilding or launching a package does not automatically repeat these checks. Read the README for play commands and the implemented scope.

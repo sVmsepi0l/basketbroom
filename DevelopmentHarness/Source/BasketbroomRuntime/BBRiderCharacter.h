@@ -9,6 +9,10 @@
 class UCameraComponent;
 class UMaterialInterface;
 class UStaticMeshComponent;
+class UInstancedStaticMeshComponent;
+class UMaterialInstanceDynamic;
+class UPointLightComponent;
+class APlayerController;
 
 /** Native movement prediction with the authoritative stun speed constraint. */
 UCLASS()
@@ -59,8 +63,50 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_StunRemaining, BlueprintReadOnly, Category="Basketbroom|Movement")
     float StunRemaining = 0.0f;
 
+    /** Server MatchState advances spell effects with live match time. */
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float SpellCooldownRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float ShieldRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float ImpedimentRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float DisarmRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float Vitality = 100.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float LumosRemaining = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
+    int32 SelectedSpell = 0;
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
+    FString SpellFeedback;
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
+    float SpellFeedbackRemaining = 0.f;
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|HUD")
+    bool bShowSpellbook = false;
+
+    /** Authority sends an outcome to this rider's owning player only. */
+    void NotifySpellResult(const FString& Message, uint64 ImpedimentAttackId = 0);
+    /** Called only after the owning HUD actually draws the current feedback. */
+    void MarkSpellFeedbackDisplayed();
+
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|HUD")
     bool bShowRoster = false;
+
+    /** Last meaningful local input; labels do not claim a physical transport. */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
+    bool bUsingGamepad = false;
+
+    /** 0 none, 1 possession award, 2 ejection; Menu confirms a separate choice. */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
+    int32 GamepadRefereeChoice = 0;
+
+    UPROPERTY(EditDefaultsOnly, Category="Basketbroom|Input", meta=(ClampMin="1", ClampMax="360"))
+    float GamepadYawDegreesPerSecond = 100.f;
+
+    UPROPERTY(EditDefaultsOnly, Category="Basketbroom|Input", meta=(ClampMin="1", ClampMax="180"))
+    float GamepadPitchDegreesPerSecond = 75.f;
 
     /** Cosmetic equipment only; role 4 outside Donnybrook, with owner-view filtering. */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Equipment")
@@ -83,8 +129,20 @@ public:
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     bool DevelopmentSetInteraction(bool bHeld);
 
+    /** Tests the actual PlayerInput/binding boundary, never a gameplay action. */
+    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    bool DevelopmentInjectGamepadInput(FName KeyName, float Value);
+
+    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    bool DevelopmentFlushControllerInput();
+
+    /** Processed LS/RS axes, catch/rise/descend keys, local catch, flush count. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<float> DevelopmentGetControllerInputState() const;
+
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     UPROPERTY()
@@ -92,6 +150,24 @@ private:
 
     UPROPERTY()
     TArray<TObjectPtr<UStaticMeshComponent>> HurleyParts;
+
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> WandParts;
+    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> ShieldVisual;
+    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> CockpitShieldVisual;
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> WandLight;
+    UPROPERTY() TObjectPtr<UPointLightComponent> WandLamp;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> ShieldMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> CockpitShieldMaterial;
+
+    struct FSpellNotice { FString Message; uint64 AttackId = 0; double QueuedAt = 0.0; };
+    TArray<FSpellNotice> PendingSpellNotices;
+    TSet<uint64> AcknowledgedImpediments;
+    uint64 ActiveImpedimentAttackId = 0;
+    double SpellFeedbackDisplayedAt = -1.0;
+    double ActiveSpellNoticeQueuedAt = 0.0;
+    static constexpr int32 MaxOrdinarySpellNotices = 6;
+    static constexpr int32 MaxCriticalSpellNotices = 8;
+    static constexpr double SpellNoticeDeadline = 3.0;
 
     UPROPERTY()
     TObjectPtr<UMaterialInterface> TealMaterial;
@@ -116,6 +192,33 @@ private:
     double LastServerActionTime = -1.0;
     double LastServerInteractTime = -1.0;
 
+    struct FDevelopmentControllerInput { FKey Key; float Value = 0.f; bool bFlush = false; };
+    TArray<FDevelopmentControllerInput> PendingControllerInputs;
+    bool bObservedViewportFocus = false;
+    bool bLastViewportFocused = false;
+    bool bGamepadRequiresNeutral = false;
+    bool bLastConductReviewPending = false;
+    int32 LastGamepadConductFoulCount = -1;
+    int32 ControllerInputFlushCount = 0;
+
+    void BindControllerInput(UInputComponent* Input);
+    void RegisterControllerInputLifecycle();
+    void TickControllerInput(APlayerController* Player);
+    void ObserveInputDevice(FKey Key);
+    void GamepadPressed(FKey Key);
+    void GamepadReleased(FKey Key);
+    void GamepadMoveAxis(float Value);
+    void GamepadLookYaw(float Value);
+    void GamepadLookPitch(float Value);
+    void ReleaseInteractInput();
+    void SyncGamepadRefereeChoice();
+    float ControllerAxis(const FKey Key) const;
+    bool IsGamepadNeutral(APlayerController* Player) const;
+    bool HasControllerViewportFocus(APlayerController* Player) const;
+    void FlushOwnedControllerInput();
+    void HandleInputDeviceConnection(EInputDeviceConnectionState State, FPlatformUserId User, FInputDeviceId Device);
+    void HandleInputDevicePairing(FInputDeviceId Device, FPlatformUserId NewUser, FPlatformUserId OldUser);
+
     void MovementPressed(FKey Key);
     void MovementReleased(FKey Key);
     void LookYaw(float Value);
@@ -128,6 +231,16 @@ private:
     void RequestReady();
     void RequestStoppage();
     void ToggleRoster();
+    void ToggleSpellbook();
+    void PreviousSpell();
+    void NextSpell();
+    void CastSelectedSpell();
+    void RequestShield();
+    void RequestBloodbroom();
+    void RequestPossessionAward();
+    void RequestEjection();
+    void ShowNextSpellNotice();
+    void RefreshSpellVisuals();
     void SubmitAction(int32 Action, int32 Value = 0);
     void RefreshUniform();
     void RefreshHurley();
@@ -147,4 +260,10 @@ private:
 
     UFUNCTION(Server, Reliable)
     void ServerAction(int32 Action, int32 Value, FVector Aim);
+
+    UFUNCTION(Client, Reliable)
+    void ClientSpellResult(const FString& Message, uint64 ImpedimentAttackId);
+
+    UFUNCTION(Server, Reliable)
+    void ServerAcknowledgeImpediment(uint64 ImpedimentAttackId);
 };
