@@ -47,6 +47,7 @@
 SourceArt/**/*.png
 SourceArt/**/*.tga
 !SourceArt/Textures/T_BB_Basalt_Albedo.png
+!SourceArt/Promo/**/*.png
 
 # Binary Files
 Binaries/*

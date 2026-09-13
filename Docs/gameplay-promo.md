@@ -1,7 +1,8 @@
-# Three-minute prototype gameplay demo
+# Prototype gameplay demo
 
-The prototype showcase targets **three minutes**, landscape **3840 × 2160
-(4K), 16:9, 30 fps**. It demonstrates the current alpha's native gameplay,
+The current showcase targets **three minutes of gameplay**, landscape
+**3840 × 2160 (4K), 16:9, 60 fps**, with a six-second illustrated intro and a
+twelve-second matching outro for a **3:18 complete promo**. It demonstrates the current alpha's native gameplay,
 with staged camera work and automated inputs. It does not claim final art,
 internet multiplayer or completed Hogwarts Legacy integration.
 
@@ -12,7 +13,7 @@ Do not present intended input requests as successful goals, catches or spells.
 Generated screenshots and cinematic mockups are not substitutes for gameplay.
 Creator Kit footage is separate and does not establish standalone game behavior.
 
-The capture pipeline targets 180 seconds at 30 frames per second. Video frame
+The capture pipeline targets 180 seconds at 60 frames per second. Video frame
 zero and the director's timestamp origin must align. Verify the actual footage,
 legibility, sequence duration and frame continuity before delivery. Retain the
 native frames, event manifest, audio receipt and edit commands for reproduction.
@@ -29,7 +30,7 @@ they are not dependencies of the packaged game.
 
 The bridge scripts run in this order:
 
-1. `gameplay_demo_capture.py`: `prepare` with a fresh `.local` output directory.
+1. `gameplay_demo_capture.py`: `prepare` with `fps: 60` and a fresh `.local` output directory.
    It creates its own Practice PIE viewport. Wait for the capture report to
    show `ready`.
 2. `gameplay_demo_director.py`: `prepare`, then `start`. This starts capture at
@@ -124,7 +125,92 @@ Card previews and selected final encoded frames were inspected for clipping,
 readability and unobstructed native referee/result dialogs. The local
 `basketbroom-prototype-4k-v2-validation.json` records independent checks.
 
+## Red-rock intro and outro
+
+`Tools/finish_gameplay_promo.py` adds a **6-second intro** and **12-second outro**
+to the completed 180-second 4K60 review. The same illustrated American Southwest
+red-rock artwork appears at both ends. The intro names Basketbroom and describes
+the broom flight, ball play and spellwork; the outro adds the five requested
+social/project destinations and official brand marks. All intro/outro text
+uses **Google Sans Flex Black (weight 900)**, as requested in the final typography
+revision; `SourceArt/Promo/Fonts` preserves the exact font and license/source details.
+The compositor loads the supplied static Black face directly, verifies the
+renderer selected it, and measures the actual title to retain the approved
+visual size across fonts. No system font installation is required.
+
+The built-in imagegen tool created `SourceArt/Promo/basketbroom-redrock-keyart.png`.
+Its native size is 1672 × 941; the compositor fits the illustration to the 4K
+bookends and typesets text and icons at 4K. This artwork does not represent
+the current in-game arena or final game assets. Full generation/edit prompts
+and first-party icon sources are retained under `SourceArt/Promo`.
+
+The technology badge reads **Hogwarts Legacy Creator Kit mod in development**
+and **Prototype built in Unreal Engine 5.8**. The gameplay in this video comes
+from the standalone UE5.8 prototype; it does not establish a completed HLCK port.
+
+```powershell
+python Tools/finish_gameplay_promo.py `
+  --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-4K60\basketbroom-prototype-4k60-review.mp4" `
+  --art SourceArt/Promo/basketbroom-redrock-keyart.png `
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-4K60" `
+  --name basketbroom-prototype-4k60-promo
+```
+
+Use `--prepare-only` with a fresh output name to render the editable layout and
+intro/outro PNGs before the gameplay is ready. `--layout` accepts the emitted
+JSON for later changes. `--preflight` runs a short, explicitly synthetic
+concatenation fixture in an empty directory; it is never a gameplay delivery.
+
+The final assembly stream-copies all 10,800 gameplay video frames and encodes
+only the bookends. It verifies frame counts, timestamps and non-key video
+packet hashes; H.264 container conversion may insert SPS/PPS headers at key
+frames. Audio is decoded and encoded once more to AAC with exactly six seconds
+of leading silence and twelve seconds after gameplay. There is no gameplay
+frame interpolation, doubling, scaling, or audio gain adjustment at this step.
+Cards and cue times move exactly six seconds later in the complete promo.
+
+The production receipt includes media probes, hashes, commands, art fitting,
+icon provenance and packet checks. Retain the clean gameplay master, separate
+cue WAV, chapter ASS, bookend PNGs, layout JSON and both bookend ASS files for
+the user's edit. Decode the finished file and inspect actual encoded frames
+before delivery.
+
 ## Delivery
+
+### Native 60 fps take and illustrated promo
+
+The 2026-09-13 take in `.local/gameplay-demo/take-60-01` completed **44/44
+observed gameplay checks**, ending **232–37**. Its capture audit verified all
+**10,818 frames** at native **3840 × 2160**, with contiguous names and **10,818
+distinct SHA256 hashes**. The first **10,800 frames** supply exactly 180 seconds
+at 60 fps; the remaining 18 are the natural 0.3-second shutdown tail.
+
+Capture and director origins match exactly. The owned editor exited normally,
+Practice URL and background throttle were restored, and no dirty map/content
+packages remained. `native-60fps-validation.json` and `source-frames.sha256`
+record the source audit. The new take's event manifest drives its own audio
+mix; the prior 30 fps event timings and WAV are not reused.
+
+The delivered `basketbroom-prototype-4k60-promo.mp4` is **198 seconds**, **11,880
+frames**, 4K60, with matching red-rock bookends in **Google Sans Flex Black**.
+It lives under `%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-4K60\`.
+The folder also holds the 180-second clean and captioned gameplay exports,
+editable bookend PNGs/ASS/layout, fonts and official icons, the separate cue WAV,
+source receipts, editing notes and selected encoded frames used for visual QA.
+
+All 10,800 gameplay picture payloads are unchanged in the final assembly, with
+timestamps shifted exactly six seconds. The full final file decodes without
+errors; all ten audio placements align at zero sample lag, and the bookends
+are silent. AAC encoding changes sample values slightly, as documented in the
+audio/production receipts. Both encoded bookends and selected controller,
+position, referee and result-card frames were visually inspected. Independent
+media and visual validation receipts are alongside the video.
+
+The earlier `basketbroom-prototype-4k60-complete` files retain the superseded
+Georgia/Segoe typography intermediate. The **`-promo`** prefix identifies the
+final Google Sans Flex Black version. No social uploads were performed.
+
+### Earlier 30 fps versions
 
 The first full take on 2026-09-12 completed **44/44 observed gameplay checks**
 and reached a certified **232–37 Teal win** after the Snitch catch. The capture
