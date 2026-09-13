@@ -271,6 +271,8 @@ def main():
         review_command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-i", str(clean), "-map", "0:v:0",
                           "-map", "0:a?", "-frames:v", str(count), "-vf", "ass=filename='" + subtitles.name + "'",
                           "-c:a", "copy"] + common + ["-metadata", "title=Basketbroom prototype - review cut", str(review)]
+        receipt["review_encode_command"] = review_command
+        receipt["review_encode_working_directory"] = str(output)
         run(review_command, cwd=output, log=output / (args.name + "-review-encode.log"))
         receipt["review"] = str(review)
         receipt["review_probe"] = inspect_media(ffprobe, review, width, height, fps, count, bool(audio_path))

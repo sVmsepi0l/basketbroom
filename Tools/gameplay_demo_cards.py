@@ -31,7 +31,13 @@ def ass_time(seconds):
 
 
 def text_escape(value):
-    return str(value).replace("\\", "/").replace("{", "(").replace("}", ")").replace("\n", r"\N")
+    # Normalize editorial copy before adding ASS escapes; native HUD text is
+    # already in the source video and never passes through this compositor.
+    return editorial_text(value).replace("\\", "/").replace("{", "(").replace("}", ")").replace("\n", r"\N")
+
+
+def editorial_text(value):
+    return str(value).lower()
 
 
 def rounded_box(width, height, radius=18):
@@ -100,6 +106,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         if end <= start or not original:
             continue
         title, body, accent_name = COPY.get(original, (original, shot.get("caption", shot.get("subtitle", "")), "teal"))
+        title, body = editorial_text(title), editorial_text(body)
         # These native central dialogs must remain fully visible throughout the card.
         top = 1260 if original in ("BB-0  /  APPLY THE HIT, THEN PENALIZE", "THE MATCH-ENDING CATCH") else Y
         panel(start, end, ACCENTS[accent_name], HEIGHT, top)
@@ -117,14 +124,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             (19.0, 23.0, "Sticks: fly + aim\nR1: cast   /   L1: shield"),
             (23.0, 27.0, "DualSense USB: Triangle works.\nMore USB + Bluetooth tests next."),
         ):
+            body = editorial_text(body)
             panel(start, end, ACCENTS["teal"], 365)
-            text(start, end, "CONTROLLER SUPPORT", X + 54, Y + 25, "Title")
+            text(start, end, "controller support", X + 54, Y + 25, "Title")
             controller_icon(start, end)
             text(start, end, body, X + 400, Y + 145, extra=r"\fs54")
-            text(start, end, "Gamepad controls implemented", X + 400, Y + 283,
+            text(start, end, "gamepad controls implemented", X + 400, Y + 283,
                  extra=r"\fs42\1c&H%s&" % ACCENTS["teal"])
-            cards.append({"start": start, "end": end, "title": "CONTROLLER SUPPORT", "subtitle": body,
-                          "footer": "Gamepad controls implemented", "bounds": [X, Y, WIDTH, 365],
+            cards.append({"start": start, "end": end, "title": "controller support", "subtitle": body,
+                          "footer": "gamepad controls implemented", "bounds": [X, Y, WIDTH, 365],
                           "editorial_insert": True, "footage": "Existing automated flight, not a physical-controller recording",
                           "hardware_evidence": "DualSense USB Triangle opens spellbook; remaining USB gameplay and Bluetooth tests pending"})
     if not cards:

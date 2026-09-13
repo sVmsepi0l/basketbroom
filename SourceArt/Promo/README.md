@@ -34,17 +34,23 @@ video resolution. The gameplay footage is separately captured at native
 3840 × 2160 and 60 frames per second. Artwork resolution does not establish
 gameplay rendering resolution or final in-game visual quality.
 
-Both bookends reuse this same artwork plate. The intro names **BASKETBROOM** and
-describes it as **An aerial team sport of broom flight, ball play and spellwork.**
+Both bookends reuse the selected environment's artwork plate. All added text is
+lowercase. The intro names **basketbroom** and describes it as **an aerial team
+sport of broom flight, ball play and spellwork.**
 The outro adds the user's Instagram, X, CurseForge, website and GitHub links.
 The user's final typography choice is **Google Sans Flex Black (weight 900)**
 for all intro/outro text; the exact font and provenance live under `Fonts`.
 Brand marks are composited from the original assets in `BrandIcons`, not drawn
 by image generation. The website globe is an original generic symbol.
 
-The technology badge distinguishes **Prototype built in Unreal Engine 5.8**
-from **Hogwarts Legacy Creator Kit mod in development**. See
+The technology badge distinguishes **prototype built in unreal engine 5.8**
+from **hogwarts legacy creator kit mod in development**. See
 `Docs/hogwarts-integration.md` for the status of the separate Creator Kit port.
+
+The compositor lowercases displayed social labels and URLs while preserving
+the exact destination URLs in the layout JSON. Official icon artwork and font
+identifiers retain their original form. Gameplay overlays follow the same
+lowercase policy; the game's own HUD and environment lettering are unchanged.
 
 `imagegen-prompts.json` preserves the complete initial prompt and selected
 red-rock edit prompt. The superseded alpine draft remains outside the project;

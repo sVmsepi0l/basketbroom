@@ -94,6 +94,12 @@ panels with colored accents and brief fades. Regular cards occupy about 5.5% of
 the frame and remain visible for six seconds. The referee and final-result
 cards move lower to keep the native dialogs readable.
 
+All added editorial text is lowercase, including card headlines, descriptions,
+controller labels, title/outro copy, displayed links and technology badges.
+Normalize visible copy before ASS escaping and text measurement. Keep native
+in-game HUD/environment lettering as captured, official icon artwork unchanged,
+and exact destination URLs, source identifiers and font names intact.
+
 An eight-second controller section runs at **00:19–00:27** over the existing
 automated flight footage. It shows a generic gamepad icon, implemented stick /
 cast / shield mappings, the user's confirmed DualSense USB Triangle input, and
@@ -114,7 +120,8 @@ python Tools/assemble_gameplay_demo.py `
 
 Reuse validates the original capture/director provenance and freshly probes
 the clean file. It preserves the audio, records source hashes and produces a
-new review MP4, captions and export receipt. The clean master and earlier
+new review MP4, captions and export receipt, including the exact review encoder
+arguments and working directory. The clean master and earlier
 review remain available.
 
 The delivered `basketbroom-prototype-4k-v2-review.mp4` passed a complete video /
@@ -151,21 +158,22 @@ bookends and typesets text and icons at 4K. This artwork does not represent
 the current in-game arena or final game assets. Full generation/edit prompts
 and first-party icon sources are retained under `SourceArt/Promo`.
 
-The technology badge reads **Hogwarts Legacy Creator Kit mod in development**
-and **Prototype built in Unreal Engine 5.8**. The gameplay in this video comes
+The technology badge reads **hogwarts legacy creator kit mod in development**
+and **prototype built in unreal engine 5.8**. The gameplay in this video comes
 from the standalone UE5.8 prototype; it does not establish a completed HLCK port.
 
 ```powershell
 python Tools/finish_gameplay_promo.py `
-  --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-4K60\basketbroom-prototype-4k60-review.mp4" `
+  --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Lowercase\basketbroom-prototype-4k60-lowercase-review.mp4" `
   --art SourceArt/Promo/basketbroom-redrock-cliff-alcove-keyart-v2.png `
-  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Environment-v2" `
-  --name basketbroom-prototype-4k60-cliff-alcove
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Lowercase" `
+  --name basketbroom-prototype-4k60-lowercase
 ```
 
 Use `--prepare-only` with a fresh output name to render the editable layout and
 intro/outro PNGs before the gameplay is ready. `--layout` accepts the emitted
-JSON for later changes. `--preflight` runs a short, explicitly synthetic
+JSON for later changes and normalizes its visible text to lowercase before
+measurement and rendering. `--preflight` runs a short, explicitly synthetic
 concatenation fixture in an empty directory; it is never a gameplay delivery.
 
 The final assembly stream-copies all 10,800 gameplay video frames and encodes
@@ -183,6 +191,29 @@ the user's edit. Decode the finished file and inspect actual encoded frames
 before delivery.
 
 ## Delivery
+
+### Current lowercase revision
+
+The current delivery is in
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-Lowercase\`.
+`basketbroom-prototype-4k60-lowercase.mp4` is the complete 3:18 Southwest promo;
+`basketbroom-prototype-4k60-lowercase-review.mp4` is the 180-second gameplay edit.
+Both use lowercase editorial copy. Matching `-intro.png` and `-outro.png` files
+provide the Southwest bookends; `basketbroom-redwoods-coast-lowercase-intro.png`
+and `-outro.png` provide the northern alternate.
+
+The review was freshly encoded from the original clean 4K60 master with only
+the new ASS cards as a visual filter, preserving native HUD/environment case
+and copying the audio. The final assembly preserves all 10,800 new review
+picture payloads at +6 seconds. The earlier uppercase versions are retained.
+
+Independent validation passed **74/74 checks**: all 14 card intervals and 30
+visible card text rows, lowercase bookends, original destination URLs, clean
+source/encoder provenance, complete video/audio decode, 11,880 frames at 60 fps,
+198 seconds, exact audio agreement with the prior promo, ten cues with zero
+sample lag and silent bookends. Fresh encoded controller/role/referee/result
+frames, both encoded Southwest bookends and the northern stills passed visual
+inspection. The adjacent media and visual receipts record the evidence.
 
 ### Native 60 fps take and illustrated promo
 

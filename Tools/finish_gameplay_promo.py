@@ -384,7 +384,15 @@ def finish(args, *, test_spec=None):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,80}", name):
         raise ValueError("Use a plain filename stem containing letters, digits, underscores or hyphens")
     output.mkdir(parents=True, exist_ok=True)
-    if any(output.glob(name + "-*")) or (output / (name + ".mp4")).exists():
+    # The source review and its caption/export receipts may share this stem.
+    # Refuse every path this tool writes, without rejecting unrelated inputs.
+    output_suffixes = [".mp4", "-layout.json", "-production.json", "-fonts",
+                       "-font-measure.ass", "-font-measure.png", "-font-measure.log",
+                       "-gameplay-copy.mp4", "-gameplay-copy.log", "-concat.txt", "-finish.log"]
+    for part in ("intro", "outro"):
+        output_suffixes.extend(f"-{part}{suffix}" for suffix in
+                               (".ass", ".png", ".mp4", "-composite.txt", "-poster.log", "-encode.log"))
+    if any((output / (name + suffix)).exists() for suffix in output_suffixes):
         raise FileExistsError("This output name already exists; choose a fresh name. Nothing will be overwritten.")
     art = args.art.resolve()
     if not art.is_file():
