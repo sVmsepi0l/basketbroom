@@ -20,6 +20,35 @@ COPY = {
     "THE MATCH-ENDING CATCH": ("THE MATCH-ENDING CATCH", "Actual prototype gameplay.\nAutomated and staged for this showcase.", "teal"),
 }
 
+# Opt-in role chapters belong to an observed six-position take. Keep the
+# original director shot keys intact so older captures retain their card plan.
+POSITION_COPY = {
+    "THE NETMINDER": (0, "netminder · 1 per team", "teal", (
+        "guard four hoops. collect a quaffle or quark.\nclear the danger and start the counterattack.",
+        "your team conceded? take the protected restart.\nkeep play moving with a pass, carry or shot.",
+    )),
+    "THE CHASER": (1, "chaser · 2 per team", "gold", (
+        "find a lane. carry, pass and shoot.\nplay the quaffle or either quark.",
+        "one scoring ball at a time.\nquaffle: 13 points. quark: 37 points.",
+    )),
+    "THE TRAPPER": (2, "trapper · 1 per team", "purple", (
+        "read the lanes. intercept a free scoring ball.\nturn the turnover into a counterattack.",
+        "carry, pass or shoot after the interception.\ndefensive duty gives no extra license to foul.",
+    )),
+    "SNIPE  /  69 POINTS": (3, "ranger · 1 per team", "gold", (
+        "score, cover or chase: switch with the game.\nplay scoring balls and pursue both winged targets.",
+        "release your scoring ball before a chase catch.\nsecure the snipe for 69 points; keep moving.",
+    )),
+    "THE HURLEYBACK": (4, "hurleyback · 2 per team", "teal", (
+        "use your hurley to control one bludger.\nprotect teammates and disrupt incoming attacks.",
+        "keep it moving: release before three seconds.\nteam control across passes: six seconds maximum.",
+    )),
+    "SNITCH  /  150 POINTS": (5, "scout · 1 per team", "gold", (
+        "hunt the snipe and snitch. stay within 3.8m.\nhold catch for one uninterrupted second.",
+        "snitch: 150 in regulation; 300 in overtime.\nthe catch triggers final review; scores decide.",
+    )),
+}
+
 # ASS colors are BGR, not RGB.
 ACCENTS = {"teal": "D5E85C", "gold": "7ACBFF", "purple": "FFC798"}
 X, Y, WIDTH, HEIGHT = 96, 350, 1510, 304
@@ -50,6 +79,9 @@ def rounded_box(width, height, radius=18):
 
 def make_captions(manifest, path, duration):
     shots = manifest.get("shots", manifest.get("timeline", []))
+    position_showcase = manifest.get("showcase_positions") is True
+    if position_showcase and not all(any(shot.get("title") == key for shot in shots) for key in POSITION_COPY):
+        raise ValueError("Position showcase requires all six observed role chapters")
     header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 3840
@@ -104,6 +136,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         end = min(float(shot.get("end", shot.get("end_seconds", duration))), start + 6.0, duration)
         original = shot.get("title", shot.get("name", ""))
         if end <= start or not original:
+            continue
+        if position_showcase and original in POSITION_COPY:
+            role, title, accent_name, phases = POSITION_COPY[original]
+            shot_end = min(float(shot.get("end", shot.get("end_seconds", duration))), duration)
+            if shot_end - start < 14 - .001:
+                raise ValueError("Each position chapter needs at least fourteen seconds")
+            for phase, body in enumerate(phases):
+                phase_start, phase_end = start + phase * 7, start + (phase + 1) * 7
+                panel(phase_start, phase_end, ACCENTS[accent_name], HEIGHT)
+                text(phase_start, phase_end, title, X + 54, Y + 25, "Title")
+                text(phase_start, phase_end, body, X + 56, Y + 139)
+                cards.append({"start": phase_start, "end": phase_end, "title": title, "subtitle": body,
+                              "accent": accent_name, "bounds": [X, Y, WIDTH, HEIGHT],
+                              "source_shot_title": original, "position_role": role, "position_phase": phase + 1})
             continue
         title, body, accent_name = COPY.get(original, (original, shot.get("caption", shot.get("subtitle", "")), "teal"))
         title, body = editorial_text(title), editorial_text(body)

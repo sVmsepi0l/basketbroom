@@ -3,7 +3,9 @@
 Bridge operations: prepare, start, inspect, stop. Prepare requires the capture
 helper's fresh Practice lobby; start synchronizes its public start_capture hook.
 The normal take is 180 game seconds, at the capture helper's fixed frame rate.
-duration_seconds (5..180) permits a short camera/capture smoke test.
+Opt-in showcase_positions adds three 14-second position vignettes at second28,
+for 222 seconds. duration_seconds (5..the selected take length) permits a short
+camera/capture smoke test. Rehearsal compresses editorial timing, not physics.
 
 All gameplay results come from the native game. The director submits ordinary
 guarded local input and arranges physical transforms/ball launch velocities.
@@ -45,6 +47,20 @@ SHOTS = [
     (151, 170, "SNITCH  /  150 POINTS", "Scout: secure the catch. Practice release follows 60 live seconds.", "wing detail / pursuit / catch"),
     (170, 180, "THE MATCH-ENDING CATCH", "Actual prototype gameplay. Automated and staged for this showcase.", "result HUD / arena pullback"),
 ]
+
+POSITION_SHOTS = [
+    (28, 42, "THE NETMINDER", "Guard the hoops. Receive an incoming scoring ball and clear it.", "own-end portrait / native catch and clear"),
+    (42, 56, "THE CHASER", "Receive, carry and release a pass into attacking space.", "midfield portrait / native carry and pass"),
+    (56, 70, "THE TRAPPER", "Intercept an inbound Quark and launch a counterattack.", "three-quarter portrait / native interception and release"),
+]
+
+
+def take_shots(showcase_positions=False):
+    if not showcase_positions:
+        return list(SHOTS)
+    original = [(a+42 if a >= 28 else a, b+42 if a >= 28 else b, c, d, e)
+                for a, b, c, d, e in SHOTS]
+    return sorted(original + POSITION_SHOTS, key=lambda shot: shot[0])
 
 
 def prop(obj, name):
@@ -108,12 +124,16 @@ def context():
 class Director:
     def __init__(self, args):
         self.args = dict(args)
-        requested_duration = float(args.get("duration_seconds", 180))
-        if not 5 <= requested_duration <= 180:
-            raise ValueError("duration_seconds must be between 5 and 180")
+        self.showcase_positions = args.get("showcase_positions", False)
+        if not isinstance(self.showcase_positions, bool):
+            raise ValueError("showcase_positions must be a boolean")
+        take_duration = 222 if self.showcase_positions else 180
+        requested_duration = float(args.get("duration_seconds", take_duration))
+        if not 5 <= requested_duration <= take_duration:
+            raise ValueError("duration_seconds must be between 5 and " + str(take_duration))
         self.time_scale = .55 if args.get("rehearsal", False) else 1.0
         self.duration = requested_duration*self.time_scale
-        self.full_take = requested_duration >= 180
+        self.full_take = requested_duration >= take_duration
         self.world, self.match, self.pawn, self.controller = context()
         if (not bool(prop(self.match, "bPractice")) or prop(self.match, "bLive")
                 or str(prop(self.match, "Status")) != "LOBBY" or self.scores() != [0, 0]):
@@ -153,12 +173,13 @@ class Director:
         self.last_publish = -1
         self.last_snitch_active = bool(prop(self.balls[4], "bActive"))
         self.data = {"status": "prepared", "duration_seconds": self.duration,
+                     "showcase_positions": self.showcase_positions,
                      "rehearsal": bool(args.get("rehearsal", False)),
                      "requested_utc": datetime.now(timezone.utc).isoformat(),
                      "engine": unreal.SystemLibrary.get_engine_version(), "world": self.world.get_path_name(),
                      "capture_origin_game_seconds": None, "elapsed_seconds": 0, "events": [], "checks": [],
                      "shots": [{"start_seconds": a*self.time_scale, "end_seconds": min(b*self.time_scale, self.duration), "title": c,
-                                "caption": d, "camera": e} for a, b, c, d, e in SHOTS if a*self.time_scale < self.duration],
+                                "caption": d, "camera": e} for a, b, c, d, e in take_shots(self.showcase_positions) if a*self.time_scale < self.duration],
                      "staging": ["Disposable Practice PIE with the genuine compiled native game and HUD.",
                                  "CPU movement is parked; native main-rider flight uses movement input.",
                                  "Scoring-ball trajectories and spell target transforms are arranged.",
@@ -171,6 +192,9 @@ class Director:
                                      "Not internet multiplayer, physical-controller certification or Hogwarts Legacy integration.",
                                      "Practice clocks compress release timing; regulation Snitch release is later.",
                                      "Audio, when added by the mixer, is an edit using original prototype cues."]}
+        if self.showcase_positions:
+            self.data["staging"].append("The three added role portraits use ordinary host stoppages; only their receive/carry/release portions consume live rule time.")
+            self.data["limitations"].append("Incoming scoring-ball trajectories are staged, not opponent throws or protected-restart adjudication; pass receivers and Hurley strikes are not demonstrated.")
         self.orbit_camera(0)
         self.publish()
 
@@ -189,6 +213,8 @@ class Director:
     def event(self, event, **detail):
         if event not in ("input_action", "physical_staging"):
             detail.setdefault("featured", True)
+        if self.showcase_positions and ("ball_index" in detail or event == "position_change"):
+            detail.setdefault("role", int(prop(self.pawn, "Position")))
         self.data["events"].append({"time_seconds": round(self.elapsed(), 5), "event": event, **detail})
 
     def check(self, name, condition, **detail):
@@ -276,6 +302,13 @@ class Director:
         point = (target or self.pawn).get_actor_location()
         self.camera_at(add(point, offset), add(point, (250, 0, 90)), fov)
 
+    def held_equipment_camera(self):
+        """Three-quarter rider/equipment view; native role/custody HUD stays on."""
+        attack = 1 if int(prop(self.pawn, "TeamIndex")) == 0 else -1
+        self.view(False, hud=True)
+        self.camera_update = lambda: self.tracking_camera(offset=(-800*attack, -950, 260), fov=58)
+        self.camera_update()
+
     def fly_to(self, target):
         start = self.pawn.get_actor_location()
         target = vec(target)
@@ -299,8 +332,16 @@ class Director:
     def wait(self, seconds, predicate=None, update=None):
         return {"seconds": max(0, seconds), "predicate": predicate, "update": update}
 
-    def at(self, seconds, update=None):
+    def at_timeline(self, seconds, update=None):
+        """An absolute editorial second; new position vignettes use this axis."""
         return self.wait(max(0, seconds*self.time_scale-self.elapsed()), update=update)
+
+    def original_time(self, seconds):
+        """Map the unchanged original sequence around the optional insertion."""
+        return seconds + (42 if self.showcase_positions and seconds >= 28 else 0)
+
+    def at(self, seconds, update=None):
+        return self.at_timeline(self.original_time(seconds), update)
 
     def ready_to_cast(self):
         return float(prop(self.pawn, "SpellCooldownRemaining")) <= 0 and float(prop(self.pawn, "StunRemaining")) <= 0
@@ -314,7 +355,7 @@ class Director:
         self.move((-450, 0, 1922), self.target)
         self.controller.set_control_rotation(unreal.Rotator(pitch=0, yaw=0, roll=0))
 
-    def switch_role(self, role):
+    def switch_role(self, role, resume=True):
         self.movement().set_component_tick_enabled(True)
         self.interact(False)
         if prop(self.match, "bLive"):
@@ -325,12 +366,107 @@ class Director:
         yield self.wait(2, lambda: int(prop(self.pawn, "Position")) == role)
         self.check("role_"+str(role)+"_accepted", int(prop(self.pawn, "Position")) == role)
         self.event("position_change", role=role)
+        if not resume:
+            self.park_cpus()
+            return
         yield self.wait(.15)
         self.request(4)
         yield self.wait(2, lambda: bool(prop(self.match, "bLive")))
         self.check("role_"+str(role)+"_resume", bool(prop(self.match, "bLive")))
         self.event("resume")
         self.park_cpus()
+
+    def position_vignette(self, role, start, index, mark, inbound, velocity, carry_target, intro_offset):
+        """Native custody from an arranged inbound trajectory, then normal release."""
+        self.view(False)
+        yield from self.switch_role(role, resume=False)
+        self.move(mark)
+        self.camera_update = lambda: self.tracking_camera(offset=intro_offset, fov=60)
+        baseline = self.scores()
+        yield self.at_timeline(start+4)
+        self.view(True)
+        self.controller.set_control_rotation(look(add(self.pawn.get_actor_location(), (0, 0, 72)), vec(inbound)))
+        self.request(4)
+        yield self.wait(2, lambda: bool(prop(self.match, "bLive")))
+        self.check(f"position_{role}_live_action", bool(prop(self.match, "bLive")))
+        self.event("resume", role=role)
+        ball = self.seed(index, inbound, velocity)
+        def receive_range():
+            a, b = ball.get_actor_location(), self.pawn.get_actor_location()
+            return math.sqrt((a.x-b.x)**2+(a.y-b.y)**2+(a.z-b.z)**2)
+        # StartInteract is a one-shot scoring-ball pickup, so submit it only
+        # after the genuinely moving ball reaches range. Travel also expires
+        # its native .25s reset cooldown; no cooldown/custody field is written.
+        yield self.wait(2, lambda: receive_range() <= 330)
+        self.check(f"position_{role}_incoming_ball_in_range", receive_range() <= 330,
+                   distance_cm=receive_range(), inbound_velocity_cm_s=xyz(ball.get_flight_velocity()))
+        self.interact(True)
+        yield self.wait(1, lambda: prop(ball, "Holder") == self.pawn)
+        self.check(f"position_{role}_actual_pickup", prop(ball, "Holder") == self.pawn,
+                   ball_index=index, role=int(prop(self.pawn, "Position")))
+        self.event("quaffle_pickup" if index == 0 else "quark_pickup", ball_index=index, vignette=True)
+        self.interact(False)
+        carried_from = self.pawn.get_actor_location()
+        carry_began = self.now()
+        def carry_with_readable_camera():
+            self.fly_to(carry_target)
+            # Retain a short native pickup proof, then show the actual body and
+            # held equipment. Only camera presentation changes; movement input
+            # and the original absolute release boundary remain identical.
+            if self.native_view and self.now()-carry_began >= .2:
+                self.held_equipment_camera()
+        yield self.at_timeline(start+8, carry_with_readable_camera)
+        carried_to = self.pawn.get_actor_location()
+        displacement = math.sqrt(sum((getattr(carried_to, k)-getattr(carried_from, k))**2 for k in ("x", "y", "z")))
+        self.check(f"position_{role}_native_carry", prop(ball, "Holder") == self.pawn and displacement > 150,
+                   ball_index=index, movement_input_displacement_cm=displacement)
+        self.movement().stop_movement_immediately()
+        self.pawn.consume_movement_input_vector()
+        self.controller.set_control_rotation(unreal.Rotator(pitch=3, yaw=0 if int(prop(self.pawn, "TeamIndex")) == 0 else 180, roll=0))
+        yield self.wait(.15)
+        self.request(1)
+        yield self.wait(.4, lambda: prop(ball, "Holder") is None)
+        self.check(f"position_{role}_actual_release", prop(ball, "Holder") is None,
+                   ball_index=index, role=int(prop(self.pawn, "Position")))
+        self.event("throw", ball_index=index, vignette=True)
+        released_at = ball.get_actor_location()
+        self.camera_update = lambda: self.tracking_camera(ball, (-850, -520, 310), 68)
+        yield self.wait(.65)
+        free_at = ball.get_actor_location()
+        flight = math.sqrt(sum((getattr(free_at, k)-getattr(released_at, k))**2 for k in ("x", "y", "z")))
+        self.check(f"position_{role}_free_flight", prop(ball, "Holder") is None and flight > 500,
+                   distance_cm=flight, ball_index=index)
+        # Return only the now-free physical ball to its isolated fixture mark.
+        # No new score, catch, reset, ownership or rule-clock assignment occurs.
+        self.seed(index, (0, -700+index*210, 1700))
+        ball.set_actor_tick_enabled(False)
+        yield self.at_timeline(start+10)
+        self.request(5)
+        yield self.wait(2, lambda: not prop(self.match, "bLive"))
+        self.check(f"position_{role}_stopped_tail", not prop(self.match, "bLive"))
+        self.check(f"position_{role}_no_added_score", self.scores() == baseline, scores=self.scores())
+        self.event("position_showcase_complete", role=role, ball_index=index,
+                   native_pickup=True, native_carry=True, native_release=True, scores=self.scores())
+        self.view(False)
+        self.camera_update = lambda: self.tracking_camera(offset=(intro_offset[0], -intro_offset[1], intro_offset[2]), fov=60)
+        yield self.at_timeline(start+14)
+
+    def position_showcases(self):
+        # A mirrored arrangement supports the selected team while keeping all
+        # release endpoints far from either goal plane and from parked CPUs.
+        attack = 1 if int(prop(self.pawn, "TeamIndex")) == 0 else -1
+        def mirror(point):
+            return (point[0]*attack, point[1], point[2])
+        for role, start, index, mark, inbound, velocity, carry, offset in (
+            (0, 28, 0, (-5250, 0, 2300), (-3950, 0, 2103.12), (-1200, 0, 388.88), (-4750, 0, 2300), (750, -950, 280)),
+            (1, 42, 0, (-2200, -650, 1900), (-3300, -650, 2020), (1100, 0, 0), (-1000, -650, 2050), (-750, -850, 220)),
+            (2, 56, 1, (-800, 1150, 2450), (400, 1150, 2580), (-1200, 0, 0), (500, 1150, 2250), (720, -950, 300)),
+        ):
+            yield from self.position_vignette(role, start, index, mirror(mark), mirror(inbound), mirror(velocity), mirror(carry), mirror(offset))
+        yield from self.switch_role(3)
+        self.check("showcase_ranger_restored", int(prop(self.pawn, "Position")) == 3
+                   and bool(prop(self.match, "bLive")) and all(prop(self.balls[i], "Holder") is None for i in (0, 1, 2)),
+                   role=int(prop(self.pawn, "Position")), scores=self.scores())
 
     def observed_score(self, before, points, index, event="goal"):
         delta = [a-b for a, b in zip(self.scores(), before)]
@@ -358,7 +494,9 @@ class Director:
         self.view(True)
         yield self.at(26, lambda: self.fly_to((-1000, 1100, 3400)))
         self.camera_update = lambda: self.tracking_camera(offset=(800, -950, 330))
-        yield self.at(28, lambda: self.fly_to((2000, 0, 2200)))
+        yield self.at_timeline(28, lambda: self.fly_to((2000, 0, 2200)))
+        if self.showcase_positions:
+            yield from self.position_showcases()
 
         # Actual pickup and normal 4400cm/s release into the large hoop.
         self.view(True)
@@ -426,7 +564,20 @@ class Director:
         self.check("bludger_actual_pickup", prop(self.balls[5], "Holder") == self.pawn)
         self.event("bludger_pickup", ball_index=5)
         self.interact(False)
-        yield self.wait(.2)
+        if self.showcase_positions:
+            hold_began = self.now()
+            def show_hurley_control():
+                if self.native_view and self.now()-hold_began >= .2:
+                    self.held_equipment_camera()
+            yield self.wait(2.25, update=show_hurley_control)
+            control = float(self.match.development_get_bludger_control_seconds(5))
+            self.check("hurleyback_observed_control_under_three_seconds", prop(self.balls[5], "Holder") == self.pawn
+                       and 2.0 <= control < 3.0, control_seconds=control, role=int(prop(self.pawn, "Position")))
+            warning = str(prop(self.match, "Announcement"))
+            self.check("hurleyback_native_warning", "HURLEY WARNING" in warning, announcement=warning)
+            self.event("bludger_control", ball_index=5, control_seconds=control, announcement=warning)
+        else:
+            yield self.wait(.2)
         self.request(1)
         yield self.wait(.3, lambda: prop(self.balls[5], "Holder") is None)
         self.check("bludger_actual_release", prop(self.balls[5], "Holder") is None)
@@ -567,7 +718,8 @@ class Director:
                    status=str(prop(self.match, "Status")), winner=int(prop(self.match, "Winner")), scores=self.scores())
         self.event("match_final", winner=winning_team, scores=self.scores())
         yield self.at(175)
-        self.camera_update = lambda: self.camera_at((-7200, -6100, 4200+(self.elapsed()-175)*190), (0, 0, 1700), 63)
+        pullback_origin = self.original_time(175)*self.time_scale if self.showcase_positions else 175
+        self.camera_update = lambda: self.camera_at((-7200, -6100, 4200+(self.elapsed()-pullback_origin)*190), (0, 0, 1700), 63)
         yield self.at(180)
 
     def start(self):
@@ -624,7 +776,7 @@ class Director:
             if self.elapsed() >= self.duration:
                 # LevelCapture startup/finalization can omit its first couple
                 # of frames. Record a short real tail, then let the assembler
-                # trim to precisely 5400 frames for the 180-second master.
+                # trim to the requested native-FPS master frame count.
                 if self.full_take and self.args.get("capture_sync", True) and self.elapsed() < self.duration+.3:
                     if self.camera_update:
                         self.camera_update()

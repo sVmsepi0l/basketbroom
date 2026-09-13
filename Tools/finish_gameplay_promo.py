@@ -5,7 +5,7 @@ Use --prepare-only with --art to review the editable layout and PNG posters
 before the gameplay file is ready. --layout accepts a previously emitted JSON.
 --preflight creates a short, clearly labelled synthetic test in a fresh folder.
 
-Only bookends are video-encoded. All 10,800 gameplay video packets/frames pass
+Only bookends are video-encoded. All validated gameplay video packets/frames pass
 through stream copy; no interpolation or duplicated gameplay frames. Gameplay
 audio is shifted by exactly six seconds without gain changes, then encoded once
 to stereo AAC with silence around it. Official link icons are composited from
@@ -378,7 +378,11 @@ def verify_copied_packets(ffprobe, source, final, intro_frames, gameplay_frames)
 
 
 def finish(args, *, test_spec=None):
-    width, height, intro, gameplay, outro = test_spec or (WIDTH, HEIGHT, INTRO, GAMEPLAY, OUTRO)
+    gameplay_seconds = getattr(args, "gameplay_seconds", GAMEPLAY)
+    if not test_spec and (not math.isfinite(gameplay_seconds) or not 180 <= gameplay_seconds <= 600
+                          or abs(gameplay_seconds * FPS - round(gameplay_seconds * FPS)) > 1e-6):
+        raise ValueError("Gameplay duration must be 180..600 seconds and contain a whole number of 60 fps frames")
+    width, height, intro, gameplay, outro = test_spec or (WIDTH, HEIGHT, INTRO, gameplay_seconds, OUTRO)
     output = args.output_dir.resolve()
     name = args.name
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,80}", name):
@@ -525,6 +529,8 @@ def preflight(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gameplay", type=Path)
+    parser.add_argument("--gameplay-seconds", type=float, default=GAMEPLAY,
+                        help="Expected completed gameplay duration; verified against video frames and audio (default: 180)")
     parser.add_argument("--art", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--name", default="basketbroom-gameplay-promo")
