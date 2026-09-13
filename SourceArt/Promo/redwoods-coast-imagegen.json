@@ -1,0 +1,31 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "intent": "edit",
+  "use_case": "precise-object-edit",
+  "user_request": "for the one that's in a more northern clime, let's use the Redwoods (old growth) area of northern CA / southern OR, highlighting the natural beauty of being seaside-ish as well",
+  "reference_image": "C:\\Users\\bigdi\\.codex\\generated_images\\01a08ab2-5505-7e03-a50a-12bdde623c7e\\exec-732a499f-b270-4bef-916c-51d17e08a41d.png",
+  "reference_role": "edit target; inspected with view_image before edit",
+  "prompt": "Use case: precise-object-edit.\nAsset type: landscape 16:9 Basketbroom promotional intro/outro background plate, intended for 4K video with separately typeset title and links.\nInput image 1 is the EDIT TARGET, an existing northern Basketbroom illustration. Change its environment to the old-growth coast redwoods of far northern California and southern Oregon, emphasizing the region's wild seaside natural beauty.\n\nScene replacement: Remove the castle, snow, alpine peaks, and generic mountain conifers entirely. Replace them with an immersive ancient coast-redwood forest: truly colossal reddish deeply furrowed trunks rising out of frame, layered high canopies, moss, lush sword ferns, and luminous cool maritime fog. Through an open gap in the forest at middle/upper center and right, show a substantial legible view of the rugged Pacific shoreline, blue ocean to a visible horizon, offshore sea stacks, and white surf on a secluded rocky cove. Coastal scenery and the giants of the old-growth forest should both be unmistakable. Soft low coastal sunlight filters through ocean mist, with cool forest shadows and warm highlights on bark and brass. The natural landscape is the setting's hero.\nArena: integrate the existing wooden broom-sport terraces and golden goal hoops gently into a clearing at the forest's coastal edge. Retain teal and copper pennants; limit construction to the already established arena, no castle or other town. Do not turn trees into buildings.\n\nKeep unchanged as closely as possible: original finely crafted wooden broom with brass fittings and bristled tail, its diagonal orientation and large right-side foreground position; golden winged chase ball floating near the upper right; recognizable golden goal hoops; teal/copper sport identity; textured cinematic painted/3D-rendered promotional quality. Preserve general composition and 16:9 aspect ratio.\nLayout: retain a dark, visually quiet left half and lower quarter suitable for readable separately composited title/description/social links. Subtle giant trunk silhouettes and forest depth can inhabit this space, but avoid bright or busy focal detail there. Concentrate the broom, winged ball, hoops, and clear forest-to-ocean vista toward the center/right.\nOutput: polished cohesive full-color raster illustration, ideally 3840 x 2160 landscape. No baked text, lettering, logos, watermark, HUD, captions, or additional characters.",
+  "generated_source": "C:\\Users\\bigdi\\.codex\\generated_images\\01a09ade-4f16-71d1-9657-a71c32381b06\\exec-9e503969-b4a2-418a-b760-4d4dae9203a3.png",
+  "selected_asset": "C:\\Git\\basketbroom\\SourceArt\\Promo\\basketbroom-redwoods-coast-keyart-v1.png",
+  "output": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "format": "PNG",
+    "sha256": "264638efb6fac15dc091e5dc9f79e06e73d3eeb75e6da207036a7d6e786d15d7"
+  },
+  "inspection": {
+    "passed": true,
+    "notes": [
+      "Colossal furrowed coastal redwood trunks, lush fern understory, mist, and forest canopy are prominent.",
+      "Open Pacific coastline with blue horizon, sea stacks, and white surf is clearly visible.",
+      "Castle, snowy mountains, and alpine setting replaced.",
+      "Crafted broom, golden winged chase ball, goal hoops, and teal/copper sport palette preserved.",
+      "Dark left/lower area remains usable for separately typeset title and links.",
+      "No baked title, links, logo, or HUD; original target preserved; no second edit required."
+    ]
+  },
+  "resolution_note": "Tool returned 1672x941 despite the ideally 3840x2160 prompt; use an explicitly recorded fit/upscale for 4K bookends. No image editing outside the built-in imagegen tool."
+}

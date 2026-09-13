@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen",
+  "intent": "edit",
+  "selected_asset": "SourceArt/Promo/basketbroom-redrock-cliff-alcove-keyart-v2.png",
+  "reference": "SourceArt/Promo/basketbroom-redrock-keyart.png",
+  "generated_original": "C:\\Users\\bigdi\\.codex\\generated_images\\01a08ab2-5505-7e03-a50a-12bdde623c7e\\exec-084400ae-fd3c-4a77-b243-056f366e78fb.png",
+  "prompt": "Use case: precise-object-edit. Asset type: revised Basketbroom promotional illustration plate for matching video intro/outro. Input image 1 is the EDIT TARGET. Primary request: keep this American Southwest red-rock sunset setting but rebuild the arena INTO a deep natural cliff alcove beneath a massive sandstone overhang, architecturally inspired by Cliff Palace at Mesa Verde, with traditional Puebloan adobe structures. The new architectural arrangement is the critical change and must be unmistakable: show the concave rock shelter and sweeping projecting cliff ceiling visibly enclosing the upper-right arena, with the stadium terraces nested well back beneath the shelter rather than standing beside or on top of the cliff. Replace the European-looking timber grandstand entirely with warm earthen/adobe-plastered sandstone masonry, clustered stepped multi-storey rectangular rooms, rounded corners, flat roofs, small inset doors and windows, projecting timber vigas and connecting ladders. An original fictional living broom-sport arena: terraced spectator spaces and courtyards integrated into the sheltered cliff settlement, opening outward toward the canyon for flight. Preserve the beautifully crafted wooden flying broom in the right foreground, luminous small golden winged chase ball, golden scoring hoops and teal/copper team pennants, their detailed craft and general diagonal composition. Preserve the distant red-rock mesas, buttes, canyon, sunset orange-to-indigo sky and dark left-side negative space. Lighting: warm reflected canyon light and small amber architectural lights under the cool dark alcove, strong believable sandstone mass and erosion textures. Style: same polished cinematic painted/3D concept-art hybrid, realistic natural geology, tactile adobe and brass. Composition: landscape16:9 at highest available resolution, ideally3840x2160. Keep left half and lower quarter quiet/dark for the existing separately typeset Google Sans Flex Black title and social links; sufficient visible architecture above/right of those copy zones. No baked text or social logos, no HUD, no snow, no conifers, no castle, no new characters. Reuse and preserve the target's visual identity; focus the revision on cliff shelter geometry and Puebloan-style architecture.",
+  "user_clarification": "Still red rock for the southwest one.",
+  "setting": "American Southwest rust-red sandstone canyon; arena built beneath deep red-rock alcove; Puebloan-style earthen-plastered masonry/adobe terraces.",
+  "references": [
+    "https://www.nps.gov/meve/learn/historyculture/cliff_palace.htm",
+    "https://www.nps.gov/meve/learn/nature/geology.htm"
+  ],
+  "note": "Original fictional sports arena inspired by the specified architecture and geology, not a documentary reconstruction of the monument. Exact Google Sans Flex Black title and official social icons are composited separately. Existing artwork and video are preserved.",
+  "native_dimensions": [
+    1672,
+    941
+  ],
+  "color_mode": "RGB",
+  "sha256": "b15005de2ba541d8bcaecab10d1faf50cb746f838df235003af9b3217efb3e0b"
+}

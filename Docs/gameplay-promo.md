@@ -138,8 +138,15 @@ The compositor loads the supplied static Black face directly, verifies the
 renderer selected it, and measures the actual title to retain the approved
 visual size across fonts. No system font installation is required.
 
-The built-in imagegen tool created `SourceArt/Promo/basketbroom-redrock-keyart.png`.
-Its native size is 1672 × 941; the compositor fits the illustration to the 4K
+The current Southwest illustration is
+`SourceArt/Promo/basketbroom-redrock-cliff-alcove-keyart-v2.png`: rust-red sandstone,
+a broad natural overhang enclosing the arena, and Puebloan-style adobe terraces.
+The northern alternative, `basketbroom-redwoods-coast-keyart-v1.png`, shows
+old-growth coast redwoods and a Pacific cove inspired by northern California
+and southern Oregon. Matching title/outro stills are available for both.
+
+The built-in imagegen tool edited both illustrations from the preceding plates.
+Both have a native size of 1672 × 941; the compositor fits each illustration to the 4K
 bookends and typesets text and icons at 4K. This artwork does not represent
 the current in-game arena or final game assets. Full generation/edit prompts
 and first-party icon sources are retained under `SourceArt/Promo`.
@@ -151,9 +158,9 @@ from the standalone UE5.8 prototype; it does not establish a completed HLCK port
 ```powershell
 python Tools/finish_gameplay_promo.py `
   --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-4K60\basketbroom-prototype-4k60-review.mp4" `
-  --art SourceArt/Promo/basketbroom-redrock-keyart.png `
-  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-4K60" `
-  --name basketbroom-prototype-4k60-promo
+  --art SourceArt/Promo/basketbroom-redrock-cliff-alcove-keyart-v2.png `
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Environment-v2" `
+  --name basketbroom-prototype-4k60-cliff-alcove
 ```
 
 Use `--prepare-only` with a fresh output name to render the editable layout and
@@ -208,7 +215,21 @@ media and visual validation receipts are alongside the video.
 
 The earlier `basketbroom-prototype-4k60-complete` files retain the superseded
 Georgia/Segoe typography intermediate. The **`-promo`** prefix identifies the
-final Google Sans Flex Black version. No social uploads were performed.
+Google Sans Flex Black version before the environment revision. No social uploads were performed.
+
+The later environment revision lives in
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-Environment-v2\`.
+Its Southwest video is `basketbroom-prototype-4k60-cliff-alcove.mp4`, using the
+same validated gameplay/card source with revised red-rock cliff-alcove and adobe
+bookends. `basketbroom-redwoods-coast-intro.png` and `-outro.png` provide the
+northern alternative as paired stills. Both retain the exact Google Sans Flex
+Black layout, official social icons and development-status badge. Source
+rasters remain 1672 × 941; the still art is fitted to the 4K bookends.
+The environment revision passed **63/63 independent media checks**, including
+full decode, all gameplay picture payloads unchanged and exact audio agreement
+with the previous validated promo. New encoded Southwest bookends and the
+redwoods still layout were visually inspected. Its receipts and editing notes
+are in the new delivery folder; earlier videos remain available.
 
 ### Earlier 30 fps versions
 
