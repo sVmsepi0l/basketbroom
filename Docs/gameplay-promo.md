@@ -1,28 +1,120 @@
-# Gameplay promo milestone
+# Three-minute prototype gameplay demo
 
-The user requested a landscape **3840 × 2160 (4K), 16:9** gameplay demo for
-social media after the prototype reaches its MVP playtest milestone. Target
-length is tentatively **45–60 seconds**. Capture and editing have not started.
+The prototype showcase targets **three minutes**, landscape **3840 × 2160
+(4K), 16:9, 30 fps**. It demonstrates the current alpha's native gameplay,
+with staged camera work and automated inputs. It does not claim final art,
+internet multiplayer or completed Hogwarts Legacy integration.
 
-The milestone opens after a reviewed playable build demonstrates reliable
-launching, readable flight and ball play, the intended match flow, and usable
-controls in an actual playtest. Resolve material crashes, misleading UI, and
-capture-blocking visual problems before recording; identify remaining alpha
-limitations in the edit or accompanying description.
+Use footage from the actual UE5.8 Basketbroom game, including arena/team flight,
+scoring-ball play, chase balls, and the working wand/referee features. The
+director records observed gameplay events and labels camera/actor staging.
+Do not present intended input requests as successful goals, catches or spells.
+Generated screenshots and cinematic mockups are not substitutes for gameplay.
+Creator Kit footage is separate and does not establish standalone game behavior.
 
-Use footage recorded from the actual UE5.8 Basketbroom game. A proposed sequence
-is an arena reveal, mounted team flight, a scoring-ball play, a Snipe or Snitch
-chase, and a brief result/title ending. Include wand play only once the relevant
-effects and referee behavior have been tested and are ready to show. Select
-shots around demonstrated gameplay rather than promising unfinished features.
+The capture pipeline targets 180 seconds at 30 frames per second. Video frame
+zero and the director's timestamp origin must align. Verify the actual footage,
+legibility, sequence duration and frame continuity before delivery. Retain the
+native frames, event manifest, audio receipt and edit commands for reproduction.
+Exports include a clean 4K master and a review version with brief chapter
+captions. The clean version retains the game's own HUD during gameplay inserts.
+Source frames and local production receipts stay under `.local/gameplay-demo/`.
 
-Capture a clean 4K master at a frame rate the playable build can sustain, with
-legible HUD text and the game's original audio. Keep the native footage and edit
-project so shorter platform versions can be produced later. Do not substitute
-generated game screenshots, cinematic mockups, or Creator Kit footage for
-evidence of the standalone game's behavior. Any staged camera shots should be
-identified in the production notes.
+## Capture workflow
 
-The request authorizes preparing this future gameplay demo. **Uploading or
-publishing it to social accounts is not authorized.** Review the finished export
-with the user before any separate publishing step.
+Build the Editor target with `Build-Native.ps1 -Target Editor`, then open the
+UE5.8 project with the existing editor bridge and select `BB_Regulation`.
+The `BasketbroomCapture` module and SequencerScripting plugin are Editor-only;
+they are not dependencies of the packaged game.
+
+The bridge scripts run in this order:
+
+1. `gameplay_demo_capture.py`: `prepare` with a fresh `.local` output directory.
+   It creates its own Practice PIE viewport. Wait for the capture report to
+   show `ready`.
+2. `gameplay_demo_director.py`: `prepare`, then `start`. This starts capture at
+   the director's recorded time origin, runs the 180-second shot sequence and
+   stops its owned PIE world when finished. Do not start a separate playtest
+   inside that world.
+3. Check the director's `complete` result and all gameplay checks, plus capture
+   `captured`, native resource size `3840 × 2160`, matching written/frame counts
+   and an empty protocol failure reason. Inspect the actual frames as well.
+4. Mix the original cues, then use `Tools/assemble_gameplay_demo.py` with the
+   capture, director and audio receipts. Keep both the clean and captioned MP4s.
+
+`UBBViewportCaptureProtocol` reads the actual game viewport's render texture.
+The stock legacy frame grabber sampled the smaller preview-window backbuffer
+and clamped its edge pixels into nominal 4K frames on this machine. The custom
+protocol refuses a render resource whose dimensions differ from the requested
+capture, and reports completed asynchronous image writes. The preview window's
+display size does not determine the recorded resolution.
+
+For a rehearsal, start a fresh Practice PIE session, then prepare the director
+with `capture_sync: false, rehearsal: true`. This compresses camera holds to
+99 seconds while preserving real spell cooldowns, catch holds and the natural
+60-live-second Practice Snitch release. Rehearsals are not accepted as final
+video/audio manifests. Disposable actor positions, movement settings, camera
+state and the temporary background-throttle setting are restored or destroyed
+with the owned session. No editor map or content asset is saved.
+
+## Edited audio
+
+`Tools/mix_gameplay_demo_audio.py` assembles a **48 kHz stereo PCM16 WAV** from
+the four original repository clips in `SourceArt/Audio`. It consumes observed
+director events and places cues at their exact offsets, quantized to the nearest
+audio sample. Native pickup/throw/goal/catch gains follow `BBAudioFeedback.cpp`.
+Mark showcased events `featured: true`; incidental goals remain audible at a
+lower level. Catch events include the native catch and score cues. Unmapped
+events, including input requests and spells without an original audio cue,
+stay silent.
+
+This is a **sparse edited game-cue mix**, not a recording of Unreal's audio
+output. It uses no external music, microphone audio or system audio. No original
+arena-wind loop exists in the current source folder, so none is added. The
+generated `.mix.json` receipt records source hashes, exact sample placements,
+gains, ignored events, format checks and sample-peak headroom. Listening and
+audiovisual synchronization still require review.
+
+```powershell
+python Tools/mix_gameplay_demo_audio.py --manifest .local/gameplay-demo-director.json
+```
+
+Default output is `.local/gameplay-demo/basketbroom-prototype-demo-audio.wav`.
+NumPy is required; no Unreal session is needed. Assemble that WAV with the video
+only after the event manifest describes the finished take. The mixer requires
+`status: complete` and rejects rehearsal manifests.
+
+## Delivery
+
+The first full take on 2026-09-12 completed **44/44 observed gameplay checks**
+and reached a certified **232–37 Teal win** after the Snitch catch. The capture
+protocol wrote all **5,409 native 3840 × 2160 frames** with no failure. The edit
+uses the first 5,400 frames for exactly 180 seconds at 30 fps; the extra nine
+frames are a natural shutdown tail, not padding. Practice URL and background
+throttle settings were restored, and the editor reported no dirty map or content
+packages after the owned capture session ended.
+
+The clean and captioned review MP4s were exported to
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-12\` as
+`basketbroom-prototype-4k-clean.mp4` and
+`basketbroom-prototype-4k-review.mp4`. Both stream inspections confirm 3840 × 2160,
+30 fps and 5,400 frames / 180 seconds. The folder also contains chapter captions,
+editing notes, an export receipt, and a `Source` folder with the separate stereo
+WAV and production receipts. Raw JPEG frames remain in the repository's ignored
+`.local/gameplay-demo/take-01/frames` directory.
+
+The capture addition passed both Editor and Game target builds. Selected source
+frames and decoded review frames were inspected for native framing, HUD and
+caption legibility, spell/referee feedback, catches and the certified result.
+The complete review MP4 decoded without errors. Both exports' audio starts at
+zero and spans exactly 180 seconds; all ten cue placements matched the edited
+WAV at zero sample lag. This numerical alignment check is separate from
+subjective listening. The independent validation receipt is beside the videos.
+
+This showcase verifies the staged sequence's outcomes, not the completeness of
+all regulation rules, internet multiplayer, or physical controller coverage.
+The USB DualSense Triangle check is recorded separately in the controller guide.
+
+The user authorized creating this prototype demo for potential social-media
+use. **Uploading or publishing it to social accounts is not authorized.**
+Review the completed exports with the user before any separate publishing step.

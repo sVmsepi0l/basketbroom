@@ -19,6 +19,13 @@
       ]
     },
     {
+      "Name": "SequencerScripting",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
       "Name": "GameInputWindows",
       "Enabled": true,
       "SupportedTargetPlatforms": [
@@ -43,6 +50,11 @@
     {
       "Name": "BasketbroomRuntime",
       "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "BasketbroomCapture",
+      "Type": "Editor",
       "LoadingPhase": "Default"
     }
   ]

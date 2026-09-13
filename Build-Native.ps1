@@ -18,7 +18,11 @@ $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudi
 if (-not $installation) { throw 'MSVC is missing. Run Install-BuildTools.cmd, then retry.' }
 $original = Get-Content -LiteralPath $project -Raw
 $descriptor = $original | ConvertFrom-Json
-$descriptor | Add-Member NoteProperty Modules @([pscustomobject]@{ Name='BasketbroomRuntime'; Type='Runtime'; LoadingPhase='Default' }) -Force
+$modules = @($descriptor.Modules).Where({ $null -ne $_ })
+if (-not $modules.Where({ $_.Name -eq 'BasketbroomRuntime' }).Count) {
+    $modules += [pscustomobject]@{ Name='BasketbroomRuntime'; Type='Runtime'; LoadingPhase='Default' }
+    $descriptor | Add-Member NoteProperty Modules $modules -Force
+}
 $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $project -Encoding UTF8
 $log = Join-Path $PSScriptRoot '.local\native-build.log'
 try {
