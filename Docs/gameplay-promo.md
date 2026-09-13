@@ -84,6 +84,46 @@ NumPy is required; no Unreal session is needed. Assemble that WAV with the video
 only after the event manifest describes the finished take. The mixer requires
 `status: complete` and rejects rehearsal manifests.
 
+## Feature cards and controller segment
+
+`Tools/gameplay_demo_cards.py` draws the revised cards as native-resolution ASS
+text and vector shapes. Headlines use 84 px bold type and descriptions use
+54 px, increased from 58 / 34 px. Shorter, two-line descriptions sit on dark
+panels with colored accents and brief fades. Regular cards occupy about 5.5% of
+the frame and remain visible for six seconds. The referee and final-result
+cards move lower to keep the native dialogs readable.
+
+An eight-second controller section runs at **00:19–00:27** over the existing
+automated flight footage. It shows a generic gamepad icon, implemented stick /
+cast / shield mappings, the user's confirmed DualSense USB Triangle input, and
+the remaining USB / Bluetooth testing. This is support information, not a new
+physical-controller recording or a claim that all hardware combinations pass.
+
+To revise captions without another gameplay capture or clean-master encode,
+pass `--review-from` the previous export JSON and choose a fresh `--name`:
+
+```powershell
+python Tools/assemble_gameplay_demo.py `
+  --capture .local/gameplay-demo/take-01/capture.json `
+  --manifest .local/gameplay-demo/take-01/director.json `
+  --review-from "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-12\basketbroom-prototype-4k-export.json" `
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-12" `
+  --name basketbroom-prototype-4k-v2
+```
+
+Reuse validates the original capture/director provenance and freshly probes
+the clean file. It preserves the audio, records source hashes and produces a
+new review MP4, captions and export receipt. The clean master and earlier
+review remain available.
+
+The delivered `basketbroom-prototype-4k-v2-review.mp4` passed a complete video /
+audio decode and fresh 4K / 30 fps / 5,400-frame / 180-second stream checks.
+Its audio matches the clean master. Fourteen nonoverlapping card intervals,
+including the two controller phases, match the exported ASS and receipt.
+Card previews and selected final encoded frames were inspected for clipping,
+readability and unobstructed native referee/result dialogs. The local
+`basketbroom-prototype-4k-v2-validation.json` records independent checks.
+
 ## Delivery
 
 The first full take on 2026-09-12 completed **44/44 observed gameplay checks**

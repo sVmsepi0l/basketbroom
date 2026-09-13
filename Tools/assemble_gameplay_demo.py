@@ -20,6 +20,8 @@ import shutil
 import struct
 import subprocess
 
+from gameplay_demo_cards import make_captions
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -57,54 +59,6 @@ def run(command, cwd=None, log=None):
     if result.returncode:
         raise RuntimeError(result.stderr)
     return result.stdout
-
-
-def ass_time(seconds):
-    value = max(0, int(round(float(seconds) * 100)))
-    return "%d:%02d:%02d.%02d" % (value // 360000, value // 6000 % 60, value // 100 % 60, value % 100)
-
-
-def ass_text(value):
-    return str(value).replace("\\", "/").replace("{", "(").replace("}", ")").replace("\n", r"\N")
-
-
-def make_captions(manifest, path, duration):
-    shots = manifest.get("shots", manifest.get("timeline", []))
-    header = """[Script Info]
-ScriptType: v4.00+
-PlayResX: 3840
-PlayResY: 2160
-WrapStyle: 0
-ScaledBorderAndShadow: yes
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Chapter,Segoe UI,58,&H00FFFFFF,&H00FFFFFF,&H70201914,&H9019120D,-1,0,0,0,100,100,0,0,3,16,0,7,120,120,360,1
-Style: Note,Segoe UI,34,&H00D7E1E4,&H00FFFFFF,&H70201914,&H9019120D,0,0,0,0,100,100,0,0,3,12,0,7,120,120,438,1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-"""
-    lines = []
-    captions = []
-    for shot in shots:
-        start = float(shot.get("start", shot.get("start_seconds", 0)))
-        end = min(float(shot.get("end", shot.get("end_seconds", duration))), start + 5.0, duration)
-        if end <= start:
-            continue
-        title = shot.get("title", shot.get("name", ""))
-        subtitle = shot.get("subtitle", shot.get("caption", ""))
-        if not title:
-            continue
-        for style, value in (("Chapter", title), ("Note", subtitle)):
-            if value:
-                lines.append("Dialogue: 0,%s,%s,%s,,0,0,0,,{\\fad(200,250)}%s" %
-                             (ass_time(start), ass_time(end), style, ass_text(value)))
-        captions.append({"start": start, "end": end, "title": title, "subtitle": subtitle})
-    if not captions:
-        raise ValueError("Director manifest contains no shot captions")
-    path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8-sig")
-    return captions
 
 
 def inspect_media(ffprobe, path, width, height, fps, frame_count, audio_required):
@@ -149,6 +103,45 @@ def validate_manifest(manifest, capture, duration, fps):
         raise ValueError("Director and capture native resolutions differ")
 
 
+def same_path(first, second):
+    return str(Path(first).resolve()).casefold() == str(Path(second).resolve()).casefold()
+
+
+def file_sha256(path):
+    import hashlib
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_review_source(previous, capture_path, manifest_path, capture, manifest, width, height, fps, count):
+    """Bind a reusable clean export to the exact recorded take and time origin."""
+    if not previous.get("source_capture") or not same_path(previous["source_capture"], capture_path):
+        raise ValueError("Review source receipt belongs to a different capture file")
+    if not previous.get("director_manifest") or not same_path(previous["director_manifest"], manifest_path):
+        raise ValueError("Review source receipt belongs to a different director manifest")
+    if not previous.get("source_frames") or not same_path(previous["source_frames"], capture["frames"]):
+        raise ValueError("Review source receipt belongs to a different native frame sequence")
+    if any(previous.get(key) != value for key, value in (("width", width), ("height", height), ("fps", fps),
+                                                       ("source_frames_used", count), ("source_first_frame", 0))):
+        raise ValueError("Review source dimensions, frame rate or frame count do not match this export")
+    if (previous.get("all_used_frame_dimensions_verified") is not True or previous.get("upscaled") is not False
+            or previous.get("boundary_frames_padded") is not False):
+        raise ValueError("Review source lacks verified native, unpadded frame provenance")
+    if int(previous.get("source_frames_available", -1)) != int(capture["protocol"]["frames_written"]):
+        raise ValueError("Review source native frame total does not match the capture")
+    prior_origin = previous.get("director_origin_game_seconds")
+    if (not isinstance(prior_origin, (int, float)) or not math.isfinite(prior_origin)
+            or abs(prior_origin - manifest["capture_origin_game_seconds"]) > 1 / fps + 1e-6
+            or abs(prior_origin - capture["start_game_seconds"]) > 1 / fps + 1e-6):
+        raise ValueError("Review source time origin does not match the capture and director")
+    prior_duration = previous.get("duration_seconds")
+    if not isinstance(prior_duration, (int, float)) or not math.isfinite(prior_duration) or abs(prior_duration - count / fps) > 0.04:
+        raise ValueError("Review source duration does not match its frame count")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--capture", type=Path, required=True)
@@ -160,7 +153,12 @@ def main():
     parser.add_argument("--encoder", choices=("h264_nvenc", "libx264"), default="h264_nvenc")
     parser.add_argument("--ffmpeg", default=shutil.which("ffmpeg"))
     parser.add_argument("--clean-only", action="store_true")
+    parser.add_argument("--review-from", type=Path, help="Reuse the validated clean MP4 from an existing export receipt; encode only a new review")
     args = parser.parse_args()
+    if args.review_from and args.clean_only:
+        raise ValueError("--review-from cannot be combined with --clean-only")
+    if args.review_from and not args.manifest:
+        raise ValueError("--review-from requires the original --manifest for take validation")
     if not args.ffmpeg:
         raise RuntimeError("ffmpeg must be installed or passed explicitly")
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.name):
@@ -170,7 +168,7 @@ def main():
     ffprobe = str(Path(args.ffmpeg).with_name("ffprobe.exe" if Path(args.ffmpeg).suffix.lower() == ".exe" else "ffprobe"))
     capture = json.loads(args.capture.read_text(encoding="utf-8-sig"))
     directory = Path(capture["frames"])
-    frames = sorted(directory.glob("frame_*.jpg"))
+    frames = sorted(directory.glob("frame_*.jpg")) if not args.review_from else None
     width, height = map(int, capture["resolution"])
     fps = int(capture["fps"])
     count = round(args.duration * fps)
@@ -179,21 +177,22 @@ def main():
         raise ValueError("Source capture did not finish successfully")
     if protocol.get("actual_resource_size") != [width, height]:
         raise ValueError("Source capture must verify its actual native render resource dimensions")
-    if not frames:
+    available = len(frames) if frames is not None else int(protocol.get("frames_written", 0))
+    if available <= 0:
         raise ValueError("Source capture contains no frames")
-    if any(int(protocol.get(name, -1)) != len(frames) for name in ("frames_captured", "frames_written")):
+    if any(int(protocol.get(name, -1)) != available for name in ("frames_captured", "frames_written")):
         raise ValueError("Native captured/written counts do not match the complete source frame sequence")
-    if len(frames) < count:
-        if count - len(frames) < fps:
+    if available < count:
+        if count - available < fps:
             # The request is approximately three minutes. Preserve genuine
             # captured boundary frames instead of padding or repeating footage.
-            count = len(frames)
+            count = available
         else:
-            raise ValueError("Insufficient native frames: %d available, %d requested" % (len(frames), count))
-    first = int(re.fullmatch(r"frame_(\d+)\.jpg", frames[0].name).group(1))
+            raise ValueError("Insufficient native frames: %d available, %d requested" % (available, count))
+    first = int(re.fullmatch(r"frame_(\d+)\.jpg", frames[0].name).group(1)) if frames is not None else 0
     if first != 0:
         raise ValueError("Source must begin with frame zero so video, captions and audio share one origin")
-    for index, frame in enumerate(frames[:count]):
+    for index, frame in enumerate(frames[:count] if frames is not None else []):
         if frame.name != "frame_%06d.jpg" % (first + index):
             raise ValueError("Source frame gap at " + frame.name)
         if jpeg_dimensions(frame) != (width, height):
@@ -208,7 +207,11 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     clean = output / (args.name + "-clean.mp4")
     review = output / (args.name + "-review.mp4")
-    if clean.exists() or (not args.clean_only and review.exists()):
+    subtitles = output / (args.name + "-captions.ass")
+    receipt_path = output / (args.name + "-export.json")
+    if args.review_from and any(path.exists() for path in (review, subtitles, receipt_path)):
+        raise ValueError("New review, captions or export receipt already exists; choose a fresh --name or --output-dir")
+    if (not args.review_from and clean.exists()) or (not args.clean_only and review.exists()):
         raise ValueError("Output already exists; choose a new --name or --output-dir")
     if args.audio and not args.audio.is_file():
         raise FileNotFoundError(args.audio)
@@ -216,37 +219,61 @@ def main():
                 if args.encoder == "h264_nvenc" else ["-c:v", "libx264", "-preset", "fast", "-crf", "16"])
     common = encoding + ["-pix_fmt", "yuv420p", "-profile:v", "high", "-color_range", "tv",
                          "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-movflags", "+faststart"]
-    command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-framerate", str(fps), "-start_number", str(first),
-               "-i", str(directory / "frame_%06d.jpg")]
-    if args.audio:
-        command += ["-i", str(args.audio.resolve())]
-    command += ["-map", "0:v:0", "-frames:v", str(count), "-t", str(count / fps), "-vf",
-                "scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p"]
-    if args.audio:
-        command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", "320k", "-ar", "48000"]
-    command += common + ["-metadata", "title=Basketbroom prototype - native 4K gameplay", str(clean)]
-    run(command, log=output / (args.name + "-clean-encode.log"))
-    clean_probe = inspect_media(ffprobe, clean, width, height, fps, count, bool(args.audio))
+    previous = None
+    source_clean_hash = None
+    audio_path = str(args.audio.resolve()) if args.audio else None
+    if args.review_from:
+        previous = json.loads(args.review_from.read_text(encoding="utf-8-sig"))
+        validate_review_source(previous, args.capture, args.manifest, capture, manifest, width, height, fps, count)
+        clean = Path(previous["clean"]).resolve()
+        if not clean.is_file():
+            raise FileNotFoundError(clean)
+        if args.audio and (not previous.get("audio") or not same_path(args.audio, previous["audio"])):
+            raise ValueError("--review-from preserves the existing clean audio; --audio must match the original receipt")
+        audio_path = previous.get("audio")
+        clean_probe = inspect_media(ffprobe, clean, width, height, fps, count, bool(audio_path))
+        video = next(stream for stream in clean_probe["streams"] if stream["codec_type"] == "video")
+        if abs(float(video.get("start_time", 0))) > 1 / fps + 1e-6:
+            raise ValueError("Reusable clean video does not start at the recorded time origin")
+        source_clean_hash = file_sha256(clean)
+        if previous.get("clean_sha256") and previous["clean_sha256"] != source_clean_hash:
+            raise ValueError("Reusable clean MP4 no longer matches its recorded SHA256")
+    else:
+        command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-framerate", str(fps), "-start_number", str(first),
+                   "-i", str(directory / "frame_%06d.jpg")]
+        if args.audio:
+            command += ["-i", str(args.audio.resolve())]
+        command += ["-map", "0:v:0", "-frames:v", str(count), "-t", str(count / fps), "-vf",
+                    "scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p"]
+        if args.audio:
+            command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", "320k", "-ar", "48000"]
+        command += common + ["-metadata", "title=Basketbroom prototype - native 4K gameplay", str(clean)]
+        run(command, log=output / (args.name + "-clean-encode.log"))
+        clean_probe = inspect_media(ffprobe, clean, width, height, fps, count, bool(args.audio))
     receipt = {"created_utc": datetime.now(timezone.utc).isoformat(), "source_capture": str(args.capture.resolve()),
-               "source_frames": str(directory), "source_frames_available": len(frames), "source_frames_used": count,
+               "source_frames": str(directory), "source_frames_available": available, "source_frames_used": count,
                "all_used_frame_dimensions_verified": True, "upscaled": False, "source_first_frame": first,
                "width": width, "height": height, "fps": fps, "duration_seconds": count / fps,
                "requested_duration_seconds": args.duration, "boundary_frames_padded": False,
                "clean": str(clean), "clean_probe": clean_probe,
                "director_manifest": str(args.manifest.resolve()) if args.manifest else None,
                "director_origin_game_seconds": manifest["capture_origin_game_seconds"] if manifest else None,
-               "audio": str(args.audio.resolve()) if args.audio else None,
-               "audio_note": "Edited sound mix from the game's original cues, aligned to recorded gameplay event timestamps; not a live system/microphone recording" if args.audio else "Silent source master"}
+               "audio": audio_path,
+               "audio_note": previous.get("audio_note", "Audio retained from the validated clean master") if previous else
+                   "Edited sound mix from the game's original cues, aligned to recorded gameplay event timestamps; not a live system/microphone recording" if args.audio else "Silent source master"}
+    if previous:
+        receipt.update(review_source_receipt=str(args.review_from.resolve()),
+                       review_source_receipt_sha256=file_sha256(args.review_from),
+                       review_source_clean_sha256=source_clean_hash, clean_sha256=source_clean_hash,
+                       clean_reused=True, source_frame_validation="Inherited from the matched export receipt; clean stream verified with fresh ffprobe")
     if not args.clean_only:
-        subtitles = output / (args.name + "-captions.ass")
         receipt["captions"] = make_captions(manifest, subtitles, count / fps)
         review_command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-i", str(clean), "-map", "0:v:0",
                           "-map", "0:a?", "-frames:v", str(count), "-vf", "ass=filename='" + subtitles.name + "'",
                           "-c:a", "copy"] + common + ["-metadata", "title=Basketbroom prototype - review cut", str(review)]
         run(review_command, cwd=output, log=output / (args.name + "-review-encode.log"))
         receipt["review"] = str(review)
-        receipt["review_probe"] = inspect_media(ffprobe, review, width, height, fps, count, bool(args.audio))
-    receipt_path = output / (args.name + "-export.json")
+        receipt["review_probe"] = inspect_media(ffprobe, review, width, height, fps, count, bool(audio_path))
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: receipt[key] for key in ("clean", "width", "height", "fps", "duration_seconds")}, indent=2))
     print("Export receipt: " + str(receipt_path))
