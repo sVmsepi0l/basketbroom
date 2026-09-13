@@ -89,3 +89,6 @@ DerivedDataCache/*
 # Reproducible local UE5.8 template dependencies; stage_skeletal_rider.py copies
 # the exact installed stock packages. Owned animation/materials stay in the mod.
 /DevelopmentHarness/Content/Characters/Mannequins/
+
+# temporarily hiding of PressPacket assets for packaging purposes
+**/PressPacket/
