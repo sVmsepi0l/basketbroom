@@ -76,9 +76,9 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **B:** host selects Bloodbroom in the initial lobby. **F7 / F9:** host serves a pending BB-0 call with a possession award or ejection in the limited playtest referee interface.
 
 Gamepad bindings and their validation status are documented in
-[controller support](Docs/controller-support.md). The post-MVP promotional
-gameplay video is planned as actual **3840 × 2160, 16:9** footage; see the
-[gameplay promo brief](Docs/gameplay-promo.md).
+[controller support](Docs/controller-support.md). The three-minute prototype
+showcase uses actual **3840 × 2160, 16:9, 30 fps** gameplay with automated camera
+and gameplay staging; see the [capture and edit workflow](Docs/gameplay-promo.md).
 
 You begin in a Ranger slot and can choose another position before play.
 Put the red-orange **Quaffle** through a large hoop for **13** points or a purple
@@ -282,8 +282,9 @@ Hurleyback selection, host-only controls, matching final results and stoppage
 state, host rematch, and continued play after a graceful client departure.
 Manual chase capture, remote networking, flight feel and the audio mix still
 need further playtesting.
-The requested [4K landscape gameplay promo](Docs/gameplay-promo.md) is a later
-milestone, following the prototype MVP playtest; no social publishing is authorized.
+The [4K landscape prototype showcase](Docs/gameplay-promo.md) records current
+native features and their observed outcomes; it does not claim final art or
+completed Hogwarts Legacy integration.
 See `Docs/validation.md` for evidence and limits; local reports describe individual
 runs and do not guarantee that every later rebuild passes.
 

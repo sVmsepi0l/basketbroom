@@ -8,5 +8,6 @@ public class BasketbroomDevEditorTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.Latest;
         IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
         ExtraModuleNames.Add("BasketbroomRuntime");
+        ExtraModuleNames.Add("BasketbroomCapture");
     }
 }

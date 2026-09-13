@@ -152,9 +152,14 @@ continued. Alt+F4 closed the game normally, with a clean exit in its log.
 `.local/controller-packaged-smoke.json` records the observations and limits.
 This manual smoke check adds no cases to the 229 automated-check total.
 
-No connected gamepad was found in the initial Windows device check. Physical
-USB/Bluetooth input, pairing, disconnect/reconnect notifications, focus changes,
-rumble, device-specific glyphs and remote gamepad ownership/replication remain
-unverified. Exercising the shared flush does not simulate an actual hardware
-disconnect, and successful backend initialization does not establish delivery
-of physical device events.
+In a subsequent physical check on 2026-09-12, Windows detected the user's Sony
+DualSense (VID `054c`, PID `0ce6`) over USB. The same packaged build registered
+it through GameInput as a gamepad on device 1, platform user 0. The user confirmed
+that pressing Triangle opened the spellbook. This is actual hardware button
+delivery, separate from the simulated checks above; the local receipt is
+`.local/dualsense-hardware-playtest.json`.
+
+The remaining USB flight/button checks and Bluetooth pairing/input are pending.
+Hardware disconnect/reconnect, focus transitions, rumble, device-specific glyphs
+and remote gamepad ownership/replication remain unverified. Exercising the shared
+flush does not simulate an actual hardware disconnect.
