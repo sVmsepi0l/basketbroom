@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 from array import array
+import copy
 from datetime import datetime, timezone
 from fractions import Fraction
 import hashlib
@@ -106,13 +107,13 @@ def media_contract(data, width, height, seconds, *, audio=True):
 
 
 def default_layout():
-    labels = ["Instagram @basketbroom", "X @basketbroom", "curseforge.com/members/basketbroom",
-              "basketbroom.fun", "github.com/sVmsepi0l"]
+    labels = ["instagram @basketbroom", "x @basketbroom", "curseforge.com/members/basketbroom",
+              "basketbroom.fun", "github.com/svmsepi0l"]
     destinations = {row["brand"]: row["url"] for row in json.loads((BRANDS / "sources.json").read_text(encoding="utf-8"))["destinations"]}
     return {
         "schema": 1, "canvas": [WIDTH, HEIGHT], "art_fit": "cover_center",
-        "title": {"text": "BASKETBROOM", "x": 200, "y": 390, "size": 320, "max_width": 1900},
-        "description": {"lines": ["An aerial team sport of broom flight,", "ball play and spellwork."],
+        "title": {"text": "basketbroom", "x": 200, "y": 390, "size": 320, "max_width": 1900},
+        "description": {"lines": ["an aerial team sport of broom flight,", "ball play and spellwork."],
                         "x": 210, "y": 680, "size": 109, "line_spacing": 96, "max_width": 1900},
         "header_panel": {"x": 160, "y": 350, "width": 2050, "height": 540, "opacity": 0.0},
         "links_panel": {"x": 180, "y": 1040, "width": 1880, "height": 760, "opacity": .66},
@@ -122,11 +123,23 @@ def default_layout():
                    "icon_area": 72, "text_x": 352, "size": 84}
                   for index, (brand, label) in enumerate(zip(ICON_NAMES, labels))],
         "badge": {"x": 2350, "y": 1460, "size": 78, "line_spacing": 76,
-                  "lines": ["Hogwarts Legacy Creator Kit", "mod in development"],
-                  "prototype": "Prototype built in Unreal Engine 5.8", "prototype_y": 1655, "prototype_size": 60},
+                  "lines": ["hogwarts legacy creator kit", "mod in development"],
+                  "prototype": "prototype built in unreal engine 5.8", "prototype_y": 1655, "prototype_size": 60},
         "fade_in_seconds": .55, "fade_out_seconds": .45,
         "note": "Coordinates are editable 3840x2160 presentation pixels; the explicit requested left positions take precedence over approximate safe-margin guidance.",
     }
+
+
+def normalize_display_text(layout):
+    """Lowercase visible copy only; destinations, font names and paths keep case."""
+    layout = copy.deepcopy(layout)
+    layout["title"]["text"] = layout["title"]["text"].lower()
+    layout["description"]["lines"] = [line.lower() for line in layout["description"]["lines"]]
+    for row in layout["links"]:
+        row["text"] = row["text"].lower()
+    layout["badge"]["lines"] = [line.lower() for line in layout["badge"]["lines"]]
+    layout["badge"]["prototype"] = layout["badge"]["prototype"].lower()
+    return layout
 
 
 def ass_text(text):
@@ -383,6 +396,7 @@ def finish(args, *, test_spec=None):
         source_probe = probe(args.ffprobe, args.gameplay)
         video = media_contract(source_probe, width, height, gameplay)
     layout = json.loads(args.layout.read_text(encoding="utf-8-sig")) if args.layout else default_layout()
+    layout = normalize_display_text(layout)
     validate_layout(layout)
     layout_path = output / f"{name}-layout.json"
     layout_path.write_text(json.dumps(layout, indent=2) + "\n", encoding="utf-8")
@@ -390,6 +404,7 @@ def finish(args, *, test_spec=None):
                "created_utc": datetime.now(timezone.utc).isoformat(), "layout": str(layout_path),
                "duration_seconds": intro + gameplay + outro, "fps": FPS, "resolution": [width, height],
                "sections": {"intro": intro, "gameplay": gameplay, "outro": outro},
+               "editorial_display_text_case": "lowercase; destination URLs and font identifiers retain their original case",
                "publishing": "Local output only; nothing uploaded"}
     receipt.update(posters(args.ffmpeg, art, output, name, layout))
     receipt_path = output / f"{name}-production.json"
