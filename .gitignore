@@ -92,3 +92,6 @@ DerivedDataCache/*
 
 # temporarily hiding of PressPacket assets for packaging purposes
 **/PressPacket/
+
+#large files
+/Docs/gameplay-promo.md
