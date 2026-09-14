@@ -94,4 +94,4 @@ DerivedDataCache/*
 **/PressPacket/
 
 #large files
-/Docs/gameplay-promo.md
+**/Docs/**
