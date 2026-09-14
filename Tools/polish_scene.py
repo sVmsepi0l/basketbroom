@@ -49,7 +49,9 @@ def build():
             builder.levels.destroy_actor(actor)
             counts["old_scenery_removed"] += 1
             continue
-        if label in ("Continuous open-crown rebound net", "Twilight dome",
+        if label in ("Continuous open-crown rebound net", "Continuous closed-arena rebound net",
+                     "Pyramidion taut roof net", "Pyramidion iron hips and eaves",
+                     "Pyramidion copper sleeves and peak", "Twilight dome",
                      "Distant stars", "Ground horizon"):
             # Repair previously saved visual meshes as well as the scenery
             # recreated below. Physical net walls are separate hidden actors.
@@ -135,7 +137,9 @@ def audit_saved_scene():
     for actor in actors:
         label = actor.get_actor_label()
         decorative = actor.actor_has_tag("BB.Scenery") or actor.actor_has_tag("BB.ArtDetail") or label in (
-            "Continuous open-crown rebound net", "Twilight dome", "Distant stars", "Ground horizon")
+            "Continuous open-crown rebound net", "Continuous closed-arena rebound net",
+            "Pyramidion taut roof net", "Pyramidion iron hips and eaves",
+            "Pyramidion copper sleeves and peak", "Twilight dome", "Distant stars", "Ground horizon")
         component = actor.get_component_by_class(unreal.StaticMeshComponent) if decorative else None
         if component is not None:
             if str(component.get_collision_profile_name()) != "NoCollision" or component.get_collision_enabled() != unreal.CollisionEnabled.NO_COLLISION:

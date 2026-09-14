@@ -3,7 +3,7 @@
 A first-person broom sport alpha built in **Unreal Engine 5.8**. The active native
 game has two opposing eight-rider teams, selectable positions, seven balls, broom flight,
 ballistic goals, continuous chase catches, and regulation match state in an
-original open-crown arena. The native Editor and Windows Development game build
+original arena enclosed by a hollow pyramid net. The native Editor and Windows Development game build
 successfully. Focused gameplay, opening, rematch, Bludger, local networking,
 and audio suites pass. Two packaged processes also share role changes, scores,
 stoppages, certified results and host rematches in local play. Full regulation,
@@ -35,11 +35,18 @@ From a PowerShell terminal in this repository:
 ```powershell
 .\Play.ps1
 .\Play.ps1 -Practice
+.\Play.ps1 -Bloodbroom -Practice
 .\Play.ps1 -Mode Training
 ```
 
-**Practice.cmd** opens the accelerated native match. **Local-Multiplayer.cmd**
-opens a packaged host and client on this computer with practice clocks.
+**Practice.cmd** opens the accelerated native match. **Bloodbroom.cmd** opens
+that practice match in Bloodbroom mode. **Local-Multiplayer.cmd** opens a packaged
+host and client on this computer with practice clocks.
+
+`Play.ps1 -Bloodbroom` selects Bloodbroom with ordinary clocks; add `-Practice`
+for accelerated clocks. It uses the native regulation map and cannot be combined
+with `-Mode Training`. Add `-Plan` to inspect the launch command without opening
+the game.
 
 For a desktop launcher, run `./Install-DesktopShortcut.ps1` in PowerShell. It
 creates **Basketbroom** on your current Windows Desktop and opens Practice mode
@@ -73,11 +80,11 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **T:** switch teams during the lobby or a stoppage. **Tab:** show the position guide.
 - **Enter:** host starts/resumes play, or starts a new match after the certified final result. **P:** host calls a stoppage.
 - **Q:** cast. **Z / X:** select a spell. **R:** Protego. **V:** spellbook.
-- **B:** host selects Bloodbroom in the initial lobby. **F7 / F9:** host serves a pending BB-0 call with a possession award or ejection in the limited playtest referee interface.
+- **B:** host selects Bloodbroom in the initial lobby. **F7 / F8 / F9:** host serves a pending BB-0 call with possession, a penalty shot plus removal, or ejection in the playtest referee interface.
 
 Gamepad bindings and their validation status are documented in
-[controller support](Docs/controller-support.md). The three-minute prototype
-showcase uses actual **3840 × 2160, 16:9, 30 fps** gameplay with automated camera
+[controller support](Docs/controller-support.md). The four-minute prototype
+showcase includes all six positions and actual **3840 × 2160, 16:9, 60 fps** gameplay with automated camera
 and gameplay staging; see the [capture and edit workflow](Docs/gameplay-promo.md).
 
 You begin in a Ranger slot and can choose another position before play.
@@ -109,8 +116,13 @@ C++ runtime: CharacterMovement broom flight, authority-owned balls, the sixteen
 roster slots, position/team selection, host start/stoppage, goal and capture
 resolution, and replicated HUD state. It spawns one Quaffle, two Quarks, one
 Snipe, one scheduled Snitch, and two Bludgers. Goal checks require the whole ball
-to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
-returns are exercised by the native integration suite.
+to clear the appropriate hoop. The [closed pyramid net](Docs/pyramid-net.md)
+replaces the old No Crown return: balls rebound off four sloping roof faces and
+remain in play in both Basketbroom and Bloodbroom. The former 138-foot roofline
+is now an open interior eave plane, with the provisional apex at 207 feet.
+Riders and held/chase balls share the closed arena bounds. Existing dated
+validation receipts retain their original build scope; the amendment describes
+the replacement native checks.
 
 The venue, team colors, broom cockpit and HUD use generated original assets.
 Riders now use Epic's locally staged Quinn mannequin with an authored seated
@@ -130,8 +142,10 @@ approximately 103 cm overall length and open shallow
 pocket are provisional: the current oversized Bludger does not physically fit.
 This visual addition does not implement striking or certify equipment dimensions.
 
-Full regulation still needs penalty-shot execution, wand gameplay, and complete
-officiating/adjudication flows. The rules engine has broader phase and penalty
+The [Serious penalty-shot flow](Docs/native-penalty-shots.md) now adds a native
+one-attempt shot, keeper defense, protected restart and live-time removal in
+both Basketbroom and Bloodbroom. Full regulation still needs Moderate free shots,
+post-termination restorative shots, full spell parity, and complete officiating/adjudication flows. The rules engine has broader phase and penalty
 coverage than the current in-game presentation. Sport-specific animation,
 finished character assets, match balance, and audio mixing need further work.
 Passing the focused native checks does not certify every regulation phase or
@@ -174,6 +188,10 @@ rider assets using `Tools/stage_skeletal_rider.py` as described in
 `Docs/skeletal-rider-art.md`; those stock dependencies are not stored in Git.
 Use `Multiplayer.ps1 -Mode LocalTest` for a
 listen server and loopback client, `-Mode Host`, or `-Mode Join -Address <host>`.
+Add `-Bloodbroom` to **Host** or **LocalTest** to select that match variant, for
+example `./Multiplayer.ps1 -Mode LocalTest -Bloodbroom -Practice`. Joining players
+inherit the server's variant; `-Mode Join -Bloodbroom` is rejected. Both host and
+client command plans can be inspected with `-Plan` without starting a process.
 All seventeen same-process networking checks pass, including client flight,
 pickup, and throw replication. The launcher prefers the
 native package; use `-EditorGame` to force Unreal's development game mode.

@@ -157,6 +157,11 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
         Target->NotifySpellResult(TEXT("PROTEGO - hit blocked.")); R->ForceNetUpdate(); return;
     }
 
+    // Remember the denied scoring ball before a stun drops it. This is an
+    // observed target context, not a client-selected restitution value.
+    int32 AffectedScoringBall = -1;
+    for (const ABBBall* Ball : Balls)
+        if (IsValid(Ball) && Ball->BallIndex <= 2 && Ball->Holder == Target) AffectedScoringBall = Ball->BallIndex;
     // Apply the authoritative effect before recording/refereeing any violation.
     Target->Vitality = FMath::Max(0.f,Target->Vitality-Spell->Damage);
     switch (Spell->Effect)
@@ -208,12 +213,13 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     LastConductViolations = static_cast<int32>(Decision.violations);
     LastConductCall = FString::Join(Reasons,TEXT(" + "));
     ConductOffender = R->RosterIndex; ConductVictimTeam = 1-R->TeamIndex;
+    ConductVictimSlot = Target->RosterIndex; ConductBall = AffectedScoringBall;
     ConductMark = Target->GetActorLocation();
     ConductMark.X = FMath::Clamp(ConductMark.X,-5900.f,5900.f);
     ConductMark.Y = FMath::Clamp(ConductMark.Y,-2700.f,2700.f);
     ConductMark.Z = FMath::Clamp(ConductMark.Z,400.f,3800.f);
     bConductReviewPending = true;
-    ConductReviewStatus = TEXT("PLAYTEST REFEREE - Host: F7 possession award / F9 ejection");
+    ConductReviewStatus = TEXT("PLAYTEST REFEREE - Host: F7 possession / F8 shot + removal / F9 ejection");
     Rules->pause("BB-0 conduct review after applied hit");
     SyncRules();
     Say(TEXT("BB-0 FOUL: ")+LastConductCall+TEXT(" - hit applied; referee decision due."));
@@ -221,17 +227,20 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
         static_cast<unsigned long long>(Cast.attack_id),R->RosterIndex,Target->RosterIndex,SpellIndex,LastConductViolations);
 }
 
-void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, bool bEject)
+void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition)
 {
     if (!CanOfficiate(Referee) || !Rules || !bConductReviewPending || Rules->status == BB::Status::Live
         || ConductOffender < 0 || ConductOffender >= 16) return;
-    // The host selects a playtest disposition. BB-0 did not assign fixed tiers;
-    // Serious shots and Catastrophic review are deliberately not auto-dismissed.
+    if (Disposition < 9 || Disposition > 11 || bPenaltyShotActive) return;
+    const bool bEject = Disposition == 11, bShot = Disposition == 10;
+    // Host-selected playtest severity; no automatic foul-to-tier mapping.
+    // A Serious removal must accompany an actual reserved shot and restart.
     const BB::Match Previous = *Rules;
     const int Id = Rules->record_penalty(ConductOffender,TCHAR_TO_UTF8(*LastConductCall),
-        bEject ? BB::Severity::Severe : BB::Severity::Moderate);
+        bEject ? BB::Severity::Severe : bShot ? BB::Severity::Serious : BB::Severity::Moderate, ConductBall);
     bool bApplied = false;
     if (bEject) bApplied = Id > 0 && Rules->resolve_penalty(Id,"host BB-0 playtest referee: ejection",true);
+    else if (bShot) bApplied = Id > 0 && BeginConductPenaltyShot(Id);
     else
     {
         // Preserve an existing goal/Crown remedy. Prefer the Quaffle, then an
@@ -248,6 +257,7 @@ void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, bool bEject)
         return;
     }
     bConductReviewPending = false;
+    if (bShot) { SyncRules(); Say(PenaltyShotStatus); return; }
     ConductReviewStatus = bEject ? TEXT("EJECTION SERVED - Host: ENTER to resume")
                                 : TEXT("POSSESSION AWARD QUEUED - Host: ENTER to serve restart");
     SyncRules(); Say(ConductReviewStatus);

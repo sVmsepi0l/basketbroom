@@ -1,5 +1,7 @@
 # Native gameplay validation
 
+> **Historical roof evidence:** Dated open-crown and No Crown checks below describe earlier builds and were superseded by the 2026-09-14 [closed pyramid-net amendment](pyramid-net.md). Their original results are preserved. The Crown-specific test entry points are now retired and return `not_run`; use the new roof tests for current behavior.
+
 `Tools/test_native_playable.py` is an asynchronous, single-world Unreal Engine 5.8 PIE integration suite for `BBGameMode`, `BBMatchState`, `BBRiderCharacter`, and `BBBall`. It is separate from the playable training Blueprint tests and the portable C++ rules tests.
 
 **Current core-suite status, 2026-09-12: 35/35 PASSED.** The compiled native module loaded in Unreal Engine 5.8.1 and the latest BB-0 regression run passed in 12.969 seconds: 35 passed, 0 failed, 0 not run. The earlier six-suite combined run passed 96 checks, including the separately scoped admission, disconnect, networking, openings and Snitch suites below. The harness observes state transitions and spaces queued requests to respect the native input throttle. The report is `.local/native-playable-test-results.json`, with the observed native GameMode, GameState, and pawn classes and the `UEDPIE_0_BB_Regulation` world recorded. The regulation map is staged and enabled in the project.

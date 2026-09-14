@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "retrieved_date": "2026-09-13",
+  "purpose": "Official link identification marks for a local Basketbroom promotional outro; no publishing or account access performed.",
+  "destinations": [
+    {
+      "brand": "instagram",
+      "label": "@basketbroom",
+      "url": "https://www.instagram.com/basketbroom"
+    },
+    {
+      "brand": "x",
+      "label": "@basketbroom",
+      "url": "https://www.x.com/basketbroom"
+    },
+    {
+      "brand": "curseforge",
+      "label": "curseforge.com/members/basketbroom",
+      "url": "https://www.curseforge.com/members/basketbroom"
+    },
+    {
+      "brand": "website",
+      "label": "basketbroom.fun",
+      "url": "https://basketbroom.fun"
+    },
+    {
+      "brand": "github",
+      "label": "github.com/sVmsepi0l",
+      "url": "https://github.com/sVmsepi0l"
+    }
+  ],
+  "sources": {
+    "instagram": {
+      "owner": "Meta / Instagram",
+      "page_url": "https://www.meta.com/brand/resources/instagram/instagram-brand/",
+      "download_url": "https://scontent-lga3-3.xx.fbcdn.net/v/t39.8562-6/10000000_295565596234104_6752419821643487968_n.zip/IG_brand_asset_pack_2023.zip?sdl=1&_nc_cat=104&ccb=1-7&_nc_sid=fcf380&_nc_ohc=8gNw5Wz4fSoQ7kNvwFhavYE&_nc_oc=Adrl5aw1OCC0PY3MRDxTA12Jh7NZyVSoQ--aSl6kpJTo4rCPYZ7Ahkt7xey8GgrqBhA&_nc_zt=14&_nc_ht=scontent-lga3-3.xx&_nc_gid=sjGgZvxC0_ZPaKDVJARUMw&_nc_ss=72100&oh=00_AQIqVAsvsfvPBJlLEb7xkK5YnNbjXWSfvRZD7_UTP1DX8Q&oe=6AAC7D47",
+      "archive_sha256": "a9e5cbe63dc01279b3d12d536ea9d94ab5236521601bd5cc4b4caf7ba7060e82",
+      "usage": "White static glyph identifying the supplied Instagram account, secondary to Basketbroom, without suggesting endorsement. Use in a general follow-us social array. Refer to the page for specified broadcast/film approval procedures."
+    },
+    "x": {
+      "owner": "X Corp.",
+      "page_url": "https://about.x.com/en/who-we-are/brand-toolkit",
+      "download_url": "https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip",
+      "archive_sha256": "ee404b30ad693963f35088e3da1c2e6e59925a34702a2e24d3980ffce5967fff",
+      "guidelines_url": "https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-brand-guidelines.pdf",
+      "usage": "Unmodified white mark on a dark panel; preserve proportions and clear space. Account text near the visible logo height, with the supplied account destination."
+    },
+    "github": {
+      "owner": "GitHub, Inc.",
+      "page_url": "https://brand.github.com/foundations/logo",
+      "download_url": "https://brand.github.com/GitHub_Logos.zip",
+      "archive_sha256": "e2a67d6cc51d990a52c46c1cf6bcab688db4830982174bca50e0be7a5c2f3194",
+      "usage": "Permitted Invertocat as social link to the supplied GitHub profile, with secondary placement. White on a quiet dark background, no added effects or alteration."
+    },
+    "curseforge": {
+      "owner": "Overwolf / CurseForge",
+      "page_url": "https://docs.curseforge.com/",
+      "download_url": "https://docs.curseforge.com/img/sprite.svg",
+      "source_sha256": "246aeb7127cfc11b06913e02aec6cd08faa36bdd029784e9ca1c50d5d5fcb554",
+      "official_symbol": "#logo",
+      "usage": "Official documentation-site logo identifying the supplied CurseForge member profile. Exact original path and viewBox retained. No dedicated public downloadable brand kit was found; no endorsement or platform availability is claimed."
+    },
+    "website": {
+      "owner": "Basketbroom project",
+      "source": "Original generic globe vector authored for this outro",
+      "usage": "Generic destination icon, not an official third-party brand mark."
+    }
+  },
+  "assets": [
+    {
+      "file": "SourceArt/Promo/BrandIcons/instagram-glyph-white.svg",
+      "source": "instagram",
+      "bytes": 1819,
+      "sha256": "3347813e9e8f082cdf48495818bd370ccff94b687efb8aa1c8a7b36cfcfb8291",
+      "archive_entry": "01 Static Glyph/02 White Glyph/Instagram_Glyph_White.svg",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/instagram-glyph-white.png",
+      "source": "instagram",
+      "bytes": 190161,
+      "sha256": "10cf9fdef34e843b3e6c0dc031385d08d84c3d8f53553a09cf2a2636b000fb61",
+      "archive_entry": "01 Static Glyph/02 White Glyph/Instagram_Glyph_White.png",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity.",
+      "image": {
+        "width": 4322,
+        "height": 4320,
+        "mode": "RGBA"
+      }
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/x-logo-white.svg",
+      "source": "x",
+      "bytes": 430,
+      "sha256": "dd46f96b6f47fcd33683b79ddfaf3daca1d4f8aeba3c0f2bde1584c69cc699d4",
+      "archive_entry": "logo.svg",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/x-logo-white.png",
+      "source": "x",
+      "bytes": 103016,
+      "sha256": "432bdd47255b48366843ec21d209e774f93b807e1fd0894fc983aad0dc7bd03b",
+      "archive_entry": "logo-white.png",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity.",
+      "image": {
+        "width": 2400,
+        "height": 2453,
+        "mode": "RGBA"
+      }
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/github-invertocat-white.svg",
+      "source": "github",
+      "bytes": 1559,
+      "sha256": "ccd84c89b1056345608fc3489357f8acc7397e49a3cdc2d418b6c8016911d47b",
+      "archive_entry": "GitHub Logos/SVG/GitHub_Invertocat_White.svg",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/github-invertocat-white.png",
+      "source": "github",
+      "bytes": 6223,
+      "sha256": "0d4c235fef9efec54174a7c005fc0fe0ce2d63d35c21898ab5148587111397a9",
+      "archive_entry": "GitHub Logos/PNG/GitHub_Invertocat_White.png",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity.",
+      "image": {
+        "width": 294,
+        "height": 288,
+        "mode": "RGBA"
+      }
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/github-invertocat-white-clearspace.svg",
+      "source": "github",
+      "bytes": 1313,
+      "sha256": "ed102562e49ca3ea6e7d79ea10d54360dbecc5beb33de6a60fa578b6c0fac803",
+      "archive_entry": "GitHub Logos/SVG/GitHub_Invertocat_White_Clearspace.svg",
+      "conversion": "None; unchanged archive bytes, locally renamed for clarity."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/curseforge-official-sprite.svg",
+      "source": "curseforge",
+      "bytes": 38222,
+      "sha256": "246aeb7127cfc11b06913e02aec6cd08faa36bdd029784e9ca1c50d5d5fcb554",
+      "conversion": "None; original downloaded sprite retained unchanged."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/curseforge-logo-white.svg",
+      "source": "curseforge",
+      "bytes": 570,
+      "sha256": "992622fa9ae3d65d6545d40dcdad478740a69abe6239628c08a60973b43755e3",
+      "conversion": "Extracted the #logo symbol into a standalone svg wrapper. Original path attributes and viewBox preserved exactly; CSS currentcolor resolved to #ffffff.",
+      "validation": {
+        "original_path_attributes_equal": true,
+        "original_viewbox_equal": true
+      }
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/curseforge-logo-white.png",
+      "source": "curseforge",
+      "bytes": 12879,
+      "sha256": "66651b3be5ba6fe405112f2c976581a78d7657629598ced4188f6c829ae4b2f7",
+      "conversion": "Locally rasterized from the adjacent SVG with sharp 0.35.4 / librsvg 2.62.91, with unchanged aspect ratio and original canvas padding. Transparent RGBA PNG; not an original vendor PNG.",
+      "derived_from": "curseforge-logo-white.svg",
+      "image": {
+        "width": 900,
+        "height": 910,
+        "mode": "RGBA"
+      }
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/website-globe-white.svg",
+      "source": "website",
+      "bytes": 310,
+      "sha256": "0767615cd8c5267b84b4f849aaef3347f5925b0e823ce0628dc22eb531fd1ed5",
+      "conversion": "Original vector, no external brand source."
+    },
+    {
+      "file": "SourceArt/Promo/BrandIcons/website-globe-white.png",
+      "source": "website",
+      "bytes": 31131,
+      "sha256": "e3fd24729247e5f8fa23dd3f107ffdb7e59051ebd65b493ad6c119ace1092489",
+      "conversion": "Locally rasterized from the adjacent SVG with sharp 0.35.4 / librsvg 2.62.91, with unchanged aspect ratio and original canvas padding. Transparent RGBA PNG; not an original vendor PNG.",
+      "derived_from": "website-globe-white.svg",
+      "image": {
+        "width": 1000,
+        "height": 1000,
+        "mode": "RGBA"
+      }
+    }
+  ],
+  "technology_badges": [
+    "Prototype built in Unreal Engine 5.8",
+    "Hogwarts Legacy Creator Kit mod in development"
+  ],
+  "technology_evidence": [
+    "README.md:15",
+    "Docs/hogwarts-integration.md:5",
+    "Docs/hogwarts-integration.md:9"
+  ]
+}

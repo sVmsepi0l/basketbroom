@@ -169,8 +169,9 @@ class ArenaPortBuilder(geometry.ArenaBuilder):
                 self.stone_texture = asset
         expected = {"SM_BB_LargeHoop", "SM_BB_SmallHoop", "SM_BB_CenterCircle", "SM_BB_ReboundNet", "SM_BB_Stars"}
         expected.update(geometry.DETAIL_MESHES)
+        expected.update(geometry.PYRAMID_MESHES)
         if set(self.meshes) != expected or self.stone_texture is None:
-            raise RuntimeError("The port requires the complete 14-mesh arena and original basalt texture")
+            raise RuntimeError("The port requires the complete 18-mesh arena (including the pyramid net) and original basalt texture")
         for primitive in ("Cube", "Cylinder", "Sphere", "Cone"):
             mesh = self.assets.load_asset("/Engine/BasicShapes/" + primitive)
             if mesh is None or not isinstance(mesh, unreal.StaticMesh):
@@ -185,6 +186,10 @@ class ArenaPortBuilder(geometry.ArenaBuilder):
         raise RuntimeError("The port never reimports texture sources")
 
     def setup_assets(self):
+        # preflight_assets has already verified importer ownership and hashes.
+        # Preserve the hollow shell as double-sided triangle collision in 4.27;
+        # convex cooking would incorrectly add a horizontal floor at the eave.
+        self.configure_pyramid_collision()
         for spec in geometry.ARENA_PALETTE:
             self.material(*spec)
         path = _asset_path("PM_BBPort_Rebound")

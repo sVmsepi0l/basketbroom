@@ -34,6 +34,7 @@ CASES = (
     "conduct_review_requires_explicit_choice_and_separate_confirmation",
     "menu_confirms_selected_possession_award_then_resumes_real_restart",
     "engine_input_flush_clears_axes_catch_and_ghost_flight",
+    "serious_dpad_choice_selects_without_adjudication_or_spell_change",
 )
 spec = importlib.util.spec_from_file_location("_bb_controller_scaffold", ROOT / "Tools/test_native_playable.py")
 base = importlib.util.module_from_spec(spec)
@@ -272,6 +273,20 @@ class NativeControllerTests(base.NativePlayableTests):
         menu_did_nothing = self.conduct() == pending and not prop(self.match, "bLive")
         yield from self.tap("Gamepad_DPad_Down", lambda: int(prop(self.pawn, "GamepadRefereeChoice")) == 2)
         severe_selection_only = self.conduct() == pending and int(prop(self.match, "PendingPenaltyCount")) == 0
+        spell_before_serious_choice = int(prop(self.pawn, "SelectedSpell"))
+        score_before_serious_choice = self.scores()
+        yield from self.tap("Gamepad_DPad_Right", lambda: int(prop(self.pawn, "GamepadRefereeChoice")) == 3)
+        serious_selection_only = (int(prop(self.pawn, "GamepadRefereeChoice")) == 3
+                                  and self.conduct() == pending and int(prop(self.match, "PendingPenaltyCount")) == 0
+                                  and not prop(self.match, "bPenaltyShotActive") and not prop(self.match, "bLive")
+                                  and self.scores() == score_before_serious_choice
+                                  and int(prop(self.pawn, "SelectedSpell")) == spell_before_serious_choice)
+        self.record(CASES[17], serious_selection_only,
+                    choice=int(prop(self.pawn, "GamepadRefereeChoice")), conduct=self.conduct(),
+                    shot_active=bool(prop(self.match, "bPenaltyShotActive")),
+                    scores_before=score_before_serious_choice, scores_after=self.scores(),
+                    spell_before=spell_before_serious_choice, spell_after=int(prop(self.pawn, "SelectedSpell")),
+                    input_path="D-pad Right via native PlayerInput; no confirmation sent")
         yield from self.tap("Gamepad_DPad_Up", lambda: int(prop(self.pawn, "GamepadRefereeChoice")) == 1)
         self.record(CASES[14], neutral_choice and menu_did_nothing and severe_selection_only
                     and self.conduct() == pending and int(prop(self.pawn, "GamepadRefereeChoice")) == 1,

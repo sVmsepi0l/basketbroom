@@ -1,4 +1,5 @@
 #include "BBRiderCharacter.h"
+#include "BBArenaGeometry.h"
 
 #include "BBMatchState.h"
 #include "BBSpellCatalog.h"
@@ -24,6 +25,8 @@
 float UBBFlyingMovementComponent::GetMaxSpeed() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxSpeed() : 0.f;
     if (Rider && Rider->StunRemaining > 0.f) return 0.f;
     return Super::GetMaxSpeed() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
@@ -31,41 +34,71 @@ float UBBFlyingMovementComponent::GetMaxSpeed() const
 float UBBFlyingMovementComponent::GetMaxAcceleration() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxAcceleration() : 0.f;
     if (Rider && Rider->StunRemaining > 0.f) return 0.f;
     return Super::GetMaxAcceleration() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
 void UBBFlyingMovementComponent::PhysFlying(float DeltaTime, int32 Iterations)
 {
+    const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    // Apply before prediction/server movement: a saved move or residual velocity
+    // must not carry the shooter off the mark or move a waiting rider.
+    if (Match && Match->bPenaltyShotActive && !Match->CanMoveDuringPenalty(Rider))
+    {
+        StopMovementImmediately();
+        return;
+    }
     const FVector EntryVelocity = Velocity;
     Super::PhysFlying(DeltaTime, Iterations);
-    const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
-    if (!HasValidData() || !Rider || Rider->StunRemaining > 0.0f || MovementMode != MOVE_Flying) return;
+    if (!HasValidData() || !Rider || MovementMode != MOVE_Flying) return;
 
     const UCapsuleComponent* Capsule = Rider->GetCapsuleComponent();
     const double Radius = Capsule->GetScaledCapsuleRadius();
     const double HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-    const FVector Lower(-6850.8 + Radius, -3200.4 + Radius, HalfHeight);
-    const FVector Upper(6850.8 - Radius, 3200.4 - Radius, 6309.36 - HalfHeight);
+    const FVector Lower(-BBArena::HalfLength + Radius, -BBArena::HalfWidth + Radius, HalfHeight);
+    const FVector Upper(BBArena::HalfLength - Radius, BBArena::HalfWidth - Radius, BBArena::ApexHeight - HalfHeight);
     const FVector Current = UpdatedComponent->GetComponentLocation();
-    const FVector Bounded(FMath::Clamp(Current.X, Lower.X, Upper.X),
-                          FMath::Clamp(Current.Y, Lower.Y, Upper.Y),
-                          FMath::Clamp(Current.Z, Lower.Z, Upper.Z));
+    const FVector Bounded = BBArena::ClampCapsule(Current, Radius, HalfHeight);
     if (!Current.Equals(Bounded, .01))
     {
+        // CharacterMovement's sweep handles normal flight into the authored
+        // roof. This explicit convex bound also covers prediction correction,
+        // high-speed saved moves and missing/late collision geometry.
         FHitResult Hit;
-        SafeMoveUpdatedComponent(Bounded - Current, UpdatedComponent->GetComponentQuat(), true, Hit);
+        SafeMoveUpdatedComponent(Bounded - Current, UpdatedComponent->GetComponentQuat(), false, Hit);
     }
 
-    // Lower nets collide physically; open-crown bounds are movement constraints.
-    // Both use the same predicted simulation and preserve a controlled rebound.
     for (int32 Axis = 0; Axis < 3; ++Axis)
     {
         const double Speed = FMath::Max(FMath::Abs(EntryVelocity[Axis]), FMath::Abs(Velocity[Axis]));
         if (Bounded[Axis] <= Lower[Axis] + 3.0 && (EntryVelocity[Axis] < 0 || Velocity[Axis] < 0))
-            Velocity[Axis] = Speed * .75;
-        else if (Bounded[Axis] >= Upper[Axis] - 3.0 && (EntryVelocity[Axis] > 0 || Velocity[Axis] > 0))
-            Velocity[Axis] = -Speed * .75;
+            Velocity[Axis] = Speed * BBArena::Restitution;
+        else if (Axis < 2 && Bounded[Axis] >= Upper[Axis] - 3.0 && (EntryVelocity[Axis] > 0 || Velocity[Axis] > 0))
+            Velocity[Axis] = -Speed * BBArena::Restitution;
+    }
+    // Restore the incoming normal component that the physical sweep can have
+    // removed, then rebound against every touching sloped face. This runs in
+    // native server movement and the client's matching predicted simulation.
+    bool bRoofImpact = false;
+    for (int32 Face = 0; Face < 4; ++Face)
+    {
+        const FPlane Plane = BBArena::RoofPlane(Face);
+        const FVector Normal(Plane.X, Plane.Y, Plane.Z);
+        const double Support = Radius + FMath::Max(0.0, HalfHeight - Radius) * Normal.Z;
+        bRoofImpact |= Plane.PlaneDot(Bounded) + Support >= -3.0
+            && FVector::DotProduct(EntryVelocity, Normal) > 0;
+    }
+    if (bRoofImpact)
+    {
+        FVector Rebound = EntryVelocity;
+        BBArena::ReboundRoof(Rebound, Bounded, Radius, HalfHeight, 3.0);
+        // Roof/wall seams must satisfy the vertical net at the same time.
+        if (FMath::Abs(Bounded.X) >= BBArena::HalfLength - Radius - 3.0 && Rebound.X * Bounded.X > 0) Rebound.X *= -.75;
+        if (FMath::Abs(Bounded.Y) >= BBArena::HalfWidth - Radius - 3.0 && Rebound.Y * Bounded.Y > 0) Rebound.Y *= -.75;
+        Velocity = Rebound;
     }
 }
 
@@ -436,12 +469,13 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABBRiderCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
+    const bool bPenaltyKeeperMovement = Match && Match->bPenaltyShotActive && Match->CanMoveDuringPenalty(this);
     if (HasAuthority())
     {
-        const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
         if (!Match || Match->bLive) StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
     }
-    if (StunRemaining > 0.0f)
+    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
     {
         GetCharacterMovement()->StopMovementImmediately();
     }
@@ -527,7 +561,19 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     {
         StopInteract();
     }
-    if (StunRemaining > 0.0f)
+    const ABBMatchState* InputMatch = GetWorld()->GetGameState<ABBMatchState>();
+    if (InputMatch && InputMatch->bPenaltyShotActive)
+    {
+        bShowRoster = false;
+        bShowSpellbook = false;
+        if (!InputMatch->CanMoveDuringPenalty(this))
+        {
+            ConsumeMovementInputVector();
+            GetCharacterMovement()->StopMovementImmediately();
+            return;
+        }
+    }
+    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
     {
         return;
     }
@@ -582,6 +628,7 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindKey(EKeys::B, IE_Pressed, this, &ABBRiderCharacter::RequestBloodbroom);
     Input->BindKey(EKeys::V, IE_Pressed, this, &ABBRiderCharacter::ToggleSpellbook);
     Input->BindKey(EKeys::F7, IE_Pressed, this, &ABBRiderCharacter::RequestPossessionAward);
+    Input->BindKey(EKeys::F8, IE_Pressed, this, &ABBRiderCharacter::RequestPenaltyShot);
     Input->BindKey(EKeys::F9, IE_Pressed, this, &ABBRiderCharacter::RequestEjection);
 }
 
@@ -631,6 +678,7 @@ void ABBRiderCharacter::CastSelectedSpell() { SubmitAction(6, SelectedSpell); }
 void ABBRiderCharacter::RequestShield() { SubmitAction(7); }
 void ABBRiderCharacter::RequestBloodbroom() { SubmitAction(8); }
 void ABBRiderCharacter::RequestPossessionAward() { SubmitAction(9); }
+void ABBRiderCharacter::RequestPenaltyShot() { SubmitAction(10); }
 void ABBRiderCharacter::RequestEjection() { SubmitAction(11); }
 
 void ABBRiderCharacter::SubmitAction(int32 Action, int32 Value)
@@ -647,7 +695,7 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11 || Action == 10
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count()))
@@ -705,7 +753,7 @@ void ABBRiderCharacter::ServerStopInteract_Implementation()
 
 void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, FVector Aim)
 {
-    if (!HasAuthority() || !Controller || Action < 0 || Action > 11 || Action == 10)
+    if (!HasAuthority() || !Controller || Action < 0 || Action > 11)
     {
         return;
     }
@@ -714,7 +762,10 @@ void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, F
     {
         return;
     }
-    if ((Action <= 1 && StunRemaining > 0.0f)
+    const ABBMatchState* MatchState = GetWorld()->GetGameState<ABBMatchState>();
+    const bool bProtectedShotRelease = Action == 1 && MatchState && MatchState->bPenaltyShotActive
+        && MatchState->PenaltyShooterSlot == RosterIndex;
+    if ((Action <= 1 && StunRemaining > 0.0f && !bProtectedShotRelease)
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count())))
@@ -743,7 +794,10 @@ FVector ABBRiderCharacter::GetCarryLocation() const
 {
     const FVector Aim = GetAimDirection();
     const FVector Right = FRotationMatrix(FRotator(0, Aim.Rotation().Yaw, 0)).GetUnitAxis(EAxis::Y);
-    return GetActorLocation() + FVector(0, 0, BaseEyeHeight - 25.0f) + Aim * 175.0f + Right * 35.0f;
+    // Use the largest held-ball radius so neither authority custody nor the
+    // local predicted held visual can protrude through a roof face or wall.
+    return BBArena::ClampSphere(GetActorLocation() + FVector(0, 0, BaseEyeHeight - 25.0f)
+        + Aim * 175.0f + Right * 35.0f, 65.0);
 }
 
 void ABBRiderCharacter::RefreshUniform()

@@ -44,6 +44,8 @@ public:
     bool IsChase() const { return BallIndex == 3 || BallIndex == 4; }
     bool IsBludger() const { return BallIndex >= 5; }
     int32 Kind() const { return BallIndex == 0 ? 0 : BallIndex <= 2 ? 1 : BallIndex - 1; }
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development")
+    float GetCollisionRadius() const { return Radius(); }
     float Radius() const { return IsChase() ? 28.f : IsBludger() ? 50.f : 65.f; }
     FString DisplayName() const;
     /** Read-only authority simulation diagnostic (cm/s), not smoothed client visual velocity. */
@@ -51,15 +53,25 @@ public:
     FVector GetFlightVelocity() const { return FlightVelocity; }
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development")
     double GetDistanceSinceReleaseCm() const { return DistanceSinceReleaseCm; }
+    /** PIE authority diagnostic: count, outward normal XYZ, incoming XYZ, outgoing XYZ. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development")
+    TArray<double> DevelopmentGetRoofContactState() const;
     UFUNCTION() void OnRep_Appearance();
     // Only arranges a free ball's physical start; never grants possession,
     // activation, capture progress, points, or a rule-engine outcome.
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     bool DevelopmentSetFlightFixture(FVector Location, FVector Velocity);
     void ResetBall(FVector Location);
+    // The match alone advances a penalty flight together with its attempt clock.
+    // Ordinary Tick never integrates the same penalty frame again.
+    void StepPenaltyFlight(double DeltaSeconds);
 private:
+    int32 RoofContactCount = 0;
+    FVector LastRoofNormal = FVector::ZeroVector;
+    FVector LastRoofIncoming = FVector::ZeroVector;
+    FVector LastRoofOutgoing = FVector::ZeroVector;
     FVector PreviousVisualLocation = FVector::ZeroVector;
     void UpdateChaseVisual(float DeltaSeconds);
-    void StepFlight(float DeltaSeconds);
+    void StepFlight(double DeltaSeconds);
     void StepCapture(float DeltaSeconds);
 };

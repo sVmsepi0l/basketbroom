@@ -248,6 +248,7 @@ def main():
         if args.audio:
             command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", "320k", "-ar", "48000"]
         command += common + ["-metadata", "title=Basketbroom prototype - native 4K gameplay", str(clean)]
+        clean_encode_command = list(command)
         run(command, log=output / (args.name + "-clean-encode.log"))
         clean_probe = inspect_media(ffprobe, clean, width, height, fps, count, bool(args.audio))
     receipt = {"created_utc": datetime.now(timezone.utc).isoformat(), "source_capture": str(args.capture.resolve()),
@@ -261,6 +262,9 @@ def main():
                "audio": audio_path,
                "audio_note": previous.get("audio_note", "Audio retained from the validated clean master") if previous else
                    "Edited sound mix from the game's original cues, aligned to recorded gameplay event timestamps; not a live system/microphone recording" if args.audio else "Silent source master"}
+    if not previous:
+        receipt["clean_encode_command"] = clean_encode_command
+        receipt["clean_encode_working_directory"] = str(Path.cwd())
     if previous:
         receipt.update(review_source_receipt=str(args.review_from.resolve()),
                        review_source_receipt_sha256=file_sha256(args.review_from),
@@ -271,6 +275,8 @@ def main():
         review_command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-i", str(clean), "-map", "0:v:0",
                           "-map", "0:a?", "-frames:v", str(count), "-vf", "ass=filename='" + subtitles.name + "'",
                           "-c:a", "copy"] + common + ["-metadata", "title=Basketbroom prototype - review cut", str(review)]
+        receipt["review_encode_command"] = review_command
+        receipt["review_encode_working_directory"] = str(output)
         run(review_command, cwd=output, log=output / (args.name + "-review-encode.log"))
         receipt["review"] = str(review)
         receipt["review_probe"] = inspect_media(ffprobe, review, width, height, fps, count, bool(audio_path))

@@ -5,6 +5,7 @@ gameplay; native Blueprint nodes handle movement, scoring, and sound playback.
 """
 import sys
 import importlib
+import math as scalar_math
 from pathlib import Path
 import unreal
 
@@ -13,6 +14,8 @@ sys.path.insert(0, str(ROOT / 'Tools'))
 import bp_graph
 importlib.reload(bp_graph)
 from bp_graph import Graph, create_blueprint, pin_type, connect
+import build_arena as arena_geometry
+importlib.reload(arena_geometry)
 
 BASE = '/Basketbroom/Blueprints/'
 MATH = '/Script/Engine.KismetMathLibrary.'
@@ -44,6 +47,63 @@ def xyz(g, v):
 def vadd(g, a, b): return math(g, 'Add_VectorVector', A=a, B=b)
 def vmul(g, a, b): return math(g, 'Multiply_VectorFloat', A=a, B=b)
 def vsub(g, a, b): return math(g, 'Subtract_VectorVector', A=a, B=b)
+def pyramid_limit(g, x, y, radius):
+    """Sphere support inside the same four roof planes used by native play."""
+    sx = (arena_geometry.PYRAMID_APEX - arena_geometry.ROOFLINE) / arena_geometry.BACKSTOP_X
+    sy = (arena_geometry.PYRAMID_APEX - arena_geometry.ROOFLINE) / arena_geometry.HALF_WIDTH
+    x_support = add(g, mul(g, math(g, 'Abs', A=x), sx), mul(g, radius, scalar_math.sqrt(1 + sx * sx)))
+    y_support = add(g, mul(g, math(g, 'Abs', A=y), sy), mul(g, radius, scalar_math.sqrt(1 + sy * sy)))
+    return sub(g, arena_geometry.PYRAMID_APEX, math(g, 'FMax', A=x_support, B=y_support))
+
+
+def pyramid_position(g, point, radius):
+    x, y, z = xyz(g, point)
+    lx = sub(g, arena_geometry.BACKSTOP_X, radius)
+    ly = sub(g, arena_geometry.HALF_WIDTH, radius)
+    x = math(g, 'FClamp', Value=x, Min=mul(g, lx, -1), Max=lx)
+    y = math(g, 'FClamp', Value=y, Min=mul(g, ly, -1), Max=ly)
+    z = math(g, 'FClamp', Value=z, Min=radius, Max=pyramid_limit(g, x, y, radius))
+    return vec(g, x, y, z)
+
+
+def ball_radius(g):
+    return math(g, 'SelectFloat', A=33, B=24, bPickA=eqi(g, g.get('Kind'), 0))
+
+
+def roof_rebounds(g):
+    """Closed plane response for training's kinematic scoring balls.
+
+    The segment's endpoint detects exit from any convex half-space, so even a
+    fast throw cannot skip a thin mesh strand. Project out penetration and
+    reflect only outward normal speed; a second pass settles hip/apex contacts.
+    These are generated Blueprint nodes, never Python callbacks at runtime.
+    """
+    planes = []
+    for face in range(4):
+        slope = (arena_geometry.PYRAMID_APEX - arena_geometry.ROOFLINE) / (
+            arena_geometry.BACKSTOP_X if face < 2 else arena_geometry.HALF_WIDTH)
+        sign = 1 if face % 2 == 0 else -1
+        length = scalar_math.sqrt(1 + slope * slope)
+        n = (sign * slope / length, 0, 1 / length) if face < 2 else (0, sign * slope / length, 1 / length)
+        planes.append((n, arena_geometry.PYRAMID_APEX / length))
+    sequence = g.sequence(9)
+    for index, (normal, distance) in enumerate(planes * 2):
+        def dot(v):
+            x, y, z = xyz(g, v)
+            return add(g, add(g, mul(g, x, normal[0]), mul(g, y, normal[1])), mul(g, z, normal[2]))
+        depth = add(g, sub(g, dot(g.get('P')), distance), ball_radius(g))
+        hit = g.branch(gt(g, depth, 0))
+        projection = g.set('P', vsub(g, g.get('P'), vmul(g, normal, add(g, depth, 0.01))))
+        outward = g.branch(gt(g, dot(g.get('Velocity')), 0))
+        reflection = g.set('Velocity', vsub(g, g.get('Velocity'), vmul(g, normal, mul(g, dot(g.get('Velocity')), 1.75))))
+        g.exec(sequence, hit, 'then_' + str(index))
+        g.chain(hit, projection, outward, reflection, sound(g, 'Bounce', 0.16))
+    # Settle any accumulated float/seam penetration without killing custody,
+    # resetting to Home, changing scores, or applying an obsolete Crown foul.
+    g.exec(sequence, g.set('P', pyramid_position(g, g.get('P'), ball_radius(g))), 'then_8')
+    return sequence
+
+
 def pawn(g): return fn(g, GS+'GetPlayerPawn', PlayerIndex=0)
 def controller(g): return fn(g, GS+'GetPlayerController', PlayerIndex=0)
 def camera(g): return fn(g, GS+'GetPlayerCameraManager', PlayerIndex=0)
@@ -114,10 +174,16 @@ def make_manager():
     reset = g.branch(key(g,'R'))
     reload = g.call(GS+'OpenLevel',LevelName='BB_Arena',bAbsolute=True)
     g.exec(seq,reset,'then_1'); g.exec(reset,reload)
-    # Keep ordinary flight within the playable envelope without an invisible roof net.
+    # Preserve training's side/floor insets, with a spherical sloped-roof limit.
+    # DefaultPawn uses a 35cm sphere; read an existing authored broom's radius
+    # when rebuilding so collision scale adjustments remain respected.
+    broom_class = unreal.load_class(None, BASE + 'BP_BBBroom.BP_BBBroom_C')
+    broom_radius = (unreal.get_default_object(broom_class).get_editor_property('collision_component').get_scaled_sphere_radius()
+                    if broom_class is not None else 35.0)
     p = location(g,pawn(g)); x,y,z = xyz(g,p)
-    clamp = setloc(g,vec(g,math(g,'FClamp',Value=x,Min=-6710,Max=6710),
-                        math(g,'FClamp',Value=y,Min=-3090,Max=3090),math(g,'FClamp',Value=z,Min=130,Max=6250)),pawn(g))
+    x = math(g,'FClamp',Value=x,Min=-6710,Max=6710)
+    y = math(g,'FClamp',Value=y,Min=-3090,Max=3090)
+    clamp = setloc(g,vec(g,x,y,math(g,'FClamp',Value=z,Min=130,Max=pyramid_limit(g,x,y,broom_radius))),pawn(g))
     g.exec(seq,clamp,'then_2')
     # Each chase ball publishes its own sample; choosing here avoids tick-order
     # races from both balls clearing or overwriting a shared nearest-distance.
@@ -160,7 +226,7 @@ def make_ball():
     g.chain(tick,valid,cd,updates)
     g.exec(updates,ready,'then_0'); g.exec(ready,botheld)
     g.exec(botheld,classify,'else')
-    botfollow=setloc(g,g.get('BotPosition'))
+    botfollow=setloc(g,pyramid_position(g,g.get('BotPosition'),ball_radius(g)))
     steal=g.branch(both(g,both(g,key(g,'E'),lt(g,math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g)))),425)),neg(g,mg(g,'HasBall'))))
     g.chain(botheld,botfollow,steal,g.set('BotOwner',-1),g.set('Held',True),ms(g,'HasBall',True),ms(g,'Message','INTERCEPTION | Possession won. Left mouse to shoot.'),sound(g,'Catch'))
     # Ordinary scoring balls: pickup, carry and release; one controlled ball at a time.
@@ -169,16 +235,14 @@ def make_ball():
     forward=math(g,'GetForwardVector',InRot=camrot)
     right=math(g,'GetRightVector',InRot=camrot)
     holdpos=vadd(g,location(g,pawn(g)),vadd(g,vmul(g,forward,175),vadd(g,vmul(g,right,72),vec(g,0,0,-48))))
-    follow=setloc(g,holdpos)
+    follow=setloc(g,pyramid_position(g,holdpos,ball_radius(g)))
     shoot=g.branch(either(g,key(g,'LeftMouseButton'),gt(g,mg(g,'Stun'),0)))
     release=g.set('Held',False); clear=ms(g,'HasBall',False)
     impulse=g.set('Velocity',vadd(g,vmul(g,forward,4400),vmul(g,fn(g,ACTOR+'GetVelocity',target=pawn(g)),0.4)))
     delay=g.set('Cooldown',0.15)
     msg=ms(g,'Message','BALL RELEASED | Bank shots stay live')
-    heldroof=g.branch(gt(g,xyz(g,holdpos)[2],4206.24))
-    g.chain(held,follow,heldroof)
-    g.exec(heldroof,shoot,'else'); g.chain(shoot,release,clear,impulse,delay,msg,sound(g,'Throw'))
-    g.chain(heldroof,g.set('Held',False),ms(g,'HasBall',False),setloc(g,g.get('Home')),g.set('Velocity',(0,0,0)),g.set('Cooldown',0.8),ms(g,'Message','NO CROWN | Carried ball returned at the roofline.'))
+    g.chain(held,follow,shoot)
+    g.chain(shoot,release,clear,impulse,delay,msg,sound(g,'Throw'))
     free=g.sequence(3); g.exec(held,free,'else')
     distance=math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g))))
     take=g.branch(both(g,both(g,key(g,'E'),lt(g,distance,425)),both(g,neg(g,mg(g,'HasBall')),lt(g,g.get('Cooldown'),0.001))))
@@ -224,9 +288,9 @@ def make_ball():
     floor=g.branch(lt(g,coords[2],65))
     bounce=math(g,'FMax',A=390,B=mul(g,math(g,'Abs',A=vel[2]),0.75))
     g.exec(surfaces,floor,'then_4'); g.chain(floor,g.set('P',vec(g,coords[0],coords[1],65)),g.set('Velocity',vec(g,vel[0],vel[1],bounce)))
-    # No Crown: this individual ball returns; the rest of the arena stays live.
-    roof=g.branch(gt(g,xyz(g,g.get('P'))[2],4206.24))
-    g.exec(surfaces,roof,'then_5'); g.chain(roof,g.set('P',g.get('Home')),g.set('Velocity',(0,0,0)),ms(g,'Message','NO CROWN | Ball returned. Open roof is out for scoring balls.'))
+    # All four sloping roof faces rebound the same live ball, including above
+    # the former 138ft threshold. The hollow eave has no horizontal collision.
+    g.exec(surfaces,roof_rebounds(g),'then_5')
     apply=setloc(g,g.get('P')); g.exec(free,apply,'then_2')
     # Chase balls use deterministic paths and a full 1-second capture window.
     chase=g.sequence(2); g.exec(classify,chase,'else')

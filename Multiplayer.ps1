@@ -6,9 +6,11 @@ param(
     [string]$EngineRoot = 'C:\Program Files\Epic Games\UE_5.8',
     [switch]$EditorGame,
     [switch]$Practice,
+    [switch]$Bloodbroom,
     [switch]$Plan
 )
 $ErrorActionPreference = 'Stop'
+if ($Mode -eq 'Join' -and $Bloodbroom) { throw '-Bloodbroom is a host option. Join without this flag; the server selects the match variant.' }
 if ($Address -notmatch '^[a-zA-Z0-9.-]+$') { throw 'Use a hostname or IPv4 address without a port or URL options.' }
 $project = Join-Path $PSScriptRoot 'DevelopmentHarness\BasketbroomDev.uproject'
 $module = Join-Path $PSScriptRoot 'DevelopmentHarness\Binaries\Win64\UnrealEditor-BasketbroomRuntime.dll'
@@ -35,6 +37,7 @@ if (-not $EditorGame) {
 }
 $map = '/Basketbroom/Maps/BB_Regulation?listen'
 if ($Practice) { $map += '?Practice=1' }
+if ($Bloodbroom) { $map += '?Bloodbroom=1' }
 if ($Mode -eq 'LocalTest') { $Address = '127.0.0.1' }
 $hostArgs = $prefix + @($map) + $runtimeFlags + @("-port=$Port",'-windowed','-ResX=1280','-ResY=720','-NoSplash','-WinX=30','-WinY=30')
 $joinArgs = $prefix + @("${Address}:$Port") + $runtimeFlags + @('-windowed','-ResX=1280','-ResY=720','-NoSplash','-WinX=140','-WinY=140')

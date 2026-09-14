@@ -15,6 +15,8 @@ enum class Severity : int { Minor, Moderate, Serious, Severe, Catastrophic };
 enum class Contact : int { None, Player, Hurley, Net, Floor, Goal };
 enum class EventKind : int { Goal, Catch };
 enum class Hoop : int { None, Large, Small };
+enum class PenaltyShotStage : int { None, Ready, InFlight, AwaitingRestart, Complete };
+enum class PenaltyShotOutcome : int { None, Goal, Miss, Timeout };
 
 struct Config {
     std::int64_t quaffle_points = 13, quark_points = 37, snipe_points = 69;
@@ -24,9 +26,11 @@ struct Config {
     Millis snipe_timeout_ms = 180000, snipe_warning_ms = 10000, catch_control_ms = 1000;
     Millis hurley_warning_ms = 2000, hurley_individual_ms = 3000, hurley_team_ms = 6000;
     Millis contestable_reset_ms = 1000, crown_return_ms = 3000, removal_ms = 180000;
-    Millis restart_protection_ms = 3000;
+    Millis restart_protection_ms = 3000, penalty_shot_ms = 5000;
     std::int64_t regulation_margin = 150, overtime_margin = 150;
     double self_toss_reset_distance_ft = 10.0;
+    // Historical replay/test compatibility only. Current venues have a closed top net.
+    bool enable_legacy_crown_exit = false;
 };
 struct Player {
     int team = 0;
@@ -60,6 +64,13 @@ struct PointEvent {
     bool by_hand = false, mounted = false, inside_envelope = false;
 };
 struct Award { int team = -1; std::int64_t points = 0; int ball = -1, player = -1; };
+struct PenaltyShot {
+    PenaltyShotStage stage = PenaltyShotStage::None;
+    PenaltyShotOutcome outcome = PenaltyShotOutcome::None;
+    int penalty_id = -1, ball = -1, shooter = -1, netminder = -1, attacking_team = -1;
+    Millis elapsed_ms = 0, released_ms = -1;
+    std::int64_t awarded_points = 0;
+};
 struct Penalty {
     int id = 0, player = -1, ball = -1;
     std::string reason, disposition;
@@ -67,6 +78,7 @@ struct Penalty {
     Millis committed_ms = 0;
     bool pending = true;
     bool crown_restoration_pending = false;
+    bool penalty_shot_reserved = false;
     int crown_restoration_receiver = -1;
     std::array<double, 3> crown_mark{{0, 0, 0}};
 };
@@ -121,10 +133,26 @@ public:
     // Queue a Moderate scoring-ball possession remedy at a stoppage. The
     // penalty remains pending until an eligible opponent takes restart().
     bool queue_conduct_possession_award(int penalty_id, int ball, int team);
+    // Serious shot administration uses a separate stopped-time attempt clock.
+    // Native callers supply physical goal/save/miss evidence; these methods
+    // never infer points from a disposition string. Five seconds includes flight.
+    // Existing terminal Review or an unavailable defending Netminder needs
+    // explicit external adjudication and is rejected without changing state.
+    bool start_penalty_shot(int penalty_id, int ball, int shooter, int netminder);
+    bool release_penalty_shot(int shooter);
+    Millis advance_penalty_shot(Millis delta_ms);
+    bool complete_penalty_shot(PenaltyShotOutcome outcome, const PointEvent& goal = PointEvent{});
+    // Actual protected defending custody resolves the pending penalty. A made
+    // Donnybrook/OT-ending shot enters Review only after this restart.
+    bool restart_penalty_shot(int netminder);
+    bool penalty_shot_active() const;
     bool recall_chase(int ball);
     // Returns positive penalty id, or -1 on rejection. -1 committed_ms means now.
     int record_penalty(int player, const std::string& reason, Severity severity,
                        int ball = -1, Millis committed_ms = -1);
+    // Compatibility for explicit external official adjudication of unreserved
+    // penalties. Native Serious play must reserve and serve the shot lifecycle;
+    // a reserved shot cannot be cleared by a disposition string.
     bool resolve_penalty(int id, const std::string& disposition, bool apply_removal = true);
     bool certify(const std::vector<Adjustment>& adjustments = {});
     bool overturn_snitch(const std::string& reason);
@@ -142,6 +170,7 @@ public:
     int quarter = 1, winner = -1, reckoner = -1;
     Millis now_ms = 0, period_elapsed_ms = 0;
     Ending ending;
+    PenaltyShot penalty_shot;
     std::vector<Penalty> penalties;
     std::vector<LogEvent> log;
     std::vector<Award> last_awards;
@@ -153,6 +182,7 @@ private:
     bool available(int player) const;
     bool live_ball(int ball);
     bool carries_scoring_ball(int player) const;
+    bool valid_penalty_shot() const;
     bool valid_conduct_award(const Penalty& penalty, int* award_ball = nullptr) const;
     bool process_batch_impl(Millis at_ms, const std::vector<PointEvent>& events);
     void emit(const std::string& kind, int player = -1, int ball = -1, int team = -1,

@@ -129,6 +129,7 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
             GamepadRefereeChoice = 0;
             if (Choice == 1) RequestPossessionAward();
             else if (Choice == 2) RequestEjection();
+            else if (Choice == 3) RequestPenaltyShot();
             // A fresh review and a lone Menu press never choose a sanction.
         }
         else if (Match && Match->bLive) RequestStoppage();
@@ -138,7 +139,7 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
     {
         if (Match && Match->bConductReviewPending)
             GamepadRefereeChoice = Key == EKeys::Gamepad_DPad_Up ? 1 : 2;
-        else if (Match && !Match->bLive)
+        else if (Match && !Match->bLive && !Match->bPenaltyShotActive)
             SubmitAction(2, (Position + (Key == EKeys::Gamepad_DPad_Up ? 1 : 5)) % 6);
     }
     else if (Key == EKeys::Gamepad_DPad_Left)
@@ -148,7 +149,8 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
     }
     else if (Key == EKeys::Gamepad_DPad_Right)
     {
-        if (bShowRoster) { if (Match && Match->Status == TEXT("LOBBY")) RequestBloodbroom(); }
+        if (Match && Match->bConductReviewPending) GamepadRefereeChoice = 3;
+        else if (bShowRoster) { if (Match && Match->Status == TEXT("LOBBY")) RequestBloodbroom(); }
         else NextSpell();
     }
 }

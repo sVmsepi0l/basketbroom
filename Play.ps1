@@ -4,7 +4,9 @@ param(
     [ValidateRange(480, 4320)][int]$Height = 900,
     [switch]$EditorGame,
     [ValidateSet('Auto','Training','Regulation')][string]$Mode = 'Auto',
-    [switch]$Practice
+    [switch]$Practice,
+    [switch]$Bloodbroom,
+    [switch]$Plan
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +14,13 @@ $gameArguments = @('-windowed', '-NoSplash', "-ResX=$Width", "-ResY=$Height")
 $map = $null
 if ($Mode -eq 'Training') { $map = '/Basketbroom/Maps/BB_Arena' }
 if ($Mode -eq 'Regulation') { $map = '/Basketbroom/Maps/BB_Regulation' }
+if ($Bloodbroom) {
+    if ($Mode -eq 'Training') { throw 'Bloodbroom requires the native Regulation map; use -Mode Regulation or Auto.' }
+    $map = '/Basketbroom/Maps/BB_Regulation'
+}
+$mapOptions = ''
+if ($Practice) { $mapOptions += '?Practice=1' }
+if ($Bloodbroom) { $mapOptions += '?Bloodbroom=1' }
 $packageExecutable = $null
 if (-not $EditorGame) {
     $packageManifest = Join-Path $PSScriptRoot '.local\latest-package.json'
@@ -30,11 +39,15 @@ if (-not $EditorGame) {
     }
 }
 if ($packageExecutable) {
-    if (($Mode -eq 'Regulation' -or $Practice) -and -not $package.NativeRuntime) {
+    if (($Mode -eq 'Regulation' -or $Practice -or $Bloodbroom) -and -not $package.NativeRuntime) {
         throw 'The latest playable package is the training build. Native regulation is waiting for a successful C++ build and packaging.'
     }
     if ($Practice -and -not $map) { $map = '/Basketbroom/Maps/BB_Regulation' }
-    if ($map) { if ($Practice) { $map += '?Practice=1' }; $gameArguments = @($map) + $gameArguments }
+    if ($map) { $gameArguments = @($map + $mapOptions) + $gameArguments }
+    if ($Plan) {
+        [pscustomobject]@{Runtime='Packaged game';Executable=$packageExecutable;Arguments=$gameArguments;WorkingDirectory=(Split-Path -Parent $packageExecutable)}
+        return
+    }
     Write-Host "Opening packaged Basketbroom ($Width x $Height)."
     # The game is intentionally visible and interactive.
     Start-Process -FilePath $packageExecutable -ArgumentList $gameArguments -WorkingDirectory (Split-Path -Parent $packageExecutable) -WindowStyle Normal
@@ -69,9 +82,13 @@ if (-not (Test-Path -LiteralPath $arena -PathType Leaf)) {
 
 $arguments = @(
     ('"{0}"' -f $project),
-    $(if ($Practice) { $map + '?Practice=1' } else { $map }),
+    ($map + $mapOptions),
     '-game'
 ) + $gameArguments
+if ($Plan) {
+    [pscustomobject]@{Runtime='Editor game';Executable=$editor;Arguments=$arguments;WorkingDirectory=$PSScriptRoot}
+    return
+}
 Write-Host "Opening Basketbroom in Unreal Engine 5.8 ($Width x $Height)."
 # The game is intentionally visible and interactive.
 Start-Process -FilePath $editor -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -WindowStyle Normal

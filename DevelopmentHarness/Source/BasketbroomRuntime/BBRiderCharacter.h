@@ -98,7 +98,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
     bool bUsingGamepad = false;
 
-    /** 0 none, 1 possession award, 2 ejection; Menu confirms a separate choice. */
+    /** 0 none, 1 Moderate possession, 2 Severe ejection, 3 Serious shot; Menu confirms. */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
     int32 GamepadRefereeChoice = 0;
 
@@ -238,6 +238,7 @@ private:
     void RequestShield();
     void RequestBloodbroom();
     void RequestPossessionAward();
+    void RequestPenaltyShot();
     void RequestEjection();
     void ShowNextSpellNotice();
     void RefreshSpellVisuals();

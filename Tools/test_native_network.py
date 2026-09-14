@@ -3,13 +3,18 @@
 Run through editor_bridge.py with BB_Arena_Regulation staged and PIE stopped.
 The asynchronous report is .local/native-network-test-results.json. Settings
 controlled by this script are restored during cleanup. If this engine omits
-the Python net-mode enum, set Play As Listen Server
-in the editor UI, pass settings_already_configured=True, then restore that UI
-choice after testing. This suite never reads or writes that enum in this mode.
+the Python net-mode enum, configure Play As Listen Server before the run and
+pass settings_already_configured=True. settings_source="editor_ui" (default)
+records the UI route. settings_source="editor_config" records the normal
+[/Script/UnrealEd.LevelEditorPlaySettings] PlayNetMode=PIE_ListenServer entry in
+EditorPerProjectUserSettings.ini, prepared with the editor closed and restored
+with it closed afterward. Both routes still require actual connected authority
+and client PIE worlds. This suite does not read/write the absent enum wrapper.
 This suite owns and
 ends its PIE session. No editor map or gameplay defaults are saved or changed.
 Outside Unreal, --list describes the plan without claiming it ran.
 """
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -25,6 +30,10 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / ".local" / "native-network-test-results.json"
 ARGS = globals().get("BRIDGE_ARGS", {})
+_receipt_spec = importlib.util.spec_from_file_location("_bb_network_receipts", ROOT / "Tools/native_test_receipts.py")
+_receipts = importlib.util.module_from_spec(_receipt_spec)
+_receipt_spec.loader.exec_module(_receipts)
+write_json_atomic = _receipts.write_json_atomic
 MODULE = "/Script/BasketbroomRuntime."
 ROLES = (0, 1, 1, 2, 3, 4, 4, 5)
 TESTS = (
@@ -65,6 +74,15 @@ def vec(x, y, z):
     return unreal.Vector(float(x), float(y), float(z))
 
 
+def net_mode_restore_actions(provenance):
+    """Report the externally configured setting honestly; never claim its restore."""
+    if provenance.get("net_mode_configuration_source") == "editor_config":
+        return ["After closing the editor, restore the backed-up EditorPerProjectUserSettings.ini PlayNetMode setting"]
+    if provenance.get("net_mode_configured_in_editor"):
+        return ["Restore the prior Play Net Mode through the editor UI"]
+    return []
+
+
 class NativeNetworkTests:
     def __init__(self):
         self.started = time.monotonic()
@@ -98,15 +116,13 @@ class NativeNetworkTests:
             "not_run": sum(row["status"] == "not_run" for row in rows),
             "tests": rows, "provenance": self.provenance, "events": self.events,
             "settings_restored": self.settings_restored, "reason": self.reason,
-            "external_restore_required": ["Restore the prior Play Net Mode through the editor UI"]
-                if self.provenance.get("net_mode_configured_in_editor") else [],
+            "external_restore_required": net_mode_restore_actions(self.provenance),
             "not_covered": ["separate processes or remote machines", "internet/LAN discovery and sessions",
                             "latency, packet loss, disconnect or reconnect", "late joining",
                             "16 human connections", "movement reconciliation under adverse latency or loss",
                             "contested possession", "Hogwarts Legacy multiplayer"],
         }
-        REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8")
+        write_json_atomic(REPORT, report)
 
     def record(self, name, passed, **detail):
         if name not in TESTS or name in self.results:
@@ -163,16 +179,28 @@ class NativeNetworkTests:
         self.settings = unreal.get_default_object(settings_class)
         wanted = {"RunUnderOneProcess": True, "PlayNumberOfClients": 2, "bLaunchSeparateServer": False}
         if ARGS.get("settings_already_configured", False):
-            # Some UE5.8 binaries expose the editable settings CDO but omit the
-            # net-mode enum's Python wrapper, including property readback.
-            # The editor UI is the supported fallback; never write raw bytes.
-            self.provenance["net_mode_configured_in_editor"] = True
+            # UE5.8 exposes these config/EditAnywhere settings but may omit
+            # PlayNetMode's Python enum wrapper. The declared external source
+            # records ordinary editor configuration, never raw-memory writes.
+            # Header: UCLASS(config=EditorPerProjectUserSettings), line213;
+            # PlayNetMode UPROPERTY(config, EditAnywhere), line385.
+            source = str(ARGS.get("settings_source", "editor_ui"))
+            self.require(source in ("editor_ui", "editor_config"), "Unknown preconfigured Play Net Mode source")
+            self.provenance["net_mode_configuration_source"] = source
+            self.provenance["net_mode_configured_in_editor"] = source == "editor_ui"
+            if source == "editor_config":
+                self.provenance["net_mode_config_entry"] = {
+                    "file": "EditorPerProjectUserSettings.ini", "section": "/Script/UnrealEd.LevelEditorPlaySettings",
+                    "key": "PlayNetMode", "declared_value": "PIE_ListenServer",
+                    "verification": "Subsequent native world authority and owning-client checks; no absent enum readback is claimed",
+                }
         else:
             net_mode = getattr(getattr(unreal, "PlayNetMode", None), "PIE_LISTEN_SERVER", None)
             if net_mode is None:
                 self.finish("not_run", "Python net-mode enum is unavailable. Record the current editor Play Net Mode, "
-                            "choose Play As Listen Server in its UI, then run with settings_already_configured=True. "
-                            "Restore the prior UI choice afterward. No PIE session was started.")
+                            "configure Play As Listen Server through its UI or the normal editor config with the editor closed, "
+                            "then run with settings_already_configured=True and settings_source='editor_ui' or 'editor_config'. "
+                            "Restore the original external setting afterward. No PIE session was started.")
                 return False
             wanted["PlayNetMode"] = net_mode
         resolved = {}

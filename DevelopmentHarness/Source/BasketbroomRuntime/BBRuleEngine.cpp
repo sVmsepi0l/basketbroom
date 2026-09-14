@@ -32,7 +32,7 @@ Match::Match(const Config& rules) : config(rules), players(default_roster()) {
     const Millis positive[] = {config.quarter_ms, config.overtime_ms, config.snitch_release_ms,
         config.snipe_timeout_ms, config.catch_control_ms, config.hurley_warning_ms,
         config.hurley_individual_ms, config.hurley_team_ms, config.contestable_reset_ms,
-        config.crown_return_ms, config.removal_ms, config.restart_protection_ms};
+        config.crown_return_ms, config.removal_ms, config.restart_protection_ms, config.penalty_shot_ms};
     for (Millis v : positive) if (v <= 0) valid_ = false;
     const std::int64_t nonnegative[] = {config.quaffle_points, config.quark_points,
         config.snipe_points, config.snitch_regulation_points, config.snitch_overtime_points,
@@ -77,6 +77,7 @@ bool Match::available(int player) const {
 bool Match::live_ball(int ball) {
     if (!valid_) return reject("invalid rules configuration");
     if (!ball_index(ball)) return reject("unknown ball");
+    if (penalty_shot_active()) return reject("ordinary ball play is suspended during a penalty shot");
     if (status != Status::Live || !balls[ball].phase_active || !balls[ball].live)
         return reject("ball is not live");
     return true;
@@ -195,6 +196,7 @@ bool Match::process_batch(Millis at_ms, const std::vector<PointEvent>& events) {
     const auto error = last_error; *this = std::move(backup); last_error = error; return false;
 }
 bool Match::process_batch_impl(Millis at_ms, const std::vector<PointEvent>& events) {
+    if (penalty_shot_active()) return reject("penalty-shot evidence requires the reserved shot API");
     if (at_ms < 0 || at_ms < now_ms) return reject("events may not run backwards");
     if (advance(at_ms - now_ms) < 0) return false;
     if (status != Status::Live || now_ms != at_ms) return reject("event completed after a stoppage or horn");
@@ -265,6 +267,10 @@ void Match::end(const std::string& reason, int catching_team, int catcher,
 Millis Match::advance(Millis delta_ms) {
     if (!valid_) { reject("invalid rules configuration"); return -1; }
     if (delta_ms < 0 || !sum_valid(now_ms, delta_ms)) { reject("invalid live-time increment"); return -1; }
+    if (penalty_shot_active()) {
+        if (!valid_penalty_shot()) { reject("invalid reserved penalty shot"); return -1; }
+        last_error.clear(); return 0;
+    }
     const Millis start = now_ms, target = now_ms + delta_ms;
     while (status == Status::Live && now_ms < target) {
         Millis next = target;
@@ -335,6 +341,7 @@ bool Match::pause(const std::string& reason) {
     last_error.clear(); return true;
 }
 bool Match::resume() {
+    if (penalty_shot_active()) return reject("serve the reserved penalty shot and defending restart before resume");
     if (!valid_ || (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak))
         return reject("there is no resumable stoppage");
     for (const auto& ball : balls) if (ball.conduct_restart_penalty >= 0) {
@@ -342,7 +349,7 @@ bool Match::resume() {
         if (id == 0 || id > static_cast<int>(penalties.size()) || !valid_conduct_award(penalties[id - 1]))
             return reject("invalid queued conduct possession award");
     }
-    for (const auto& p : penalties) if (p.pending && !valid_conduct_award(p))
+    for (const auto& p : penalties) if (p.penalty_shot_reserved || (p.pending && !valid_conduct_award(p)))
         return reject("administer pending penalties before the next horn");
     if (status == Status::QuarterBreak) { ++quarter; period_elapsed_ms = 0; }
     status = Status::Live;
@@ -350,6 +357,7 @@ bool Match::resume() {
     emit("resume", -1, -1, -1, quarter); last_error.clear(); return true;
 }
 bool Match::restart(int ball, int player) {
+    if (penalty_shot_active()) return reject("use the reserved penalty-shot restart");
     if (!valid_ || !ball_index(ball)) return reject("unknown ball");
     if (!available(player)) return reject("player is unavailable");
     auto& b = balls[ball]; const auto& p = players[player];
@@ -390,6 +398,7 @@ bool Match::restart(int ball, int player) {
     emit("protected_restart", player, ball); last_error.clear(); return true;
 }
 bool Match::crown_exit(int ball, const std::array<double, 3>& mark, int responsible_player, bool deliberate_delay) {
+    if (!config.enable_legacy_crown_exit) return reject("closed pyramid net: roof contact rebounds, never a Crown exit");
     if (!live_ball(ball)) return false;
     if (chase(balls[ball].type)) return reject("winged balls use chase-envelope recall, not No Crown");
     for (double v : mark) if (!std::isfinite(v)) return reject("Crown Mark must contain finite coordinates in feet");
@@ -421,6 +430,8 @@ bool Match::prepare_crown_restart(int penalty_id) {
         return reject("penalty has no outstanding ordinary Crown restoration");
     auto& ball = balls[penalty.ball];
     if (!ball.phase_active) return reject("removed ball cannot receive a Crown restart");
+    if (penalty_shot_active() && penalty.ball == penalty_shot.ball)
+        return reject("ball already belongs to a reserved penalty shot");
     if (ball.conduct_restart_penalty >= 0) return reject("ball already has a conduct possession award");
     if (ball.crown_restart_penalty == penalty_id) return reject("Crown restart is already reserved");
     // One physical ball cannot serve two opposing possession awards at once.
@@ -491,6 +502,219 @@ bool Match::queue_conduct_possession_award(int penalty_id, int ball, int team) {
     emit("conduct_possession_award_queued", penalty.player, ball, team, 0, penalty.disposition, penalty_id);
     last_error.clear(); return true;
 }
+bool Match::penalty_shot_active() const {
+    return penalty_shot.stage != PenaltyShotStage::None && penalty_shot.stage != PenaltyShotStage::Complete;
+}
+bool Match::valid_penalty_shot() const {
+    const auto& shot = penalty_shot;
+    if (!valid_ || !penalty_shot_active() ||
+        (shot.stage != PenaltyShotStage::Ready && shot.stage != PenaltyShotStage::InFlight &&
+         shot.stage != PenaltyShotStage::AwaitingRestart) ||
+        (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak) ||
+        ending.active || shot.penalty_id <= 0 || shot.penalty_id > static_cast<int>(penalties.size()) ||
+        !ball_index(shot.ball) || !team_index(shot.attacking_team) ||
+        !eligible(shot.shooter, shot.ball) || !eligible(shot.netminder, shot.ball) ||
+        players[shot.shooter].team != shot.attacking_team ||
+        players[shot.netminder].team != 1 - shot.attacking_team ||
+        players[shot.netminder].role != Role::Netminder ||
+        shot.elapsed_ms < 0 || shot.elapsed_ms > config.penalty_shot_ms)
+        return false;
+    const auto& penalty = penalties[shot.penalty_id - 1];
+    if (penalty.id != shot.penalty_id || !penalty.pending || !penalty.penalty_shot_reserved ||
+        penalty.severity != Severity::Serious || !player_index(penalty.player) ||
+        players[penalty.player].team != 1 - shot.attacking_team || penalty.crown_restoration_pending)
+        return false;
+    const auto& offender = players[penalty.player];
+    if (phase == Phase::Donnybrook ? !offender.donnybrook_excluded : offender.removed_until <= now_ms)
+        return false;
+    const auto& ball = balls[shot.ball];
+    if (!ball.phase_active || !scoring(ball.type) || ball.live ||
+        ball.crown_restart_penalty >= 0 || ball.conduct_restart_penalty >= 0 ||
+        ball.crown_deadline >= 0 || ball.timeout_until >= 0 || ball.protection_until >= 0 ||
+        ball.restart_team != 1 - shot.attacking_team ||
+        (phase == Phase::Donnybrook && ball.type != BallType::Quark)) return false;
+    for (int i = 0; i < 7; ++i) {
+        if (balls[i].live || (i != shot.ball && balls[i].controller >= 0)) return false;
+    }
+    for (const auto& other : penalties) {
+        if (other.id != shot.penalty_id && other.penalty_shot_reserved) return false;
+        if (other.ball == shot.ball && other.crown_restoration_pending) return false;
+    }
+    if (shot.stage == PenaltyShotStage::Ready)
+        return ball.dead_reason == "penalty_shot" && ball.controller == shot.shooter &&
+               shot.released_ms == -1 && shot.outcome == PenaltyShotOutcome::None && shot.awarded_points == 0;
+    if (shot.released_ms < -1 || shot.released_ms > shot.elapsed_ms) return false;
+    if (shot.stage == PenaltyShotStage::InFlight)
+        return ball.dead_reason == "penalty_shot" && ball.controller == -1 && shot.released_ms >= 0 &&
+               shot.outcome == PenaltyShotOutcome::None && shot.awarded_points == 0;
+    if (ball.dead_reason != "penalty_shot_restart" || ball.controller != -1) return false;
+    if (shot.outcome == PenaltyShotOutcome::Goal)
+        return shot.released_ms >= 0 && shot.awarded_points ==
+            (ball.type == BallType::Quaffle ? config.quaffle_points : config.quark_points);
+    return shot.awarded_points == 0 &&
+        ((shot.outcome == PenaltyShotOutcome::Miss && shot.released_ms >= 0) ||
+         (shot.outcome == PenaltyShotOutcome::Timeout && shot.elapsed_ms == config.penalty_shot_ms));
+}
+bool Match::start_penalty_shot(int penalty_id, int ball, int shooter, int netminder) {
+    if (!valid_ || penalty_shot_active() || ending.active ||
+        (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak) ||
+        penalty_id <= 0 || penalty_id > static_cast<int>(penalties.size()) || !ball_index(ball))
+        return reject("penalty shot requires an unreserved nonterminal stoppage and pending Serious penalty");
+    const auto& penalty = penalties[penalty_id - 1];
+    if (penalty.id != penalty_id || !penalty.pending || penalty.severity != Severity::Serious ||
+        penalty.penalty_shot_reserved || penalty.crown_restoration_pending || !player_index(penalty.player) ||
+        !team_index(players[penalty.player].team)) return reject("penalty is not eligible for a Serious shot");
+    const int attacking_team = 1 - players[penalty.player].team;
+    // A prior shot's genuine restart may coexist with other unresolved Serious
+    // penalties at this same stoppage. Re-secure that completed restart only
+    // after all new-shot checks pass, just as the next global whistle would.
+    int previous_restart = -1;
+    if (penalty_shot.stage == PenaltyShotStage::Complete && ball_index(penalty_shot.ball) &&
+        penalty_shot.penalty_id > 0 && penalty_shot.penalty_id <= static_cast<int>(penalties.size())) {
+        const auto& prior = penalties[penalty_shot.penalty_id - 1];
+        const auto& prior_ball = balls[penalty_shot.ball];
+        if (!prior.pending && !prior.penalty_shot_reserved && prior_ball.live &&
+            prior_ball.controller == penalty_shot.netminder && prior_ball.dead_reason.empty() &&
+            prior_ball.crown_restart_penalty < 0 && prior_ball.conduct_restart_penalty < 0 &&
+            prior_ball.timeout_until < 0 && prior_ball.crown_deadline < 0)
+            previous_restart = penalty_shot.ball;
+    }
+    const auto& selected = balls[ball];
+    BallType expected = phase == Phase::Donnybrook ? BallType::Quark : BallType::Quaffle;
+    if (ball_index(penalty.ball) && scoring(balls[penalty.ball].type)) expected = balls[penalty.ball].type;
+    if (phase == Phase::Donnybrook && expected != BallType::Quark)
+        return reject("a removed Quaffle remedy in Donnybrook requires external adjudication");
+    if (!scoring(selected.type) || selected.type != expected || !selected.phase_active ||
+        (ball != previous_restart && (selected.live || selected.controller >= 0 ||
+         selected.dead_reason != "stoppage" || selected.protection_until >= 0)) ||
+        selected.crown_restart_penalty >= 0 || selected.conduct_restart_penalty >= 0 ||
+        selected.crown_deadline >= 0 || selected.timeout_until >= 0)
+        return reject("shot ball type or existing dead-ball remedy forbids reservation");
+    if (!eligible(shooter, ball) || !eligible(netminder, ball) || shooter == penalty.player ||
+        netminder == penalty.player || players[shooter].team != attacking_team ||
+        players[netminder].team != 1 - attacking_team || players[netminder].role != Role::Netminder ||
+        (carries_scoring_ball(shooter) &&
+         (previous_restart < 0 || balls[previous_restart].controller != shooter)) ||
+        (carries_scoring_ball(netminder) &&
+         (previous_restart < 0 || balls[previous_restart].controller != netminder)))
+        return reject("one eligible shooter must face an available defending Netminder");
+    for (const auto& other : penalties) {
+        if (other.penalty_shot_reserved) return reject("another penalty shot is reserved");
+        if (other.ball == ball && other.crown_restoration_pending)
+            return reject("outstanding Crown restoration owns this ball");
+    }
+    for (int i = 0; i < 7; ++i) if (i != previous_restart && (balls[i].live || balls[i].controller >= 0))
+        return reject("all balls and their controllers must be stopped before a penalty shot");
+    if (!sum_valid(now_ms, config.removal_ms)) return reject("removal clock overflow");
+    // All rejection paths precede mutation. Live clocks cannot expire this
+    // removal while the independent attempt clock is running.
+    if (previous_restart >= 0) dead(previous_restart, "stoppage");
+    auto& offender = players[penalty.player];
+    offender.removed_until = std::max(offender.removed_until, now_ms + config.removal_ms);
+    if (phase == Phase::Donnybrook) { offender.donnybrook_excluded = true; offender.removed_until = -1; }
+    penalties[penalty_id - 1].penalty_shot_reserved = true;
+    penalties[penalty_id - 1].disposition = "Serious penalty shot reserved; removal active";
+    penalty_shot = {};
+    penalty_shot.stage = PenaltyShotStage::Ready;
+    penalty_shot.penalty_id = penalty_id; penalty_shot.ball = ball;
+    penalty_shot.shooter = shooter; penalty_shot.netminder = netminder;
+    penalty_shot.attacking_team = attacking_team;
+    dead(ball, "penalty_shot");
+    balls[ball].controller = shooter; balls[ball].restart_team = 1 - attacking_team;
+    last_awards.clear();
+    emit("penalty_shot_started", shooter, ball, attacking_team, config.penalty_shot_ms, "", penalty_id);
+    emit("temporary_removal", penalty.player, ball, players[penalty.player].team,
+         phase == Phase::Donnybrook ? -1 : offender.removed_until, "Serious penalty shot", penalty_id);
+    last_error.clear(); return true;
+}
+bool Match::release_penalty_shot(int shooter) {
+    if (!valid_penalty_shot() || penalty_shot.stage != PenaltyShotStage::Ready ||
+        shooter != penalty_shot.shooter || penalty_shot.elapsed_ms >= config.penalty_shot_ms)
+        return reject("only the reserved shooter may release one penalty-shot attempt before timeout");
+    penalty_shot.stage = PenaltyShotStage::InFlight;
+    penalty_shot.released_ms = penalty_shot.elapsed_ms;
+    balls[penalty_shot.ball].controller = -1;
+    emit("penalty_shot_released", shooter, penalty_shot.ball, penalty_shot.attacking_team,
+         penalty_shot.elapsed_ms, "", penalty_shot.penalty_id);
+    last_error.clear(); return true;
+}
+Millis Match::advance_penalty_shot(Millis delta_ms) {
+    if (!valid_penalty_shot() || delta_ms < 0 ||
+        (penalty_shot.stage != PenaltyShotStage::Ready && penalty_shot.stage != PenaltyShotStage::InFlight)) {
+        reject("only a ready or released penalty shot may advance its nonnegative attempt clock"); return -1;
+    }
+    const Millis consumed = std::min(delta_ms, config.penalty_shot_ms - penalty_shot.elapsed_ms);
+    penalty_shot.elapsed_ms += consumed;
+    if (penalty_shot.elapsed_ms >= config.penalty_shot_ms) {
+        // Validation above makes this completion infallible; no live match time
+        // passes, including when a large caller delta overshoots the deadline.
+        complete_penalty_shot(PenaltyShotOutcome::Timeout);
+    }
+    last_error.clear(); return consumed;
+}
+bool Match::complete_penalty_shot(PenaltyShotOutcome outcome, const PointEvent& goal) {
+    if (!valid_penalty_shot() ||
+        (penalty_shot.stage != PenaltyShotStage::Ready && penalty_shot.stage != PenaltyShotStage::InFlight))
+        return reject("no unresolved reserved penalty-shot attempt");
+    auto& shot = penalty_shot;
+    std::int64_t points = 0;
+    if (outcome == PenaltyShotOutcome::Timeout) {
+        if (shot.elapsed_ms != config.penalty_shot_ms) return reject("attempt clock has not expired");
+    } else if (outcome == PenaltyShotOutcome::Goal || outcome == PenaltyShotOutcome::Miss) {
+        if (shot.stage != PenaltyShotStage::InFlight || shot.elapsed_ms >= config.penalty_shot_ms)
+            return reject("a make or miss requires the one released attempt before timeout");
+        if (outcome == PenaltyShotOutcome::Goal) {
+            const auto expected = balls[shot.ball].type == BallType::Quaffle ? Hoop::Large : Hoop::Small;
+            if (goal.kind != EventKind::Goal || goal.ball != shot.ball ||
+                goal.attacking_team != shot.attacking_team ||
+                (goal.player != -1 && goal.player != shot.shooter) || goal.hoop != expected ||
+                !goal.entire_ball || !goal.forward || goal.teleported)
+                return reject("penalty goal lacks matching physical scoring evidence");
+            points = balls[shot.ball].type == BallType::Quaffle ? config.quaffle_points : config.quark_points;
+            if (!sum_valid(scores[shot.attacking_team], points)) return reject("score overflow");
+        }
+    } else return reject("unknown penalty-shot outcome");
+    shot.outcome = outcome; shot.awarded_points = points;
+    shot.stage = PenaltyShotStage::AwaitingRestart;
+    dead(shot.ball, "penalty_shot_restart");
+    last_awards.clear();
+    if (outcome == PenaltyShotOutcome::Goal) {
+        scores[shot.attacking_team] += points;
+        last_awards.push_back({shot.attacking_team, points, shot.ball, shot.shooter});
+        emit("points", shot.shooter, shot.ball, shot.attacking_team, points, "penalty shot", shot.penalty_id);
+    }
+    emit("penalty_shot_completed", shot.shooter, shot.ball, shot.attacking_team,
+         static_cast<int>(outcome), "", shot.penalty_id);
+    last_error.clear(); return true;
+}
+bool Match::restart_penalty_shot(int netminder) {
+    if (!valid_penalty_shot() || penalty_shot.stage != PenaltyShotStage::AwaitingRestart ||
+        netminder != penalty_shot.netminder || carries_scoring_ball(netminder))
+        return reject("reserved penalty shot awaits its defending Netminder's actual restart");
+    if (!sum_valid(now_ms, config.restart_protection_ms)) return reject("restart clock overflow");
+    auto& shot = penalty_shot;
+    auto& penalty = penalties[shot.penalty_id - 1];
+    // This custody assignment is the stopped-play equivalent of restart(),
+    // with stricter identity and reservation validation. Resume preserves it.
+    release_ball(shot.ball);
+    balls[shot.ball].controller = netminder;
+    balls[shot.ball].protection_until = now_ms + config.restart_protection_ms;
+    penalty.pending = false; penalty.penalty_shot_reserved = false;
+    penalty.disposition = "Serious penalty shot served by defending Netminder restart; removal active";
+    shot.stage = PenaltyShotStage::Complete;
+    emit("possession", netminder, shot.ball);
+    emit("protected_restart", netminder, shot.ball);
+    emit("penalty_shot_restart", netminder, shot.ball, players[netminder].team, 0, "", shot.penalty_id);
+    emit("penalty_resolved", penalty.player, penalty.ball, players[netminder].team,
+         0, penalty.disposition, shot.penalty_id);
+    // The defending restart is audited even when the successful shot itself
+    // terminates the phase. Review then secures it along with every other ball.
+    if (shot.outcome == PenaltyShotOutcome::Goal && phase == Phase::Donnybrook)
+        end("donnybrook", -1, -1, 0, shot.attacking_team);
+    else if (shot.outcome == PenaltyShotOutcome::Goal && phase == Phase::Overtime && margin() >= config.overtime_margin)
+        end("overtime_margin");
+    last_error.clear(); return true;
+}
 bool Match::recall_chase(int ball) {
     if (!live_ball(ball)) return false;
     if (!chase(balls[ball].type)) return reject("only chase balls may use envelope recall");
@@ -510,8 +734,9 @@ int Match::record_penalty(int player, const std::string& reason, Severity severi
     last_error.clear(); return id;
 }
 bool Match::resolve_penalty(int id, const std::string& disposition, bool apply_removal) {
+    if (penalty_shot_active()) return reject("complete the reserved shot and defending restart before manual adjudication");
     if (!valid_ || id <= 0 || id > static_cast<int>(penalties.size()) || disposition.empty() || status == Status::Live ||
-        !penalties[id - 1].pending) return reject("resolve a pending penalty at a stoppage with a disposition");
+        (!penalties[id - 1].pending || penalties[id - 1].penalty_shot_reserved)) return reject("resolve a pending penalty at a stoppage with a disposition");
     for (const auto& ball : balls) if (ball.conduct_restart_penalty == id)
         return reject("serve the queued conduct possession award through an actual protected restart");
     auto& penalty = penalties[id - 1]; auto& p = players[penalty.player];
@@ -530,6 +755,9 @@ bool Match::resolve_penalty(int id, const std::string& disposition, bool apply_r
     emit("penalty_resolved", penalty.player, penalty.ball, -1, 0, disposition, id); last_error.clear(); return true;
 }
 bool Match::certify(const std::vector<Adjustment>& adjustments) {
+    if (penalty_shot_active()) return reject("reserved penalty shot and restart are outstanding");
+    for (const auto& p : penalties) if (p.penalty_shot_reserved)
+        return reject("reserved penalty shot cannot be bypassed by certification");
     if (!valid_ || status != Status::Review || !ending.active) return reject("no provisional ending to certify");
     for (const auto& p : penalties) if (p.pending && p.committed_ms <= ending.at_ms)
         return reject("resolve every pre-termination penalty before certification");

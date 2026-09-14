@@ -36,12 +36,30 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly) FString LastConductCall;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bConductReviewPending = false;
     UPROPERTY(Replicated, BlueprintReadOnly) FString ConductReviewStatus;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotActive = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotReleased = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) float PenaltyShotSecondsLeft = 0;
+    UPROPERTY(Replicated, BlueprintReadOnly) int32 PenaltyShotBall = -1;
+    UPROPERTY(Replicated, BlueprintReadOnly) int32 PenaltyShooterSlot = -1;
+    UPROPERTY(Replicated, BlueprintReadOnly) int32 PenaltyKeeperSlot = -1;
+    UPROPERTY(Replicated, BlueprintReadOnly) FString PenaltyShotStatus;
+    bool CanMoveDuringPenalty(const ABBRiderCharacter* Rider) const;
+    bool IsPenaltyBallActive(const ABBBall* Ball) const;
+    void PenaltyBallStopped(ABBBall* Ball, const FString& Reason, double FlightStepFraction = 1.0);
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<int32> DevelopmentGetPenaltyShotState() const;
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    double DevelopmentGetRemovalSeconds(int32 Slot) const;
+    /** Read-only PIE attempt timing: elapsed, duration, remaining milliseconds,
+     * including the native fractional-millisecond carry. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<double> DevelopmentGetPenaltyShotTiming() const;
     UPROPERTY() TArray<TObjectPtr<ABBRiderCharacter>> Riders;
     UPROPERTY() TArray<TObjectPtr<ABBBall>> Balls;
     void HandleAction(ABBRiderCharacter* Rider, int32 Action, int32 Value = 0, FVector Aim = FVector::ZeroVector);
     void AssignHuman(ABBRiderCharacter* Rider);
     void FillRoster();
-    void Goal(ABBBall* Ball, int32 Team);
+    void Goal(ABBBall* Ball, int32 Team, double FlightStepFraction = 1.0);
     bool CanInteract(const ABBRiderCharacter* Rider, const ABBBall* Ball) const;
     bool TryPossess(ABBRiderCharacter* Rider, ABBBall* Ball);
     bool TryCatch(ABBRiderCharacter* Rider, ABBBall* Ball);
@@ -52,7 +70,6 @@ public:
     TArray<int32> DevelopmentGetConductState() const;
     /** Server GameMode teardown only; clears custody, never historical sanctions. */
     void ReleaseDepartedSlot(int32 RosterIndex);
-    void NoCrown(ABBBall* Ball);
     void ObserveBludgerFlight(ABBBall* Ball, BB::Contact Contact);
     /** Read-only PIE diagnostic. -1 means unavailable or no current controller. */
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
@@ -71,13 +88,31 @@ private:
     int32 ConductOffender = -1;
     int32 ConductVictimTeam = -1;
     int32 ConductRestartBall = -1;
+    int32 ConductBall = -1, ConductVictimSlot = -1;
+    TMap<int32, FTransform> PenaltySavedRiders;
+    TMap<int32, FRotator> PenaltySavedViews;
+    FVector PenaltyShooterMark = FVector::ZeroVector;
+    FVector PenaltyKeeperMark = FVector::ZeroVector;
+    float PenaltyResultDelay = 0;
+    double PenaltyShotMillisecondCarry = 0;
+    double PenaltyFlightStepMs = 0, PenaltyFlightConsumedMs = 0;
+    bool bSteppingPenaltyFlight = false;
+    TWeakObjectPtr<ABBRiderCharacter> PenaltyShooterActor, PenaltyKeeperActor;
+    bool AdvancePenaltyClock(double Milliseconds);
+    bool ConsumePenaltyFlightTime(double FlightStepFraction);
+    bool BeginConductPenaltyShot(int32 PenaltyId);
+    void TickPenaltyShot(float DeltaSeconds);
+    void ReleasePenaltyShot(ABBRiderCharacter* Rider, FVector Aim);
+    void FinishPenaltyShot(BB::PenaltyShotOutcome Outcome, const FString& Reason, const BB::PointEvent& Goal = {});
+    ABBRiderCharacter* RiderForSlot(int32 Slot) const;
+    void ResetPenaltyPresentation();
     FVector ConductMark = FVector::ZeroVector;
     uint64 LastConductAttack = 0;
     int32 LastConductViolations = 0;
     void SyncCombatRoster();
     int32 CombatIndex(const ABBRiderCharacter* Rider) const;
     void TickSpells(float LiveDelta);
-    void ReviewConduct(ABBRiderCharacter* Referee, bool bEject);
+    void ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition);
     bool CanOfficiate(const ABBRiderCharacter* Rider) const;
     double MillisecondCarry = 0;
     float BotAccumulator = 0;

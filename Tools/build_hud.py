@@ -185,7 +185,7 @@ def build():
     rect(24, 24, 246, 66)
     rect(24, 24, 3, 66, GOLD)
     label("BASKETBROOM", 42, 34, 1.1)
-    label("TRAINING FLIGHT  /  OPEN CROWN", 43, 64, 0.47, MUTED)
+    label("TRAINING  /  PYRAMID NET", 43, 64, 0.47, MUTED)
     rect(-268, 24, 536, 88, xa="center")
     rect(-268, 24, 178, 3, TEAL, xa="center")
     rect(90, 24, 178, 3, COPPER, xa="center")

@@ -38,16 +38,16 @@ TEST_NAMES = (
     "host_switches_team_at_stoppage",
     "host_selects_ranger_at_stoppage",
     "host_resumes_live_clock",
-    "native_flight_crosses_open_crown",
-    "native_flight_respects_chase_ceiling",
-    "native_flight_respects_side_bound_above_net",
+    "native_flight_enters_hollow_pyramid_above_old_crown",
+    "native_flight_respects_pyramid_apex",
+    "native_flight_respects_sloping_roof_above_eave",
     "side_net_restitution",
     "trampoline_floor_rebound",
-    "no_crown_free_ball_dies",
-    "no_crown_free_ball_returns",
+    "free_ball_crosses_old_plane_without_respawn",
+    "free_ball_remains_live_in_hollow_pyramid",
     "ranger_picks_up_scoring_ball",
-    "no_crown_carried_ball_releases",
-    "no_crown_carried_ball_returns",
+    "carried_ball_crosses_old_plane_without_losing_custody",
+    "carried_ball_releases_only_on_actual_throw",
     "quark_wrong_hoop_rejected",
     "quaffle_reverse_crossing_rejected",
     "quaffle_rim_hit_rebounds_without_score",
@@ -395,7 +395,7 @@ class NativePlayableTests:
         flight_samples = []
         self.move_pawn((0, 0, 4100))
         yield self.wait(0.55, lambda: self.fly_fixture((0, 0, 1), flight_samples))
-        self.record("native_flight_crosses_open_crown", bool(flight_samples)
+        self.record("native_flight_enters_hollow_pyramid_above_old_crown", bool(flight_samples)
                     and max(row[2] for row in flight_samples) > 4300,
                     max_height_cm=max((row[2] for row in flight_samples), default=0),
                     samples=len(flight_samples), input="AddMovementInput into native CharacterMovement")
@@ -405,17 +405,23 @@ class NativePlayableTests:
         flight_samples = []
         yield self.wait(0.55, lambda: self.fly_fixture((0, 0, 1), flight_samples))
         peak = max((row[2] for row in flight_samples), default=0)
-        self.record("native_flight_respects_chase_ceiling", bool(flight_samples)
+        self.record("native_flight_respects_pyramid_apex", bool(flight_samples)
                     and ceiling - 25 <= peak <= ceiling + 1,
                     capsule_center_limit_cm=ceiling, observed_max_height_cm=peak)
         side_limit = 3200.4 - capsule.get_scaled_capsule_radius()
-        self.move_pawn((0, side_limit - 100, 4700))
+        self.move_pawn((0, 1900, 5000))
         flight_samples = []
         yield self.wait(0.55, lambda: self.fly_fixture((0, 1, 0), flight_samples))
-        peak = max((row[1] for row in flight_samples), default=0)
-        self.record("native_flight_respects_side_bound_above_net", bool(flight_samples)
-                    and side_limit - 25 <= peak <= side_limit + 1,
-                    capsule_center_limit_cm=side_limit, observed_max_y_cm=peak, fixture_height_cm=4700)
+        slope = (6309.36-4206.24)/3200.4
+        normal_length = (1+slope*slope)**.5
+        support = capsule.get_scaled_capsule_radius()*normal_length + (
+            capsule.get_scaled_capsule_half_height()-capsule.get_scaled_capsule_radius())
+        clearances = [6309.36-row[2]-slope*abs(row[1])-support for row in flight_samples]
+        self.record("native_flight_respects_sloping_roof_above_eave", bool(flight_samples)
+                    and min(clearances) >= -1 and min(clearances) <= 10
+                    and max(row[2] for row in flight_samples) > 4206.24,
+                    minimum_roof_clearance_cm=min(clearances, default=-999),
+                    capsule_radius_cm=capsule.get_scaled_capsule_radius(), samples=flight_samples)
         self.move_pawn((-3200, -2200, 1000))
         ball = self.seed_ball(2, (0, 3100, 1600), (0, 1000, 0))
         yield self.wait(0.16)
@@ -429,31 +435,35 @@ class NativePlayableTests:
                     velocity=xyz(velocity), location=xyz(ball.get_actor_location()))
         ball = self.seed_ball(2, (0, 0, 4190), (0, 0, 700))
         yield self.wait(0.16)
-        self.record("no_crown_free_ball_dies", str(prop(ball, "BallStatus")) == "crown"
-                    and not prop(ball, "bActive") and prop(ball, "Holder") is None and ball.get_actor_location().z < 4206.24,
+        self.record("free_ball_crosses_old_plane_without_respawn", str(prop(ball, "BallStatus")) == ""
+                    and prop(ball, "bActive") and prop(ball, "Holder") is None and ball.get_actor_location().z > 4206.24,
                     status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
         yield self.wait(1.2)
-        self.record("no_crown_free_ball_returns", bool(prop(ball, "bActive"))
-                    and str(prop(ball, "BallStatus")) != "crown" and ball.get_actor_location().z < 4206.24,
-                    active=bool(prop(ball, "bActive")), status=str(prop(ball, "BallStatus")))
+        self.record("free_ball_remains_live_in_hollow_pyramid", bool(prop(ball, "bActive"))
+                    and str(prop(ball, "BallStatus")) == "" and ball.get_actor_location().z > 4206.24
+                    and int(prop(self.match, "PendingPenaltyCount")) == 0,
+                    active=bool(prop(ball, "bActive")), status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
         self.close_ball(2)
         yield self.wait(0.35)
         self.interact(True)
         yield self.wait_until(lambda: prop(ball, "Holder") == self.pawn)
         self.record("ranger_picks_up_scoring_ball", prop(ball, "Holder") == self.pawn,
                     held=prop(ball, "Holder") == self.pawn, role=int(prop(self.pawn, "Position")))
-        self.require(prop(ball, "Holder") == self.pawn, "Carried No Crown fixture needs an actual pickup")
+        self.require(prop(ball, "Holder") == self.pawn, "Carried roof fixture needs an actual pickup")
         self.interact(False)
         self.move_pawn((-2000, -1200, 4450))
         yield self.wait(0.16)
-        self.record("no_crown_carried_ball_releases", prop(ball, "Holder") is None
-                    and str(prop(ball, "BallStatus")) == "crown" and not prop(ball, "bActive"),
-                    held=prop(ball, "Holder") is not None, status=str(prop(ball, "BallStatus")))
-        self.move_pawn((-3200, -2200, 1000))
-        yield self.wait(1.2)
-        self.record("no_crown_carried_ball_returns", bool(prop(ball, "bActive"))
-                    and prop(ball, "Holder") is None and ball.get_actor_location().z < 4206.24,
+        self.record("carried_ball_crosses_old_plane_without_losing_custody", prop(ball, "Holder") == self.pawn
+                    and str(prop(ball, "BallStatus")) == "" and prop(ball, "bActive")
+                    and ball.get_actor_location().z > 4206.24 and int(prop(self.match, "PendingPenaltyCount")) == 0,
+                    held=prop(ball, "Holder") == self.pawn, status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
+        self.request(1)
+        yield self.wait_until(lambda: prop(ball, "Holder") is None, timeout=1)
+        self.record("carried_ball_releases_only_on_actual_throw", bool(prop(ball, "bActive"))
+                    and prop(ball, "Holder") is None and str(prop(ball, "BallStatus")) == ""
+                    and int(prop(self.match, "PendingPenaltyCount")) == 0,
                     active=bool(prop(ball, "bActive")), location=xyz(ball.get_actor_location()))
+        self.move_pawn((-3200, -2200, 1000))
 
         self.isolate()
         before = self.scores()
