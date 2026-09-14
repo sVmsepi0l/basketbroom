@@ -61,5 +61,10 @@ void ABBGameMode::Logout(AController* Exiting)
     }
     AssignedRiders.Remove(Exiting);
     Super::Logout(Exiting);
-    if (ABBMatchState* State = GetGameState<ABBMatchState>()) State->FillRoster();
+    // Logout also runs while the world destroys its local PlayerController.
+    // Unreal rejects all spawns after BeginTearingDown; only an ongoing world
+    // needs a CPU replacement for a departed player or penalty participant.
+    const UWorld* World = GetWorld();
+    if (World && !World->bIsTearingDown)
+        if (ABBMatchState* State = GetGameState<ABBMatchState>()) State->FillRoster();
 }

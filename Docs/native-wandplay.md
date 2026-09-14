@@ -12,8 +12,9 @@ separate question.
 - **Z / X:** select the previous or next entry. **V:** open the spellbook.
 - **R:** cast Protego without changing selection.
 - **B:** host toggles Basketbroom/Bloodbroom in the initial lobby only.
-- **F7 / F9:** host resolves a pending conduct call with a possession award or
-  ejection. These are explicitly limited playtest referee choices.
+- **F7 / F8 / F9:** host resolves a pending conduct call with possession, a
+  Serious penalty shot plus removal, or ejection. These remain host-selected
+  playtest choices, not automatic severity assignments.
 
 The existing flight, ball, role and team controls remain. Bloodbroom keeps the
 same ball/clock format and waives only the Unforgivable and headshot prohibitions.
@@ -99,9 +100,10 @@ treated as a required substitute for an appropriate possession disposition.
 
 F9 chooses a Severe ejection through the existing rules engine. The offender
 is unavailable for the rest of that match and cannot change positions to escape
-the sanction. These two manual choices do not establish canonical BB-0 severity
-tiers. Penalty shots, automatic severity/escalation, terminal-event restorative
-shots, match reports and Catastrophic adjudication still need implementation.
+the sanction. These manual choices do not establish canonical BB-0 severity tiers.
+F8 now provides the [Serious penalty-shot flow](native-penalty-shots.md) in both
+variants. Moderate free shots, automatic severity/escalation, terminal-event
+restorative shots, match reports and Catastrophic adjudication remain incomplete.
 
 The [wandplay validation receipt](native-wandplay-validation.md) records **212
 passing checks: 130 portable and 82 native**, including the separate regulation,

@@ -24,15 +24,38 @@ Windows input backend, not just these button equivalents.
 - With the position guide explicitly open, D-pad Left switches team and D-pad
   Right toggles Bloodbroom in the initial lobby. Close the guide to return those
   buttons to spell selection.
-- During a conduct review, the host first selects a possession award with
-  D-pad Up or an ejection with D-pad Down, then presses Menu to confirm. Opening
-  a review selects neither disposition. These are the same provisional referee
-  choices as F7/F9 on the keyboard.
+- During a conduct review, the host selects **Moderate** (possession award)
+  with D-pad Up, **Serious** (penalty shot and removal) with D-pad Right, or
+  **Severe** (ejection) with D-pad Down, then presses Menu to confirm. Opening a
+  review selects no disposition. Choosing a direction alone does not apply a
+  penalty. Keyboard F7/F8/F9 directly request those respective host dispositions.
 
 The HUD changes its hints after gamepad input. Keyboard/mouse controls remain
 available. Stick movement is analog; camera rotation uses elapsed time rather
 than adding a fixed angle every frame. Focus loss, unpossession and controller
 disconnection must clear held movement and catch input.
+
+## Penalty-shot controls
+
+The same protected Serious-shot procedure applies in Basketbroom and Bloodbroom.
+The HUD identifies the selected ball and point value, designated shooter and
+keeper, and five-second attempt timer. The clock covers aiming and ball flight.
+The normal match clock and combat-effect clocks remain frozen through the shot.
+
+The shooter uses the right stick to aim and RT to release once, while movement
+is locked at the mark. The keeper alone may fly inside the restricted goal area
+and save by blocking the ball with their body. Every other rider stays in place
+and may look around. No wandwork, passes, role changes or second attempt are
+allowed; Menu cannot resume the match during the active procedure. After the
+brief decision display, the defending keeper receives the protected restart
+and the host may use Menu to resume unless the shot triggers result review. After
+certification, Menu starts a new match. Keyboard equivalents are mouse/LMB for
+the shot, standard flight keys for the keeper, and Enter for resume or rematch.
+
+Existing stuns and impediments are preserved rather than cleared. The designated
+shooter's release and keeper's movement are narrowly allowed during the protected
+procedure; the normal effects apply again when play resumes. These controls do
+not imply that every penalty severity or all Bloodbroom rules are implemented.
 
 ## Windows input backend
 
@@ -98,6 +121,15 @@ events has been verified by this configuration change. Editor and packaged
 startup logs and physical device checks remain separate evidence.
 
 ## Validation status
+
+The 2026-09-14 source adds an eighteenth controller case: D-pad Right must
+select Serious during a real conduct review without applying a penalty,
+starting a shot, changing the score or selecting another spell. The test then
+chooses Moderate and exercises the existing separate Menu confirmation. This
+eighteen-case suite passed on 2026-09-14 with zero failures or skipped cases.
+The preserved receipt is `.local/penalty-validation-solo-20260914-141926/02-native-controller-test-results.json`.
+This run precedes the final result-message-only patch; the dated 17-case evidence
+and totals below remain historical and do not include the new case.
 
 On 2026-09-12, **17 controller checks passed in 14.172 seconds**, with zero failed
 and zero not run, under `5.8.1-56057345+++UE5+Release-5.8`. The receipt is

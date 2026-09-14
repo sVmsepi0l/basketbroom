@@ -2,7 +2,7 @@
 
 Run through editor_bridge.py with /Basketbroom/Maps/BB_Regulation open and PIE
 stopped. The existing network runner owns startup, deadlines and cleanup. Its
-settings_already_configured UI fallback also applies here. The report is
+settings_already_configured fallback and explicit settings_source provenance also apply here. The report is
 .local/native-spell-network-test-results.json. This suite does not save assets.
 
 Positions and movement components are arranged in disposable PIE worlds;
@@ -63,16 +63,14 @@ class SpellNetworkTests(base.NativeNetworkTests):
             "tests": rows, "provenance": self.provenance, "events": self.events,
             "settings_restored": self.settings_restored,
             "time_dilation_restored": self.dilations_restored, "reason": self.reason,
-            "external_restore_required": ["Restore the prior Play Net Mode through the editor UI"]
-                if self.provenance.get("net_mode_configured_in_editor") else [],
+            "external_restore_required": base.net_mode_restore_actions(self.provenance),
             "not_covered": ["separate processes, remote machines or adverse network conditions",
                             "human keyboard or visual judgement", "movement replication",
                             "double-tap HUD delivery/acknowledgement", "all catalog spells",
                             "automatic penalty severity selection or full regulation remedies",
                             "Hogwarts Legacy multiplayer"],
         }
-        REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8")
+        base.write_json_atomic(REPORT, report)
 
     def begin(self):
         if unreal:

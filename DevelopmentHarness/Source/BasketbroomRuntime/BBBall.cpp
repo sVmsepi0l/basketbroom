@@ -238,6 +238,9 @@ void ABBBall::Tick(float DeltaSeconds)
         Mesh->SetWorldLocation(LastLocation);
         return;
     }
+    // Match Tick owns all penalty time/physics. Running even one ordinary
+    // flight step here would make deadline outcomes depend on actor tick order.
+    if (Match && Match->bPenaltyShotActive) return;
     if (!Match || !Match->bLive || !bActive) { CaptureProgress = 0; CapturingRider = nullptr; return; }
     Cooldown = FMath::Max(0.f, Cooldown - DeltaSeconds);
     LastLocation = GetActorLocation();
@@ -269,6 +272,14 @@ void ABBBall::Tick(float DeltaSeconds)
         }
     }
 }
+void ABBBall::StepPenaltyFlight(double DeltaSeconds)
+{
+    if (!HasAuthority() || !IsValid(Match) || !Match->IsPenaltyBallActive(this)
+        || !Match->bPenaltyShotReleased || !bActive || Holder || DeltaSeconds <= 0) return;
+    Cooldown = FMath::Max(0.f, Cooldown - static_cast<float>(DeltaSeconds));
+    LastLocation = GetActorLocation();
+    StepFlight(DeltaSeconds);
+}
 void ABBBall::StepCapture(float DeltaSeconds)
 {
     if (!HasAuthority() || !IsValid(Match)) return;
@@ -289,11 +300,11 @@ void ABBBall::StepCapture(float DeltaSeconds)
         CaptureProgress = 0;
     }
 }
-void ABBBall::StepFlight(float Dt)
+void ABBBall::StepFlight(double Dt)
 {
     if (!HasAuthority() || !IsValid(Match)) return;
-    ThrowerIgnoreRemaining = FMath::Max(0.f, ThrowerIgnoreRemaining - Dt);
-    ImpactCooldown = FMath::Max(0.f, ImpactCooldown - Dt);
+    ThrowerIgnoreRemaining = FMath::Max(0.f, ThrowerIgnoreRemaining - static_cast<float>(Dt));
+    ImpactCooldown = FMath::Max(0.f, ImpactCooldown - static_cast<float>(Dt));
     FVector Old = GetActorLocation();
     if (FlightVelocity.IsNearlyZero()) return;
     FlightVelocity.Z -= (IsBludger() ? 60.f : 380.f) * Dt;
@@ -311,6 +322,26 @@ void ABBBall::StepFlight(float Dt)
     const bool bRimHit = SweepRims(Old, P, R, HitTime, HitNormal);
     if (bRimHit) bCollision = true;
     BB::Contact Contact = bRimHit ? BB::Contact::Goal : BB::Contact::None;
+    const bool bPenaltyFlight = Match->IsPenaltyBallActive(this) && Match->bPenaltyShotReleased;
+    if (bPenaltyFlight)
+    {
+        // Only the designated Netminder may physically defend a penalty shot.
+        for (ABBRiderCharacter* Rider : Match->Riders)
+            if (IsValid(Rider) && Rider->RosterIndex != Match->PenaltyKeeperSlot) Query.AddIgnoredActor(Rider);
+        FCollisionObjectQueryParams KeeperObjects; KeeperObjects.AddObjectTypesToQuery(ECC_Pawn);
+        FHitResult KeeperHit;
+        if (GetWorld()->SweepSingleByObjectType(KeeperHit, Old, P, FQuat::Identity,
+            KeeperObjects, FCollisionShape::MakeSphere(R), Query) && KeeperHit.Time <= HitTime)
+        {
+            const ABBRiderCharacter* Keeper = Cast<ABBRiderCharacter>(KeeperHit.GetActor());
+            if (Keeper && Keeper->RosterIndex == Match->PenaltyKeeperSlot)
+            {
+                SetActorLocation(KeeperHit.Location);
+                Match->PenaltyBallStopped(this, TEXT("SAVED BY THE NETMINDER"), KeeperHit.Time);
+                return;
+            }
+        }
+    }
     if (IsBludger() && ImpactCooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
     {
         // Pickup lockout must never grant nearby opponents impact immunity.
@@ -370,13 +401,18 @@ void ABBBall::StepFlight(float Dt)
             const float Plane = Side * (6400.8f + R);
             if (Old.X * Side < Plane * Side && P.X * Side >= Plane * Side)
             {
-                float T = (Plane - Old.X) / (P.X - Old.X);
+                double T = (Plane - Old.X) / (P.X - Old.X);
                 FVector Cross = FMath::Lerp(Old, P, T);
                 bool bGoal = false;
                 if (BallIndex == 0)
                     for (float Y : {-1066.8f, 0.f, 1066.8f}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - 2103.12f).SizeSquared() < FMath::Square(335.28f - R);
                 else bGoal = FVector2D(Cross.Y, Cross.Z - 3048.f).SizeSquared() < FMath::Square(198.12f - R);
-                if (bGoal) { SetActorLocation(Cross); Match->Goal(this, Side > 0 ? 0 : 1); return; }
+                if (bGoal)
+                {
+                    SetActorLocation(Cross);
+                    Match->Goal(this, Side > 0 ? 0 : 1, T * (bCollision ? HitTime : 1.f));
+                    return;
+                }
             }
         }
     }
@@ -385,6 +421,9 @@ void ABBBall::StepFlight(float Dt)
     if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); Contact = BB::Contact::Floor; }
     DistanceSinceReleaseCm += FVector::Distance(Old, P);
     SetActorLocation(P);
+    if (bPenaltyFlight && (Contact == BB::Contact::Floor || Contact == BB::Contact::Net
+        || FMath::Abs(P.X) > 6400.8f + R || P.Z > 4206.24f))
+    { Match->PenaltyBallStopped(this, TEXT("PENALTY SHOT MISSED"), bCollision ? HitTime : 1.f); return; }
     if (IsBludger()) Match->ObserveBludgerFlight(this, Contact);
     if (P.Z > 4206.24f) Match->NoCrown(this);
 }

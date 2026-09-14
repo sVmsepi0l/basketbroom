@@ -139,6 +139,8 @@ void ABBMatchState::ResetMatchRules()
     bConductReviewPending = false; ConductReviewStatus.Empty();
     ConductOffender = ConductVictimTeam = ConductRestartBall = -1;
     LastConductAttack = 0; LastConductViolations = 0;
+    ConductBall = ConductVictimSlot = -1;
+    ResetPenaltyPresentation();
     Rules->pause("pregame selection");
     MillisecondCarry = 0;
     BotAccumulator = ReviewDelay = 0;
@@ -192,6 +194,10 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, bBloodbroom); DOREPLIFETIME(ABBMatchState, ConductFoulCount);
     DOREPLIFETIME(ABBMatchState, LastConductCall); DOREPLIFETIME(ABBMatchState, bConductReviewPending);
     DOREPLIFETIME(ABBMatchState, ConductReviewStatus);
+    DOREPLIFETIME(ABBMatchState, bPenaltyShotActive); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
+    DOREPLIFETIME(ABBMatchState, PenaltyShotSecondsLeft); DOREPLIFETIME(ABBMatchState, PenaltyShotBall);
+    DOREPLIFETIME(ABBMatchState, PenaltyShooterSlot); DOREPLIFETIME(ABBMatchState, PenaltyKeeperSlot);
+    DOREPLIFETIME(ABBMatchState, PenaltyShotStatus);
 }
 FString ABBMatchState::PositionName(int32 Position)
 {
@@ -215,6 +221,11 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
     }
     if (bConductReviewPending && ConductOffender >= 0 && ConductOffender < 16)
         Occupied[ConductOffender] = true;
+    if (bPenaltyShotActive)
+    {
+        if (PenaltyShooterSlot >= 0 && PenaltyShooterSlot < 16) Occupied[PenaltyShooterSlot] = true;
+        if (PenaltyKeeperSlot >= 0 && PenaltyKeeperSlot < 16) Occupied[PenaltyKeeperSlot] = true;
+    }
     const int32 Team = Counts[0] <= Counts[1] ? 0 : 1;
     // The first local login can precede GameState::BeginPlay. There cannot be
     // historical penalties yet; use the clean default roster for that one path.
@@ -300,8 +311,20 @@ bool ABBMatchState::TryCatch(ABBRiderCharacter* R, ABBBall* B)
     PendingPoints.push_back(Event);
     return true;
 }
-void ABBMatchState::Goal(ABBBall* B, int32 Team)
+void ABBMatchState::Goal(ABBBall* B, int32 Team, double FlightStepFraction)
 {
+    if (HasAuthority() && bPenaltyShotActive)
+    {
+        if (!IsPenaltyBallActive(B) || !bPenaltyShotReleased || !Rules
+            || !ConsumePenaltyFlightTime(FlightStepFraction)) return;
+        BB::PointEvent Event; Event.ball = B->BallIndex; Event.attacking_team = Team;
+        Event.player = PenaltyShooterSlot; Event.hoop = B->BallIndex == 0 ? BB::Hoop::Large : BB::Hoop::Small;
+        Event.entire_ball = true; Event.forward = true;
+        if (Team == Rules->penalty_shot.attacking_team)
+            FinishPenaltyShot(BB::PenaltyShotOutcome::Goal, TEXT("PENALTY SHOT SCORED"), Event);
+        else FinishPenaltyShot(BB::PenaltyShotOutcome::Miss, TEXT("PENALTY SHOT MISSED - wrong goal"));
+        return;
+    }
     if (!HasAuthority() || !Rules || !bLive || !IsValid(B) || !Balls.Contains(B) || Team < 0 || Team > 1
         || B->BallIndex < 0 || B->BallIndex > 2 || !Rules->balls[B->BallIndex].live || B->Holder || !B->bActive) return;
     for (const auto& P : PendingPoints) if (P.ball == B->BallIndex) return;
@@ -313,6 +336,7 @@ void ABBMatchState::Goal(ABBBall* B, int32 Team)
 }
 void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
 {
+    if (bPenaltyShotActive) { ReleasePenaltyShot(R, Aim); return; }
     if (!HasAuthority() || !Rules || !IsValid(R) || Aim.ContainsNaN()) return;
     for (ABBBall* B : Balls)
     {
@@ -423,6 +447,7 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || NewPosition < 0 || NewPosition > 5 || NewTeam < 0 || NewTeam > 1) return;
     if (bLive) { Say(TEXT("Positions are locked during live play. Choose at the next stoppage.")); return; }
+    if (bPenaltyShotActive) { Say(TEXT("Finish the penalty shot before changing positions.")); return; }
     if (bConductReviewPending) { Say(TEXT("Resolve the BB-0 conduct call before changing positions.")); return; }
     if (Rules->status == BB::Status::Review || Rules->status == BB::Status::Complete) return;
     if (R->Position == NewPosition && R->TeamIndex == NewTeam) return;
@@ -458,6 +483,12 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
 void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value, FVector Aim)
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || !Riders.Contains(R) || R->RosterIndex < 0 || R->RosterIndex >= 16) return;
+    if (bPenaltyShotActive)
+    {
+        if (Action == 1) ReleasePenaltyShot(R, Aim);
+        else R->NotifySpellResult(TEXT("Penalty shot: designated shooter throws once; no wandwork, pass or role change."));
+        return;
+    }
     if (Action == 2) { ChangePosition(R, Value, R->TeamIndex); return; }
     if (Action == 3) { ChangePosition(R, R->Position, Value); return; }
     if (Action == 8)
@@ -472,7 +503,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
-    if (Action == 9 || Action == 11) { ReviewConduct(R, Action == 11); return; }
+    if (Action >= 9 && Action <= 11) { ReviewConduct(R, Action); return; }
     if (Action == 4 || Action == 5)
     {
         // Listen-server period control belongs to the host. A dedicated server
@@ -480,7 +511,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         if (!CanOfficiate(R)) return;
         if (bConductReviewPending)
         {
-            R->NotifySpellResult(TEXT("Resolve the BB-0 call: F7 possession award or F9 ejection (playtest referee)."));
+            R->NotifySpellResult(TEXT("Resolve the BB-0 call: F7 possession, F8 penalty shot + removal, F9 ejection."));
             return;
         }
         const bool bRematch = Rules->status == BB::Status::Complete && Action == 4;
@@ -532,6 +563,7 @@ void ABBMatchState::Tick(float Dt)
 {
     Super::Tick(Dt);
     if (!HasAuthority() || !Rules) return;
+    if (bPenaltyShotActive) { TickPenaltyShot(Dt); return; }
     if (!PendingPoints.empty())
     {
         if (Rules->process_batch(Rules->now_ms, PendingPoints))
@@ -611,7 +643,8 @@ void ABBMatchState::Tick(float Dt)
                     && Rules->balls[Penalty.ball].crown_restart_penalty == Penalty.id)
                     Balls[Penalty.ball]->ResetBall(CrownRestartLocation(Rules->balls[Penalty.ball]) + FVector(0,0,80));
             }
-            else if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic)
+            else if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic
+                && Penalty.severity != BB::Severity::Serious)
             {
                 bool bQueuedConductAward = false;
                 for (const auto& Ball : Rules->balls) bQueuedConductAward |= Ball.conduct_restart_penalty == Penalty.id;
@@ -665,7 +698,8 @@ void ABBMatchState::SyncRules()
         ABBBall* B = Balls[I]; const auto& S = Rules->balls[I];
         const bool WasActive = B->bActive;
         // At stoppages, keep active equipment visible for orientation.
-        B->bActive = S.phase_active && (S.live || S.dead_reason == "stoppage");
+        B->bActive = S.phase_active && (S.live || S.dead_reason == "stoppage"
+            || (bPenaltyShotActive && I == PenaltyShotBall));
         B->ReturnIn = FMath::Max(0.f, S.timeout_until >= 0 ? (S.timeout_until-Rules->now_ms)/1000.f : S.dead_reason == "scheduled_release" ? (Rules->config.snitch_release_ms-Rules->now_ms)/1000.f : 0.f);
         B->BallStatus = UTF8_TO_TCHAR(S.dead_reason.c_str());
         B->Holder = nullptr;

@@ -12,7 +12,8 @@ No editor or firewall changes.
 [CmdletBinding()]
 param(
     [ValidateRange(1024, 65535)][int]$Port = 18779,
-    [ValidateRange(5, 30)][int]$TimeoutSeconds = 30
+    [ValidateRange(5, 30)][int]$TimeoutSeconds = 30,
+    [switch]$Bloodbroom
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,7 +31,8 @@ $watch = [Diagnostics.Stopwatch]::new()
 $report = [ordered]@{
     Status = 'not_run'
     Scope = 'Two local packaged processes: loopback connection/join and client map travel only'
-    Excludes = @('Role selection', 'Score replication', 'Remote connectivity', 'Latency/load', 'Full regulation gameplay')
+    RequestedVariant = $(if ($Bloodbroom) { 'bloodbroom' } else { 'basketbroom' })
+    Excludes = @('Variant activation/replication', 'Role selection', 'Score replication', 'Remote connectivity', 'Latency/load', 'Full regulation gameplay')
     StartedUtc = [DateTime]::UtcNow.ToString('o')
     TimeoutSeconds = $TimeoutSeconds
     Address = '127.0.0.1'
@@ -75,51 +77,109 @@ function Find-LogErrors([string]$Text, [string]$Role) {
     }
 }
 
+function Wait-OwnedGameIdentity($Record, [int]$TimeoutMilliseconds = 5000) {
+    $metadataWatch = [Diagnostics.Stopwatch]::StartNew()
+    try {
+        do {
+            $Record.Process.Refresh()
+            if ($Record.Process.HasExited) {
+                throw "$($Record.Role) exited during startup with code $($Record.Process.ExitCode)."
+            }
+            $rawPath = $null
+            $startedUtc = $null
+            # MainModule/Path may not be populated immediately after creation.
+            # Retry missing metadata, but reject an observed identity mismatch.
+            try { $rawPath = $Record.Process.Path } catch { }
+            try { $startedUtc = $Record.Process.StartTime.ToUniversalTime() } catch { }
+            if (-not [string]::IsNullOrWhiteSpace($rawPath)) {
+                if (-not [IO.Path]::IsPathRooted($rawPath)) { throw 'Started process reported a non-absolute executable path.' }
+                $actualPath = [IO.Path]::GetFullPath($rawPath)
+                if (-not [string]::Equals($actualPath, $Record.Executable, [StringComparison]::OrdinalIgnoreCase)) {
+                    throw "$($Record.Role) process executable differs from the selected package."
+                }
+                if ($null -ne $startedUtc -and $startedUtc.Ticks -gt 0) {
+                    $Record.StartTimeUtcTicks = $startedUtc.Ticks
+                    $Record.StartupIdentityVerified = $true
+                    $Record.Receipt.Executable = $actualPath
+                    $Record.Receipt.StartTimeUtc = $startedUtc.ToString('o')
+                    $Record.Receipt.StartupIdentityVerified = $true
+                    return
+                }
+            }
+            if ($metadataWatch.ElapsedMilliseconds -lt $TimeoutMilliseconds) { Start-Sleep -Milliseconds 50 }
+        } while ($metadataWatch.ElapsedMilliseconds -lt $TimeoutMilliseconds)
+        throw "$($Record.Role) executable/start-time metadata was unavailable after $TimeoutMilliseconds ms."
+    } finally {
+        $metadataWatch.Stop()
+        $Record.Receipt.MetadataWaitMilliseconds = $metadataWatch.ElapsedMilliseconds
+    }
+}
+
 function Start-OwnedGame([string]$Role, [string[]]$Arguments) {
-    $process = Start-Process -FilePath $script:mainExecutable -ArgumentList $Arguments `
-        -WorkingDirectory $script:packageRoot -WindowStyle Hidden -PassThru
-    # Record the returned process immediately. Cleanup verifies its executable
-    # and creation time; it never selects a process by name or kills a tree.
+    # Direct Process.Start with UseShellExecute=false retains the OS creation
+    # handle. Cleanup can target that exact process even while Path/StartTime
+    # metadata is late; it never reopens a PID or searches by executable name.
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $script:mainExecutable
+    $startInfo.Arguments = [string]::Join(' ', $Arguments)
+    $startInfo.WorkingDirectory = $script:packageRoot
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    if (-not $process.Start()) { $process.Dispose(); throw "$Role process did not start." }
     $record = [pscustomobject]@{
         Role = $Role; Id = $process.Id; Process = $process
         Executable = $script:mainExecutable; StartTimeUtcTicks = 0L
+        StartedDirectly = $true; CreationHandle = $process.SafeHandle
+        StartupIdentityVerified = $false; Receipt = $null
     }
     $script:owned.Add($record)
-    $process.Refresh()
-    if ($process.HasExited) { throw "$Role exited during startup with code $($process.ExitCode)." }
-    $actualPath = [IO.Path]::GetFullPath($process.Path)
-    if (-not [string]::Equals($actualPath, $script:mainExecutable, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "$Role process executable differs from the selected package."
+    $record.Receipt = [pscustomobject]@{
+        Role = $Role; Id = $record.Id; RequestedExecutable = $script:mainExecutable
+        Executable = $null; StartTimeUtc = $null; Arguments = $Arguments
+        Ownership = 'original_process_creation_handle'; StartupIdentityVerified = $false
+        MetadataWaitMilliseconds = 0L
     }
-    $record.StartTimeUtcTicks = $process.StartTime.ToUniversalTime().Ticks
-    $script:report.Processes += [pscustomobject]@{
-        Role = $Role; Id = $record.Id; Executable = $actualPath
-        StartTimeUtc = $process.StartTime.ToUniversalTime().ToString('o'); Arguments = $Arguments
+    $script:report.Processes += $record.Receipt
+    if ($record.CreationHandle.IsInvalid -or $record.CreationHandle.IsClosed) {
+        throw "$Role did not retain a valid process creation handle."
     }
+    Wait-OwnedGameIdentity $record
     return $record
 }
 
 function Stop-OwnedGame($Record) {
-    $result = [ordered]@{ Role = $Record.Role; Id = $Record.Id; Outcome = 'already_exited' }
+    $result = [ordered]@{
+        Role = $Record.Role; Id = $Record.Id; Outcome = 'already_exited'
+        IdentityBasis = 'original_process_creation_handle'
+        StartupIdentityVerified = $Record.StartupIdentityVerified
+    }
     try {
-        $candidate = Get-Process -Id $Record.Id -ErrorAction SilentlyContinue
-        if ($null -eq $candidate) { return [pscustomobject]$result }
-        $candidate.Refresh()
-        if ($candidate.HasExited) { return [pscustomobject]$result }
-        $candidatePath = [IO.Path]::GetFullPath($candidate.Path)
-        $samePath = [string]::Equals($candidatePath, $Record.Executable, [StringComparison]::OrdinalIgnoreCase)
-        $sameStart = $Record.StartTimeUtcTicks -ne 0 -and $candidate.StartTime.ToUniversalTime().Ticks -eq $Record.StartTimeUtcTicks
-        if (-not $samePath -or -not $sameStart) {
+        $candidate = $Record.Process
+        if (-not $Record.StartedDirectly -or $null -eq $candidate -or $null -eq $Record.CreationHandle -or
+            $Record.CreationHandle.IsInvalid -or $Record.CreationHandle.IsClosed -or
+            $candidate.Id -ne $Record.Id -or
+            -not [object]::ReferenceEquals($candidate.SafeHandle, $Record.CreationHandle)) {
             $result.Outcome = 'refused_identity_mismatch'
             return [pscustomobject]$result
         }
-        # Kill through the verified Process object, retaining its OS handle.
+        $candidate.Refresh()
+        if ($candidate.HasExited) { return [pscustomobject]$result }
+        # Process.Start retained this handle before metadata verification. A
+        # late/missing image path cannot redirect it to a recycled PID. Kill and
+        # WaitForExit act on the same original Process object and owned handle.
         $candidate.Kill()
         $stopped = $candidate.WaitForExit(5000)
         $result.Outcome = if ($stopped) { 'stopped_owned_process' } else { 'stop_timeout' }
     } catch {
         $result.Outcome = 'cleanup_error'
         $result.Error = $_.Exception.Message
+    } finally {
+        if ($null -ne $Record.Process -and $result.Outcome -in @('already_exited','stopped_owned_process')) {
+            $Record.Process.Dispose()
+        }
     }
     return [pscustomobject]$result
 }
@@ -154,7 +214,9 @@ try {
     } finally { $reservation.Dispose() }
 
     $common = @('-nullrhi', '-unattended', '-nosound', '-nosplash', '-MULTIHOME=127.0.0.1', '-FORCELOGFLUSH')
-    $serverArguments = @('/Basketbroom/Maps/BB_Regulation?listen?Practice=1', "-port=$Port") + $common + @(('-abslog="{0}"' -f $serverLog))
+    $hostMap = '/Basketbroom/Maps/BB_Regulation?listen?Practice=1'
+    if ($Bloodbroom) { $hostMap += '?Bloodbroom=1' }
+    $serverArguments = @($hostMap, "-port=$Port") + $common + @(('-abslog="{0}"' -f $serverLog))
     # NMT_Challenge copies URL options but overrides Name= with GetNickname().
     # Use an otherwise inert URL option to correlate this client's join.
     $clientArguments = @("127.0.0.1:${Port}?BBNetSmoke=$clientName") + $common + @(('-abslog="{0}"' -f $clientLog))

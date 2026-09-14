@@ -24,6 +24,8 @@
 float UBBFlyingMovementComponent::GetMaxSpeed() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxSpeed() : 0.f;
     if (Rider && Rider->StunRemaining > 0.f) return 0.f;
     return Super::GetMaxSpeed() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
@@ -31,16 +33,26 @@ float UBBFlyingMovementComponent::GetMaxSpeed() const
 float UBBFlyingMovementComponent::GetMaxAcceleration() const
 {
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxAcceleration() : 0.f;
     if (Rider && Rider->StunRemaining > 0.f) return 0.f;
     return Super::GetMaxAcceleration() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
 void UBBFlyingMovementComponent::PhysFlying(float DeltaTime, int32 Iterations)
 {
+    const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
+    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
+    // Apply before prediction/server movement: a saved move or residual velocity
+    // must not carry the shooter off the mark or move a waiting rider.
+    if (Match && Match->bPenaltyShotActive && !Match->CanMoveDuringPenalty(Rider))
+    {
+        StopMovementImmediately();
+        return;
+    }
     const FVector EntryVelocity = Velocity;
     Super::PhysFlying(DeltaTime, Iterations);
-    const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
-    if (!HasValidData() || !Rider || Rider->StunRemaining > 0.0f || MovementMode != MOVE_Flying) return;
+    if (!HasValidData() || !Rider || (Rider->StunRemaining > 0.0f && !(Match && Match->bPenaltyShotActive)) || MovementMode != MOVE_Flying) return;
 
     const UCapsuleComponent* Capsule = Rider->GetCapsuleComponent();
     const double Radius = Capsule->GetScaledCapsuleRadius();
@@ -436,12 +448,13 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABBRiderCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
+    const bool bPenaltyKeeperMovement = Match && Match->bPenaltyShotActive && Match->CanMoveDuringPenalty(this);
     if (HasAuthority())
     {
-        const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
         if (!Match || Match->bLive) StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
     }
-    if (StunRemaining > 0.0f)
+    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
     {
         GetCharacterMovement()->StopMovementImmediately();
     }
@@ -527,7 +540,19 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     {
         StopInteract();
     }
-    if (StunRemaining > 0.0f)
+    const ABBMatchState* InputMatch = GetWorld()->GetGameState<ABBMatchState>();
+    if (InputMatch && InputMatch->bPenaltyShotActive)
+    {
+        bShowRoster = false;
+        bShowSpellbook = false;
+        if (!InputMatch->CanMoveDuringPenalty(this))
+        {
+            ConsumeMovementInputVector();
+            GetCharacterMovement()->StopMovementImmediately();
+            return;
+        }
+    }
+    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
     {
         return;
     }
@@ -582,6 +607,7 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindKey(EKeys::B, IE_Pressed, this, &ABBRiderCharacter::RequestBloodbroom);
     Input->BindKey(EKeys::V, IE_Pressed, this, &ABBRiderCharacter::ToggleSpellbook);
     Input->BindKey(EKeys::F7, IE_Pressed, this, &ABBRiderCharacter::RequestPossessionAward);
+    Input->BindKey(EKeys::F8, IE_Pressed, this, &ABBRiderCharacter::RequestPenaltyShot);
     Input->BindKey(EKeys::F9, IE_Pressed, this, &ABBRiderCharacter::RequestEjection);
 }
 
@@ -631,6 +657,7 @@ void ABBRiderCharacter::CastSelectedSpell() { SubmitAction(6, SelectedSpell); }
 void ABBRiderCharacter::RequestShield() { SubmitAction(7); }
 void ABBRiderCharacter::RequestBloodbroom() { SubmitAction(8); }
 void ABBRiderCharacter::RequestPossessionAward() { SubmitAction(9); }
+void ABBRiderCharacter::RequestPenaltyShot() { SubmitAction(10); }
 void ABBRiderCharacter::RequestEjection() { SubmitAction(11); }
 
 void ABBRiderCharacter::SubmitAction(int32 Action, int32 Value)
@@ -647,7 +674,7 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11 || Action == 10
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count()))
@@ -705,7 +732,7 @@ void ABBRiderCharacter::ServerStopInteract_Implementation()
 
 void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, FVector Aim)
 {
-    if (!HasAuthority() || !Controller || Action < 0 || Action > 11 || Action == 10)
+    if (!HasAuthority() || !Controller || Action < 0 || Action > 11)
     {
         return;
     }
@@ -714,7 +741,10 @@ void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, F
     {
         return;
     }
-    if ((Action <= 1 && StunRemaining > 0.0f)
+    const ABBMatchState* MatchState = GetWorld()->GetGameState<ABBMatchState>();
+    const bool bProtectedShotRelease = Action == 1 && MatchState && MatchState->bPenaltyShotActive
+        && MatchState->PenaltyShooterSlot == RosterIndex;
+    if ((Action <= 1 && StunRemaining > 0.0f && !bProtectedShotRelease)
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count())))
