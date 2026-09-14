@@ -93,5 +93,10 @@ DerivedDataCache/*
 # temporarily hiding of PressPacket assets for packaging purposes
 **/PressPacket/
 
-#large files
-**/Docs/**
+# Generated gameplay videos stay local, including exports under Docs.
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.m4v
