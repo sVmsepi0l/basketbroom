@@ -1,5 +1,7 @@
 # Basketbroom alpha validation
 
+> **Historical roof evidence:** This receipt records earlier builds. Its open-crown and No Crown observations were superseded by the user’s 2026-09-14 [closed pyramid-net amendment](pyramid-net.md). The results remain unchanged for provenance and do not validate the replacement roof.
+
 Validated locally with Unreal Engine 5.8.1 and Windows 11; native gameplay, practice transitions/rematch, local networking, and physical two-process packaged role/authority/result/rematch/stoppage/departure were checked on 2026-09-12, with the recorded audio evidence below from 2026-09-10. The active project uses the compiled native runtime and `/Basketbroom/Maps/BB_Regulation`. The earlier Blueprint training mode remains available as `/Basketbroom/Maps/BB_Arena`.
 
 The later **BB-0 partial wandplay milestone passed 212 checks: 130 portable C++ and 82 native PIE**, including 17 regulation spell, 3 Bloodbroom and 10 spell-network checks. See the [wandplay validation receipt](native-wandplay-validation.md) for exact runs, engine/build provenance, 18 implemented versus 13 pending adapters, and the separate package/UI outcome. Named package observations below belong to their earlier builds.

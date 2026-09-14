@@ -53,6 +53,9 @@ public:
     FVector GetFlightVelocity() const { return FlightVelocity; }
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development")
     double GetDistanceSinceReleaseCm() const { return DistanceSinceReleaseCm; }
+    /** PIE authority diagnostic: count, outward normal XYZ, incoming XYZ, outgoing XYZ. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development")
+    TArray<double> DevelopmentGetRoofContactState() const;
     UFUNCTION() void OnRep_Appearance();
     // Only arranges a free ball's physical start; never grants possession,
     // activation, capture progress, points, or a rule-engine outcome.
@@ -63,6 +66,10 @@ public:
     // Ordinary Tick never integrates the same penalty frame again.
     void StepPenaltyFlight(double DeltaSeconds);
 private:
+    int32 RoofContactCount = 0;
+    FVector LastRoofNormal = FVector::ZeroVector;
+    FVector LastRoofIncoming = FVector::ZeroVector;
+    FVector LastRoofOutgoing = FVector::ZeroVector;
     FVector PreviousVisualLocation = FVector::ZeroVector;
     void UpdateChaseVisual(float DeltaSeconds);
     void StepFlight(double DeltaSeconds);

@@ -1,4 +1,6 @@
-"""Ordinary No Crown attribution, delayed enforcement and native restitution.
+"""RETIRED: superseded by the closed pyramid-net amendment on 2026-09-14.
+
+Ordinary No Crown attribution, delayed enforcement and native restitution.
 
 Owns/discards one PIE world. Inputs use the ordinary queued rider/RPC path;
 free-ball transforms/velocities use the guarded physical fixture. There are no
@@ -239,18 +241,21 @@ class NativeCrownTests(base.NativePlayableTests):
 
 
 def main():
-    if unreal is None and "--list" in sys.argv:
-        return {"status": "not_run", "planned_tests": list(CASES), "count": len(CASES)}
-    runner = NativeCrownTests()
-    try:
-        started = runner.begin()
-    except Exception:
-        runner.finish("error", traceback.format_exc())
-        started = False
-    if unreal and started:
-        unreal._basketbroom_native_test = runner
-        unreal._basketbroom_native_crown_test = runner
-    return {"status": "started" if started else runner.final_status, "report": str(REPORT), "planned_cases": len(CASES)}
+    # Keep historical cases/classes available for source inspection, but never
+    # start PIE against a rule the user has removed. A separate receipt leaves
+    # earlier real test evidence untouched.
+    retired_report = ROOT / ".local/native-crown-retired-results.json"
+    data = {"status": "not_run", "retired": True,
+            "reason": "No Crown was retired by the closed pyramid-net amendment on 2026-09-14.",
+            "replacement": "Tools/test_native_pyramid_net.py",
+            "passed": 0, "failed": 0, "not_run": len(CASES),
+            "planned_tests": [], "historical_tests": list(CASES),
+            "count": 0, "historical_count": len(CASES),
+            "tests": [{"name": name, "status": "not_run"} for name in CASES],
+            "pie_started": False, "report": str(retired_report)}
+    retired_report.parent.mkdir(parents=True, exist_ok=True)
+    retired_report.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return data
 
 
 if __name__ == "__main__":

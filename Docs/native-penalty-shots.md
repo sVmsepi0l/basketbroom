@@ -16,7 +16,7 @@ F8 reserves a scoring ball and begins a five-second attempt. A denied Quaffle or
 Quark chance retains its ball type; otherwise the default is the Quaffle. A
 second Quark can supply the same type if the first has a prior remedy, but the
 adapter never substitutes a different point value merely to force a shot.
-Existing goal, Crown and conduct reservations retain priority.
+Existing goal and conduct reservations retain priority.
 
 The harmed rider is preferred when legally eligible to handle that ball.
 Otherwise the adapter selects an eligible teammate, preferring a human. The
@@ -33,7 +33,7 @@ provisional playtest behavior, not final competitive AI.
 
 The five seconds include ball flight. A make awards the ordinary **13 or 37**
 points once. A save, missed goal/end boundary, floor/net contact or expiry ends
-the attempt without points. Rim deflection remains part of that same flight.
+the attempt without points. The [pyramid roof net](pyramid-net.md) is a net-contact miss; crossing its former 138-foot eave plane alone leaves the attempt live. Rim deflection remains part of that same flight.
 After the short result hold, the defending Netminder receives actual protected
 custody before the penalty is marked served. The match stays stopped until the
 host resumes it, unless the shot has caused a result review.

@@ -29,6 +29,8 @@ struct Config {
     Millis restart_protection_ms = 3000, penalty_shot_ms = 5000;
     std::int64_t regulation_margin = 150, overtime_margin = 150;
     double self_toss_reset_distance_ft = 10.0;
+    // Historical replay/test compatibility only. Current venues have a closed top net.
+    bool enable_legacy_crown_exit = false;
 };
 struct Player {
     int team = 0;

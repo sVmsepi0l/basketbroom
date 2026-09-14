@@ -3,7 +3,7 @@
 A first-person broom sport alpha built in **Unreal Engine 5.8**. The active native
 game has two opposing eight-rider teams, selectable positions, seven balls, broom flight,
 ballistic goals, continuous chase catches, and regulation match state in an
-original open-crown arena. The native Editor and Windows Development game build
+original arena enclosed by a hollow pyramid net. The native Editor and Windows Development game build
 successfully. Focused gameplay, opening, rematch, Bludger, local networking,
 and audio suites pass. Two packaged processes also share role changes, scores,
 stoppages, certified results and host rematches in local play. Full regulation,
@@ -116,8 +116,13 @@ C++ runtime: CharacterMovement broom flight, authority-owned balls, the sixteen
 roster slots, position/team selection, host start/stoppage, goal and capture
 resolution, and replicated HUD state. It spawns one Quaffle, two Quarks, one
 Snipe, one scheduled Snitch, and two Bludgers. Goal checks require the whole ball
-to clear the appropriate hoop; rim strikes, floor/net rebounds, and No Crown
-returns are exercised by the native integration suite.
+to clear the appropriate hoop. The [closed pyramid net](Docs/pyramid-net.md)
+replaces the old No Crown return: balls rebound off four sloping roof faces and
+remain in play in both Basketbroom and Bloodbroom. The former 138-foot roofline
+is now an open interior eave plane, with the provisional apex at 207 feet.
+Riders and held/chase balls share the closed arena bounds. Existing dated
+validation receipts retain their original build scope; the amendment describes
+the replacement native checks.
 
 The venue, team colors, broom cockpit and HUD use generated original assets.
 Riders now use Epic's locally staged Quinn mannequin with an authored seated

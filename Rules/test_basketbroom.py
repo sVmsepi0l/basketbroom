@@ -360,9 +360,31 @@ class DonnybrookTests(unittest.TestCase):
         self.assertEqual(match.status, "live")
 
 
-class CrownTests(unittest.TestCase):
-    def test_crown_only_kills_one_ball_and_flag_survives_return(self):
+class ClosedRoofTests(unittest.TestCase):
+    def test_default_crown_exit_is_atomic_rejection(self):
         match = Match()
+        self.assertFalse(match.config["enable_legacy_crown_exit"])
+        for ball in match.balls:
+            before = deepcopy(match.__dict__)
+            with self.assertRaisesRegex(RulesError, "closed pyramid net"):
+                match.crown_exit(ball, [0, 0, 207])
+            self.assertEqual(match.__dict__, before)
+        match.possess("A_chaser_1", "quaffle")
+        before = deepcopy(match.__dict__)
+        with self.assertRaises(RulesError):
+            match.crown_exit("quaffle", [0, 0, 138], "A_chaser_1", deliberate_delay=True)
+        self.assertEqual(match.__dict__, before)
+
+
+class LegacyCrownTests(unittest.TestCase):
+    """Historical open-roof fixtures; not current regulation behavior."""
+    def legacy_match(self):
+        config = load_config()
+        config["enable_legacy_crown_exit"] = True
+        return Match(config=config)
+
+    def test_crown_only_kills_one_ball_and_flag_survives_return(self):
+        match = self.legacy_match()
         match.crown_exit("quaffle", [0, 0, 138], "A_chaser_1")
         self.assertEqual(match.balls["quaffle"]["play_state"], "dead")
         self.assertEqual(match.balls["quark_1"]["play_state"], "live")
@@ -378,7 +400,7 @@ class CrownTests(unittest.TestCase):
         match.resume()
 
     def test_missed_reentry_target_triggers_safety_stoppage(self):
-        match = Match()
+        match = self.legacy_match()
         match.crown_exit("quark_1", [1, 2, 138])
         consumed = match.advance(10000)
         self.assertEqual(consumed, 3000)
@@ -388,12 +410,12 @@ class CrownTests(unittest.TestCase):
         self.assertEqual(match.balls["quark_1"]["play_state"], "live")
 
     def test_dead_roof_delay_is_moderate(self):
-        match = Match()
+        match = self.legacy_match()
         match.crown_exit("bludger_1", [0, 0, 138], "A_hurleyback_1", deliberate_delay=True)
         self.assertEqual(match.penalties[0]["severity"], "moderate")
 
     def test_simultaneous_crown_returns_stop_once_and_preserve_timeout(self):
-        match = Match()
+        match = self.legacy_match()
         match.process_batch(0, [catch()])
         match.advance(177000)
         match.crown_exit("quaffle", [0, 0, 138])
@@ -406,7 +428,7 @@ class CrownTests(unittest.TestCase):
         self.assertEqual(match.balls["snipe"]["play_state"], "live")
 
     def test_winged_envelope_recall_has_no_crown_penalty(self):
-        match = Match()
+        match = self.legacy_match()
         with self.assertRaises(RulesError):
             match.crown_exit("snipe", [0, 0, 138])
         match.recall_chase("snipe")

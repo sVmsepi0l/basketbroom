@@ -16,14 +16,14 @@ base.OUTPUT = ROOT / ".local/native-admission-rules"
 base.PREAMBLE += '\n#include "BBAdmission.h"\n'
 base.CASES = [
     ("newcomer_avoids_departed_players_pending_crown_without_erasing_it", r'''
-        Match m; std::array<bool,16> occupied{};
+        Match m(legacy_crown_config()); std::array<bool,16> occupied{};
         CHECK(m.possess(4,1)&&m.crown_exit(1,{0,0,138},4)&&m.crown_return(1));
         const auto before=fingerprint(m); const int slot=SelectAdmissionSlot(m,occupied,0);
         CHECK(slot>=0&&slot<8&&slot!=4&&m.eligible(slot,1));
         CHECK(fingerprint(m)==before&&m.penalties[0].pending&&m.penalties[0].crown_restoration_pending);
     '''),
     ("reserved_team_remedy_survives_newcomer_selection_and_serves_opponent", r'''
-        Match m; std::array<bool,16> occupied{};
+        Match m(legacy_crown_config()); std::array<bool,16> occupied{};
         CHECK(m.crown_exit(1,{0,0,138},4)&&m.pause()&&m.prepare_crown_restart(1));
         const auto before=fingerprint(m); const int slot=SelectAdmissionSlot(m,occupied,0);
         CHECK(slot>=0&&slot!=4&&fingerprint(m)==before);
@@ -41,7 +41,7 @@ base.CASES = [
         CHECK(fingerprint(m)==before&&m.penalties.size()==16);
     '''),
     ("occupied_clean_slots_do_not_make_a_restricted_slot_safe", r'''
-        Match m; std::array<bool,16> occupied; occupied.fill(true); occupied[4]=false;
+        Match m(legacy_crown_config()); std::array<bool,16> occupied; occupied.fill(true); occupied[4]=false;
         CHECK(m.crown_exit(1,{0,0,138},4)); const auto before=fingerprint(m);
         CHECK(SelectAdmissionSlot(m,occupied,0)==-1&&fingerprint(m)==before);
     '''),
@@ -74,7 +74,7 @@ base.CASES = [
         CHECK(SelectAdmissionSlot(m,occupied,0)==-1&&fingerprint(m)==before);
     '''),
     ("served_ordinary_crown_remedy_reopens_slot_without_erasing_history", r'''
-        Match m; std::array<bool,16> occupied; occupied.fill(true); occupied[4]=false;
+        Match m(legacy_crown_config()); std::array<bool,16> occupied; occupied.fill(true); occupied[4]=false;
         CHECK(m.crown_exit(1,{0,0,138},4)&&m.pause()&&m.prepare_crown_restart(1));
         CHECK(SelectAdmissionSlot(m,occupied,0)==-1);
         CHECK(m.resume()&&m.restart(1,9)); const auto before=fingerprint(m);

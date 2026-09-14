@@ -1,5 +1,7 @@
 # BASKETBROOM
 
+> **Superseded roof rules — 2026-09-14:** The user replaced the open roof and No Crown procedure with a [closed, hollow pyramidion net](pyramid-net.md) for Basketbroom and Bloodbroom. That amendment overrides this historical draft wherever it specifies an open roof, Crown exit/return, Dead-Roof Delay or an exterior chase envelope, including the draft status statement below. The original text remains for provenance; it is not the current roof specification.
+
 ## Rules Bible + Playable Design Specification
 
 **Development draft 0.1 — 20 July 2026**  

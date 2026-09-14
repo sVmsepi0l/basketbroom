@@ -1,4 +1,5 @@
 #include "BBRiderCharacter.h"
+#include "BBArenaGeometry.h"
 
 #include "BBMatchState.h"
 #include "BBSpellCatalog.h"
@@ -52,32 +53,52 @@ void UBBFlyingMovementComponent::PhysFlying(float DeltaTime, int32 Iterations)
     }
     const FVector EntryVelocity = Velocity;
     Super::PhysFlying(DeltaTime, Iterations);
-    if (!HasValidData() || !Rider || (Rider->StunRemaining > 0.0f && !(Match && Match->bPenaltyShotActive)) || MovementMode != MOVE_Flying) return;
+    if (!HasValidData() || !Rider || MovementMode != MOVE_Flying) return;
 
     const UCapsuleComponent* Capsule = Rider->GetCapsuleComponent();
     const double Radius = Capsule->GetScaledCapsuleRadius();
     const double HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-    const FVector Lower(-6850.8 + Radius, -3200.4 + Radius, HalfHeight);
-    const FVector Upper(6850.8 - Radius, 3200.4 - Radius, 6309.36 - HalfHeight);
+    const FVector Lower(-BBArena::HalfLength + Radius, -BBArena::HalfWidth + Radius, HalfHeight);
+    const FVector Upper(BBArena::HalfLength - Radius, BBArena::HalfWidth - Radius, BBArena::ApexHeight - HalfHeight);
     const FVector Current = UpdatedComponent->GetComponentLocation();
-    const FVector Bounded(FMath::Clamp(Current.X, Lower.X, Upper.X),
-                          FMath::Clamp(Current.Y, Lower.Y, Upper.Y),
-                          FMath::Clamp(Current.Z, Lower.Z, Upper.Z));
+    const FVector Bounded = BBArena::ClampCapsule(Current, Radius, HalfHeight);
     if (!Current.Equals(Bounded, .01))
     {
+        // CharacterMovement's sweep handles normal flight into the authored
+        // roof. This explicit convex bound also covers prediction correction,
+        // high-speed saved moves and missing/late collision geometry.
         FHitResult Hit;
-        SafeMoveUpdatedComponent(Bounded - Current, UpdatedComponent->GetComponentQuat(), true, Hit);
+        SafeMoveUpdatedComponent(Bounded - Current, UpdatedComponent->GetComponentQuat(), false, Hit);
     }
 
-    // Lower nets collide physically; open-crown bounds are movement constraints.
-    // Both use the same predicted simulation and preserve a controlled rebound.
     for (int32 Axis = 0; Axis < 3; ++Axis)
     {
         const double Speed = FMath::Max(FMath::Abs(EntryVelocity[Axis]), FMath::Abs(Velocity[Axis]));
         if (Bounded[Axis] <= Lower[Axis] + 3.0 && (EntryVelocity[Axis] < 0 || Velocity[Axis] < 0))
-            Velocity[Axis] = Speed * .75;
-        else if (Bounded[Axis] >= Upper[Axis] - 3.0 && (EntryVelocity[Axis] > 0 || Velocity[Axis] > 0))
-            Velocity[Axis] = -Speed * .75;
+            Velocity[Axis] = Speed * BBArena::Restitution;
+        else if (Axis < 2 && Bounded[Axis] >= Upper[Axis] - 3.0 && (EntryVelocity[Axis] > 0 || Velocity[Axis] > 0))
+            Velocity[Axis] = -Speed * BBArena::Restitution;
+    }
+    // Restore the incoming normal component that the physical sweep can have
+    // removed, then rebound against every touching sloped face. This runs in
+    // native server movement and the client's matching predicted simulation.
+    bool bRoofImpact = false;
+    for (int32 Face = 0; Face < 4; ++Face)
+    {
+        const FPlane Plane = BBArena::RoofPlane(Face);
+        const FVector Normal(Plane.X, Plane.Y, Plane.Z);
+        const double Support = Radius + FMath::Max(0.0, HalfHeight - Radius) * Normal.Z;
+        bRoofImpact |= Plane.PlaneDot(Bounded) + Support >= -3.0
+            && FVector::DotProduct(EntryVelocity, Normal) > 0;
+    }
+    if (bRoofImpact)
+    {
+        FVector Rebound = EntryVelocity;
+        BBArena::ReboundRoof(Rebound, Bounded, Radius, HalfHeight, 3.0);
+        // Roof/wall seams must satisfy the vertical net at the same time.
+        if (FMath::Abs(Bounded.X) >= BBArena::HalfLength - Radius - 3.0 && Rebound.X * Bounded.X > 0) Rebound.X *= -.75;
+        if (FMath::Abs(Bounded.Y) >= BBArena::HalfWidth - Radius - 3.0 && Rebound.Y * Bounded.Y > 0) Rebound.Y *= -.75;
+        Velocity = Rebound;
     }
 }
 
@@ -773,7 +794,10 @@ FVector ABBRiderCharacter::GetCarryLocation() const
 {
     const FVector Aim = GetAimDirection();
     const FVector Right = FRotationMatrix(FRotator(0, Aim.Rotation().Yaw, 0)).GetUnitAxis(EAxis::Y);
-    return GetActorLocation() + FVector(0, 0, BaseEyeHeight - 25.0f) + Aim * 175.0f + Right * 35.0f;
+    // Use the largest held-ball radius so neither authority custody nor the
+    // local predicted held visual can protrude through a roof face or wall.
+    return BBArena::ClampSphere(GetActorLocation() + FVector(0, 0, BaseEyeHeight - 25.0f)
+        + Aim * 175.0f + Right * 35.0f, 65.0);
 }
 
 void ABBRiderCharacter::RefreshUniform()

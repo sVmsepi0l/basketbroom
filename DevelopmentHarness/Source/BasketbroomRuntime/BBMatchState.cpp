@@ -417,32 +417,6 @@ TArray<int32> ABBMatchState::DevelopmentGetCrownPenaltyState(int32 BallIndex) co
 #endif
     return State;
 }
-void ABBMatchState::NoCrown(ABBBall* B)
-{
-    if (!HasAuthority() || !Rules || !bLive || !IsValid(B) || !Balls.Contains(B) || B->IsChase()) return;
-    const FVector P = B->GetActorLocation();
-    ABBRiderCharacter* Responsible = IsValid(B->Holder) ? B->Holder.Get() : B->RecentThrower.Get();
-    int32 ResponsibleSlot = -1;
-    if (IsValid(Responsible) && Riders.Contains(Responsible) && Responsible->RosterIndex >= 0 && Responsible->RosterIndex < 16)
-    {
-        const auto& Player = Rules->players[Responsible->RosterIndex];
-        if (!Player.ejected && !Player.donnybrook_excluded && Player.removed_until < 0)
-            ResponsibleSlot = Responsible->RosterIndex;
-    }
-    // Unknown or no-longer-available attribution never prevents neutral return.
-    // Incidental grazes/banks do not replace RecentThrower; intentional releases
-    // and current carried control are the deliberate acts modeled by this alpha.
-    if (Rules->crown_exit(B->BallIndex, {P.X / 30.48, P.Y / 30.48, 138.0}, ResponsibleSlot))
-    {
-        B->Holder = nullptr; B->FlightVelocity = FVector::ZeroVector;
-        B->DistanceSinceReleaseCm = 0;
-        B->RecentThrower.Reset();
-        B->ThrowerIgnoreRemaining = B->ImpactCooldown = 0;
-        B->SetActorLocation(FVector(P.X, P.Y, 4110.f));
-        Say(B->DisplayName() + TEXT(" - NO CROWN. Returning below the roofline."));
-        SyncRules();
-    }
-}
 void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int32 NewTeam)
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || NewPosition < 0 || NewPosition > 5 || NewTeam < 0 || NewTeam > 1) return;

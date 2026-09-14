@@ -32,7 +32,7 @@ TESTS = (
     "host_headshot_applies_then_referee_pause_replicates",
     "client_cannot_adjudicate_pending_conduct",
     "host_possession_award_queues_then_actual_restart_replicates",
-    "fallback_preserves_reserved_quaffle_and_its_neutral_return",
+    "fallback_preserves_reserved_quaffle_and_its_scored_ball_restart",
     "managed_play_settings_restored_and_pie_ended",
 )
 
@@ -281,33 +281,42 @@ class SpellNetworkTests(base.NativeNetworkTests):
         fouls_before = int(prop(self.host["match"], "ConductFoulCount"))
         scores_before = self.scores(self.host)
         self.require(fouls_before == 0, "Earlier legal torso casts unexpectedly produced a foul")
-        # A real untouched loose-ball roof exit creates an existing reservation
-        # without a player sanction. The native neutral return begins after
-        # about one live second. Queue the real headshot as soon as the server
-        # observes Crown, rather than waiting several replicated samples before
-        # sending it. The resulting conduct stoppage freezes that reservation.
-        quaffle = self.host["balls"][0]
-        self.require(prop(quaffle, "Holder") is None and prop(quaffle, "bActive"),
-                     "Fallback fixture requires the untouched active Quaffle")
-        self.require(quaffle.development_set_flight_fixture(vec(-2000, -1200, 4000), vec(0, 0, 900)),
-                     "Physical Quaffle roof fixture was rejected")
+        # Two actual goals reserve the Quaffle without a removed roof rule.
+        # Quark 2 first gives the defending keeper genuine scoring-ball custody.
+        # The subsequent Quaffle score must wait until that keeper releases it.
+        quaffle, occupied = self.host["balls"][0], self.host["balls"][2]
+        for ball in (quaffle, occupied):
+            self.require(prop(ball, "Holder") is None and prop(ball, "bActive"),
+                         "Fallback fixture needs two untouched active scoring balls")
+        self.require(occupied.development_set_flight_fixture(vec(6200, 0, 3048), vec(2000, 0, 0)),
+                     "Physical Quark goal fixture rejected")
+        occupied.set_actor_tick_enabled(True)
+        keeper_holds = lambda: prop(occupied, "Holder") is not None
+        yield self.wait(3, keeper_holds)
+        self.require(keeper_holds(), "First native Quark goal must reach a real keeper restart")
+        keeper_slot = int(prop(prop(occupied, "Holder"), "RosterIndex"))
+        self.require(self.scores(self.host) == [scores_before[0]+37, scores_before[1]],
+                     "Quark fixture must produce exactly one genuine 37-point goal")
+        self.require(quaffle.development_set_flight_fixture(vec(6200, 0, 2103.12), vec(2000, 0, 0)),
+                     "Physical Quaffle goal fixture rejected")
         quaffle.set_actor_tick_enabled(True)
-        roof_observed = {}
-
-        def cast_during_crown():
-            if not roof_observed and str(prop(quaffle, "BallStatus")) == "crown":
-                roof_observed["server_status_at_cast_submission"] = "crown"
-                roof_observed["server_live_time"] = float(prop(self.host["match"], "LiveSeconds"))
-                self.request(self.host, 6, 0)
-
+        score_reserved = lambda: all(str(prop(side["balls"][0], "BallStatus")) == "score"
+                                      and prop(side["balls"][0], "Holder") is None
+                                      for side in (self.host, self.client))
+        yield self.wait(3, score_reserved)
+        self.require(score_reserved(), "Second native goal must retain its score restart while keeper is occupied")
+        scores_before = [scores_before[0]+50, scores_before[1]]
+        self.require(self.scores(self.host) == self.scores(self.client) == scores_before,
+                     "Both real goals and reserved Quaffle state must replicate")
+        score_fixture = {"server_status_at_cast_submission": str(prop(quaffle, "BallStatus")),
+                         "keeper_holds_other_scoring_ball": keeper_holds(), "keeper_slot": keeper_slot,
+                         "scores_from_actual_goals": scores_before,
+                         "server_live_time": float(prop(self.host["match"], "LiveSeconds"))}
+        self.request(self.host, 6, 0)
         review = lambda: all(prop(side["match"], "bConductReviewPending") and not self.live(side)
                              for side in (self.host, self.client))
-        yield self.wait(4, review, cast_during_crown)
-        crown_reserved = lambda: all(str(prop(side["balls"][0], "BallStatus")) == "crown"
-                                     and prop(side["balls"][0], "Holder") is None
-                                     for side in (self.host, self.client))
-        self.require(roof_observed and crown_reserved(),
-                     "Headshot did not stop play while the physical Quaffle Crown reservation remained active")
+        yield self.wait(4, review)
+        self.require(score_reserved(), "Headshot must preserve the genuine Quaffle score reservation")
         head_after = self.values(self.client, "Vitality")
         head_ok = review() and all(after <= before - 7.5 for before, after in zip(head_before, head_after))
         head_ok = head_ok and all(int(prop(side["match"], "ConductFoulCount")) == fouls_before + 1
@@ -315,7 +324,7 @@ class SpellNetworkTests(base.NativeNetworkTests):
                                   and "PLAYTEST REFEREE" in str(prop(side["match"], "ConductReviewStatus"))
                                   for side in (self.host, self.client))
         self.record(TESTS[5], head_ok, before=head_before, after=head_after,
-                    server=self.conduct(self.host), client=self.conduct(self.client), roof_fixture=roof_observed)
+                    server=self.conduct(self.host), client=self.conduct(self.client), score_fixture=score_fixture)
         self.require(head_ok, "Headshot effect and pending referee stoppage did not replicate")
 
         review_before = self.conduct(self.host)
@@ -341,9 +350,9 @@ class SpellNetworkTests(base.NativeNetworkTests):
         queue_state = self.conduct(self.host)
         yield self.wait(.5)
         queue_held = queued()
-        crown_preserved = crown_reserved()
-        self.require(queue_observed and queue_held and crown_preserved,
-                     "F7 must reserve available Quark 1 and preserve the prior Quaffle Crown reservation")
+        score_preserved = score_reserved()
+        self.require(queue_observed and queue_held and score_preserved,
+                     "F7 must reserve available Quark 1 and preserve the prior Quaffle score reservation")
         self.request(self.host, 4)
         served = lambda: both_live() and all(int(prop(side["match"], "PendingPenaltyCount")) == 0 for side in (self.host, self.client)) \
             and prop(self.host["balls"][1], "Holder") == self.client_on_server() \
@@ -361,12 +370,15 @@ class SpellNetworkTests(base.NativeNetworkTests):
                     scores_unchanged=self.scores(self.host) == scores_before)
         returned = lambda: all(prop(side["balls"][0], "bActive")
                                and str(prop(side["balls"][0], "BallStatus")) == ""
-                               and prop(side["balls"][0], "Holder") is None for side in (self.host, self.client))
+                               and prop(side["balls"][0], "Holder") is not None
+                               and int(prop(prop(side["balls"][0], "Holder"), "RosterIndex")) == keeper_slot
+                               for side in (self.host, self.client))
         yield self.wait(3, returned)
-        self.record(TESTS[8], crown_preserved and returned() and served()
+        self.record(TESTS[8], score_preserved and returned() and served()
                     and self.scores(self.host) == self.scores(self.client) == scores_before,
-                    physical_exit=roof_observed, reserved_through_f7=crown_preserved,
-                    neutral_return_observed=returned(), opposing_quark_possession_retained=served())
+                    physical_goals=score_fixture, reserved_through_f7=score_preserved,
+                    scored_ball_keeper_restart_observed=returned(), opposing_quark_possession_retained=served())
+
 
 
 def main():

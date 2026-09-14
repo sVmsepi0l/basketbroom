@@ -4,6 +4,9 @@ Run after staging BB_Arena through editor_bridge.py. The bridge returns promptly
 the Slate callback writes .local/playable-test-results.json when tests finish.
 Only PIE copies are changed. The test stops PIE afterward unless leave_play=True.
 It seeds positions/velocities, then waits for the compiled game graphs to act.
+This historical broad fixture suite also resets rule fields between cases; use
+test_training_pyramid.py for current physical-only roof checks without score,
+custody or clock writes. Neither suite claims actual keyboard pickup coverage.
 Keyboard pickup/capture and visual feel still need an interactive play check.
 """
 import json
@@ -132,8 +135,8 @@ class PlayableTests:
             ("large_hoop_rim_clearance", lambda: self.launch(0, (6300, 350, 2103.12), (2000, 0, 0)), lambda: self.check_score(0, 0)),
             ("side_net_rebound", lambda: self.launch(0, (0, 3100, 1600), (0, 1000, 0)), self.check_rebound),
             ("trampoline_floor_rebound", lambda: self.launch(0, (0, 0, 75), (0, 0, -500)), self.check_floor),
-            ("no_crown_free_ball", lambda: self.launch(0, (0, 0, 4190), (0, 0, 1000)), self.check_no_crown),
-            ("no_crown_held_ball", self.prepare_held_roof, self.check_no_crown),
+            ("hollow_pyramid_free_ball_crosses_old_plane", lambda: self.launch(0, (0, 0, 4190), (0, 0, 1000)), self.check_hollow_pyramid),
+            ("closed_pyramid_free_ball_rebounds", self.prepare_roof_bounce, self.check_roof_bounce),
             ("snipe_path_moves", self.prepare_chase, self.check_chase),
             ("snipe_timeout_returns", self.prepare_timeout, self.check_timeout),
             ("training_clock_ends_match", self.prepare_clock, self.check_clock),
@@ -174,17 +177,40 @@ class PlayableTests:
         vel = prop(self.active_ball, "Velocity")
         return pos.z >= 65 and vel.z > 0, {"height": pos.z, "velocity_z": vel.z}
 
-    def check_no_crown(self):
+    def roof_contains_ball(self):
+        point = self.active_ball.get_actor_location()
+        radius = 33 if int(prop(self.active_ball, "Kind")) == 0 else 24
+        sx, sy = (6309.36-4206.24)/6850.8, (6309.36-4206.24)/3200.4
+        return (abs(point.x)+radius <= 6850.8+.2 and abs(point.y)+radius <= 3200.4+.2
+                and point.z >= radius-.2
+                and point.z+sx*abs(point.x)+radius*(1+sx*sx)**.5 <= 6309.36+.2
+                and point.z+sy*abs(point.y)+radius*(1+sy*sy)**.5 <= 6309.36+.2)
+
+    def check_hollow_pyramid(self):
         message = str(prop(self.manager, "Message"))
         pos = self.active_ball.get_actor_location()
         held = bool(prop(self.active_ball, "Held"))
-        return "NO CROWN" in message and pos.z < 1500 and not held, {"message": message, "height": pos.z, "held": held}
+        return (pos.z > 4206.24 and self.roof_contains_ball() and not held
+                and "CROWN" not in message.upper() and self.check_score(0, 0)[0]), {
+                    "message": message, "height": pos.z, "held": held,
+                    "scope": "free-ball physical fixture; old horizontal plane has no reset"}
 
-    def prepare_held_roof(self):
-        self.launch(0, (0, 0, 4450), (0, 0, 0))
-        position(self.pawn, (0, 0, 4500))
-        prop(self.active_ball, "Held", True)
-        prop(self.manager, "HasBall", True)
+    def prepare_roof_bounce(self):
+        # Start wholly inside and let the compiled graph cross the +Y slope.
+        # This replaces the old Held=True fixture; no pickup is claimed here.
+        self.launch(0, (0, 1600, 4900), (0, 2200, 3300))
+
+    def check_roof_bounce(self):
+        velocity = prop(self.active_ball, "Velocity")
+        slope = (6309.36-4206.24)/3200.4
+        outward_speed = (slope*velocity.y+velocity.z)/(1+slope*slope)**.5
+        message = str(prop(self.manager, "Message"))
+        return (outward_speed < -100 and self.roof_contains_ball()
+                and not prop(self.active_ball, "Held") and "CROWN" not in message.upper()
+                and self.check_score(0, 0)[0]), {
+                    "position": str(self.active_ball.get_actor_location()), "velocity": str(velocity),
+                    "outward_normal_speed": outward_speed, "message": message,
+                    "scope": "actual free-ball generated-graph rebound; keyboard pickup not exercised"}
 
     def prepare_chase(self):
         self.launch(2, (0, 0, -3000), (0, 0, 0))

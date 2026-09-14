@@ -436,6 +436,8 @@ class Match:
         self._emit("protected_restart", ball=ball_id, player=player_id)
 
     def crown_exit(self, ball_id, mark, responsible_player=None, *, deliberate_delay=False):
+        if not self.config.get("enable_legacy_crown_exit", False):
+            raise RulesError("closed pyramid net: roof contact rebounds, never a Crown exit")
         ball = self._live_ball(ball_id)
         if ball["type"] in ("snipe", "snitch"):
             raise RulesError("winged balls use chase-envelope recall, not No Crown")

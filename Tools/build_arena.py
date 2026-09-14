@@ -37,6 +37,10 @@ FT = 30.48
 HALF_LENGTH = 210.0 * FT
 HALF_WIDTH = 105.0 * FT
 ROOFLINE = 138.0 * FT
+PYRAMID_APEX = 207.0 * FT
+PYRAMID_TAG = "BB.PyramidNet"
+PYRAMID_MESHES = ("SM_BB_PyramidNet", "SM_BB_PyramidRibs",
+                  "SM_BB_PyramidCopper", "SM_BB_PyramidCollision")
 LARGE_CENTER = 69.0 * FT
 SMALL_CENTER = 100.0 * FT
 LARGE_RADIUS = 11.0 * FT
@@ -68,6 +72,7 @@ ARENA_PALETTE = (
     ("M_BB_CopperLight", (1.0, 0.30, 0.045), 0.65, 0.0, 2.1, False),
     ("M_BB_IvoryLight", (0.83, 0.57, 0.22), 0.65, 0.0, 1.45, False),
     ("M_BB_Net", (0.018, 0.032, 0.039), 1.0, 0.0, 1.0, True),
+    ("M_BB_RoofNet", (0.085, 0.13, 0.135), 0.78, 0.18, 0.15, False),
     ("M_BB_Sky", (0.010, 0.020, 0.046), 1.0, 0.0, 1.0, True),
     ("M_BB_Stars", (0.37, 0.51, 0.66), 1.0, 0.0, 1.6, True),
     ("M_BB_Ground", (0.028, 0.043, 0.030), 0.97, 0.0, 0.0, False),
@@ -184,6 +189,66 @@ class ObjMesh:
         return {"file": filename, "vertices": len(self.vertices), "polygons": len(self.faces)}
 
 
+def pyramid_geometry():
+    """Four triangular faces meeting exactly at a central upward apex; no base."""
+    corners = [(-BACKSTOP_X, -HALF_WIDTH, ROOFLINE),
+               (BACKSTOP_X, -HALF_WIDTH, ROOFLINE),
+               (BACKSTOP_X, HALF_WIDTH, ROOFLINE),
+               (-BACKSTOP_X, HALF_WIDTH, ROOFLINE)]
+    apex = (0.0, 0.0, PYRAMID_APEX)
+    return corners, apex
+
+
+def generate_pyramid_meshes():
+    """Taut open mesh on the four faces, separated from four-triangle collision."""
+    SOURCE_ROOT.mkdir(parents=True, exist_ok=True)
+    corners, apex = pyramid_geometry()
+    net, ribs, copper, collision = ObjMesh(), ObjMesh(), ObjMesh(), ObjMesh()
+    for point in corners + [apex]:
+        collision.vertex(point)
+    for side in range(4):
+        # Outward winding; double-sided collision also accepts interior traces.
+        collision.face(side + 1, (side + 1) % 4 + 1, 5)
+        a, b = corners[side], corners[(side + 1) % 4]
+        center = tuple((a[j] + b[j]) * 0.5 for j in range(3))
+        width = math.dist(a, b)
+        depth = math.dist(center, apex)
+        # Each family is evenly spaced in its panel plane, rather than a dense
+        # fan of wires at the apex. Boundary ends attach to continuous hip ribs.
+        rows = max(1, math.ceil(depth / 230.0))
+        for row in range(1, rows):
+            t = row / rows
+            start = tuple(a[j] * (1 - t) + apex[j] * t for j in range(3))
+            end = tuple(b[j] * (1 - t) + apex[j] * t for j in range(3))
+            net.rod(start, end, 3.8, 6)
+        columns = max(2, math.ceil(width / 230.0))
+        for column in range(1, columns):
+            u = column / columns
+            t = 1 - abs(2 * u - 1)
+            start = tuple(a[j] * (1 - u) + b[j] * u for j in range(3))
+            end = tuple(start[j] + (apex[j] - center[j]) * t for j in range(3))
+            net.rod(start, end, 3.8, 6)
+        # The eave perimeter and hips make the capstone legible from the court.
+        ribs.rod(a, b, 14.0, 10)
+        ribs.rod(a, apex, 16.0, 10)
+        ribs.rod(center, apex, 8.0, 8)
+        # Short copper sleeves emphasize structure without a solid roof panel.
+        for t in (0.0, 0.25, 0.5, 0.75):
+            lo, hi = max(0, t - 0.012), min(1, t + 0.012)
+            copper.rod(tuple(a[j] * (1 - lo) + apex[j] * lo for j in range(3)),
+                       tuple(a[j] * (1 - hi) + apex[j] * hi for j in range(3)),
+                       20.0, 10)
+    copper.octahedron(apex, 31.0)
+    entries = [mesh.save(name + ".obj") for mesh, name in
+               zip((net, ribs, copper, collision), PYRAMID_MESHES)]
+    # Collision has exactly five authored vertices and four sloped triangles.
+    # Never convex-decompose this shell: its convex hull adds a false eave floor.
+    assert len(collision.vertices) == 5 and len(collision.faces) == 4
+    assert all(any(collision.vertices[i - 1][2] == PYRAMID_APEX for i in face)
+               for face in collision.faces)
+    return entries
+
+
 def generate_source_meshes():
     """Return source manifest; safe to run without Unreal installed."""
     SOURCE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -232,6 +297,7 @@ def generate_source_meshes():
     meshes.append(mesh.save("SM_BB_Stars.obj"))
 
     meshes.extend(generate_detail_meshes())
+    meshes.extend(generate_pyramid_meshes())
 
     manifest = {
         "units": "centimeters", "origin": "midfield, trampoline top",
@@ -240,7 +306,14 @@ def generate_source_meshes():
         "large_goal_centers_y_cm": [-GOAL_SPACING, 0, GOAL_SPACING],
         "large_goal_z_cm": LARGE_CENTER, "large_goal_inner_radius_cm": LARGE_RADIUS,
         "small_goal_z_cm": SMALL_CENTER, "small_goal_inner_radius_cm": SMALL_RADIUS,
-        "roofline_z_cm": ROOFLINE, "chase_ceiling_z_cm": 207 * FT,
+        "roofline_z_cm": ROOFLINE, "chase_ceiling_z_cm": PYRAMID_APEX,
+        "roof": {"type": "closed_hollow_pyramidion_net", "eave_z_cm": ROOFLINE,
+                 "apex_cm": [0.0, 0.0, PYRAMID_APEX], "rise_cm": PYRAMID_APEX - ROOFLINE,
+                 "eave_half_x_cm": BACKSTOP_X, "eave_half_y_cm": HALF_WIDTH,
+                 "faces": 4, "horizontal_base": False,
+                 "collision": "double-sided four-triangle complex-as-simple static shell",
+                 "net_spacing_cm_max": 230.0, "net_cord_radius_cm": 3.8,
+                 "scope": "all balls and riders; no roof exit or respawn"},
         "end_net_x_cm": [-BACKSTOP_X, BACKSTOP_X], "side_net_y_cm": [-HALF_WIDTH, HALF_WIDTH],
         "backstop_note": "450cm catch bay behind each goal plane; 420ft remains goal-to-goal.",
         "restitution": 0.75, "level": LEVEL_PATH,
@@ -661,8 +734,9 @@ class ArenaBuilder:
             self.meshes[primitive] = self.load_mesh("/Engine/BasicShapes/" + primitive)
         for name in ("SM_BB_LargeHoop", "SM_BB_SmallHoop", "SM_BB_CenterCircle", "SM_BB_ReboundNet", "SM_BB_Stars"):
             self.import_mesh(name)
-        for name in DETAIL_MESHES:
+        for name in DETAIL_MESHES + PYRAMID_MESHES:
             self.import_mesh(name)
+        self.configure_pyramid_collision()
         self.import_stone_texture()
         for spec in ARENA_PALETTE:
             self.material(*spec)
@@ -746,10 +820,41 @@ class ArenaBuilder:
             self.text(team + " hoop values", "LARGE 13   |   HIGH 37", (x - side * 50, 0, 1260),
                       rotation=(0, 180 if side > 0 else 0, 0), size=94, color=(225, 182, 112))
 
+    def configure_pyramid_collision(self):
+        """Persist per-triangle collision, never convex cooking a closed base."""
+        mesh = self.meshes["SM_BB_PyramidCollision"]
+        body = mesh.get_editor_property("body_setup")
+        if body is None:
+            raise RuntimeError("Pyramid collision import has no BodySetup")
+        body.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+        body.set_editor_property("double_sided_geometry", True)
+        # PostEditChange rebuilds the static body's cooked geometry after edits.
+        mesh.set_editor_property("body_setup", body)
+        if not self.assets.save_loaded_asset(mesh, only_if_is_dirty=False):
+            raise RuntimeError("Could not save pyramid collision flags")
+
+    def pyramid_net(self):
+        for label, mesh, material in (
+            ("Pyramidion taut roof net", "SM_BB_PyramidNet", "M_BB_RoofNet"),
+            ("Pyramidion iron hips and eaves", "SM_BB_PyramidRibs", "M_BB_Iron"),
+            ("Pyramidion copper sleeves and peak", "SM_BB_PyramidCopper", "M_BB_Copper")):
+            self.shape(label, mesh, material, (0, 0, 0),
+                       tags=(PYRAMID_TAG, "BB.Net.Roof.Visual"), folder="Nets/Pyramidion")
+        roof = self.shape("Pyramidion sloped net collision", "SM_BB_PyramidCollision", "M_BB_Iron",
+                          (0, 0, 0), collision=True, shadow=False,
+                          tags=(PYRAMID_TAG, "BB.Net", "BB.Net.Roof", "BB.Rebound"), folder="Collision")
+        roof.set_actor_hidden_in_game(True)
+        roof.static_mesh_component.set_visibility(False)
+        _optional(roof.static_mesh_component, "visible_in_ray_tracing", False)
+        _optional(roof.static_mesh_component, "affect_distance_field_lighting", False)
+        self.actor(unreal.TargetPoint, "Pyramidion apex", (0, 0, PYRAMID_APEX),
+                   tags=(PYRAMID_TAG, "BB.Net.Roof.Apex"), folder="Gameplay anchors")
+
     def net_and_crown(self):
-        self.actor(unreal.TargetPoint, "No Crown reference plane", (0, 0, ROOFLINE),
-                   tags=("BB.Roofline", "BB.NoCrown.Plane"), folder="Gameplay anchors")
-        self.shape("Continuous open-crown rebound net", "SM_BB_ReboundNet", "M_BB_Net", (0, 0, 0), folder="Nets")
+        self.actor(unreal.TargetPoint, "Pyramidion eave reference", (0, 0, ROOFLINE),
+                   tags=("BB.Roofline", "BB.Net.Eave"), folder="Gameplay anchors")
+        self.pyramid_net()
+        self.shape("Continuous closed-arena rebound net", "SM_BB_ReboundNet", "M_BB_Net", (0, 0, 0), folder="Nets")
         for side in (-1, 1):
             net = self.box("End net collision %s" % side, "M_BB_Iron", (side * (BACKSTOP_X + 15), 0, ROOFLINE / 2),
                            (30, 2 * HALF_WIDTH, ROOFLINE), collision=True,
@@ -769,7 +874,7 @@ class ArenaBuilder:
                 y = side * (HALF_WIDTH + 35)
                 self.cylinder("Net mast %s %s" % (side, index), "M_BB_Iron", (x, y, ROOFLINE / 2), 20, ROOFLINE, folder="Nets")
                 self.cylinder("Mast copper base %s %s" % (side, index), "M_BB_Copper", (x, y, 210), 38, 420, folder="Nets")
-                self.shape("Crown beacon %s %s" % (side, index), "Sphere", "M_BB_IvoryLight", (x, y, ROOFLINE + 40), (0.42, 0.42, 0.42), folder="Nets")
+                self.shape("Eave beacon %s %s" % (side, index), "Sphere", "M_BB_IvoryLight", (x, y, ROOFLINE + 40), (0.42, 0.42, 0.42), folder="Nets")
 
     def stands(self):
         for side in (-1, 1):

@@ -4,7 +4,7 @@ Through editor_bridge.py, use BRIDGE_ARGS such as:
   {"variant": "regulation", "outcome": "make", "affected_ball": 0}
   {"variant": "bloodbroom", "outcome": "miss", "affected_ball": 1}
   {"variant": "bloodbroom", "outcome": "timeout", "affected_ball": 0}
-Run both ball makes, a Quark miss and a Quaffle timeout in both variants. Each fresh run creates a real foul and
+Run both ball makes, a Quark side miss, a Quark pyramid-roof contact and a Quaffle timeout in both variants. Each fresh run creates a real foul and
 uses the ordinary host Serious action (10 / F8). No score, effect, possession,
 penalty, shot result, timer or confirmation receipt is injected. A read-only
 rule diagnostic establishes removal timing; camera/actor transforms arrange
@@ -123,7 +123,7 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
 
     def prepare(self):
         self.require(VARIANT in ("regulation", "bloodbroom"), "Unknown variant")
-        self.require(OUTCOME in ("make", "miss", "timeout"), "Unknown shot outcome")
+        self.require(OUTCOME in ("make", "miss", "roof", "timeout"), "Unknown shot outcome")
         self.require(AFFECTED_BALL in (0, 1, 2), "Affected ball must be Quaffle or Quark")
         self.shot()  # Fail explicitly on a stale DLL before any fixture action.
         self.original_dilation = float(unreal.GameplayStatics.get_global_time_dilation(self.world))
@@ -259,8 +259,9 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         # A real camera direction and ordinary release drive the native ball.
         # Corrections use observed carry origin; no in-flight fixture is used.
         sign = 1 if int(prop(self.guest, "TeamIndex")) == 0 else -1
-        target = (sign*6400.8, 0 if OUTCOME == "make" else 2400,
-                  2103.12 if AFFECTED_BALL == 0 else 3048.0)
+        target = ((sign*5000.0, 0, 7200.0) if OUTCOME == "roof" else
+                  (sign*6400.8, 0 if OUTCOME == "make" else 2400,
+                   2103.12 if AFFECTED_BALL == 0 else 3048.0))
         for unused in range(2):
             start = xyz(self.guest.get_carry_location())
             delta = [target[i]-start[i] for i in range(3)]
@@ -299,11 +300,15 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         outcome_status = str(prop(self.match, "PenaltyShotStatus")).lower()
         travelled = max((dist(origin, row["point"]) for row in samples), default=0)
         result = self.diagnostic()
-        expected_outcome = {"make": 1, "miss": 2, "timeout": 3}[OUTCOME]
+        expected_outcome = {"make": 1, "miss": 2, "roof": 2, "timeout": 3}[OUTCOME]
         native_outcome = (result["outcome"] == expected_outcome and not prop(self.match, "bLive")
                           and ((OUTCOME == "timeout" and not released and "time" in outcome_status)
                                or (OUTCOME != "timeout" and released and travelled > 500)))
-        self.record(CASES[7], native_outcome, requested_outcome=OUTCOME, status=outcome_status,
+        roof_contact = None
+        if OUTCOME == "roof":
+            roof_contact = [float(v) for v in self.shot_ball.development_get_roof_contact_state()]
+            native_outcome = native_outcome and len(roof_contact) == 10 and roof_contact[0] > 0 and "net" in outcome_status
+        self.record(CASES[7], native_outcome, roof_contact=roof_contact, requested_outcome=OUTCOME, status=outcome_status,
                     holder_lost=released, travel_cm=travelled, samples=samples,
                     release_requests=0 if OUTCOME == "timeout" else 2, diagnostic=result)
         self.require(native_outcome, "Shot must finish through native flight or its own attempt timeout")
@@ -361,7 +366,7 @@ def main():
         return {"status": "not_run", "cases_per_run": len(CASES), "planned_cases": list(CASES),
                 "required_matrix": [{"variant": v, "outcome": o, "affected_ball": b}
                                     for v in ("regulation", "bloodbroom")
-                                    for o, b in (("make", 0), ("make", 1), ("miss", 1), ("timeout", 0))]}
+                                    for o, b in (("make", 0), ("make", 1), ("miss", 1), ("roof", 1), ("timeout", 0))]}
     test = NativePenaltyShotTests()
     try:
         started = test.begin()

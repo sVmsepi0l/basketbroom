@@ -398,6 +398,7 @@ bool Match::restart(int ball, int player) {
     emit("protected_restart", player, ball); last_error.clear(); return true;
 }
 bool Match::crown_exit(int ball, const std::array<double, 3>& mark, int responsible_player, bool deliberate_delay) {
+    if (!config.enable_legacy_crown_exit) return reject("closed pyramid net: roof contact rebounds, never a Crown exit");
     if (!live_ball(ball)) return false;
     if (chase(balls[ball].type)) return reject("winged balls use chase-envelope recall, not No Crown");
     for (double v : mark) if (!std::isfinite(v)) return reject("Crown Mark must contain finite coordinates in feet");

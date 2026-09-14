@@ -1,4 +1,5 @@
 #include "BBBall.h"
+#include "BBArenaGeometry.h"
 #include "BBMatchState.h"
 #include "BBRiderCharacter.h"
 #include "Components/StaticMeshComponent.h"
@@ -188,6 +189,13 @@ void ABBBall::UpdateChaseVisual(float DeltaSeconds)
     LeftWing->SetRelativeRotation(FRotator(0, 0, -Flap));
     RightWing->SetRelativeRotation(FRotator(0, 0, Flap));
 }
+TArray<double> ABBBall::DevelopmentGetRoofContactState() const
+{
+    if (!HasAuthority() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE) return {};
+    return {static_cast<double>(RoofContactCount), LastRoofNormal.X, LastRoofNormal.Y, LastRoofNormal.Z,
+        LastRoofIncoming.X, LastRoofIncoming.Y, LastRoofIncoming.Z,
+        LastRoofOutgoing.X, LastRoofOutgoing.Y, LastRoofOutgoing.Z};
+}
 bool ABBBall::DevelopmentSetFlightFixture(FVector Location, FVector Velocity)
 {
 #if UE_BUILD_SHIPPING
@@ -210,6 +218,7 @@ bool ABBBall::DevelopmentSetFlightFixture(FVector Location, FVector Velocity)
 void ABBBall::ResetBall(FVector Location)
 {
     if (!HasAuthority() || Location.ContainsNaN()) return;
+    Location = BBArena::ClampSphere(Location, Radius());
     SetActorLocation(Location);
     LastLocation = Location;
     FlightVelocity = FVector::ZeroVector;
@@ -247,7 +256,6 @@ void ABBBall::Tick(float DeltaSeconds)
     if (Holder)
     {
         SetActorLocation(Holder->GetCarryLocation());
-        if (!IsChase() && GetActorLocation().Z > 4206.24f) Match->NoCrown(this);
         return;
     }
     if (IsChase())
@@ -257,7 +265,8 @@ void ABBBall::Tick(float DeltaSeconds)
         ChaseTime += DeltaSeconds * (BallIndex == 3 ? .18f : .30f);
         FVector Target(FMath::Sin(ChaseTime) * 4200.f, FMath::Cos(ChaseTime * 1.31f) * 2300.f,
                        2450.f + FMath::Sin(ChaseTime * .73f) * 1100.f);
-        SetActorLocation(FMath::VInterpConstantTo(GetActorLocation(), Target, DeltaSeconds, Speed));
+        SetActorLocation(BBArena::ClampSphere(
+            FMath::VInterpConstantTo(GetActorLocation(), Target, DeltaSeconds, Speed), Radius()));
         StepCapture(DeltaSeconds);
     }
     else
@@ -302,128 +311,190 @@ void ABBBall::StepCapture(float DeltaSeconds)
 }
 void ABBBall::StepFlight(double Dt)
 {
-    if (!HasAuthority() || !IsValid(Match)) return;
+    if (!HasAuthority() || !IsValid(Match) || Dt <= 0) return;
     ThrowerIgnoreRemaining = FMath::Max(0.f, ThrowerIgnoreRemaining - static_cast<float>(Dt));
     ImpactCooldown = FMath::Max(0.f, ImpactCooldown - static_cast<float>(Dt));
-    FVector Old = GetActorLocation();
+    const float R = Radius();
+    // Spawn/possession fixtures may begin outside the new volume. Recover to
+    // its nearest vertical interior, preserving identity, custody and velocity.
+    const FVector BoundedStart = BBArena::ClampSphere(GetActorLocation(), R);
+    if (!GetActorLocation().Equals(BoundedStart, .001))
+    {
+        SetActorLocation(BoundedStart);
+        BBArena::ReboundRoof(FlightVelocity, BoundedStart, R, R);
+    }
     if (FlightVelocity.IsNearlyZero()) return;
     FlightVelocity.Z -= (IsBludger() ? 60.f : 380.f) * Dt;
-    FVector P = Old + FlightVelocity * Dt;
-    const float R = Radius();
-    FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomBallFlight), false, this);
-    FCollisionObjectQueryParams StaticObjects;
-    StaticObjects.AddObjectTypesToQuery(ECC_WorldStatic);
-    FHitResult WorldHit;
-    bool bCollision = GetWorld()->SweepSingleByObjectType(WorldHit, Old, P, FQuat::Identity,
-        StaticObjects, FCollisionShape::MakeSphere(R), Query);
-    float HitTime = bCollision ? WorldHit.Time : 1.f;
-    FVector HitNormal = bCollision ? WorldHit.Normal : FVector::ZeroVector;
-    ABBRiderCharacter* StruckRider = nullptr;
-    const bool bRimHit = SweepRims(Old, P, R, HitTime, HitNormal);
-    if (bRimHit) bCollision = true;
-    BB::Contact Contact = bRimHit ? BB::Contact::Goal : BB::Contact::None;
     const bool bPenaltyFlight = Match->IsPenaltyBallActive(this) && Match->bPenaltyShotReleased;
-    if (bPenaltyFlight)
+    double Remaining = Dt;
+    double Elapsed = 0;
+    // Continue the unused portion after a rebound. A bounded contact count
+    // prevents pathological overlapping fixtures from hanging a server tick.
+    for (int32 Bounce = 0; Bounce < 12 && Remaining > 1.e-9; ++Bounce)
     {
-        // Only the designated Netminder may physically defend a penalty shot.
-        for (ABBRiderCharacter* Rider : Match->Riders)
-            if (IsValid(Rider) && Rider->RosterIndex != Match->PenaltyKeeperSlot) Query.AddIgnoredActor(Rider);
-        FCollisionObjectQueryParams KeeperObjects; KeeperObjects.AddObjectTypesToQuery(ECC_Pawn);
-        FHitResult KeeperHit;
-        if (GetWorld()->SweepSingleByObjectType(KeeperHit, Old, P, FQuat::Identity,
-            KeeperObjects, FCollisionShape::MakeSphere(R), Query) && KeeperHit.Time <= HitTime)
+        const FVector Old = GetActorLocation();
+        FVector P = Old + FlightVelocity * Remaining;
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomBallFlight), false, this);
+        FCollisionObjectQueryParams StaticObjects;
+        StaticObjects.AddObjectTypesToQuery(ECC_WorldStatic);
+        TArray<FHitResult> WorldHits;
+        GetWorld()->SweepMultiByObjectType(WorldHits, Old, P, FQuat::Identity,
+            StaticObjects, FCollisionShape::MakeSphere(R), Query);
+        FHitResult WorldHit;
+        bool bCollision = false;
+        float HitTime = 1.f;
+        FVector HitNormal = FVector::ZeroVector;
+        for (const FHitResult& Hit : WorldHits)
         {
-            const ABBRiderCharacter* Keeper = Cast<ABBRiderCharacter>(KeeperHit.GetActor());
-            if (Keeper && Keeper->RosterIndex == Match->PenaltyKeeperSlot)
+            const AActor* Surface = Hit.GetActor();
+            // The net mesh provides physical collision for native characters.
+            // Balls use the exact four planes, avoiding triangle back-face,
+            // seam and mesh-thickness artifacts or two bounces for one touch.
+            if (Surface && Surface->ActorHasTag(TEXT("BB.Net.Roof"))) continue;
+            if (Hit.Time <= HitTime)
             {
-                SetActorLocation(KeeperHit.Location);
-                Match->PenaltyBallStopped(this, TEXT("SAVED BY THE NETMINDER"), KeeperHit.Time);
-                return;
+                WorldHit = Hit;
+                HitTime = Hit.Time;
+                HitNormal = Hit.Normal;
+                bCollision = true;
             }
         }
-    }
-    if (IsBludger() && ImpactCooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
-    {
-        // Pickup lockout must never grant nearby opponents impact immunity.
-        // Only the releasing rider receives a brief launch-clearance window.
-        if (ThrowerIgnoreRemaining > 0 && RecentThrower.IsValid()) Query.AddIgnoredActor(RecentThrower.Get());
-        FCollisionObjectQueryParams PawnObjects;
-        PawnObjects.AddObjectTypesToQuery(ECC_Pawn);
-        FHitResult RiderHit;
-        if (GetWorld()->SweepSingleByObjectType(RiderHit, Old, P, FQuat::Identity,
-            PawnObjects, FCollisionShape::MakeSphere(R), Query) && RiderHit.Time <= HitTime)
+        const bool bRimHit = SweepRims(Old, P, R, HitTime, HitNormal);
+        if (bRimHit) bCollision = true;
+        const bool bRoofHit = BBArena::SweepRoof(Old, P, R, HitTime, HitNormal);
+        if (bRoofHit) bCollision = true;
+        BB::Contact Contact = bRoofHit ? BB::Contact::Net : bRimHit ? BB::Contact::Goal : BB::Contact::None;
+        ABBRiderCharacter* StruckRider = nullptr;
+        ABBRiderCharacter* SavingKeeper = nullptr;
+        if (bPenaltyFlight)
         {
-            if (ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(RiderHit.GetActor()))
+            for (ABBRiderCharacter* Rider : Match->Riders)
+                if (IsValid(Rider) && Rider->RosterIndex != Match->PenaltyKeeperSlot) Query.AddIgnoredActor(Rider);
+            FCollisionObjectQueryParams KeeperObjects; KeeperObjects.AddObjectTypesToQuery(ECC_Pawn);
+            FHitResult KeeperHit;
+            if (GetWorld()->SweepSingleByObjectType(KeeperHit, Old, P, FQuat::Identity,
+                KeeperObjects, FCollisionShape::MakeSphere(R), Query) && KeeperHit.Time <= HitTime)
             {
-                if (Match->Riders.Contains(Rider))
+                ABBRiderCharacter* Keeper = Cast<ABBRiderCharacter>(KeeperHit.GetActor());
+                if (Keeper && Keeper->RosterIndex == Match->PenaltyKeeperSlot)
                 {
-                    StruckRider = Rider;
-                    HitTime = RiderHit.Time;
-                    HitNormal = RiderHit.Normal;
+                    SavingKeeper = Keeper;
+                    HitTime = KeeperHit.Time;
+                    HitNormal = KeeperHit.Normal;
                     bCollision = true;
                 }
             }
         }
-    }
-    if (bCollision)
-    {
-        P = FMath::Lerp(Old, P, HitTime) + HitNormal * .5f;
-        const double IntoSurface = FVector::DotProduct(FlightVelocity, HitNormal);
-        if (IntoSurface < 0) FlightVelocity = (FlightVelocity - 2.0 * IntoSurface * HitNormal) * .75f;
-        if (StruckRider)
+        if (IsBludger() && ImpactCooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
         {
-            Contact = BB::Contact::Player;
-            StruckRider->StunRemaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
-            StruckRider->ForceNetUpdate();
-            Match->Release(StruckRider, FVector::ZeroVector);
-            Cooldown = .7f;
-            ImpactCooldown = .7f;
-            Match->Say(TEXT("Bludger impact - rider recovers in 1.5 seconds"));
-        }
-        else if (!bRimHit)
-        {
-            const AActor* Surface = WorldHit.GetActor();
-            if (Surface && (Surface->ActorHasTag(TEXT("BB.Goal.Rim")) || Surface->ActorHasTag(TEXT("BB.Support"))))
-                Contact = BB::Contact::Goal;
-            else if ((Surface && Surface->ActorHasTag(TEXT("BB.Floor"))) || (HitNormal.Z > .5 && P.Z < R + 5.f))
-                Contact = BB::Contact::Floor;
-            else if ((Surface && Surface->ActorHasTag(TEXT("BB.Net")))
-                || FMath::Abs(P.X) >= 6850.8f - R - 5.f || FMath::Abs(P.Y) >= 3200.4f - R - 5.f)
-                Contact = BB::Contact::Net;
-        }
-        ForceNetUpdate();
-    }
-    // Pickup/impact cooldown must not suppress a legitimate short-range goal.
-    if (!IsBludger())
-    {
-        for (int32 Side : {-1, 1})
-        {
-            const float Plane = Side * (6400.8f + R);
-            if (Old.X * Side < Plane * Side && P.X * Side >= Plane * Side)
+            if (ThrowerIgnoreRemaining > 0 && RecentThrower.IsValid()) Query.AddIgnoredActor(RecentThrower.Get());
+            FCollisionObjectQueryParams PawnObjects; PawnObjects.AddObjectTypesToQuery(ECC_Pawn);
+            FHitResult RiderHit;
+            if (GetWorld()->SweepSingleByObjectType(RiderHit, Old, P, FQuat::Identity,
+                PawnObjects, FCollisionShape::MakeSphere(R), Query) && RiderHit.Time <= HitTime)
             {
-                double T = (Plane - Old.X) / (P.X - Old.X);
-                FVector Cross = FMath::Lerp(Old, P, T);
-                bool bGoal = false;
-                if (BallIndex == 0)
-                    for (float Y : {-1066.8f, 0.f, 1066.8f}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - 2103.12f).SizeSquared() < FMath::Square(335.28f - R);
-                else bGoal = FVector2D(Cross.Y, Cross.Z - 3048.f).SizeSquared() < FMath::Square(198.12f - R);
-                if (bGoal)
+                if (ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(RiderHit.GetActor()))
                 {
-                    SetActorLocation(Cross);
-                    Match->Goal(this, Side > 0 ? 0 : 1, T * (bCollision ? HitTime : 1.f));
-                    return;
+                    if (Match->Riders.Contains(Rider))
+                    {
+                        StruckRider = Rider;
+                        HitTime = RiderHit.Time;
+                        HitNormal = RiderHit.Normal;
+                        bCollision = true;
+                    }
                 }
             }
         }
+        // Compare whole-ball goal passage only with the unobstructed portion
+        // before the earliest rim, net, world or keeper contact.
+        const FVector TravelEnd = FMath::Lerp(Old, P, HitTime);
+        if (!IsBludger())
+        {
+            for (int32 Side : {-1, 1})
+            {
+                const float Plane = Side * (6400.8f + R);
+                if (Old.X * Side < Plane * Side && TravelEnd.X * Side >= Plane * Side)
+                {
+                    const double T = (Plane - Old.X) / (TravelEnd.X - Old.X);
+                    const FVector Cross = FMath::Lerp(Old, TravelEnd, T);
+                    bool bGoal = false;
+                    if (BallIndex == 0)
+                        for (float Y : {-1066.8f, 0.f, 1066.8f}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - 2103.12f).SizeSquared() < FMath::Square(335.28f - R);
+                    else bGoal = FVector2D(Cross.Y, Cross.Z - 3048.f).SizeSquared() < FMath::Square(198.12f - R);
+                    if (bGoal)
+                    {
+                        DistanceSinceReleaseCm += FVector::Distance(Old, Cross);
+                        SetActorLocation(Cross);
+                        Match->Goal(this, Side > 0 ? 0 : 1, (Elapsed + Remaining * HitTime * T) / Dt);
+                        return;
+                    }
+                }
+            }
+        }
+        const double ContactFraction = (Elapsed + Remaining * HitTime) / Dt;
+        if (SavingKeeper)
+        {
+            SetActorLocation(TravelEnd);
+            Match->PenaltyBallStopped(this, TEXT("SAVED BY THE NETMINDER"), ContactFraction);
+            return;
+        }
+        if (bCollision)
+        {
+            P = TravelEnd + HitNormal * .5f;
+            if (StruckRider)
+            {
+                Contact = BB::Contact::Player;
+                StruckRider->StunRemaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
+                StruckRider->ForceNetUpdate();
+                Match->Release(StruckRider, FVector::ZeroVector);
+                Cooldown = ImpactCooldown = .7f;
+                Match->Say(TEXT("Bludger impact - rider recovers in 1.5 seconds"));
+            }
+            else if (!bRoofHit && !bRimHit)
+            {
+                const AActor* Surface = WorldHit.GetActor();
+                if (Surface && (Surface->ActorHasTag(TEXT("BB.Goal.Rim")) || Surface->ActorHasTag(TEXT("BB.Support"))))
+                    Contact = BB::Contact::Goal;
+                else if ((Surface && Surface->ActorHasTag(TEXT("BB.Floor"))) || (HitNormal.Z > .5 && P.Z < R + 5.f))
+                    Contact = BB::Contact::Floor;
+                else if ((Surface && Surface->ActorHasTag(TEXT("BB.Net")))
+                    || FMath::Abs(P.X) >= BBArena::HalfLength - R - 5.f || FMath::Abs(P.Y) >= BBArena::HalfWidth - R - 5.f)
+                    Contact = BB::Contact::Net;
+            }
+            if (bRoofHit && !StruckRider)
+            {
+                ++RoofContactCount;
+                LastRoofNormal = -HitNormal;
+                LastRoofIncoming = FlightVelocity;
+                BBArena::ReboundRoof(FlightVelocity, TravelEnd, R, R);
+                LastRoofOutgoing = FlightVelocity;
+            }
+            else
+            {
+                const double IntoSurface = FVector::DotProduct(FlightVelocity, HitNormal);
+                if (IntoSurface < 0) FlightVelocity = (FlightVelocity - 2.0 * IntoSurface * HitNormal) * BBArena::Restitution;
+            }
+            ForceNetUpdate();
+        }
+        // Lower walls and floor keep their existing fallback for incomplete
+        // authored collision. The roof is already swept, never a respawn plane.
+        if (FMath::Abs(P.X) > BBArena::HalfLength - R) { P.X = FMath::Sign(P.X) * (BBArena::HalfLength - R); FlightVelocity.X *= -.75f; Contact = BB::Contact::Net; }
+        if (FMath::Abs(P.Y) > BBArena::HalfWidth - R) { P.Y = FMath::Sign(P.Y) * (BBArena::HalfWidth - R); FlightVelocity.Y *= -.75f; Contact = BB::Contact::Net; }
+        if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); Contact = BB::Contact::Floor; }
+        P = BBArena::ClampSphere(P, R);
+        DistanceSinceReleaseCm += FVector::Distance(Old, P);
+        SetActorLocation(P);
+        if (bPenaltyFlight && (Contact == BB::Contact::Floor || Contact == BB::Contact::Net
+            || FMath::Abs(P.X) > 6400.8f + R))
+        {
+            Match->PenaltyBallStopped(this, bRoofHit ? TEXT("PENALTY SHOT MISSED - ROOF NET")
+                : TEXT("PENALTY SHOT MISSED"), ContactFraction);
+            return;
+        }
+        if (IsBludger()) Match->ObserveBludgerFlight(this, Contact);
+        if (!bCollision) break;
+        const double Consumed = Remaining * HitTime;
+        Elapsed += Consumed;
+        Remaining -= Consumed;
     }
-    if (FMath::Abs(P.X) > 6850.8f - R) { P.X = FMath::Sign(P.X) * (6850.8f - R); FlightVelocity.X *= -.75f; Contact = BB::Contact::Net; }
-    if (FMath::Abs(P.Y) > 3200.4f - R) { P.Y = FMath::Sign(P.Y) * (3200.4f - R); FlightVelocity.Y *= -.75f; Contact = BB::Contact::Net; }
-    if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); Contact = BB::Contact::Floor; }
-    DistanceSinceReleaseCm += FVector::Distance(Old, P);
-    SetActorLocation(P);
-    if (bPenaltyFlight && (Contact == BB::Contact::Floor || Contact == BB::Contact::Net
-        || FMath::Abs(P.X) > 6400.8f + R || P.Z > 4206.24f))
-    { Match->PenaltyBallStopped(this, TEXT("PENALTY SHOT MISSED"), bCollision ? HitTime : 1.f); return; }
-    if (IsBludger()) Match->ObserveBludgerFlight(this, Contact);
-    if (P.Z > 4206.24f) Match->NoCrown(this);
 }

@@ -18,6 +18,24 @@
   "small_goal_inner_radius_cm": 198.12,
   "roofline_z_cm": 4206.24,
   "chase_ceiling_z_cm": 6309.36,
+  "roof": {
+    "type": "closed_hollow_pyramidion_net",
+    "eave_z_cm": 4206.24,
+    "apex_cm": [
+      0.0,
+      0.0,
+      6309.36
+    ],
+    "rise_cm": 2103.12,
+    "eave_half_x_cm": 6850.8,
+    "eave_half_y_cm": 3200.4,
+    "faces": 4,
+    "horizontal_base": false,
+    "collision": "double-sided four-triangle complex-as-simple static shell",
+    "net_spacing_cm_max": 230.0,
+    "net_cord_radius_cm": 3.8,
+    "scope": "all balls and riders; no roof exit or respawn"
+  },
   "end_net_x_cm": [
     -6850.8,
     6850.8
@@ -111,6 +129,26 @@
       "file": "SM_BB_SmallHoopLight.obj",
       "vertices": 1024,
       "polygons": 1024
+    },
+    {
+      "file": "SM_BB_PyramidNet.obj",
+      "vertices": 3192,
+      "polygons": 2128
+    },
+    {
+      "file": "SM_BB_PyramidRibs.obj",
+      "vertices": 224,
+      "polygons": 136
+    },
+    {
+      "file": "SM_BB_PyramidCopper.obj",
+      "vertices": 326,
+      "polygons": 200
+    },
+    {
+      "file": "SM_BB_PyramidCollision.obj",
+      "vertices": 5,
+      "polygons": 4
     }
   ]
 }

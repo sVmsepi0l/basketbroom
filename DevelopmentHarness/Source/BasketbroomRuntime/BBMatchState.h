@@ -70,7 +70,6 @@ public:
     TArray<int32> DevelopmentGetConductState() const;
     /** Server GameMode teardown only; clears custody, never historical sanctions. */
     void ReleaseDepartedSlot(int32 RosterIndex);
-    void NoCrown(ABBBall* Ball);
     void ObserveBludgerFlight(ABBBall* Ball, BB::Contact Contact);
     /** Read-only PIE diagnostic. -1 means unavailable or no current controller. */
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
