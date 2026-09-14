@@ -130,6 +130,7 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
             if (Choice == 1) RequestPossessionAward();
             else if (Choice == 2) RequestEjection();
             else if (Choice == 3) RequestPenaltyShot();
+            else if (Choice == 4) RequestFreeShot();
             // A fresh review and a lone Menu press never choose a sanction.
         }
         else if (Match && Match->bLive) RequestStoppage();
@@ -144,7 +145,8 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
     }
     else if (Key == EKeys::Gamepad_DPad_Left)
     {
-        if (bShowRoster) { if (Match && !Match->bLive) RequestTeam(); }
+        if (Match && Match->bConductReviewPending) GamepadRefereeChoice = 4;
+        else if (bShowRoster) { if (Match && !Match->bLive) RequestTeam(); }
         else PreviousSpell();
     }
     else if (Key == EKeys::Gamepad_DPad_Right)
@@ -239,6 +241,7 @@ void ABBRiderCharacter::RegisterControllerInputLifecycle()
 
 void ABBRiderCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    ClearConcealmentViews();
     IPlatformInputDeviceMapper::Get().GetOnInputDeviceConnectionChange().RemoveAll(this);
     IPlatformInputDeviceMapper::Get().GetOnInputDevicePairingChange().RemoveAll(this);
     FCoreDelegates::ApplicationWillDeactivateDelegate.RemoveAll(this);

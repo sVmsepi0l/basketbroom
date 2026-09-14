@@ -69,8 +69,13 @@ def inspect():
               "The external entrance belongs in a selected Overland sublevel, not inside the dungeon")
         report = json.loads((ROOT / ".local/hlck/dungeon-anchor-result.json").read_text(encoding="utf-8"))
         current_hash = stage.digest(stage.checked_file(stage.TARGET_MAP, ".umap"))
-        check("saved_dungeon_matches_anchor_receipt", report.get("status") == "staged"
-              and report.get("map_sha256_after") == current_hash, current_hash)
+        amendment = None
+        if report.get("status") == "staged" and report.get("map_sha256_after") != current_hash:
+            amendment = module("_bb_anchor_roof_amendment", "Tools/stage_hlck_pyramid_net.py").verified_amendment(
+                stage.TARGET_MAP, report["map_sha256_after"])
+        check("saved_dungeon_matches_anchor_receipt_or_verified_roof_amendment", report.get("status") == "staged"
+              and (report.get("map_sha256_after") == current_hash or amendment is not None),
+              {"current_sha256": current_hash, "roof_amendment": amendment})
         result["dirty_after"] = guard.require_clean(unreal)
         result["world"] = stage.TARGET_MAP
         result["passed"] = sum(item["passed"] for item in result["checks"])

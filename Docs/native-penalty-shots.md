@@ -1,4 +1,4 @@
-# Serious penalty shots — Basketbroom and Bloodbroom
+# Free shots and Serious penalty shots — Basketbroom and Bloodbroom
 
 Both variants share the same host-selected Serious remedy: a penalty shot plus
 three minutes of live-time removal. Bloodbroom still waives only Unforgivables
@@ -8,9 +8,12 @@ rules. This feature does not choose automatic severity tiers for those fouls.
 ## Playtest controls and sequence
 
 After an applied illegal spell hit creates the referee stoppage, the host can
-select **F7: possession**, **F8: shot plus removal**, or **F9: ejection**. With a
-controller, D-pad Up/Right/Down selects those choices; Menu confirms. Clients
-cannot select the match variant or serve the referee's decision.
+select **F6: Moderate free shot**, **F7: possession**, **F8: Serious shot plus
+removal**, or **F9: ejection**. With a controller, D-pad Left/Up/Right/Down selects
+those choices; Menu confirms. Clients cannot select the match variant or serve
+the referee's decision. Sprint 3's final native/package validation is pending
+its [handoff receipt](sprint-3-spells-graphics.md); the dated results below remain
+historical Serious-shot evidence.
 
 F8 reserves a scoring ball and begins a five-second attempt. A denied Quaffle or
 Quark chance retains its ball type; otherwise the default is the Quaffle. A
@@ -45,14 +48,38 @@ cleared or shortened. The offender remains unavailable during removal and cannot
 escape it by changing positions. Removal resumes with live play. In Donnybrook,
 this remedy uses a Quark and removal becomes phase exclusion.
 
+## Moderate free shots added in sprint 3
+
+F6 reserves one restorative free shot with **no new removal**. It retains the
+affected Quaffle/Quark type; otherwise the default is the Quaffle, or a Quark in
+Donnybrook. Existing goal/remedy reservations keep priority. The harmed eligible
+rider is preferred, with an eligible teammate as fallback. A keeper responsible
+for the Moderate foul may still defend; Donnybrook permits an eligible designated
+goal defender because positional restrictions are suspended.
+
+The user confirmed on September 14, 2026 that the minimum **44-foot** placement
+is measured along pitch **X** from the attacking goal plane. Move backward only
+when needed, preserving the actual foul's **Y and Z**. Nonkeeper defenders remain
+at least **22 feet** from the shooter until release. The original foul point is
+stored separately from the older possession-award clamps.
+
+The adapter currently reuses the stopped **five-second** single-attempt procedure,
+keeper defense, no wandwork/pass/second attempt, frozen effect clocks and actual
+protected defending restart described above. Other participants remain unable to
+move throughout it. **These free-shot timing and administration restrictions are
+prototype choices, not additions declared canonical in the v0.1 bible.**
+The user's X-only placement interpretation is separate from those choices. A
+single penalty cannot reserve both a free shot and a possession award in either
+ordering direction. Moderate and Serious remedies keep distinct removal state.
+
 ## Scope and remaining work
 
-The 44-foot mark, five-second attempt and three-minute removal are existing
-provisional alpha defaults from the design reference. Goal-area movement limits,
+For Serious penalties, the 44-foot mark, five-second attempt and three-minute
+removal are existing provisional alpha defaults from the design reference. Goal-area movement limits,
 CPU shot selection, keeper reaction speed and result-display time need playtesting.
 
-This implements the host-selected Serious path. Moderate free-shot execution,
-automatic escalation, comprehensive contact detection, post-termination restorative
+Host-selected Moderate free shots and the Serious path are implemented in source.
+Automatic escalation, comprehensive contact detection, post-termination restorative
 shots, unavailable-Netminder replacement decisions and Catastrophic adjudication
 remain separate work. An already active terminal review or unavailable defending
 Netminder is rejected without clearing the owed remedy. Generic portable

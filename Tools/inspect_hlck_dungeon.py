@@ -47,7 +47,12 @@ def inspect():
         owners = [actor for actor in unreal.EditorLevelLibrary.get_all_level_actors() if actor.actor_has_tag(stage.BASE_MARKER)]
         check("dungeon_staging_ownership", len(owners) == 1 and owners[0].actor_has_tag(stage.STAGE_MARKER), [actor.get_path_name() for actor in owners])
         original = json.loads((ROOT / ".local/hlck/arena-port-result.json").read_text(encoding="utf-8-sig"))["map_sha256"]
-        check("source_arena_unchanged", stage.digest(stage.checked_file(stage.SOURCE_MAP, ".umap")) == original, original)
+        current_source_hash = stage.digest(stage.checked_file(stage.SOURCE_MAP, ".umap"))
+        amendment = None
+        if current_source_hash != original:
+            amendment = module("_bb_dungeon_roof_amendment", "Tools/stage_hlck_pyramid_net.py").verified_amendment(stage.SOURCE_MAP, original)
+        check("source_arena_preserved_or_verified_roof_amendment", current_source_hash == original or amendment is not None,
+              {"original_sha256": original, "current_sha256": current_source_hash, "roof_amendment": amendment})
         library = unreal.EditorAssetLibrary
         owned = {}
         for source, destination in stage.DESTINATIONS.items():

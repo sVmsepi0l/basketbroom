@@ -9,6 +9,7 @@
 class UCameraComponent;
 class UMaterialInterface;
 class UStaticMeshComponent;
+class UMeshComponent;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UPointLightComponent;
@@ -77,6 +78,31 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
     float LumosRemaining = 0.f;
 
+    /** Sporting statuses: authority advances these with live match time only. */
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float RevealRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float ConcealRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float PetrificusRemaining = 0.f;
+    UPROPERTY(ReplicatedUsing=OnRep_StunRemaining, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float TransformationRemaining = 0.f;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
+    float ImperioRemaining = 0.f;
+
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
+    bool HasSpellMovementLock() const { return StunRemaining > 0.f || PetrificusRemaining > 0.f || TransformationRemaining > 0.f; }
+
+    /** Concealment changes presentation and AI detection, never physical collision. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
+    bool IsConcealedFrom(const ABBRiderCharacter* Observer) const;
+
+    /** Genuine match reset only; ordinary stoppages preserve ongoing effects. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    bool DevelopmentIsHiddenFrom(const ABBRiderCharacter* Observer) const;
+    void ResetSportSpellState();
+    void ClearConcealmentViews();
+
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
     int32 SelectedSpell = 0;
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
@@ -98,7 +124,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
     bool bUsingGamepad = false;
 
-    /** 0 none, 1 Moderate possession, 2 Severe ejection, 3 Serious shot; Menu confirms. */
+    /** 0 none, 1 Moderate possession, 2 Severe ejection, 3 Serious shot, 4 Moderate free shot; Menu confirms. */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
     int32 GamepadRefereeChoice = 0;
 
@@ -158,6 +184,14 @@ private:
     UPROPERTY() TObjectPtr<UPointLightComponent> WandLamp;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> ShieldMaterial;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> CockpitShieldMaterial;
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> TransformationVisual;
+    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> SportStatusRings;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> SportStatusMaterial;
+    TSet<TWeakObjectPtr<APlayerController>> ConcealmentViewers;
+    TMap<TWeakObjectPtr<UMeshComponent>, bool> TransformationHiddenBaseline;
+    void InitializeSportSpellVisuals();
+    void RefreshSportSpellVisuals();
+
 
     struct FSpellNotice { FString Message; uint64 AttackId = 0; double QueuedAt = 0.0; };
     TArray<FSpellNotice> PendingSpellNotices;
@@ -237,6 +271,7 @@ private:
     void CastSelectedSpell();
     void RequestShield();
     void RequestBloodbroom();
+    void RequestFreeShot();
     void RequestPossessionAward();
     void RequestPenaltyShot();
     void RequestEjection();

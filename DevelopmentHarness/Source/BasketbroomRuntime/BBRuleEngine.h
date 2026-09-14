@@ -65,6 +65,7 @@ struct PointEvent {
 };
 struct Award { int team = -1; std::int64_t points = 0; int ball = -1, player = -1; };
 struct PenaltyShot {
+    bool free_shot = false; // Moderate: restorative shot, no temporary removal.
     PenaltyShotStage stage = PenaltyShotStage::None;
     PenaltyShotOutcome outcome = PenaltyShotOutcome::None;
     int penalty_id = -1, ball = -1, shooter = -1, netminder = -1, attacking_team = -1;
@@ -138,7 +139,7 @@ public:
     // never infer points from a disposition string. Five seconds includes flight.
     // Existing terminal Review or an unavailable defending Netminder needs
     // explicit external adjudication and is rejected without changing state.
-    bool start_penalty_shot(int penalty_id, int ball, int shooter, int netminder);
+    bool start_penalty_shot(int penalty_id, int ball, int shooter, int netminder, bool free_shot = false);
     bool release_penalty_shot(int shooter);
     Millis advance_penalty_shot(Millis delta_ms);
     bool complete_penalty_shot(PenaltyShotOutcome outcome, const PointEvent& goal = PointEvent{});

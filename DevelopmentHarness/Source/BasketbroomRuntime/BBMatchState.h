@@ -37,6 +37,7 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly) bool bConductReviewPending = false;
     UPROPERTY(Replicated, BlueprintReadOnly) FString ConductReviewStatus;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotActive = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bFreeShot = false;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotReleased = false;
     UPROPERTY(Replicated, BlueprintReadOnly) float PenaltyShotSecondsLeft = 0;
     UPROPERTY(Replicated, BlueprintReadOnly) int32 PenaltyShotBall = -1;
@@ -100,13 +101,14 @@ private:
     TWeakObjectPtr<ABBRiderCharacter> PenaltyShooterActor, PenaltyKeeperActor;
     bool AdvancePenaltyClock(double Milliseconds);
     bool ConsumePenaltyFlightTime(double FlightStepFraction);
-    bool BeginConductPenaltyShot(int32 PenaltyId);
+    bool BeginConductPenaltyShot(int32 PenaltyId, bool bModerate = false);
     void TickPenaltyShot(float DeltaSeconds);
     void ReleasePenaltyShot(ABBRiderCharacter* Rider, FVector Aim);
     void FinishPenaltyShot(BB::PenaltyShotOutcome Outcome, const FString& Reason, const BB::PointEvent& Goal = {});
     ABBRiderCharacter* RiderForSlot(int32 Slot) const;
     void ResetPenaltyPresentation();
     FVector ConductMark = FVector::ZeroVector;
+    FVector ConductFoulPoint = FVector::ZeroVector;
     uint64 LastConductAttack = 0;
     int32 LastConductViolations = 0;
     void SyncCombatRoster();

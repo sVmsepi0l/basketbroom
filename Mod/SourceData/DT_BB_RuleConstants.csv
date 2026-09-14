@@ -41,5 +41,7 @@ geometry_ft_snipe_launch_z,69,feet,geometry_ft.snipe_launch_z
 geometry_ft_snipe_exclusion,44,feet,geometry_ft.snipe_exclusion
 geometry_ft_snitch_launch_z,100,feet,geometry_ft.snitch_launch_z
 geometry_ft_self_toss_reset_distance,10,feet,geometry_ft.self_toss_reset_distance
+geometry_ft_net_apex,207,feet,geometry_ft.net_apex
+geometry_ft_net_rise,69,feet,geometry_ft.net_rise
 physics_rebound_speed_retention,0.75,ratio,physics.rebound_speed_retention
 physics_feet_to_unreal_cm,30.48,centimeters_per_foot,physics.feet_to_unreal_cm

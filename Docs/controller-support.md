@@ -24,11 +24,12 @@ Windows input backend, not just these button equivalents.
 - With the position guide explicitly open, D-pad Left switches team and D-pad
   Right toggles Bloodbroom in the initial lobby. Close the guide to return those
   buttons to spell selection.
-- During a conduct review, the host selects **Moderate** (possession award)
-  with D-pad Up, **Serious** (penalty shot and removal) with D-pad Right, or
-  **Severe** (ejection) with D-pad Down, then presses Menu to confirm. Opening a
-  review selects no disposition. Choosing a direction alone does not apply a
-  penalty. Keyboard F7/F8/F9 directly request those respective host dispositions.
+- During a conduct review, the host selects **Moderate free shot** with D-pad
+  Left, **Moderate possession** with D-pad Up, **Serious** (shot and removal)
+  with D-pad Right, or **Severe** (ejection) with D-pad Down, then presses Menu
+  to confirm. Opening a review selects no disposition. Choosing a direction
+  alone does not apply a penalty. Keyboard F6/F7/F8/F9 request those respective
+  host dispositions. The free shot adds no removal.
 
 The HUD changes its hints after gamepad input. Keyboard/mouse controls remain
 available. Stick movement is analog; camera rotation uses elapsed time rather
@@ -37,7 +38,11 @@ disconnection must clear held movement and catch input.
 
 ## Penalty-shot controls
 
-The same protected Serious-shot procedure applies in Basketbroom and Bloodbroom.
+The same protected shot controls apply in Basketbroom and Bloodbroom. Sprint 3
+also uses them for the Moderate free shot: its stopped five-second attempt,
+no-wand/no-pass/no-second-attempt restrictions and defending restart are explicit
+prototype administration choices, not newly canonical rules. See the
+[sprint 3 handoff](sprint-3-spells-graphics.md) for scope and final validation status.
 The HUD identifies the selected ball and point value, designated shooter and
 keeper, and five-second attempt timer. The clock covers aiming and ball flight.
 The normal match clock and combat-effect clocks remain frozen through the shot.

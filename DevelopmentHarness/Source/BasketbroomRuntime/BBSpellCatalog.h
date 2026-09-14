@@ -4,7 +4,7 @@
 // Native sporting adaptations, not the Hogwarts Legacy combat implementation.
 // Stable indices follow Rules/spell_catalog.json; contextual spells stay visible.
 enum class EBBSpellEffect : uint8 { Context, Impact, Shield, Stun, Pull, Push, Down,
-    Flip, Slow, Freeze, Lift, Disarm, Light, Knockout, Curse };
+    Flip, Slow, Freeze, Lift, Disarm, Light, Knockout, Curse, Reveal, Conceal, BodyBind, Transform, Confuse };
 struct FBBSpellSpec
 {
     const TCHAR* Name;

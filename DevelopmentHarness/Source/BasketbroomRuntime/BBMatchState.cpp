@@ -151,9 +151,7 @@ void ABBMatchState::ResetMatchRules()
     for (ABBRiderCharacter* R : Riders)
         if (IsValid(R))
         {
-            R->StunRemaining = R->SpellCooldownRemaining = R->ShieldRemaining = 0;
-            R->ImpedimentRemaining = R->DisarmRemaining = R->LumosRemaining = 0;
-            R->Vitality = 100.f; R->bInteractHeld = false; R->ForceNetUpdate();
+            R->ResetSportSpellState();
         }
 }
 void ABBMatchState::ResetOpeningLayout()
@@ -194,7 +192,8 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, bBloodbroom); DOREPLIFETIME(ABBMatchState, ConductFoulCount);
     DOREPLIFETIME(ABBMatchState, LastConductCall); DOREPLIFETIME(ABBMatchState, bConductReviewPending);
     DOREPLIFETIME(ABBMatchState, ConductReviewStatus);
-    DOREPLIFETIME(ABBMatchState, bPenaltyShotActive); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
+    DOREPLIFETIME(ABBMatchState, bPenaltyShotActive);
+    DOREPLIFETIME(ABBMatchState, bFreeShot); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
     DOREPLIFETIME(ABBMatchState, PenaltyShotSecondsLeft); DOREPLIFETIME(ABBMatchState, PenaltyShotBall);
     DOREPLIFETIME(ABBMatchState, PenaltyShooterSlot); DOREPLIFETIME(ABBMatchState, PenaltyKeeperSlot);
     DOREPLIFETIME(ABBMatchState, PenaltyShotStatus);
@@ -217,7 +216,7 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
         if (!IsValid(R) || R == Rider || R->RosterIndex < 0 || R->RosterIndex >= 16) continue;
         const bool bHuman = R->IsPlayerControlled();
         if (bHuman) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
-        Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->StunRemaining > 0;
+        Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->HasSpellMovementLock();
     }
     if (bConductReviewPending && ConductOffender >= 0 && ConductOffender < 16)
         Occupied[ConductOffender] = true;
@@ -279,7 +278,7 @@ bool ABBMatchState::CanInteract(const ABBRiderCharacter* R, const ABBBall* B) co
 {
     if (!HasAuthority() || !Rules || !bLive || !IsValid(R) || !IsValid(B) || !Riders.Contains(R) || !Balls.Contains(B)
         || !B->bActive || B->BallIndex < 0 || B->BallIndex >= 7 || !Rules->balls[B->BallIndex].live
-        || R->StunRemaining > 0 || R->RosterIndex < 0 || R->RosterIndex >= 16) return false;
+        || R->HasSpellMovementLock() || R->RosterIndex < 0 || R->RosterIndex >= 16) return false;
     if (!Rules->eligible(R->RosterIndex, B->BallIndex)) return false;
     for (const ABBBall* Other : Balls) if (IsValid(Other) && Other->Holder == R && Other != B) return false;
     FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomInteraction), false, R);
@@ -421,7 +420,7 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || NewPosition < 0 || NewPosition > 5 || NewTeam < 0 || NewTeam > 1) return;
     if (bLive) { Say(TEXT("Positions are locked during live play. Choose at the next stoppage.")); return; }
-    if (bPenaltyShotActive) { Say(TEXT("Finish the penalty shot before changing positions.")); return; }
+    if (bPenaltyShotActive) { Say(TEXT("Finish the shot before changing positions.")); return; }
     if (bConductReviewPending) { Say(TEXT("Resolve the BB-0 conduct call before changing positions.")); return; }
     if (Rules->status == BB::Status::Review || Rules->status == BB::Status::Complete) return;
     if (R->Position == NewPosition && R->TeamIndex == NewTeam) return;
@@ -460,7 +459,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
     if (bPenaltyShotActive)
     {
         if (Action == 1) ReleasePenaltyShot(R, Aim);
-        else R->NotifySpellResult(TEXT("Penalty shot: designated shooter throws once; no wandwork, pass or role change."));
+        else R->NotifySpellResult(TEXT("Shot: designated shooter throws once; no wandwork, pass or role change."));
         return;
     }
     if (Action == 2) { ChangePosition(R, Value, R->TeamIndex); return; }
@@ -477,7 +476,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
-    if (Action >= 9 && Action <= 11) { ReviewConduct(R, Action); return; }
+    if (Action >= 9 && Action <= 12) { ReviewConduct(R, Action); return; }
     if (Action == 4 || Action == 5)
     {
         // Listen-server period control belongs to the host. A dedicated server
@@ -485,7 +484,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         if (!CanOfficiate(R)) return;
         if (bConductReviewPending)
         {
-            R->NotifySpellResult(TEXT("Resolve the BB-0 call: F7 possession, F8 penalty shot + removal, F9 ejection."));
+            R->NotifySpellResult(TEXT("Resolve BB-0: F6 free shot, F7 possession, F8 shot + removal, F9 ejection."));
             return;
         }
         const bool bRematch = Rules->status == BB::Status::Complete && Action == 4;
@@ -519,7 +518,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
-    if (!bLive || R->StunRemaining > 0) return;
+    if (!bLive || R->HasSpellMovementLock()) return;
     if (Action == 6 || Action == 7) { CastSpell(R, Action == 7 ? 1 : Value, Aim); return; }
     if (Action == 0)
     {
@@ -574,10 +573,10 @@ void ABBMatchState::Tick(float Dt)
                     if (!IsValid(R) || R->TeamIndex != State.restart_team) continue;
                     if (I < 3 && !bCrownRestart && I != ConductRestartBall)
                     {
-                        if (R->Position == 0) { Receiver = R; break; }
+                        if (R->Position == 0 && !R->HasSpellMovementLock() && Rules->eligible(R->RosterIndex, I)) { Receiver = R; break; }
                         continue;
                     }
-                    if (R->StunRemaining > 0 || !Rules->eligible(R->RosterIndex, I)) continue;
+                    if (R->HasSpellMovementLock() || !Rules->eligible(R->RosterIndex, I)) continue;
                     bool bAlreadyHolding = false;
                     for (const ABBBall* Other : Balls)
                         if (IsValid(Other) && Other != B && Other->Holder == R) { bAlreadyHolding = true; break; }
@@ -721,7 +720,7 @@ void ABBMatchState::UpdateBots(float Dt)
 {
     for (ABBRiderCharacter* R : Riders)
     {
-        if (!IsValid(R) || R->IsPlayerControlled() || R->StunRemaining > 0) continue;
+        if (!IsValid(R) || R->IsPlayerControlled() || R->HasSpellMovementLock()) continue;
         ABBBall* Held = nullptr; for (ABBBall* B : Balls) if (B->Holder == R) Held = B;
         FVector Target = StartLocation(R->RosterIndex);
         R->bInteractHeld = false;
@@ -732,7 +731,7 @@ void ABBMatchState::UpdateBots(float Dt)
             Target = GoalMark - FVector(Sign * 2100.f,0,0);
             if (Held->IsBludger())
             {
-                for (ABBRiderCharacter* Enemy : Riders) if (Enemy->TeamIndex != R->TeamIndex) { GoalMark = Enemy->GetActorLocation(); break; }
+                for (ABBRiderCharacter* Enemy : Riders) if (Enemy->TeamIndex != R->TeamIndex && !Enemy->IsConcealedFrom(R)) { GoalMark = Enemy->GetActorLocation(); break; }
                 Release(R,(GoalMark-R->GetCarryLocation()).GetSafeNormal());
             }
             else if (R->Position == 0 || FVector::DistSquared(R->GetActorLocation(), Target) < FMath::Square(500.f))

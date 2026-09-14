@@ -80,7 +80,7 @@ Click inside the game window to take control. `Alt+F4` closes the game.
 - **T:** switch teams during the lobby or a stoppage. **Tab:** show the position guide.
 - **Enter:** host starts/resumes play, or starts a new match after the certified final result. **P:** host calls a stoppage.
 - **Q:** cast. **Z / X:** select a spell. **R:** Protego. **V:** spellbook.
-- **B:** host selects Bloodbroom in the initial lobby. **F7 / F8 / F9:** host serves a pending BB-0 call with possession, a penalty shot plus removal, or ejection in the playtest referee interface.
+- **B:** host selects Bloodbroom in the initial lobby. **F6 / F7 / F8 / F9:** host serves a pending BB-0 call with a Moderate free shot, possession, a Serious shot plus removal, or ejection in the playtest referee interface.
 
 Gamepad bindings and their validation status are documented in
 [controller support](Docs/controller-support.md). The four-minute prototype
@@ -105,11 +105,14 @@ new quarters and phases use their defined opening layouts.
 
 ## What is implemented
 
-The [BB-0 wandplay adapter](Docs/native-wandplay.md) adds eighteen sporting spell
-effects, a spellbook, vitality, wand/shield visuals and conduct review after
-applied hits. The complete base-game repertoire is cataloged; remaining spell
-adapters are explicitly marked pending. Bloodbroom waives Unforgivables and
-headshots only. Its penalty choices and spell tuning remain provisional.
+The [BB-0 wandplay adapter](Docs/native-wandplay.md) and [sprint 3 spellwork](Docs/native-sport-spells.md)
+implement **23 of 31 spell-menu actions**, including Revelio, Disillusionment,
+Petrificus Totalus, Transformation and sporting Imperio. The spellbook retains
+eight contextual actions with their adapters marked pending. Vitality, wand/shield
+visuals and conduct review follow applied hits. Bloodbroom waives Unforgivables
+and headshots only; other sporting restrictions remain shared. Spell tuning and
+referee choices remain provisional. See the [sprint 3 handoff](Docs/sprint-3-spells-graphics.md)
+for current controls, completed gameplay/network/package validation and remaining work.
 
 `DevelopmentHarness/Source/BasketbroomRuntime/` now supplies the enabled native
 C++ runtime: CharacterMovement broom flight, authority-owned balls, the sixteen
@@ -125,6 +128,8 @@ validation receipts retain their original build scope; the amendment describes
 the replacement native checks.
 
 The venue, team colors, broom cockpit and HUD use generated original assets.
+Sprint 3 also supplies [original layered broom and wand art](SourceArt/Equipment/broom_equipment.md);
+its final rendered/package validation belongs to the sprint handoff.
 Riders now use Epic's locally staged Quinn mannequin with an authored seated
 flight animation and team materials. Python authors saved Unreal assets; native matches run in C++. Native
 pickup, throw, goal, and Snipe-catch events trigger original synthesized sounds.
@@ -142,10 +147,16 @@ approximately 103 cm overall length and open shallow
 pocket are provisional: the current oversized Bludger does not physically fit.
 This visual addition does not implement striking or certify equipment dimensions.
 
-The [Serious penalty-shot flow](Docs/native-penalty-shots.md) now adds a native
-one-attempt shot, keeper defense, protected restart and live-time removal in
-both Basketbroom and Bloodbroom. Full regulation still needs Moderate free shots,
-post-termination restorative shots, full spell parity, and complete officiating/adjudication flows. The rules engine has broader phase and penalty
+The [native shot flow](Docs/native-penalty-shots.md) includes a host-selected
+**Moderate free shot without removal** and the separate Serious shot plus
+live-time removal in both modes. F6, or D-pad Left then Menu during a review,
+selects the free shot. It preserves the foul's lateral position and altitude,
+projects backward along X only when needed for the minimum 44-foot goal-plane
+distance, and keeps nonkeeper defenders at least 22 feet away until release.
+Its stopped five-second attempt, restricted participant actions and protected
+keeper restart are explicit prototype administration choices. Full regulation
+still needs post-termination restorative shots, full spell parity, and complete
+officiating/adjudication flows. The rules engine has broader phase and penalty
 coverage than the current in-game presentation. Sport-specific animation,
 finished character assets, match balance, and audio mixing need further work.
 Passing the focused native checks does not certify every regulation phase or
@@ -163,9 +174,9 @@ Earlier standalone training packages remain available in the local build folder.
 
 ## Native builds and multiplayer development
 
-The portable native rules engine passes **68 C++ scenarios**, including the
-54 reference cases. The separate native Unreal integration suite now passes
-**35/35** checks in one authority PIE world. The latest combined native run passed
+Earlier baseline validation recorded **68 C++ scenarios**, including the
+54 reference cases, and **35/35** native Unreal integration checks in one
+authority PIE world. That milestone's combined native run passed
 **96/96** checks across gameplay, admission, disconnect, networking, opening and
 Snitch suites. Native Editor compilation and Win64
 Development compilation/cooking/packaging succeeded using Visual Studio 2026,

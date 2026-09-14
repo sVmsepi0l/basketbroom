@@ -1,10 +1,12 @@
 # Basketbroom alpha validation
 
+The current [Sprint 3 handoff](sprint-3-spells-graphics.md#validation-and-package-handoff) records the September 14 spell, free-shot, equipment and package checks. The dated milestones below retain their original build scope.
+
 > **Historical roof evidence:** This receipt records earlier builds. Its open-crown and No Crown observations were superseded by the user’s 2026-09-14 [closed pyramid-net amendment](pyramid-net.md). The results remain unchanged for provenance and do not validate the replacement roof.
 
 Validated locally with Unreal Engine 5.8.1 and Windows 11; native gameplay, practice transitions/rematch, local networking, and physical two-process packaged role/authority/result/rematch/stoppage/departure were checked on 2026-09-12, with the recorded audio evidence below from 2026-09-10. The active project uses the compiled native runtime and `/Basketbroom/Maps/BB_Regulation`. The earlier Blueprint training mode remains available as `/Basketbroom/Maps/BB_Arena`.
 
-The later **BB-0 partial wandplay milestone passed 212 checks: 130 portable C++ and 82 native PIE**, including 17 regulation spell, 3 Bloodbroom and 10 spell-network checks. See the [wandplay validation receipt](native-wandplay-validation.md) for exact runs, engine/build provenance, 18 implemented versus 13 pending adapters, and the separate package/UI outcome. Named package observations below belong to their earlier builds.
+The later **BB-0 partial wandplay milestone passed 212 checks: 130 portable C++ and 82 native PIE**, including 17 regulation spell, 3 Bloodbroom and 10 spell-network checks. See the [wandplay validation receipt](native-wandplay-validation.md) for exact runs, engine/build provenance, the historical 18 implemented versus 13 pending adapters at that milestone, and the separate package/UI outcome. Named package observations below belong to their earlier builds.
 
 ## Native alpha milestone
 
@@ -46,7 +48,7 @@ This adds actual packaged two-process role/authority, result/rematch, stoppage a
 
 The **54 Python rule-reference tests** passed. They exercise the separate engine-independent model, including rules beyond the playable scene's current scope. The portable C++ engine passed **68 scenarios**, including those 54 reference cases and ordinary Crown restoration cases. Its test executable was compiled independently of Unreal. Neither suite certifies Unreal collisions, presentation, or networking.
 
-Full regulation still has penalty-shot execution, final officiating/adjudication and spell-parity gaps. [Partial native wandplay](native-wandplay-validation.md) now has tested hits, control effects, host referee dispositions and local replication; thirteen contextual adapters remain pending. Native phase logic and portable rule coverage do not mean every phase has received end-to-end gameplay validation.
+Full regulation still has final officiating/adjudication and spell-parity gaps. Current source implements [23 sporting spell adapters with eight contextual actions pending](native-sport-spells.md), alongside [Moderate free shots and Serious penalty shots](native-penalty-shots.md). The dated evidence here does not validate those later changes. Native phase logic and portable rule coverage do not mean every phase has received end-to-end gameplay validation.
 
 ## Retained training evidence
 

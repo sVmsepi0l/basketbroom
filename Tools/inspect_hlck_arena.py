@@ -7,6 +7,7 @@ report includes the installed high-resolution screenshot API documentation.
 """
 from collections import Counter
 from datetime import datetime
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -62,13 +63,31 @@ def inspect():
     generated = [actor for actor in actors if actor.actor_has_tag(GENERATED_TAG)]
     owners = [actor for actor in actors if actor.actor_has_tag(OWNER_TAG)]
     checks = []
+    roof_amendment = None
+    roof_audit = None
+    expected_generated, expected_meshes, expected_materials = 900, 14, 18
+    if any(actor.actor_has_tag("BB.Net.Roof") for actor in actors):
+        spec = importlib.util.spec_from_file_location("_bb_inspect_native_roof", ROOT / "Tools/stage_hlck_pyramid_net.py")
+        roof = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(roof)
+        if LEVEL_PATH == roof.MAPS[0]:
+            baseline = json.loads((ROOT / ".local/hlck/arena-port-result.json").read_text(encoding="utf-8-sig"))["map_sha256"]
+        elif LEVEL_PATH == roof.MAPS[1]:
+            baseline = json.loads((ROOT / ".local/hlck/dungeon-anchor-result.json").read_text(encoding="utf-8-sig"))["map_sha256_after"]
+        else:
+            raise RuntimeError("No exact roof amendment contract exists for this map")
+        roof_amendment = roof.verified_amendment(LEVEL_PATH, baseline)
+        if roof_amendment is None:
+            raise RuntimeError("The saved roof map lacks its verified original-map amendment chain")
+        roof_audit = roof.collision_audit(unreal, world, actors)
+        expected_generated, expected_meshes, expected_materials = 905, 18, 19
 
     def check(name, passed, detail):
         checks.append({"name": name, "passed": bool(passed), "detail": detail})
 
     check("single_port_ownership_marker", len(owners) == 1 and isinstance(owners[0], unreal.TargetPoint) if owners else False,
           [actor.get_actor_label() for actor in owners])
-    check("generated_geometry_actor_count", len(generated) == 900, {"observed": len(generated), "expected": 900})
+    check("generated_geometry_actor_count", len(generated) == expected_generated, {"observed": len(generated), "expected": expected_generated})
     class_counts = Counter(actor.get_class().get_name() for actor in generated)
     mesh_paths, material_paths = set(), set()
     mesh_actor_count = 0
@@ -97,7 +116,7 @@ def inspect():
     check("detail_and_scenery_remain_nonblocking", len(collision_samples) == 15 and all(item["no_collision"] for item in collision_samples),
           collision_samples)
     imported_mesh_paths = sorted(path for path in mesh_paths if path.startswith("/Basketbroom/Art/Meshes/"))
-    check("all_fourteen_original_meshes_used", len(imported_mesh_paths) == 14, imported_mesh_paths)
+    check("all_original_meshes_used", len(imported_mesh_paths) == expected_meshes, imported_mesh_paths)
     check("geometry_uses_port_palette", bool(material_paths) and all(path.startswith("/Basketbroom/Art/Materials/M_BBPort_") for path in material_paths),
           sorted(material_paths))
     records = registry.get_assets_by_path("/Basketbroom/Art/Materials", recursive=False, include_only_on_disk_assets=False) or []
@@ -105,7 +124,7 @@ def inspect():
                      if str(record.asset_name).startswith("M_BBPort_") and str(record.asset_class) == "Material")
     physical = sorted(str(record.object_path) for record in records
                       if str(record.asset_name) == "PM_BBPort_Rebound" and str(record.asset_class) == "PhysicalMaterial")
-    check("eighteen_port_materials_and_rebound_material", len(palette) == 18 and len(physical) == 1,
+    check("port_materials_and_rebound_material", len(palette) == expected_materials and len(physical) == 1,
           {"materials": palette, "physical_materials": physical})
     goal_positions = {}
     for tag, expected_count, height in (("BB.Goal.Large", 6, 2103.12), ("BB.Goal.Small", 2, 3048.0)):
@@ -117,8 +136,11 @@ def inspect():
             any(all(abs(actual[axis] - wanted[axis]) < 1.0 for axis in range(3)) for actual in positions)
             for wanted in expected_positions)
         check(tag + "_centers_cm", matches, positions)
-    crown = [xyz(actor.get_actor_location()) for actor in generated if actor.actor_has_tag("BB.NoCrown.Plane")]
-    check("roofline_reference_height_cm", len(crown) == 1 and abs(crown[0][2] - 4206.24) < 1.0 if crown else False, crown)
+    reference_tag = "BB.Net.Eave" if roof_amendment else "BB.NoCrown.Plane"
+    eaves = [xyz(actor.get_actor_location()) for actor in generated if actor.actor_has_tag(reference_tag)]
+    check("roofline_reference_and_current_collision", len(eaves) == 1 and abs(eaves[0][2] - 4206.24) < 1.0 if eaves else False,
+          {"reference": eaves, "roof_amendment": roof_amendment, "collision": roof_audit,
+           "legacy_open_roof": roof_amendment is None})
     screenshot_api = getattr(getattr(unreal, "AutomationLibrary", None), "take_high_res_screenshot", None)
     screenshot_doc = str(screenshot_api.__doc__) if screenshot_api is not None else None
     report = {"status": "passed" if all(item["passed"] for item in checks) else "failed",

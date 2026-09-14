@@ -444,6 +444,7 @@ void ABBBall::StepFlight(double Dt)
             if (StruckRider)
             {
                 Contact = BB::Contact::Player;
+                StruckRider->ConcealRemaining = 0.f;
                 StruckRider->StunRemaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
                 StruckRider->ForceNetUpdate();
                 Match->Release(StruckRider, FVector::ZeroVector);

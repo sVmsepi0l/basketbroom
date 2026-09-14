@@ -66,7 +66,7 @@ class NativeSpellTests(base.NativePlayableTests):
         data.update(scope="native same-world local-player spell and conduct integration", variant=VARIANT,
                     not_covered=["remote ownership, networking and internet play",
                                  "physical keyboard bindings, visual quality or frame rate",
-                                 "all 31 spell-menu actions: 13 contextual catalog entries remain pending",
+                                 "all 31 spell-menu actions: 8 contextual catalog entries remain pending",
                                  "canonical automatic penalty tiers, penalty shots and catastrophic review",
                                  "mob attacker identities and window expiry (portable conduct suite)"],
                     fixture_policy="Only disposable actor transforms/component ticks, ordinary local-player lifecycle, "
