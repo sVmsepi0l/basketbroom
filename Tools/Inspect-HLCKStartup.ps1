@@ -6,6 +6,10 @@ Reads only process identity, memory counters, and allowlisted startup log entrie
 Never reads process command lines, starts/stops processes, or changes settings.
 A shader count is a sampled queue, not a countdown or completion estimate: Play
 may discover additional material permutations. Missing evidence is not success.
+.PARAMETER LogPaths
+Optional ordered candidate paths for diagnostics/tests. Defaults to the installed
+project log followed by the current user's Creator Kit log. The newest write time
+wins; equal times prefer the earlier candidate. Selection does not prove ownership.
 .PARAMETER Save
 Also save this JSON snapshot in the repository's ignored .local/hlck/startup folder.
 .EXAMPLE
@@ -16,6 +20,7 @@ param(
     [string]$KitRoot = 'C:\Program Files\HogwartsLegacyCreatorKit',
     [ValidateRange(100, 20000)][int]$TailLines = 5000,
     [ValidateRange(1, 100)][int]$EvidenceLines = 16,
+    [string[]]$LogPaths = @(),
     [switch]$Save
 )
 
@@ -24,14 +29,22 @@ Set-StrictMode -Version 2.0
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $kit = [IO.Path]::GetFullPath($KitRoot)
 $editorPath = Join-Path $kit 'Engine\Binaries\Win64\UE4Editor.exe'
+$editorPaths = @($editorPath, (Join-Path $kit 'Engine\Binaries\Win64\HogwartsLegacyCreatorKit.exe'))
 $workerPath = Join-Path $kit 'Engine\Binaries\Win64\ShaderCompileWorker.exe'
-$logPath = Join-Path $kit 'PhoenixGame\Saved\Logs\Phoenix.log'
+if ($LogPaths.Count -eq 0) {
+    $LogPaths = @(
+        (Join-Path $kit 'PhoenixGame\Saved\Logs\Phoenix.log'),
+        (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'HogwartsLegacyCreatorKit\Saved\Logs\Phoenix.log')
+    )
+}
+$logPath = $null
 $report = [ordered]@{
-    SchemaVersion = 1
+    SchemaVersion = 2
     SampledUtc = [DateTime]::UtcNow.ToString('o')
     Scope = 'One read-only native Creator Kit startup snapshot; no command lines or authentication logs.'
     Status = 'sampled'
     ExpectedEditorPath = $editorPath
+    ExpectedEditorPaths = $editorPaths
     EditorSelection = 'not_sampled'
     Editors = @()
     ShaderWorkers = [ordered]@{
@@ -45,9 +58,13 @@ $report = [ordered]@{
         Path = $logPath
         Exists = $false
         LastWriteUtc = $null
+        LastWriteAgeSecondsAtRead = $null
+        Candidates = @()
+        Selection = 'not_sampled'
+        SelectionCaveat = 'Newest LastWriteTimeUtc among known files; equal times prefer earlier candidate order. Write times can change after selection and do not prove current editor ownership or shader readiness.'
         TailLinesRequested = $TailLines
         TailLinesRead = 0
-        EditorAssociation = 'unverified; Phoenix.log is shared by this installation'
+        EditorAssociation = 'unverified; known log locations may contain earlier runs or another editor session'
         LastShaderQueueSampleInTail = $null
         LatestPlayLifecycle = @()
         LifecycleScan = 'not_sampled'
@@ -61,8 +78,13 @@ $report = [ordered]@{
 
 try {
     # Request an explicit property list: never retrieve CommandLine.
-    $processes = @(Get-CimInstance Win32_Process -Filter "Name = 'UE4Editor.exe' OR Name = 'ShaderCompileWorker.exe'" -Property Name,ProcessId,ParentProcessId,ExecutablePath,CreationDate)
-    $editors = @($processes | Where-Object { $_.ExecutablePath -and [string]::Equals($_.ExecutablePath, $editorPath, [StringComparison]::OrdinalIgnoreCase) })
+    $processes = @(Get-CimInstance Win32_Process -Filter "Name = 'UE4Editor.exe' OR Name = 'HogwartsLegacyCreatorKit.exe' OR Name = 'ShaderCompileWorker.exe'" -Property Name,ProcessId,ParentProcessId,ExecutablePath,CreationDate)
+    $editors = @($processes | Where-Object {
+        $candidateExecutable = $_.ExecutablePath
+        $candidateExecutable -and @($editorPaths | Where-Object {
+            [string]::Equals($_, $candidateExecutable, [StringComparison]::OrdinalIgnoreCase)
+        }).Count -gt 0
+    })
     $workers = @($processes | Where-Object { $_.ExecutablePath -and [string]::Equals($_.ExecutablePath, $workerPath, [StringComparison]::OrdinalIgnoreCase) })
     $report.EditorSelection = if ($editors.Count -eq 0) { 'no_verified_editor' } elseif ($editors.Count -eq 1) { 'one_verified_editor' } else { 'multiple_verified_editors; none selected' }
     if (@($processes | Where-Object { -not $_.ExecutablePath }).Count -gt 0) {
@@ -90,7 +112,7 @@ try {
         try {
             $live = Get-Process -Id $entry.ProcessId -ErrorAction Stop
             # Recheck the identity before joining the two samples; a PID may have exited/recycled.
-            if ([string]::Equals($live.Path, $editorPath, [StringComparison]::OrdinalIgnoreCase) -and
+            if ([string]::Equals($live.Path, $entry.ExecutablePath, [StringComparison]::OrdinalIgnoreCase) -and
                 $null -ne $entry.CreationDate -and
                 [math]::Abs(($live.StartTime.ToUniversalTime() - $entry.CreationDate.ToUniversalTime()).TotalMilliseconds) -lt 2) {
                 $item.Responding = $live.Responding
@@ -141,10 +163,52 @@ try {
 }
 
 try {
-    $report.Log.Exists = [IO.File]::Exists($logPath)
-    if ($report.Log.Exists) {
-        $logInfo = Get-Item -LiteralPath $logPath
-        $report.Log.LastWriteUtc = $logInfo.LastWriteTimeUtc.ToString('o')
+    # Inspect only these explicit candidates. Do not infer association from file
+    # recency, traverse account folders, or read process launch arguments.
+    $newestWriteUtc = $null
+    foreach ($candidatePath in $LogPaths) {
+        $candidate = [ordered]@{
+            Path = [IO.Path]::GetFullPath($candidatePath)
+            Exists = $false
+            MetadataStatus = 'absent'
+            LastWriteUtc = $null
+            AgeSecondsAtRead = $null
+            Selected = $false
+        }
+        try {
+            if (Test-Path -LiteralPath $candidate.Path -PathType Leaf) {
+                $info = Get-Item -LiteralPath $candidate.Path -ErrorAction Stop
+                $candidate.Exists = $true
+                $candidate.MetadataStatus = 'sampled'
+                $candidate.LastWriteUtc = $info.LastWriteTimeUtc.ToString('o')
+                $candidate.AgeSecondsAtRead = [math]::Round(([DateTime]::UtcNow - $info.LastWriteTimeUtc).TotalSeconds, 1)
+                # Strictly greater retains the first candidate on exact ties.
+                if ($null -eq $newestWriteUtc -or $info.LastWriteTimeUtc -gt $newestWriteUtc) {
+                    $newestWriteUtc = $info.LastWriteTimeUtc
+                    $logPath = $candidate.Path
+                    $report.Log.LastWriteAgeSecondsAtRead = $candidate.AgeSecondsAtRead
+                }
+            }
+        } catch {
+            $candidate.MetadataStatus = 'unavailable'
+            $report.Status = 'partial'
+            $report.Warnings += 'One known log candidate had unreadable metadata; the selection uses only successfully sampled files.'
+        }
+        $report.Log.Candidates += [pscustomobject]$candidate
+    }
+    if ($null -ne $logPath) {
+        $report.Log.Path = $logPath
+        $report.Log.Exists = $true
+        $report.Log.LastWriteUtc = $newestWriteUtc.ToString('o')
+        $report.Log.Selection = 'newest_known_log'
+        # Mark exactly one entry even when diagnostic candidate paths repeat.
+        $selectedMarked = $false
+        foreach ($candidate in $report.Log.Candidates) {
+            if (-not $selectedMarked -and [string]::Equals($candidate.Path, $logPath, [StringComparison]::OrdinalIgnoreCase)) {
+                $candidate.Selected = $true
+                $selectedMarked = $true
+            }
+        }
         $lines = @(Get-Content -LiteralPath $logPath -Tail $TailLines -Encoding UTF8)
         $report.Log.TailLinesRead = $lines.Count
         $evidence = New-Object 'System.Collections.Generic.List[object]'
@@ -221,14 +285,19 @@ try {
             if ($null -ne $reader) { $reader.Dispose() }
             elseif ($null -ne $stream) { $stream.Dispose() }
         }
-        if ($report.Editors.Count -eq 1) {
+        if ($report.EditorSelection -eq 'query_failed') {
+            $report.Log.EditorAssociation = 'Editor query failed; current process association is unknown.'
+        } elseif ($report.Editors.Count -eq 1) {
             $report.Log.EditorAssociation = 'One matching editor; timestamps may include earlier runs. Log ownership is not proven.'
         } elseif ($report.Editors.Count -eq 0) {
             $report.Log.EditorAssociation = 'No verified editor; treat this log as historical.'
         } else {
             $report.Log.EditorAssociation = 'Multiple matching editors; this shared log cannot be attributed to one.'
         }
-    } else { $report.Warnings += 'Phoenix.log does not exist at the expected location.' }
+    } else {
+        $report.Log.Selection = 'no_readable_known_log'
+        $report.Warnings += 'No known Phoenix.log candidate had readable file metadata.'
+    }
 } catch {
     $report.Status = 'partial'
     $report.Warnings += 'Could not finish reading the allowlisted live log evidence; existing fields may be partial.'

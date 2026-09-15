@@ -12,6 +12,18 @@ Measure the actual enclosed space from the trampoline floor through the hollow p
 
 The finished volume must be between `1.40 * V` and `1.50 * V`, targeting `1.45 * V`. Use the enclosing net's footprint for this measurement; the historical 420-foot goal-to-goal distance omits the space behind the goal planes. Preserve the upward-pointing, hollow four-face cap and the rebound behavior established by the [pyramid-net amendment](pyramid-net.md).
 
+## Source audit before implementation
+
+The September 15 source audit resolved an important naming difference: `BBArenaGeometry.h::HalfLength` is the **end-net plane**, while `build_arena.py::HALF_LENGTH` is the **goal plane**. The existing 450 cm behind-goal bay belongs to the enclosed footprint. Scale the goal-plane placement and bay depth together; adding an unchanged 450 cm after scaling the pitch would miss the uniform-volume target.
+
+At the 45% target, enclosure half-length is 7754.086173 cm, half-width 3622.376568 cm, eaves 4760.837775 cm and apex 7141.256662 cm. The goal planes move to ±7244.753135 cm and bay depth becomes 509.333038 cm. The enclosed volume is approximately 430374.351 m³ before and 624042.809 m³ after. These remain **planned dimensions**, not a description of the saved maps.
+
+Use explicit goal-plane and end-net constants across the C++ runtime and source generator. Preserve current hoop apertures, 35-foot hoop spacing and 69/100-foot hoop-center heights, along with the fixed 44-foot free-shot minimum, 22-foot restart offset and 13-foot exclusion distance. Reposition arena-dependent scenery and marks selectively; do not scale the whole world or the riders and equipment.
+
+The implementation must replace duplicated geometry in ball scoring, match admissions/openings, bot approaches, penalty-shot targets and conduct-mark bounds. Training has separate Blueprint generators: its current 3140 cm side-ball limit should become half-width minus the actual ball radius. Active collision and network tests also contain fixed dimensions and goal-adjacent fixtures that must move with the venue. Retired Crown-rule tests are historical evidence, not active geometry specifications.
+
+Native expansion needs its own bounded staging receipt. The existing roof stage covers only four roof meshes, one material and two maps; it cannot claim preservation for changed floors, walls or goal placements. Extend the verified map-amendment chain used by the arena, dungeon and anchor inspectors. Keep the native PlayerStart and exit where they are if their clearance checks remain valid, preserve existing material edits, and retain all pre-expansion receipts.
+
 ## Implementation and acceptance
 
 - Update the shared dimensions, generated floor/wall/roof geometry, collision, authoritative ball and rider bounds, owner prediction, held balls and Snipe/Snitch paths together. The visual enclosure and playable bounds must agree.
