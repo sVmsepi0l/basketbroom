@@ -8,3 +8,6 @@ SourceArt/Promo/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,c
 # The unmodified upstream legal notices contain trailing spaces.
 SourceArt/Promo/Fonts/OFL*.txt -whitespace
 SourceArt/Promo/Fonts/TRADEMARKS.txt -whitespace
+
+# Preserve the exact native registration SQL bytes across checkouts.
+Mod/Basketbroom/Content/ModEdits.sql text eol=lf

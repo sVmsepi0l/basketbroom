@@ -117,8 +117,6 @@ def snapshot(unreal, actors):
         transform = actor.get_actor_transform()
         rotation = actor.get_actor_rotation()
         label = actor.get_actor_label()
-        if actor.actor_has_tag(GENERATED_TAG) and label == "Continuous open-crown rebound net":
-            label = "Continuous closed-arena rebound net"
         record = {"class": actor.get_class().get_path_name(), "label": label,
                   "location": xyz(transform.translation), "scale": xyz(transform.scale3d),
                   "rotation": [float(rotation.pitch), float(rotation.yaw), float(rotation.roll)],
@@ -378,13 +376,16 @@ def run(dry_run=True):
                 if not levels.load_level(item["path"]):
                     raise RuntimeError("Could not reopen the exact native amendment map")
                 world, actors = validate_map_ownership(unreal, item["path"])
+                item["preserved_after_reload_before_roof"] = snapshot(unreal, actors)
+                item["baseline_after_reload_matches"] = item["preserved_after_reload_before_roof"] == item["preserved_before"]
+                write(receipt, report)
+                if not item["baseline_after_reload_matches"]:
+                    raise RuntimeError("Native map reload changed nonroof actors before authoring; no roof actor will be edited")
                 builder.target_map = item["path"]
                 for actor in actors:
                     if targeted(actor):
                         if not levels.destroy_actor(actor):
                             raise RuntimeError("Could not replace an owned prior roof actor")
-                    elif actor.actor_has_tag(GENERATED_TAG) and actor.get_actor_label() == "Continuous open-crown rebound net":
-                        actor.set_actor_label("Continuous closed-arena rebound net")
                 builder.actor(unreal.TargetPoint, "Pyramidion eave reference", (0.0, 0.0, EAVE),
                               tags=("BB.Roofline", "BB.Net.Eave"), folder="Gameplay anchors")
                 builder.pyramid_net()
