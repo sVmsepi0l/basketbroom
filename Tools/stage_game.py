@@ -8,6 +8,12 @@ Blueprint instances, a game mode, five balls and a first-person broom cockpit.
 No Python is required while playing. Restaging replaces only BB.Gameplay actors.
 """
 
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
+
 import json
 import os
 from pathlib import Path
@@ -22,7 +28,7 @@ from build_arena import ArenaBuilder, EditorWorldAccess, LEVEL_PATH, ART_PATH
 BASE = "/Basketbroom/Blueprints/"
 GAMEPLAY_TAG = "BB.Gameplay"
 GAME_MODE_PATH = BASE + "BP_BBGameMode"
-PLAYER_START = (-4400.0, 0.0, 1400.0)
+PLAYER_START = (-4400.0 * dimensions.LINEAR_SCALE, 0.0, 1400.0)
 BALLS = (
     ("Quaffle", 0, (-4050.0, 0.0, 1350.0), 0.65, "M_BB_BallQuaffle"),
     ("Quark A", 1, (-2750.0, -800.0, 1550.0), 0.48, "M_BB_BallQuark"),
@@ -30,6 +36,10 @@ BALLS = (
     ("Snipe", 2, (-500.0, -1400.0, 2200.0), 0.30, "M_BB_BallSnipe"),
     ("Snitch", 3, (2000.0, 1200.0, 2800.0), 0.24, "M_BB_BallSnitch"),
 )
+# Move the opening layout across the expanded pitch while retaining its
+# playable altitudes and equipment sizes.
+BALLS = tuple((name, kind, (point[0]*dimensions.LINEAR_SCALE, point[1]*dimensions.LINEAR_SCALE, point[2]), size, material)
+              for name, kind, point, size, material in BALLS)
 
 
 def load_required_asset(path):

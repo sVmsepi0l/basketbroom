@@ -1,5 +1,6 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
+#include "BBArenaGeometry.h"
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
 #include "BBSpellVisual.h"
@@ -65,9 +66,15 @@ void ABBMatchState::TickSpells(float LiveDelta)
     for (ABBRiderCharacter* R : Riders)
     {
         if (!IsValid(R)) continue;
+        R->StunRemaining = FMath::Max(0.f, R->StunRemaining-LiveDelta);
         R->SpellCooldownRemaining = FMath::Max(0.f, R->SpellCooldownRemaining-LiveDelta);
         R->ShieldRemaining = FMath::Max(0.f, R->ShieldRemaining-LiveDelta);
         R->DisarmRemaining = FMath::Max(0.f, R->DisarmRemaining-LiveDelta);
+        R->RevealRemaining = FMath::Max(0.f, R->RevealRemaining-LiveDelta);
+        R->ConcealRemaining = FMath::Max(0.f, R->ConcealRemaining-LiveDelta);
+        R->PetrificusRemaining = FMath::Max(0.f, R->PetrificusRemaining-LiveDelta);
+        R->TransformationRemaining = FMath::Max(0.f, R->TransformationRemaining-LiveDelta);
+        R->ImperioRemaining = FMath::Max(0.f, R->ImperioRemaining-LiveDelta);
         const bool bWasImpeded = R->ImpedimentRemaining > 0;
         R->ImpedimentRemaining = FMath::Max(0.f, R->ImpedimentRemaining-LiveDelta);
         if (bWasImpeded && R->ImpedimentRemaining == 0) Combat->recover_target(CombatIndex(R));
@@ -98,7 +105,7 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     }
     SyncCombatRoster();
     const auto& Player = Rules->players[R->RosterIndex];
-    if (Player.ejected || Player.donnybrook_excluded || Player.removed_until >= 0 || R->StunRemaining > 0) return;
+    if (Player.ejected || Player.donnybrook_excluded || Player.removed_until >= 0 || R->HasSpellMovementLock()) return;
     if (!BBSpellCatalog::IsImplemented(SpellIndex)) { R->NotifySpellResult(Spell->Description); return; }
     if (R->DisarmRemaining > 0) { R->NotifySpellResult(TEXT("Wand disarmed - recovering.")); return; }
     if (R->SpellCooldownRemaining > 0) { R->NotifySpellResult(TEXT("Wand recovering.")); return; }
@@ -112,6 +119,20 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     {
         R->LumosRemaining = R->LumosRemaining > 0 ? 0.f : 1.f;
         R->NotifySpellResult(R->LumosRemaining > 0 ? TEXT("LUMOS") : TEXT("NOX")); R->ForceNetUpdate(); return;
+    }
+
+    if (Spell->Effect == EBBSpellEffect::Reveal)
+    {
+        R->RevealRemaining = 6.f;
+        R->NotifySpellResult(TEXT("REVELIO - concealed opponents visible within 22m for 6 live seconds."));
+        R->ForceNetUpdate(); return;
+    }
+    if (Spell->Effect == EBBSpellEffect::Conceal)
+    {
+        R->ConcealRemaining = 6.f;
+        R->LumosRemaining = 0.f;
+        R->NotifySpellResult(TEXT("DISILLUSIONMENT - concealed for 6 live seconds. Attacks and hits break concealment."));
+        R->ForceNetUpdate(); return;
     }
 
     const FVector Start = R->GetActorLocation()+FVector(0,0,72);
@@ -131,10 +152,28 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     // rider through the geometry that clipped the original wand ray.
     if (Target && bObstructed && Obstruction.GetActor() != Target && Hit.Distance+8.f >= Obstruction.Distance)
         Target = nullptr;
+    // Determine stealth eligibility before this attempted hostile cast breaks
+    // concealment. Detection is server-derived; clients supply only their aim.
+    const bool bBodyBind = Spell->Effect == EBBSpellEffect::BodyBind;
+    bool bStealthEligible = false;
+    if (bBodyBind && IsValid(Target))
+    {
+        const FVector ToCaster = R->GetActorLocation()-Target->GetActorLocation();
+        const FVector TargetForward = Target->GetAimDirection().GetSafeNormal2D();
+        bStealthEligible = R->IsConcealedFrom(Target)
+            && ToCaster.SizeSquared() <= FMath::Square(Spell->Range)
+            && FVector::DotProduct(TargetForward, ToCaster.GetSafeNormal2D()) < -.5f;
+    }
+    R->ConcealRemaining = 0.f;
     if (!IsValid(Target) || Target == R || !Riders.Contains(Target))
     {
         ABBSpellVisual::Spawn(GetWorld(),Start,End,SpellIndex,false);
         R->NotifySpellResult(BBSpellCatalog::Name(SpellIndex)+TEXT(" - missed.")); R->ForceNetUpdate(); return;
+    }
+    if (bBodyBind && !bStealthEligible)
+    {
+        R->NotifySpellResult(TEXT("PETRIFICUS - requires concealment, a target within 3.5m, and approach from behind."));
+        R->ForceNetUpdate(); return;
     }
     End = Hit.ImpactPoint;
     // Capsule upper region is a provisional server hit zone, not a head-bone
@@ -163,10 +202,20 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     for (const ABBBall* Ball : Balls)
         if (IsValid(Ball) && Ball->BallIndex <= 2 && Ball->Holder == Target) AffectedScoringBall = Ball->BallIndex;
     // Apply the authoritative effect before recording/refereeing any violation.
+    Target->ConcealRemaining = 0.f;
     Target->Vitality = FMath::Max(0.f,Target->Vitality-Spell->Damage);
     switch (Spell->Effect)
     {
     case EBBSpellEffect::Stun: Target->StunRemaining = FMath::Max(Target->StunRemaining,1.2f); break;
+    case EBBSpellEffect::BodyBind:
+        Target->PetrificusRemaining = FMath::Max(Target->PetrificusRemaining,2.5f);
+        Target->StunRemaining = FMath::Max(Target->StunRemaining,2.5f); break;
+    case EBBSpellEffect::Transform:
+        Target->TransformationRemaining = FMath::Max(Target->TransformationRemaining,3.f);
+        Target->ImpedimentRemaining = FMath::Max(Target->ImpedimentRemaining,3.f);
+        Target->ShieldRemaining = Target->LumosRemaining = 0.f; break;
+    case EBBSpellEffect::Confuse:
+        Target->ImperioRemaining = FMath::Max(Target->ImperioRemaining,3.f); break;
     case EBBSpellEffect::Slow: Target->ImpedimentRemaining = FMath::Max(Target->ImpedimentRemaining,3.f); break;
     case EBBSpellEffect::Freeze:
         Target->ImpedimentRemaining = FMath::Max(Target->ImpedimentRemaining,1.5f);
@@ -189,7 +238,7 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
         Target->StunRemaining = FMath::Max(Target->StunRemaining,3.f);
         Target->Vitality = 50.f;
     }
-    if (Target->StunRemaining > 0)
+    if (Target->HasSpellMovementLock())
     {
         Target->GetCharacterMovement()->StopMovementImmediately();
         Target->bInteractHeld = false;
@@ -214,12 +263,18 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     LastConductCall = FString::Join(Reasons,TEXT(" + "));
     ConductOffender = R->RosterIndex; ConductVictimTeam = 1-R->TeamIndex;
     ConductVictimSlot = Target->RosterIndex; ConductBall = AffectedScoringBall;
-    ConductMark = Target->GetActorLocation();
-    ConductMark.X = FMath::Clamp(ConductMark.X,-5900.f,5900.f);
-    ConductMark.Y = FMath::Clamp(ConductMark.Y,-2700.f,2700.f);
-    ConductMark.Z = FMath::Clamp(ConductMark.Z,400.f,3800.f);
+    ConductFoulPoint = Target->GetActorLocation();
+    ConductMark = ConductFoulPoint;
+    // Preserve the existing restart margins, measured from the expanded
+    // goal, side net and eave. The final capsule bound covers the sloped cap.
+    const double LimitX = BBArena::GoalPlaneX - 500.8;
+    const double LimitY = BBArena::HalfWidth - 500.4;
+    ConductMark.X = FMath::Clamp(ConductMark.X, -LimitX, LimitX);
+    ConductMark.Y = FMath::Clamp(ConductMark.Y, -LimitY, LimitY);
+    ConductMark.Z = FMath::Clamp(ConductMark.Z, 400.0, BBArena::EaveHeight - 406.24);
+    ConductMark = BBArena::ClampSphere(ConductMark, 250.0);
     bConductReviewPending = true;
-    ConductReviewStatus = TEXT("PLAYTEST REFEREE - Host: F7 possession / F8 shot + removal / F9 ejection");
+    ConductReviewStatus = TEXT("PLAYTEST REFEREE - F6 free shot / F7 possession / F8 shot + removal / F9 ejection");
     Rules->pause("BB-0 conduct review after applied hit");
     SyncRules();
     Say(TEXT("BB-0 FOUL: ")+LastConductCall+TEXT(" - hit applied; referee decision due."));
@@ -231,16 +286,16 @@ void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition)
 {
     if (!CanOfficiate(Referee) || !Rules || !bConductReviewPending || Rules->status == BB::Status::Live
         || ConductOffender < 0 || ConductOffender >= 16) return;
-    if (Disposition < 9 || Disposition > 11 || bPenaltyShotActive) return;
-    const bool bEject = Disposition == 11, bShot = Disposition == 10;
+    if (Disposition < 9 || Disposition > 12 || bPenaltyShotActive) return;
+    const bool bEject = Disposition == 11, bFree = Disposition == 12, bShot = Disposition == 10 || bFree;
     // Host-selected playtest severity; no automatic foul-to-tier mapping.
     // A Serious removal must accompany an actual reserved shot and restart.
     const BB::Match Previous = *Rules;
     const int Id = Rules->record_penalty(ConductOffender,TCHAR_TO_UTF8(*LastConductCall),
-        bEject ? BB::Severity::Severe : bShot ? BB::Severity::Serious : BB::Severity::Moderate, ConductBall);
+        bEject ? BB::Severity::Severe : bShot && !bFree ? BB::Severity::Serious : BB::Severity::Moderate, ConductBall);
     bool bApplied = false;
     if (bEject) bApplied = Id > 0 && Rules->resolve_penalty(Id,"host BB-0 playtest referee: ejection",true);
-    else if (bShot) bApplied = Id > 0 && BeginConductPenaltyShot(Id);
+    else if (bShot) bApplied = Id > 0 && BeginConductPenaltyShot(Id,bFree);
     else
     {
         // Preserve an existing goal/Crown remedy. Prefer the Quaffle, then an

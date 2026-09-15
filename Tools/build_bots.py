@@ -5,6 +5,12 @@ and shoot actual ballistic balls. Hurleybacks and Scouts patrol visually in this
 first slice; they do not award points or fake chase catches. Python authors the
 Blueprint only and is not a game runtime dependency.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 from pathlib import Path
 
 import unreal
@@ -92,7 +98,7 @@ def build():
 
     # Attack the other team's center hoop. The target height is ball-specific.
     side = math(g, "SelectFloat", A=1, B=-1, bPickA=eqi(g, g.get("Team"), 0))
-    goal_x = mul(g, side, 6460.8)
+    goal_x = mul(g, side, dimensions.GOAL_PLANE_X + 60)
     goal_z = math(g, "SelectFloat", A=3048, B=2103.12, bPickA=eqi(g, ball_get("Kind"), 1))
     goal = vec(g, goal_x, 0, goal_z)
     approach = vsub(g, goal, vec(g, 0, 0, 60))

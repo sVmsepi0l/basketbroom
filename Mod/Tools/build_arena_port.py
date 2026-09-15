@@ -4,7 +4,8 @@ Run in the already-open Phoenix editor after import_sources.build():
     import build_arena_port
     result = build_arena_port.build()
 
-Writes /Basketbroom/Maps/BB_Arena_Port and its own M_BBPort_* materials only.
+Writes /Basketbroom/Maps/BB_Arena_Port, its own M_BBPort_* materials, and
+collision settings/cooked physics on the importer-owned native roof mesh only.
 The shared builder supplies geometry placement, never its build/import/save
 entry points. This creates a venue, not a playable or registered dungeon mod.
 """
@@ -184,6 +185,75 @@ class ArenaPortBuilder(geometry.ArenaBuilder):
 
     def import_stone_texture(self):
         raise RuntimeError("The port never reimports texture sources")
+
+    def configure_pyramid_collision(self):
+        """Rebuild this native shell's cooked triangles without convex hulls."""
+        import_sources._editor()
+        if unreal.EditorLevelLibrary.get_pie_worlds(include_dedicated_server=True):
+            raise RuntimeError("Stop Play In Editor before rebuilding native roof collision")
+        path = "/Basketbroom/Art/Meshes/SM_BB_PyramidCollision"
+        source = "SourceArt/Arena/SM_BB_PyramidCollision.obj"
+        entries = [entry for entry in self.manifest["source_imports"]
+                   if entry["destination"] == path]
+        if (len(entries) != 1 or entries[0]["asset_type"] != "StaticMesh"
+                or entries[0]["source"] != source):
+            raise RuntimeError("Native roof collision requires the exact owned source manifest entry")
+        entry = entries[0]
+        if import_sources.digest(ROOT / source) != entry["sha256"]:
+            raise RuntimeError("Native roof collision source hash is stale; regenerate the port manifest")
+        mesh = self.meshes.get("SM_BB_PyramidCollision")
+        if not isinstance(mesh, unreal.StaticMesh) or mesh.get_path_name().split(".")[0] != path:
+            raise RuntimeError("Refusing collision rebuild outside the exact native roof mesh")
+        import_sources._owned(unreal, mesh)
+        if self.assets.get_metadata_tag(mesh, import_sources.META_HASH) != entry["sha256"]:
+            raise RuntimeError("Native roof mesh source hash is stale; rerun import_sources.build()")
+        metadata_keys = (import_sources.META_OWNER, import_sources.META_HASH, import_sources.META_REVISION)
+        metadata_before = [self.assets.get_metadata_tag(mesh, key) for key in metadata_keys]
+        lib = getattr(unreal, "EditorStaticMeshLibrary", None)
+        required = ("get_lod_count", "get_simple_collision_count", "get_convex_collision_count",
+                    "is_section_collision_enabled", "remove_collisions_with_notification")
+        if lib is None or any(not callable(getattr(lib, name, None)) for name in required):
+            raise RuntimeError("Creator Kit is missing a required public static-mesh collision API")
+
+        def shape_counts():
+            return [lib.get_simple_collision_count(mesh), lib.get_convex_collision_count(mesh)]
+
+        def assert_shell_section():
+            if (lib.get_lod_count(mesh) < 1 or mesh.get_editor_property("lod_for_collision") != 0
+                    or not lib.is_section_collision_enabled(mesh, 0, 0)):
+                raise RuntimeError("Native roof must retain collision-enabled LOD 0 section 0")
+
+        assert_shell_section()
+        before = shape_counts()
+        if before != [0, 0]:
+            raise RuntimeError("Preserving native roof with unexpected simple/convex collision: " + str(before))
+        super().configure_pyramid_collision()
+        # In the native 4.27 kit, assigning BodySetup flags and PostEditChange
+        # alone can leave stale cooked triangles. The supported Remove Collision
+        # editor operation invalidates physics and refreshes component bodies.
+        # The zero-shape guard above ensures it removes no authored geometry.
+        if not lib.remove_collisions_with_notification(mesh, True):
+            raise RuntimeError("Creator Kit could not rebuild native roof collision")
+        after = shape_counts()
+        body = mesh.get_editor_property("body_setup")
+        assert_shell_section()
+        if (after != [0, 0] or body is None
+                or body.get_editor_property("collision_trace_flag") != unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE
+                or not body.get_editor_property("double_sided_geometry")):
+            raise RuntimeError("Native roof collision rebuild did not preserve the hollow double-sided shell")
+        if (mesh.get_path_name().split(".")[0] != path
+                or [self.assets.get_metadata_tag(mesh, key) for key in metadata_keys] != metadata_before):
+            raise RuntimeError("Native roof identity or importer metadata changed during collision rebuild")
+        if not self.assets.save_loaded_asset(mesh, only_if_is_dirty=False):
+            raise RuntimeError("Could not save rebuilt native roof collision")
+        self.report["pyramid_collision_build"] = {
+            "asset": path, "source_sha256": entry["sha256"],
+            "method": "EditorStaticMeshLibrary.remove_collisions_with_notification(apply_changes=True)",
+            "simple_convex_counts_before": before, "simple_convex_counts_after": after,
+            "collision_lod": 0, "section_0_collision_enabled": True,
+            "complex_as_simple": True, "double_sided": True,
+            "trace_validation": "Required separately by the native roof staging audit",
+        }
 
     def setup_assets(self):
         # preflight_assets has already verified importer ownership and hashes.

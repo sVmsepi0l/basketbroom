@@ -8,6 +8,12 @@ mix quality. The runner owns/ends its PIE world and never saves editor assets.
 Outside Unreal, --list only reports the plan.
 """
 
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
+
 import importlib.util
 import json
 from pathlib import Path
@@ -137,7 +143,7 @@ class NativeAudioTests(base.NativePlayableTests):
         self.isolate()
         before = self.counts()
         scores = self.scores()
-        self.seed_ball(0, (6200, 0, 2103.12), (2000, 0, 0))
+        self.seed_ball(0, ((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), (2000, 0, 0))
         yield self.wait_until(lambda: self.scores() != scores and self.counts()["ScoreEvents"] > before["ScoreEvents"])
         scored = self.counts()
         self.record("whole_ball_goal_starts_one_score_chime", self.score_delta(scores) == [13, 0]

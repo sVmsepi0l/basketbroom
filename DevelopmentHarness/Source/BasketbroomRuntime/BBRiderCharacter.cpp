@@ -11,6 +11,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/MeshComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
@@ -27,7 +28,7 @@ float UBBFlyingMovementComponent::GetMaxSpeed() const
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
     const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
     if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxSpeed() : 0.f;
-    if (Rider && Rider->StunRemaining > 0.f) return 0.f;
+    if (Rider && Rider->HasSpellMovementLock()) return 0.f;
     return Super::GetMaxSpeed() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
@@ -36,7 +37,7 @@ float UBBFlyingMovementComponent::GetMaxAcceleration() const
     const ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(GetOwner());
     const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
     if (Match && Match->bPenaltyShotActive) return Match->CanMoveDuringPenalty(Rider) ? Super::GetMaxAcceleration() : 0.f;
-    if (Rider && Rider->StunRemaining > 0.f) return 0.f;
+    if (Rider && Rider->HasSpellMovementLock()) return 0.f;
     return Super::GetMaxAcceleration() * (Rider && Rider->ImpedimentRemaining > 0.f ? .35f : 1.f);
 }
 
@@ -51,8 +52,23 @@ void UBBFlyingMovementComponent::PhysFlying(float DeltaTime, int32 Iterations)
         StopMovementImmediately();
         return;
     }
+    if (Rider && Rider->HasSpellMovementLock() && !(Match && Match->bPenaltyShotActive))
+    {
+        StopMovementImmediately();
+        return;
+    }
     const FVector EntryVelocity = Velocity;
+    // Sporting Imperio preserves the pawn/controller and normal RPC ownership.
+    // Reverse horizontal acceleration inside the shared movement simulation,
+    // then restore the caller's input so saved moves cannot be inverted twice.
+    const FVector OriginalAcceleration = Acceleration;
+    if (Rider && Rider->ImperioRemaining > 0.f && !(Match && Match->bPenaltyShotActive))
+    {
+        Acceleration.X *= -1.f;
+        Acceleration.Y *= -1.f;
+    }
     Super::PhysFlying(DeltaTime, Iterations);
+    Acceleration = OriginalAcceleration;
     if (!HasValidData() || !Rider || MovementMode != MOVE_Flying) return;
 
     const UCapsuleComponent* Capsule = Rider->GetCapsuleComponent();
@@ -169,6 +185,19 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         GetMesh()->ComponentTags.Add(TEXT("BB.SkeletalRider"));
     }
 
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BroomWoodMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_BroomWood.SM_BB_BroomWood"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BroomLeatherMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_BroomLeather.SM_BB_BroomLeather"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BroomBristlesMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_BroomBristles.SM_BB_BroomBristles"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BroomCopperMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_BroomCopper.SM_BB_BroomCopper"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BroomAccentMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_BroomAccent.SM_BB_BroomAccent"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> WandWoodMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_WandWood.SM_BB_WandWood"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> WandLeatherMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_WandLeather.SM_BB_WandLeather"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> WandCopperMesh(TEXT("/Basketbroom/Art/Equipment/SM_BB_WandCopper.SM_BB_WandCopper"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> EquipmentWood(TEXT("/Basketbroom/Art/Equipment/M_BB_EquipWood.M_BB_EquipWood"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> EquipmentLeather(TEXT("/Basketbroom/Art/Equipment/M_BB_EquipLeather.M_BB_EquipLeather"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> EquipmentBristles(TEXT("/Basketbroom/Art/Equipment/M_BB_EquipBristles.M_BB_EquipBristles"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> EquipmentCopper(TEXT("/Basketbroom/Art/Equipment/M_BB_EquipCopper.M_BB_EquipCopper"));
+
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cone(TEXT("/Engine/BasicShapes/Cone.Cone"));
@@ -221,16 +250,21 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         Part(TEXT("Helmet"), Sphere.Object, Teal.Object, FVector(21, 0, 92), FVector(.30, .28, .19), FRotator::ZeroRotator, false, true);
         Part(TEXT("ChestMark"), Sphere.Object, Ivory.Object, FVector(30, 0, 40), FVector(.027, .17, .24), FRotator(-12, 0, 0), false);
     }
-    Part(TEXT("BroomShaft"), Cylinder.Object, Wood.Object, FVector(25, 0, -8), FVector(.07, .07, 2.70), FRotator(90, 0, 0), false);
-    Part(TEXT("BroomBristles"), Cone.Object, Bristles.Object, FVector(-148, 0, -8), FVector(.39, .39, 1.03), FRotator(-90, 0, 0), false);
-    Part(TEXT("BroomBinding"), Cylinder.Object, Ivory.Object, FVector(-95, 0, -8), FVector(.115, .115, .13), FRotator(90, 0, 0), false);
-    Part(TEXT("BroomNose"), Sphere.Object, Wood.Object, FVector(160, 0, -8), FVector(.13, .079, .079), FRotator::ZeroRotator, false);
-    if (bSkeletalRiderEnabled)
+    // Cosmetic authored equipment shares the existing owner/remote Part settings.
+    for (const bool bCockpit : {false, true})
     {
-        // Raised original grip supports the authored wrist/finger positions.
-        // This is visible equipment; no steering or collision behavior is added.
-        Part(TEXT("BroomGripStem"), Cylinder.Object, Wood.Object, FVector(43, 0, -.5), FVector(.045, .045, .155), FRotator::ZeroRotator, false);
-        Part(TEXT("BroomRaisedGrip"), Cylinder.Object, Leather.Object, FVector(43, 0, 7), FVector(.065, .065, .34), FRotator(0, 0, 90), false);
+        const FString Prefix = bCockpit ? TEXT("CockpitBroom") : TEXT("Broom");
+        const FVector Mount = bCockpit ? FVector(55, 30, -48) : FVector::ZeroVector;
+        Part(FName(*(Prefix + TEXT("Wood"))), BroomWoodMesh.Object, EquipmentWood.Object,
+             Mount, FVector::OneVector, FRotator::ZeroRotator, bCockpit);
+        Part(FName(*(Prefix + TEXT("Leather"))), BroomLeatherMesh.Object, EquipmentLeather.Object,
+             Mount, FVector::OneVector, FRotator::ZeroRotator, bCockpit);
+        Part(FName(*(Prefix + TEXT("Bristles"))), BroomBristlesMesh.Object, EquipmentBristles.Object,
+             Mount, FVector::OneVector, FRotator::ZeroRotator, bCockpit);
+        Part(FName(*(Prefix + TEXT("Copper"))), BroomCopperMesh.Object, EquipmentCopper.Object,
+             Mount, FVector::OneVector, FRotator::ZeroRotator, bCockpit);
+        Part(FName(*(Prefix + TEXT("Accent"))), BroomAccentMesh.Object, Teal.Object,
+             Mount, FVector::OneVector, FRotator::ZeroRotator, bCockpit, true);
     }
     for (int32 Side : {-1, 1})
     {
@@ -242,12 +276,8 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         Part(FName(*(Prefix + TEXT("Boot"))), Sphere.Object, Leather.Object, FVector(29, Side * 20, -49), FVector(.25, .20, .48), FRotator(-10, 0, 0), false);
     }
 
-    Part(TEXT("CockpitShaft"), Cylinder.Object, Wood.Object, FVector(108, 30, -56), FVector(.082, .082, 2.25), FRotator(90, 0, 0), true);
-    Part(TEXT("CockpitNose"), Sphere.Object, Wood.Object, FVector(220, 30, -54), FVector(.15, .105, .105), FRotator::ZeroRotator, true);
-    Part(TEXT("CockpitGrip"), Cylinder.Object, Leather.Object, FVector(65, 30, -56), FVector(.105, .105, .42), FRotator(90, 0, 0), true);
-    Part(TEXT("CockpitCollar"), Cylinder.Object, Metal.Object, FVector(152, 30, -56), FVector(.124, .124, .065), FRotator(90, 0, 0), true);
-    Part(TEXT("CockpitCharmMount"), Cube.Object, Iron.Object, FVector(145, 30, -48), FVector(.17, .14, .08), FRotator::ZeroRotator, true);
-    Part(TEXT("CockpitFlightCharm"), Sphere.Object, Light.Object, FVector(145, 30, -42), FVector(.12, .11, .065), FRotator::ZeroRotator, true);
+    Part(TEXT("CockpitCharmMount"), Cylinder.Object, EquipmentCopper.Object, FVector(145, 30, -50.5), FVector(.14, .14, .03), FRotator::ZeroRotator, true);
+    Part(TEXT("CockpitFlightCharm"), Sphere.Object, Light.Object, FVector(145, 30, -47.6), FVector(.09, .08, .045), FRotator::ZeroRotator, true);
 
     // Original 44 cm wand: tapered wood, padded grip and copper collar.
     // Cosmetic owner/remote copies use the existing equipment filtering.
@@ -257,12 +287,12 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
         const FVector Start = bCockpit ? FVector(45, 38, -29) : FVector(43, 10, 14);
         const FVector Direction = (bCockpit ? FVector(42, -8, 12) : FVector(44, 2, 7)).GetSafeNormal();
         const FRotator Rotation = FRotationMatrix::MakeFromZ(Direction).Rotator();
-        WandParts.Add(Part(FName(*(Prefix + TEXT("Wood"))), Cone.Object, Wood.Object,
-            Start + Direction * 25.f, FVector(.021, .021, .38), Rotation, bCockpit));
-        WandParts.Add(Part(FName(*(Prefix + TEXT("Grip"))), Cylinder.Object, Leather.Object,
-            Start + Direction * 5.f, FVector(.031, .031, .10), Rotation, bCockpit));
-        WandParts.Add(Part(FName(*(Prefix + TEXT("Collar"))), Cylinder.Object, Metal.Object,
-            Start + Direction * 11.f, FVector(.035, .035, .018), Rotation, bCockpit));
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Wood"))), WandWoodMesh.Object,
+            EquipmentWood.Object, Start, FVector::OneVector, Rotation, bCockpit));
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Grip"))), WandLeatherMesh.Object,
+            EquipmentLeather.Object, Start, FVector::OneVector, Rotation, bCockpit));
+        WandParts.Add(Part(FName(*(Prefix + TEXT("Collar"))), WandCopperMesh.Object,
+            EquipmentCopper.Object, Start, FVector::OneVector, Rotation, bCockpit));
     }
     WandLight = Part(TEXT("WandLumos"), Sphere.Object, Light.Object, FVector(87, 30, -17),
         FVector(.045), FRotator::ZeroRotator, true);
@@ -331,12 +361,6 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
             CockpitShieldVisual->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Axis).ToQuat(),
                 (APos + BPos) * .5f, FVector(.006, .006, Axis.Size() / 100.f)));
         }
-    Part(TEXT("CockpitBristles"), Cone.Object, Bristles.Object, FVector(-55, 30, -56), FVector(.4, .4, .75), FRotator(-90, 0, 0), true);
-    for (int32 Index = 0; Index < 6; ++Index)
-    {
-        Part(FName(*FString::Printf(TEXT("CockpitGripWrap%d"), Index)), Cylinder.Object, Metal.Object,
-             FVector(47 + Index * 6.5, 30, -56), FVector(.111, .111, .012), FRotator(90, 0, 0), true);
-    }
 
     // Original provisional Basketbroom tool, about 103 cm overall and 36 cm
     // across the head. The current oversized Bludger is not a physical fit;
@@ -443,6 +467,7 @@ void ABBRiderCharacter::BeginPlay()
     }
     RefreshUniform();
     RefreshHurley();
+    InitializeSportSpellVisuals();
     ShieldMaterial = ShieldVisual->CreateDynamicMaterialInstance(0);
     if (ShieldMaterial) ShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.18f, .58f, 1.f));
     CockpitShieldMaterial = CockpitShieldVisual->CreateDynamicMaterialInstance(0);
@@ -464,6 +489,11 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ABBRiderCharacter, DisarmRemaining);
     DOREPLIFETIME(ABBRiderCharacter, Vitality);
     DOREPLIFETIME(ABBRiderCharacter, LumosRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, RevealRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, ConcealRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, PetrificusRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, TransformationRemaining);
+    DOREPLIFETIME(ABBRiderCharacter, ImperioRemaining);
 }
 
 void ABBRiderCharacter::Tick(float DeltaSeconds)
@@ -473,9 +503,9 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     const bool bPenaltyKeeperMovement = Match && Match->bPenaltyShotActive && Match->CanMoveDuringPenalty(this);
     if (HasAuthority())
     {
-        if (!Match || Match->bLive) StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
+        if (!Match) StunRemaining = FMath::Max(0.0f, StunRemaining - DeltaSeconds);
     }
-    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
+    if (HasSpellMovementLock() && !bPenaltyKeeperMovement)
     {
         GetCharacterMovement()->StopMovementImmediately();
     }
@@ -573,7 +603,7 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
             return;
         }
     }
-    if (StunRemaining > 0.0f && !bPenaltyKeeperMovement)
+    if (HasSpellMovementLock() && !bPenaltyKeeperMovement)
     {
         return;
     }
@@ -627,6 +657,7 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindKey(EKeys::X, IE_Pressed, this, &ABBRiderCharacter::NextSpell);
     Input->BindKey(EKeys::B, IE_Pressed, this, &ABBRiderCharacter::RequestBloodbroom);
     Input->BindKey(EKeys::V, IE_Pressed, this, &ABBRiderCharacter::ToggleSpellbook);
+    Input->BindKey(EKeys::F6, IE_Pressed, this, &ABBRiderCharacter::RequestFreeShot);
     Input->BindKey(EKeys::F7, IE_Pressed, this, &ABBRiderCharacter::RequestPossessionAward);
     Input->BindKey(EKeys::F8, IE_Pressed, this, &ABBRiderCharacter::RequestPenaltyShot);
     Input->BindKey(EKeys::F9, IE_Pressed, this, &ABBRiderCharacter::RequestEjection);
@@ -677,6 +708,7 @@ void ABBRiderCharacter::NextSpell() { SelectedSpell = (SelectedSpell + 1) % FMat
 void ABBRiderCharacter::CastSelectedSpell() { SubmitAction(6, SelectedSpell); }
 void ABBRiderCharacter::RequestShield() { SubmitAction(7); }
 void ABBRiderCharacter::RequestBloodbroom() { SubmitAction(8); }
+void ABBRiderCharacter::RequestFreeShot() { SubmitAction(12); }
 void ABBRiderCharacter::RequestPossessionAward() { SubmitAction(9); }
 void ABBRiderCharacter::RequestPenaltyShot() { SubmitAction(10); }
 void ABBRiderCharacter::RequestEjection() { SubmitAction(11); }
@@ -695,7 +727,7 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 11
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 12
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count()))
@@ -722,7 +754,7 @@ bool ABBRiderCharacter::DevelopmentSetInteraction(bool bHeld)
 
 void ABBRiderCharacter::ServerStartInteract_Implementation()
 {
-    if (!HasAuthority() || bInteractHeld || !Controller)
+    if (!HasAuthority() || bInteractHeld || !Controller || HasSpellMovementLock())
     {
         return;
     }
@@ -753,7 +785,7 @@ void ABBRiderCharacter::ServerStopInteract_Implementation()
 
 void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, FVector Aim)
 {
-    if (!HasAuthority() || !Controller || Action < 0 || Action > 11)
+    if (!HasAuthority() || !Controller || Action < 0 || Action > 12)
     {
         return;
     }
@@ -765,7 +797,7 @@ void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, F
     const ABBMatchState* MatchState = GetWorld()->GetGameState<ABBMatchState>();
     const bool bProtectedShotRelease = Action == 1 && MatchState && MatchState->bPenaltyShotActive
         && MatchState->PenaltyShooterSlot == RosterIndex;
-    if ((Action <= 1 && StunRemaining > 0.0f && !bProtectedShotRelease)
+    if ((Action <= 1 && HasSpellMovementLock() && !bProtectedShotRelease)
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count())))
@@ -917,6 +949,7 @@ void ABBRiderCharacter::RefreshSpellVisuals()
         ShieldMaterial->SetScalarParameterValue(TEXT("Glow"), 1.5f + .35f * FMath::Sin(GetWorld()->GetTimeSeconds() * 6.f));
     if (CockpitShieldMaterial && ShieldRemaining > 0.f)
         CockpitShieldMaterial->SetScalarParameterValue(TEXT("Glow"), .65f + .10f * FMath::Sin(GetWorld()->GetTimeSeconds() * 6.f));
+    RefreshSportSpellVisuals();
 }
 
 void ABBRiderCharacter::RefreshHurley()
@@ -931,7 +964,7 @@ void ABBRiderCharacter::RefreshHurley()
 
 void ABBRiderCharacter::OnRep_StunRemaining()
 {
-    if (StunRemaining > 0.0f)
+    if (HasSpellMovementLock())
     {
         GetCharacterMovement()->StopMovementImmediately();
     }

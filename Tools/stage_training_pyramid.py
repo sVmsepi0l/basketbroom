@@ -1,7 +1,7 @@
-"""Rebuild BP_BBMatch, BP_BBBall and BP_BBHUD for the closed training roof.
+"""Rebuild training match, balls, bots and HUD for the expanded closed arena.
 
 Run through the editor bridge with {} after the native roof map stage. Requires
-PIE stopped and clean saved work. Maps, pawn, bots and game mode stay intact. Use {"hud_only": true} for a label-only refresh.
+PIE stopped and clean saved work. Maps, pawn and game mode stay intact. Bot graph goals move with the arena. Use {"hud_only": true} for a label-only refresh.
 """
 from datetime import datetime
 import hashlib
@@ -13,7 +13,7 @@ import unreal
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "DevelopmentHarness/Plugins/Basketbroom/Content"
-OWNED = ("BP_BBMatch", "BP_BBBall", "BP_BBHUD")
+OWNED = ("BP_BBMatch", "BP_BBBall", "BP_BBHUD", "BP_BBBot")
 MAPS = ("BB_Arena", "BB_Regulation")
 
 
@@ -63,6 +63,11 @@ def build():
     hud = importlib.util.module_from_spec(hud_spec)
     hud_spec.loader.exec_module(hud)
     rebuilt.append(hud.build())
+    if owned != ("BP_BBHUD",):
+        bot_spec = importlib.util.spec_from_file_location("basketbroom_training_bots", ROOT / "Tools/build_bots.py")
+        bots = importlib.util.module_from_spec(bot_spec)
+        bot_spec.loader.exec_module(bots)
+        rebuilt.append(bots.build())
     for bp in rebuilt:
         if bp.get_editor_property("status") == unreal.BlueprintStatus.BS_ERROR:
             raise RuntimeError("Training Blueprint compile failed: " + bp.get_path_name())

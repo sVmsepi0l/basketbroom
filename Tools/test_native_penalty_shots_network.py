@@ -1,17 +1,24 @@
-"""Paired native Serious-shot replication checks through actual owning inputs.
+"""Paired native Serious/free-shot replication checks through owning inputs.
 
 Run in separate fresh listen-server/client PIE worlds for each variant:
 BRIDGE_ARGS={"variant":"regulation", "settings_already_configured":True}
 BRIDGE_ARGS={"variant":"bloodbroom", "settings_already_configured":True}
+Add "shot_kind":"free" to run the Moderate F6 path with no removal.
 The existing network runner also accepts settings_source="editor_config" for
 the standard PlayNetMode INI entry prepared with the editor closed. The report
 records which external configuration route requires restoration afterward.
-Both runs create an actual unlawful hit, then a host-selected Serious Quark
+Both runs create an actual unlawful hit, then a host-selected Serious or free Quark
 shot fired by the owning remote client. No protected gameplay property, score,
 shot outcome, penalty or feedback receipt is injected. Actor/camera fixture
 positions are arranged in disposable worlds, so movement replication is not
 claimed. --list reports planned coverage without starting Unreal.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -23,7 +30,10 @@ import traceback
 ROOT = Path(__file__).resolve().parents[1]
 ARGS = {"max_wall_seconds": 180, **globals().get("BRIDGE_ARGS", {})}
 VARIANT = str(ARGS.get("variant", "regulation")).lower()
-REPORT = ROOT / ".local" / ("native-penalty-shot-network-%s-results.json" % VARIANT)
+SHOT_KIND = str(ARGS.get("shot_kind", "serious")).lower()
+FREE = SHOT_KIND == "free"
+DISPOSITION = 12 if FREE else 10
+REPORT = ROOT / ".local" / ("native-%s-shot-network-%s-results.json" % ("free" if FREE else "penalty", VARIANT))
 TESTS = (
     "owning_client_role_and_affected_quark_pickup_reach_authority",
     "paired_variant_and_actual_illegal_hit_review_replicate",
@@ -36,6 +46,14 @@ TESTS = (
     "only_host_resumes_after_completed_shot",
     "managed_play_settings_restored_and_pie_ended",
 )
+if FREE:
+    names = list(TESTS)
+    names[2] = "remote_client_cannot_adjudicate_free_shot"
+    names[3] = "host_free_shot_flag_ball_and_participants_replicate_without_removal"
+    names[4] = "free_countdown_replicates_while_live_clocks_freeze_and_removal_stays_zero"
+    names[7] = "free_keeper_restart_and_single_served_penalty_replicate_without_removal"
+    names[8] = "only_host_resumes_free_shot_and_offender_remains_eligible"
+    TESTS = tuple(names)
 _spec = importlib.util.spec_from_file_location("_bb_penalty_network_fixture", ROOT / "Tools/test_native_spell_network.py")
 spells = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(spells)
@@ -53,8 +71,8 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
     def write(self, status):
         rows = [{"name": name, **self.results.get(name, {"status": "not_run"})} for name in TESTS]
         data = {
-            "status": status, "phase": self.phase, "variant": VARIANT,
-            "scope": "Serious-shot RPC and state replication in distinct local PIE worlds",
+            "status": status, "phase": self.phase, "variant": VARIANT, "shot_kind": SHOT_KIND,
+            "scope": "%s-shot RPC and state replication in distinct local PIE worlds" % SHOT_KIND,
             "elapsed_wall_seconds": round(time.monotonic()-self.started, 3),
             "passed": sum(row["status"] == "passed" for row in rows),
             "failed": sum(row["status"] == "failed" for row in rows),
@@ -72,7 +90,7 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
     def shot(self, side):
         return {key: prop(side["match"], key) for key in
                 ("bPenaltyShotActive", "bPenaltyShotReleased", "PenaltyShotSecondsLeft", "PenaltyShotBall",
-                 "PenaltyShooterSlot", "PenaltyKeeperSlot", "PenaltyShotStatus", "PendingPenaltyCount", "bLive")}
+                 "PenaltyShooterSlot", "PenaltyKeeperSlot", "PenaltyShotStatus", "PendingPenaltyCount", "bLive", "bFreeShot")}
 
     def diagnostic(self):
         values = [int(value) for value in self.host["match"].development_get_penalty_shot_state()]
@@ -82,6 +100,14 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
 
     def clocks(self):
         return [float(prop(side["match"], "LiveSeconds")) for side in (self.host, self.client)]
+
+    def removal(self):
+        method = getattr(self.host["match"], "development_get_removal_seconds", None)
+        self.require(callable(method), "Server requires read-only removal diagnostic")
+        return float(method(int(prop(self.host["pawn"], "RosterIndex"))))
+
+    def free_state_correct(self):
+        return all(bool(prop(side["match"], "bFreeShot")) == FREE for side in (self.host, self.client)) and (not FREE or self.removal() == 0)
 
     def paired_stop(self):
         return not self.live(self.host) and not self.live(self.client)
@@ -103,7 +129,7 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
             ball.set_actor_tick_enabled(True)
 
     def aim_quark(self):
-        target = vec(-6400.8, 0, 3048)
+        target = vec(-dimensions.GOAL_PLANE_X, 0, 3048)
         controller = unreal.GameplayStatics.get_player_controller(self.client["world"], 0)
         for unused in range(2):
             start = self.client["pawn"].get_carry_location()
@@ -123,6 +149,7 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
 
     def scenarios(self):
         self.require(VARIANT in ("regulation", "bloodbroom"), "Unknown variant")
+        self.require(SHOT_KIND in ("serious", "free"), "Unknown shot kind")
         self.require(self.host["world"] != self.client["world"] and self.host["match"].has_authority()
                      and not self.client["match"].has_authority(), "Distinct connected authority/client worlds required")
         self.shot(self.host)
@@ -185,26 +212,26 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
         effect = min(self.values(self.client, "StunRemaining")) > 0 if desired else all(v < old-4 for v, old in zip(self.values(self.client, "Vitality"), before))
         self.record(TESTS[1], selected() and reviewed() and effect and self.paired_stop(),
                     server=self.conduct(self.host), client=self.conduct(self.client), applied_effect=effect)
-        self.require(reviewed() and effect, "Actual applied illegal hit must precede Serious selection")
+        self.require(reviewed() and effect, "Actual applied illegal hit must precede host shot selection")
         before_call = self.conduct(self.host)
-        self.request(self.client, 10)
+        self.request(self.client, DISPOSITION)
         yield self.wait(.4)
         rejected = self.conduct(self.host) == before_call and all(not prop(side["match"], "bPenaltyShotActive") for side in (self.host, self.client))
         self.record(TESTS[2], rejected, server=self.shot(self.host), client=self.shot(self.client))
-        self.require(rejected, "Remote client must not adjudicate its own Serious shot")
-        self.request(self.host, 10)
-        staged = lambda: all(prop(side["match"], "bPenaltyShotActive") and int(prop(side["match"], "PenaltyShotBall")) == 1 for side in (self.host, self.client))
+        self.require(rejected, "Remote client must not adjudicate its own %s shot" % SHOT_KIND)
+        self.request(self.host, DISPOSITION)
+        staged = lambda: self.free_state_correct() and all(prop(side["match"], "bPenaltyShotActive") and int(prop(side["match"], "PenaltyShotBall")) == 1 for side in (self.host, self.client))
         yield self.wait(3, staged)
         same_participants = all(int(prop(self.host["match"], key)) == int(prop(self.client["match"], key)) for key in ("PenaltyShooterSlot", "PenaltyKeeperSlot"))
-        self.record(TESTS[3], staged() and same_participants and owned(), server=self.shot(self.host), client=self.shot(self.client))
+        self.record(TESTS[3], staged() and same_participants and owned(), server=self.shot(self.host), client=self.shot(self.client), offender_removal=self.removal())
         self.require(staged() and owned(), "Host-selected Quark shot and ownership must replicate")
         self.arrange_owner_at_native_shot()
         clocks = self.clocks()
         counters = [float(prop(side["match"], "PenaltyShotSecondsLeft")) for side in (self.host, self.client)]
         yield self.wait(.4)
         later = [float(prop(side["match"], "PenaltyShotSecondsLeft")) for side in (self.host, self.client)]
-        self.record(TESTS[4], self.clocks() == clocks and self.paired_stop() and all(a < b-.15 for a, b in zip(later, counters)),
-                    clocks_before=clocks, clocks_after=self.clocks(), countdown_before=counters, countdown_after=later)
+        self.record(TESTS[4], self.free_state_correct() and self.clocks() == clocks and self.paired_stop() and all(a < b-.15 for a, b in zip(later, counters)),
+                    clocks_before=clocks, clocks_after=self.clocks(), countdown_before=counters, countdown_after=later, offender_removal=self.removal())
         role = int(prop(self.client["pawn"], "Position"))
         cooldowns = self.values(self.client, "SpellCooldownRemaining")
         self.request(self.client, 6, 0)
@@ -236,8 +263,8 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
                     return False
             return self.diagnostic()["stage"] == 4 and self.paired_stop()
         yield self.wait(4, served)
-        self.record(TESTS[7], served() and scored() and self.diagnostic()["pending"] == 0,
-                    server=self.shot(self.host), client=self.shot(self.client), diagnostic=self.diagnostic())
+        self.record(TESTS[7], served() and scored() and self.diagnostic()["pending"] == 0 and self.free_state_correct(),
+                    server=self.shot(self.host), client=self.shot(self.client), diagnostic=self.diagnostic(), offender_removal=self.removal())
         self.require(served(), "Actual keeper restart must serve and replicate before global resume")
         self.request(self.client, 4)
         yield self.wait(.3)
@@ -245,13 +272,14 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
         self.request(self.host, 4)
         live = lambda: self.live(self.host) and self.live(self.client)
         yield self.wait(3, live)
-        self.record(TESTS[8], client_rejected and live() and self.scores(self.host) == self.scores(self.client) == expected,
-                    remote_resume_rejected=client_rejected, server=self.snapshot(self.host), client=self.snapshot(self.client))
+        self.record(TESTS[8], client_rejected and live() and self.scores(self.host) == self.scores(self.client) == expected
+                    and (not FREE or self.removal() == 0),
+                    remote_resume_rejected=client_rejected, server=self.snapshot(self.host), client=self.snapshot(self.client), offender_removal=self.removal())
 
 
 def main():
     if unreal is None and "--list" in sys.argv:
-        return {"status": "not_run", "planned_tests": list(TESTS), "count": len(TESTS), "variants": ["regulation", "bloodbroom"]}
+        return {"status": "not_run", "planned_tests": list(TESTS), "count": len(TESTS), "variants": ["regulation", "bloodbroom"], "shot_kinds": ["serious", "free"]}
     runner = PenaltyShotNetworkTests()
     try:
         started = runner.begin()
@@ -260,7 +288,7 @@ def main():
         started = False
     if unreal and (started or not runner.done):
         unreal._basketbroom_native_network_test = runner
-    return {"status": "started" if started else runner.final_status, "report": str(REPORT), "planned_cases": len(TESTS), "variant": VARIANT}
+    return {"status": "started" if started else runner.final_status, "report": str(REPORT), "planned_cases": len(TESTS), "variant": VARIANT, "shot_kind": SHOT_KIND}
 
 
 if __name__ == "__main__":

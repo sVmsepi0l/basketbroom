@@ -69,10 +69,10 @@ void ABBHUD::DrawHUD()
     Text(FString(Pad ? TEXT("RB  ") : TEXT("Q  ")) + BBSpellCatalog::Name(Rider->SelectedSpell),38,83,.95f,SpellReady ? Cream : Muted);
     const TCHAR* SpellControls = TEXT("Z / X  Select    R  Protego    V  Spellbook");
     if (Pad)
-        SpellControls = Match->bConductReviewPending ? TEXT("D-pad Up/Right/Down  Call    Menu  Confirm")
+        SpellControls = Match->bConductReviewPending ? TEXT("D-pad  Choose call    Menu  Confirm")
             : Rider->bShowRoster ? TEXT("View  Close roles to select spells    Y  Book")
             : TEXT("D-pad L/R  Spells    LB  Protego    Y  Book");
-    if (Penalty) SpellControls = TEXT("PENALTY SHOT  /  WANDWORK LOCKED");
+    if (Penalty) SpellControls = Match->bFreeShot ? TEXT("FREE SHOT  /  WANDWORK LOCKED") : TEXT("PENALTY SHOT  /  WANDWORK LOCKED");
     Text(SpellControls,38,108,.76f,Muted);
     const FString SpellState = Penalty ? TEXT("LOCKED") : !SpellReady ? TEXT("ADAPTER DUE") : Rider->DisarmRemaining > 0.f ? TEXT("DISARMED")
         : Rider->SpellCooldownRemaining > 0.f ? FString::Printf(TEXT("%.1fs"),Rider->SpellCooldownRemaining) : TEXT("READY");
@@ -116,7 +116,7 @@ void ABBHUD::DrawHUD()
     else if (Penalty)
     {
         Text(Pad ? TEXT("RS  Look around") : TEXT("MOUSE  Look around"),40,UH-67,.8,Muted);
-        Text(TEXT("Penalty shot in progress. Movement and roles locked."),40,UH-43,.75,Muted);
+        Text(TEXT("Shot in progress. Movement and roles locked."),40,UH-43,.75,Muted);
     }
     else
     {
@@ -151,7 +151,7 @@ void ABBHUD::DrawHUD()
     ABBBall* ChaseTarget = nullptr;
     float BestDist = TNumericLimits<float>::Max();
     const bool CanChase = Rider->Position == 3 || Rider->Position == 5 || Match->Phase == TEXT("DONNYBROOK");
-    Text(Penalty ? TEXT("PENALTY SHOT / BALLS") : TEXT("BALLS IN PLAY"),UW-244,143,.78f,Muted);
+    Text(Penalty ? TEXT("SHOT / BALLS") : TEXT("BALLS IN PLAY"),UW-244,143,.78f,Muted);
     for (TActorIterator<ABBBall> It(GetWorld()); It; ++It)
     {
         ABBBall* B = *It;
@@ -171,8 +171,8 @@ void ABBHUD::DrawHUD()
         }
         else if (B->BallStatus == TEXT("crown")) BallState = TEXT("NO CROWN / RETURNING");
         else if (Penalty && Match->IsPenaltyBallActive(B))
-            BallState = Match->bPenaltyShotReleased ? TEXT("PENALTY / SHOT FLIGHT") : TEXT("PENALTY / AT THE MARK");
-        else if (Penalty && B->bActive) BallState = TEXT("FROZEN / PENALTY SHOT");
+            BallState = Match->bPenaltyShotReleased ? TEXT("SHOT / IN FLIGHT") : TEXT("SHOT / AT THE MARK");
+        else if (Penalty && B->bActive) BallState = TEXT("FROZEN / SHOT");
         else if (!Match->bLive && B->bActive) BallState = TEXT("WAITING FOR PLAY");
         Text(BallState,UW-240,StatusY+20,.67f,Muted);
         if (B->IsChase())
@@ -218,10 +218,13 @@ void ABBHUD::DrawHUD()
             Text(Side < 0 ? TEXT("< CHASE TARGET") : TEXT("CHASE TARGET >"), Side < 0 ? 28 : UW-224,FMath::Max(UH/2,530.f),1,Color);
         }
     }
-    if (Rider->StunRemaining > 0 && !Penalty)
+    if ((Rider->HasSpellMovementLock() || Rider->ImperioRemaining > 0.f) && !Penalty)
     {
         Rect(UW/2-155,UH/2-90,310,42,Ink);
-        Text(TEXT("STUNNED - RECOVERING"),UW/2-134,UH/2-79,1.1,Copper);
+        Text(Rider->TransformationRemaining > 0 ? TEXT("TRANSFORMED - RECOVERING")
+            : Rider->PetrificusRemaining > 0 ? TEXT("PETRIFICUS - BOUND")
+            : Rider->StunRemaining > 0 ? TEXT("STUNNED - RECOVERING")
+            : TEXT("IMPERIO - FLIGHT REVERSED"),UW/2-145,UH/2-79,.98f,Copper);
     }
     if (Match->Status == TEXT("FINAL") || Match->Status == TEXT("CERTIFYING RESULT"))
     {
@@ -246,7 +249,7 @@ void ABBHUD::DrawHUD()
         const bool Quaffle = Match->PenaltyShotBall == 0;
         Rect(UW/2-330,164,660,256,Ink);
         Rect(UW/2-330,164,660,4,Gold);
-        Text(TEXT("SERIOUS FOUL / PENALTY SHOT"),UW/2-305,181,1.3f,Gold);
+        Text(Match->bFreeShot ? TEXT("MODERATE FOUL / FREE SHOT") : TEXT("SERIOUS FOUL / PENALTY SHOT"),UW/2-305,181,1.3f,Gold);
         const FString ShotStage = PenaltyDecision ? TEXT("DECISION / RESTART NEXT")
             : FString::Printf(TEXT("ATTEMPT %.1fs / 5s"), Match->PenaltyShotSecondsLeft);
         Text(FString::Printf(TEXT("%s / %d POINTS     %s"), Quaffle ? TEXT("QUAFFLE") : TEXT("QUARK"),
@@ -271,10 +274,11 @@ void ABBHUD::DrawHUD()
         WrappedText(Match->LastConductCall,UW/2-305,226,.88f,Cream,610,3);
         if (Pad)
         {
-            Text(TEXT("Host: D-pad Up = Moderate / Right = Serious / Down = Severe"),UW/2-305,296,.79f,Gold);
+            Text(TEXT("Host: Left free shot / Up possession / Right Serious / Down Severe"),UW/2-305,296,.79f,Gold);
             Text(Rider->GamepadRefereeChoice == 1 ? TEXT("MODERATE: possession award. Menu to confirm.")
                 : Rider->GamepadRefereeChoice == 2 ? TEXT("SEVERE: ejection. Menu to confirm.")
                 : Rider->GamepadRefereeChoice == 3 ? TEXT("SERIOUS: penalty shot + removal. Menu to confirm.")
+                : Rider->GamepadRefereeChoice == 4 ? TEXT("MODERATE: free shot, no removal. Menu to confirm.")
                 : TEXT("Choose a disposition before confirming with Menu."),UW/2-305,328,.82f,Cream);
         }
         else WrappedText(Match->ConductReviewStatus,UW/2-305,296,.85f,Gold,610,3);

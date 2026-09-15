@@ -24,7 +24,10 @@ variants, but physical holding detection is not integrated.
 
 ## Available sporting adaptations
 
-Eighteen spells have native behavior: Basic Cast, Protego, Stupefy, Accio,
+Twenty-three spell-menu actions have native sporting behavior. Five new actions
+are detailed in [Sprint 3 spellwork](native-sport-spells.md): Revelio,
+Disillusionment, Petrificus Totalus, Transformation and Imperio. The prior
+eighteen remain: Basic Cast, Protego, Stupefy, Accio,
 Depulso, Descendo, Flipendo, Arresto Momentum, Glacius, Levioso, Incendio,
 Confringo, Diffindo, Expelliarmus, Bombarda, Lumos, Avada Kedavra and Crucio.
 
@@ -45,7 +48,7 @@ confirmation record. Protego shields for one second; Unforgivables bypass it.
 Expelliarmus disables wandwork for 2.5 seconds; Lumos toggles a real point light.
 Cooldowns, ranges, vitality and durations are playtest tuning in `BBSpellCatalog.cpp`.
 
-The spellbook also shows the eleven remaining base spells and the two Ancient
+The spellbook also shows six remaining base spells and the two Ancient
 Magic actions, marked **ADAPTER DUE / LATER**. They are allowed repertoire with
 unimplemented target/context adapters, not forbidden BB-0 spells. Beast-care
 tools are cataloged separately. CPU teammates still play the ball game and do
@@ -81,6 +84,8 @@ Critical feedback preempts ordinary notices. Queues are bounded; stale receipts
 expire without invented acknowledgments. Combat identity follows a rider across
 position swaps. New occupants cannot inherit an old rider's confirmation IDs.
 Match/phase resets clear relevant conduct state; ordinary stoppages preserve it.
+The new sporting status timers retain their remaining duration through quarter
+breaks and clear on a genuine match reset.
 
 ## Applied hit, then referee decision
 
@@ -108,5 +113,5 @@ restorative shots, match reports and Catastrophic adjudication remain incomplete
 The [wandplay validation receipt](native-wandplay-validation.md) records **212
 passing checks: 130 portable and 82 native**, including the separate regulation,
 Bloodbroom and spell-network runs. It identifies tested behavior, fixture limits
-and the separate standalone-package/physical-UI outcome. Eighteen implemented
-adapters do not mean every adapter has received independent gameplay coverage.
+and the separate standalone-package/physical-UI outcome. Those historical eighteen-adapter receipts do not certify the five newer
+[Sprint 3 adapters](native-sport-spells.md), which have a separate runtime suite.

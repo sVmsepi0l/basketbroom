@@ -1,6 +1,6 @@
 # Basketbroom: Hogwarts Legacy integration
 
-Local editor evidence updated 2026-09-12 against the installed Creator Kit. Compatibility notes also use the supplied tutorial snapshots and publisher/CurseForge documentation.
+The current native Play milestone was verified on 2026-09-15: 16 runtime checks passed, including grounded player spawn, runtime mod tables and exit setup, with clean shutdown. Actual entry/return interaction and match gameplay remain pending. See [Hogwarts sprint 3](hogwarts-sprint3.md) for the retained success receipts and exact scope. The September 12 investigation below remains historical evidence; its pending automated-Play statements are superseded by this result. Compatibility notes also use the supplied tutorial snapshots and publisher/CurseForge documentation.
 
 **The UE 5.8 game and a Hogwarts Legacy mod are separate builds.** The practical Creator Kit route is a single-player arena content mod with Blueprint gameplay and bots. A full networked Hogwarts Legacy match is not a verified capability of the official kit. This repository contains original port sources and native Creator Kit art assets; it does not yet contain a playable or published Hogwarts Legacy Basketbroom match.
 

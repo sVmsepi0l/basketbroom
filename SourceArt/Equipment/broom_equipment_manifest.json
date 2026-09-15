@@ -1,0 +1,310 @@
+{
+  "generator": "Basketbroom.FlightEquipment.v1",
+  "original_geometry": true,
+  "units": "centimeters",
+  "coordinate_contract": "OBJ Y is inverse Unreal Y; winding is also reflected",
+  "decorative_only": true,
+  "component_collision": "NoCollision",
+  "maps_modified": false,
+  "broom_mount": {
+    "location": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  "cockpit_broom_mount": {
+    "location": [
+      55,
+      30,
+      -48
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  "wand_mount": {
+    "tip_axis": "+Z",
+    "length_cm": 44,
+    "location": "existing Start",
+    "scale": [
+      1,
+      1,
+      1
+    ]
+  },
+  "pose_fit_cm": {
+    "grip_center": [
+      43,
+      0,
+      7
+    ],
+    "hand_targets": [
+      [
+        46,
+        -9,
+        10
+      ],
+      [
+        46,
+        9,
+        10
+      ]
+    ],
+    "foot_targets": [
+      [
+        26,
+        -22,
+        -53
+      ],
+      [
+        26,
+        22,
+        -53
+      ]
+    ],
+    "footrest_height": -60
+  },
+  "materials": {
+    "Wood": {
+      "name": "M_BB_EquipWood",
+      "color": [
+        0.205,
+        0.077,
+        0.027
+      ],
+      "roughness": 0.49,
+      "metallic": 0.0,
+      "grain": 0.15
+    },
+    "Leather": {
+      "name": "M_BB_EquipLeather",
+      "color": [
+        0.037,
+        0.024,
+        0.017
+      ],
+      "roughness": 0.73,
+      "metallic": 0.0,
+      "grain": 0.055
+    },
+    "Bristles": {
+      "name": "M_BB_EquipBristles",
+      "color": [
+        0.26,
+        0.158,
+        0.06
+      ],
+      "roughness": 0.84,
+      "metallic": 0.0,
+      "grain": 0.1
+    },
+    "Copper": {
+      "name": "M_BB_EquipCopper",
+      "color": [
+        0.43,
+        0.196,
+        0.066
+      ],
+      "roughness": 0.38,
+      "metallic": 0.78,
+      "grain": 0.025
+    }
+  },
+  "checks": {
+    "finite_geometry": true,
+    "valid_indices": true,
+    "nondegenerate_polygons": true,
+    "total_triangles_broom_and_wand": 9210,
+    "budget_triangles": 16000
+  },
+  "assets": [
+    {
+      "name": "SM_BB_BroomWood",
+      "file": "SourceArt/Equipment/SM_BB_BroomWood.obj",
+      "material": "Wood",
+      "vertices": 519,
+      "polygons": 450,
+      "triangles": 944,
+      "ue_bounds_cm": [
+        [
+          -119.3028756876011,
+          -18.0,
+          -13.099746634174622
+        ],
+        [
+          165.41604953689955,
+          18.0,
+          9.7
+        ]
+      ],
+      "sha256": "361684a3704b6ef2b26ac88d896e8d56300178437b19bea70549db4bd59917d2"
+    },
+    {
+      "name": "SM_BB_BroomLeather",
+      "file": "SourceArt/Equipment/SM_BB_BroomLeather.obj",
+      "material": "Leather",
+      "vertices": 852,
+      "polygons": 670,
+      "triangles": 1446,
+      "ue_bounds_cm": [
+        [
+          -124.47807106689174,
+          -16.8,
+          -18.36326977710987
+        ],
+        [
+          46.05,
+          16.8,
+          10.05
+        ]
+      ],
+      "sha256": "dbab67be061c28372ee4c9935438095527825069f29992dccd47b52fb582b26e"
+    },
+    {
+      "name": "SM_BB_BroomBristles",
+      "file": "SourceArt/Equipment/SM_BB_BroomBristles.obj",
+      "material": "Bristles",
+      "vertices": 2016,
+      "polygons": 1554,
+      "triangles": 3360,
+      "ue_bounds_cm": [
+        [
+          -209.60543564236696,
+          -22.788289754804005,
+          -34.480723340629794
+        ],
+        [
+          -105.50111849687778,
+          23.053354160674882,
+          11.54151202698655
+        ]
+      ],
+      "sha256": "de8342b9d14da2531324094e09152db11d3841e6de5f6673f9c53485b0720165"
+    },
+    {
+      "name": "SM_BB_BroomCopper",
+      "file": "SourceArt/Equipment/SM_BB_BroomCopper.obj",
+      "material": "Copper",
+      "vertices": 946,
+      "polygons": 612,
+      "triangles": 1612,
+      "ue_bounds_cm": [
+        [
+          -124.55,
+          -30.76774027322851,
+          -61.55
+        ],
+        [
+          139.55,
+          30.76774027322851,
+          10.11
+        ]
+      ],
+      "sha256": "ac36148b857b38b794708afbd4406a1549acdfaa076f376f555944afdfee3ffb"
+    },
+    {
+      "name": "SM_BB_BroomAccent",
+      "file": "SourceArt/Equipment/SM_BB_BroomAccent.obj",
+      "material": "Team",
+      "vertices": 112,
+      "polygons": 60,
+      "triangles": 192,
+      "ue_bounds_cm": [
+        [
+          -114.5,
+          -26.5,
+          -59.5
+        ],
+        [
+          110.0,
+          26.5,
+          -1.4662206894566072
+        ]
+      ],
+      "sha256": "77b716058595abdd75c816e1cf35902f56952d39e670116992b08378b5f75db3"
+    },
+    {
+      "name": "SM_BB_WandWood",
+      "file": "SourceArt/Equipment/SM_BB_WandWood.obj",
+      "material": "Wood",
+      "vertices": 208,
+      "polygons": 182,
+      "triangles": 380,
+      "ue_bounds_cm": [
+        [
+          -1.2999976620158196,
+          -1.3,
+          -0.002465512807271382
+        ],
+        [
+          1.2999976620158196,
+          1.3,
+          44.00213373429771
+        ]
+      ],
+      "sha256": "099b33496e4f03f92343fef9942d30eeaa5fd241f7486fd8189265ae486604d5"
+    },
+    {
+      "name": "SM_BB_WandLeather",
+      "file": "SourceArt/Equipment/SM_BB_WandLeather.obj",
+      "material": "Leather",
+      "vertices": 538,
+      "polygons": 440,
+      "triangles": 898,
+      "ue_bounds_cm": [
+        [
+          -1.63,
+          -1.63,
+          0.5
+        ],
+        [
+          1.63,
+          1.63,
+          10.2
+        ]
+      ],
+      "sha256": "2e159f544e08f7c62346c9b00a234ea26a8f70b5326ec6d57cd107eaac0712b7"
+    },
+    {
+      "name": "SM_BB_WandCopper",
+      "file": "SourceArt/Equipment/SM_BB_WandCopper.obj",
+      "material": "Copper",
+      "vertices": 226,
+      "polygons": 138,
+      "triangles": 378,
+      "ue_bounds_cm": [
+        [
+          -1.48,
+          -1.48,
+          0.15000000000000002
+        ],
+        [
+          1.48,
+          1.48,
+          29.001407536734682
+        ]
+      ],
+      "sha256": "4148bc4ff2b360dd24e1e2ec13c3ce32cfede5a78e3214ff059fac029ca5863d"
+    }
+  ],
+  "rendered_validation": "not_run",
+  "frame_time_validation": "not_run"
+}

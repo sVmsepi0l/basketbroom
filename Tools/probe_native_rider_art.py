@@ -61,11 +61,14 @@ def inspect():
         materials = [path(mesh.get_material(index)) for index in (0, 1)]
         static_parts = rider.get_components_by_class(unreal.StaticMeshComponent)
         legacy = [part.get_name() for part in static_parts if part.get_name() in LEGACY]
-        supports = [part for part in static_parts if part.get_name() in ("BroomGripStem", "BroomRaisedGrip")]
+        supports = [part for part in static_parts if part.get_name() in ("BroomWood", "BroomLeather")]
         support_valid = len(supports) == 2 and all(
             str(part.get_collision_profile_name()) == "NoCollision"
             and part.get_collision_enabled() == unreal.CollisionEnabled.NO_COLLISION
             and bool(prop(part, "bOwnerNoSee")) and not bool(prop(part, "bOnlyOwnerSee"))
+            and path(part.get_editor_property("static_mesh")) == "/Basketbroom/Art/Equipment/SM_BB_" + part.get_name() + ".SM_BB_" + part.get_name()
+            and abs(prop(part, "RelativeLocation").x) < .01 and abs(prop(part, "RelativeLocation").y) < .01 and abs(prop(part, "RelativeLocation").z) < .01
+            and abs(prop(part, "RelativeScale3D").x-1) < .01 and abs(prop(part, "RelativeScale3D").y-1) < .01 and abs(prop(part, "RelativeScale3D").z-1) < .01
             and part.get_attach_parent() == mesh for part in supports)
         checks = {
             "skeletal_body_enabled": enabled,

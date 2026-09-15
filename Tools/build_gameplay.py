@@ -3,6 +3,12 @@
 Standalone Unreal Engine 5.8 authoring tool. No Python runs in the resulting
 gameplay; native Blueprint nodes handle movement, scoring, and sound playback.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import sys
 import importlib
 import math as scalar_math
@@ -181,8 +187,8 @@ def make_manager():
     broom_radius = (unreal.get_default_object(broom_class).get_editor_property('collision_component').get_scaled_sphere_radius()
                     if broom_class is not None else 35.0)
     p = location(g,pawn(g)); x,y,z = xyz(g,p)
-    x = math(g,'FClamp',Value=x,Min=-6710,Max=6710)
-    y = math(g,'FClamp',Value=y,Min=-3090,Max=3090)
+    x = math(g,'FClamp',Value=x,Min=-(dimensions.HALF_LENGTH-140.8),Max=dimensions.HALF_LENGTH-140.8)
+    y = math(g,'FClamp',Value=y,Min=-(dimensions.HALF_WIDTH-110.4),Max=dimensions.HALF_WIDTH-110.4)
     clamp = setloc(g,vec(g,x,y,math(g,'FClamp',Value=z,Min=130,Max=pyramid_limit(g,x,y,broom_radius))),pawn(g))
     g.exec(seq,clamp,'then_2')
     # Each chase ball publishes its own sample; choosing here avoids tick-order
@@ -258,10 +264,10 @@ def make_ball():
     for index,side in enumerate((1,-1)):
         px,py,pz=xyz(g,g.get('P')); ox,oy,oz=xyz(g,g.get('OldP'))
         radius=math(g,'SelectFloat',A=33,B=24,bPickA=eqi(g,g.get('Kind'),0))
-        full_plane=add(g,6400.8,radius)
+        full_plane=add(g,dimensions.GOAL_PLANE_X,radius)
         crosses=both(g,lt(g,mul(g,ox,side),full_plane),gt(g,mul(g,px,side),full_plane))
         test=g.branch(crosses); g.exec(surfaces,test,'then_'+str(index))
-        frac=div(g,sub(g,side*6400.8,ox),sub(g,px,ox))
+        frac=div(g,sub(g,side*dimensions.GOAL_PLANE_X,ox),sub(g,px,ox))
         hit_y=add(g,oy,mul(g,sub(g,py,oy),frac)); hit_z=add(g,oz,mul(g,sub(g,pz,oz),frac))
         def in_circle(y,z,radius):
             dy=sub(g,hit_y,y); dz=sub(g,hit_z,z)
@@ -278,10 +284,11 @@ def make_ball():
             resetp=g.set('P',g.get('Home')); resetv=g.set('Velocity',(0,0,0)); wait=g.set('Cooldown',1.0)
             g.exec(quark,award,'then' if isquark else 'else'); g.chain(award,text,resetp,resetv,wait,sound(g,'Score'))
     # Side/end nets preserve 75% normal incident speed.
-    for axis,limit,out_index in [(0,6850.8,2),(1,3140,3)]:
+    for axis,extent,out_index in [(0,dimensions.HALF_LENGTH,2),(1,dimensions.HALF_WIDTH,3)]:
+        limit=sub(g,extent,ball_radius(g))
         coords=xyz(g,g.get('P')); vel=xyz(g,g.get('Velocity'))
         hit=g.branch(gt(g,math(g,'Abs',A=coords[axis]),limit))
-        pos=list(coords); pos[axis]=math(g,'FClamp',Value=coords[axis],Min=-limit,Max=limit)
+        pos=list(coords); pos[axis]=math(g,'FClamp',Value=coords[axis],Min=mul(g,limit,-1),Max=limit)
         newv=list(vel); newv[axis]=mul(g,vel[axis],-0.75)
         g.exec(surfaces,hit,'then_'+str(out_index)); g.chain(hit,g.set('P',vec(g,*pos)),g.set('Velocity',vec(g,*newv)),sound(g,'Bounce',0.16))
     coords=xyz(g,g.get('P')); vel=xyz(g,g.get('Velocity'))
@@ -296,10 +303,11 @@ def make_ball():
     chase=g.sequence(2); g.exec(classify,chase,'else')
     # The Snipe traverses its route at 60% of the Snitch's path rate.
     chase_rate=math(g,'SelectFloat',A=0.6,B=1.0,bPickA=eqi(g,g.get('Kind'),2))
-    t=mul(g,mg(g,'Elapsed'),chase_rate); phase=mul(g,g.get('Kind'),2.17)
-    cx=mul(g,math(g,'Sin',A=add(g,mul(g,t,0.23),phase)),4300)
-    cy=mul(g,math(g,'Cos',A=add(g,mul(g,t,0.41),phase)),2050)
-    cz=add(g,2200,mul(g,math(g,'Sin',A=add(g,mul(g,t,0.32),phase)),950))
+    # Longer paths retain their existing flight speeds and Snipe/Snitch ratio.
+    t=div(g,mul(g,mg(g,'Elapsed'),chase_rate),dimensions.LINEAR_SCALE); phase=mul(g,g.get('Kind'),2.17)
+    cx=mul(g,math(g,'Sin',A=add(g,mul(g,t,0.23),phase)),4300*dimensions.LINEAR_SCALE)
+    cy=mul(g,math(g,'Cos',A=add(g,mul(g,t,0.41),phase)),2050*dimensions.LINEAR_SCALE)
+    cz=add(g,2200*dimensions.LINEAR_SCALE,mul(g,math(g,'Sin',A=add(g,mul(g,t,0.32),phase)),950*dimensions.LINEAR_SCALE))
     g.exec(chase,setloc(g,vec(g,cx,cy,cz)),'then_0')
     near=both(g,neg(g,gt(g,math(g,'VSize',A=vsub(g,location(g),location(g,pawn(g)))),380)),both(g,key(g,'E',True),neg(g,mg(g,'HasBall'))))
     catch=g.branch(near); g.exec(chase,catch,'then_1')

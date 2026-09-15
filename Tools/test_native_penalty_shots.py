@@ -22,7 +22,7 @@ RUNNER.PREAMBLE = RUNNER.PREAMBLE.replace(
     "<<p.crown_restoration_receiver;", "<<p.crown_restoration_receiver<<','<<p.penalty_shot_reserved;")
 RUNNER.PREAMBLE = RUNNER.PREAMBLE.replace(" return s.str();", r'''
  const auto& shot=m.penalty_shot;
- s<<int(shot.stage)<<','<<int(shot.outcome)<<','<<shot.penalty_id<<','<<shot.ball<<','<<shot.shooter<<','<<shot.netminder<<','<<shot.attacking_team<<','<<shot.elapsed_ms<<','<<shot.released_ms<<','<<shot.awarded_points<<';';
+ s<<int(shot.stage)<<','<<int(shot.outcome)<<','<<shot.penalty_id<<','<<shot.ball<<','<<shot.shooter<<','<<shot.netminder<<','<<shot.attacking_team<<','<<shot.elapsed_ms<<','<<shot.released_ms<<','<<shot.awarded_points<<','<<shot.free_shot<<';';
  return s.str();''')
 assert "<<p.penalty_shot_reserved" in RUNNER.PREAMBLE and "<<shot.awarded_points" in RUNNER.PREAMBLE
 RUNNER.PREAMBLE += r'''

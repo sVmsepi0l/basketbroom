@@ -7,6 +7,12 @@ goal plane; they never change elapsed time, rule state, custody, scores or the
 outcome. A measured final-frame hitch must straddle the remaining shot time.
 Lifecycle cases use real CreatePlayer/RemovePlayer in the disposable PIE world.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 from pathlib import Path
@@ -116,7 +122,7 @@ class PenaltyShotEdgeTests(core.NativePenaltyShotTests):
         offset_ms = {"before": -20, "exact": 0, "after": 20}[EDGE]
         crossing_ms = before["remaining_ms"]+offset_ms
         speed = 4400.0
-        plane = -f32(f32(6400.8)+radius)
+        plane = -f32(f32(dimensions.GOAL_PLANE_X)+radius)
         start = (plane + speed*crossing_ms/1000, 0, 2103.12)
         self.require(self.shot_ball.development_set_flight_fixture(vector(start), vector((-speed, 0, 0))),
                      "Final boundary flight fixture must be accepted without changing shot state")

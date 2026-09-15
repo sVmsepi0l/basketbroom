@@ -7,6 +7,12 @@ Cooldown, graph positions, timers or activation. Actual training E pickup and
 held-ball graph execution are explicitly NOT covered without a real key source.
 --list prints planned coverage without opening Unreal.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -34,7 +40,7 @@ CASES = (
     "roof_graph_preserves_scores_identity_and_live_clock_without_crown_message",
     "owned_pie_ended_and_original_saved_map_restored",
 )
-HALF_X, HALF_Y, EAVE, APEX = 6850.8, 3200.4, 4206.24, 6309.36
+HALF_X, HALF_Y, EAVE, APEX = dimensions.HALF_LENGTH, dimensions.HALF_WIDTH, dimensions.EAVE_HEIGHT, dimensions.APEX_HEIGHT
 SX, SY = (APEX-EAVE)/HALF_X, (APEX-EAVE)/HALF_Y
 PLANES = ((SX, 0, 1), (-SX, 0, 1), (0, SY, 1), (0, -SY, 1))
 _spec = importlib.util.spec_from_file_location("_bb_training_roof_receipts", ROOT / "Tools/native_test_receipts.py")
@@ -237,7 +243,7 @@ class TrainingPyramidTests:
             # the bounded 1.3s window; reversal establishes an actual roof graph response.
             self.record(CASES[1+face], correct, face=face, outward_normal=n, samples=rows)
             self.require(correct, "Generated roof rebound failed on face "+str(face))
-        self.fixture((0, 0, 4090), (0, 0, 1250))
+        self.fixture((0, 0, EAVE-116.24), (0, 0, 1250))
         rows = []
         yield self.wait(1.4, lambda: rows.append(self.snapshot()))
         self.ball.set_actor_tick_enabled(False)
@@ -257,13 +263,13 @@ class TrainingPyramidTests:
         self.require(sphere is not None, "Training DefaultPawn sphere is unavailable")
         radius = float(sphere.get_scaled_sphere_radius())
         bounds = []
-        for point in ((0, 0, APEX+700), (5000, 0, 5900), (-5000, 0, 5900),
-                      (0, 2500, 5900), (0, -2500, 5900), (8000, 5000, 7000)):
+        for point in ((0, 0, APEX+700), (HALF_X*.73, 0, APEX-409.36), (-HALF_X*.73, 0, APEX-409.36),
+                      (0, HALF_Y*.78, APEX-409.36), (0, -HALF_Y*.78, APEX-409.36), (HALF_X+1150, HALF_Y+1800, APEX+700)):
             self.pawn.set_actor_location(vec(point), False, True)
             yield self.wait(.18)
             after = xyz(self.pawn.get_actor_location())
             bounds.append(dict(fixture=point, actual=after, inside=inside(after, radius),
-                               side_insets=abs(after[0]) <= 6710.2 and abs(after[1]) <= 3090.2))
+                               side_insets=abs(after[0]) <= HALF_X-140.6 and abs(after[1]) <= HALF_Y-110.2))
         self.record(CASES[7], all(row["inside"] and row["side_insets"] for row in bounds), sphere_radius_cm=radius, samples=bounds)
         self.record(CASES[8], self.scores() == self.initial_scores and self.ball.get_path_name() == self.identity
                     and xyz(prop(self.ball, "Home")) == self.home and float(prop(self.manager, "SecondsLeft")) < self.initial_clock

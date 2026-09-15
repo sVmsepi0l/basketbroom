@@ -1,6 +1,7 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
 #include "BBAdmission.h"
+#include "BBArenaGeometry.h"
 #include "BBGameMode.h"
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
@@ -22,18 +23,20 @@ FVector StartLocation(int32 Slot, bool bDonnybrook = false, float CapsuleRadius 
 {
     const int32 Local = Slot % 8;
     const float Sign = Slot < 8 ? -1.f : 1.f;
-    // The whole capsule starts behind its own 105ft quarter line. Donnybrook
+    // The whole capsule starts behind its own quarter line. Donnybrook
     // instead lines every available rider up behind its own goal plane.
     const float Clearance = CapsuleRadius + 12.f;
     if (bDonnybrook)
-        return FVector(Sign * (6400.8f + Clearance), (Local - 3.5f) * 650.f, 1400.f + (Local % 2) * 180.f);
-    if (Local == 0) return FVector(Sign * 5400.f, 0, 2103.12f);
+        return FVector(Sign * (BBArena::GoalPlaneX + Clearance),
+            (Local - 3.5f) * 650.f * BBArena::LinearScale,
+            (1400.f + (Local % 2) * 180.f) * BBArena::LinearScale);
+    if (Local == 0) return FVector(Sign * (BBArena::GoalPlaneX - 1000.8), 0, BBArena::LargeHoopHeight);
     // Provisional tactical spacing staggers the second row so teammates do not
     // obstruct the first-person view while waiting for the opening horn.
     const int32 Row = (Local - 1) / 3;
-    return FVector(Sign * (3200.4f + Clearance + Row * 650.f),
-                   Local == 7 ? 0.f : ((Local - 1) % 3 - 1) * 950.f + (Row == 1 ? 450.f : 0.f),
-                   Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f);
+    return FVector(Sign * (BBArena::GoalPlaneX / 2.0 + Clearance + Row * 650.f * BBArena::LinearScale),
+                   (Local == 7 ? 0.f : ((Local - 1) % 3 - 1) * 950.f + (Row == 1 ? 450.f : 0.f)) * BBArena::LinearScale,
+                   (Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f) * BBArena::LinearScale);
 }
 
 FVector OpeningBallLocation(int32 Index)
@@ -51,9 +54,11 @@ FVector CrownRestartLocation(const BB::Ball& Ball)
     // A safe mark directly below the recorded exit. The 4m vertical clearance
     // and 3m edge clearance are provisional physical implementation margins.
     // The carry point projects 175cm ahead plus the scoring ball's 65cm radius.
-    return FVector(FMath::Clamp(Ball.crown_mark[0] * 30.48, -6550.8, 6550.8),
-                   FMath::Clamp(Ball.crown_mark[1] * 30.48, -2900.4, 2900.4),
-                   FMath::Clamp(Ball.crown_mark[2] * 30.48 - 400.0, 250.0, 3806.24));
+    const double LimitX = BBArena::HalfLength - 300.0, LimitY = BBArena::HalfWidth - 300.0;
+    return BBArena::ClampSphere(FVector(
+        FMath::Clamp(Ball.crown_mark[0] * 30.48, -LimitX, LimitX),
+        FMath::Clamp(Ball.crown_mark[1] * 30.48, -LimitY, LimitY),
+        FMath::Clamp(Ball.crown_mark[2] * 30.48 - 400.0, 250.0, BBArena::EaveHeight - 400.0)), 250.0);
 }
 
 void PlaceRider(ABBRiderCharacter* Rider, const FVector& Location, float Yaw)
@@ -74,18 +79,18 @@ void ClearCrownRestartSpace(ABBRiderCharacter* Rider, const FVector& Mark)
 {
     const FVector Previous = Rider->GetActorLocation();
     const float Radius = Rider->GetCapsuleComponent()->GetScaledCapsuleRadius();
-    const double LimitX = 6850.8 - Radius, LimitY = 3200.4 - Radius;
+    const float HalfHeight = Rider->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
     FVector Direction = (Previous - Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector);
     auto PointAlong = [&Mark, &Previous](const FVector& Along)
     { return FVector(Mark.X + Along.X * 450.0, Mark.Y + Along.Y * 450.0, Previous.Z); };
-    auto Inside = [LimitX, LimitY](const FVector& Point)
-    { return FMath::Abs(Point.X) <= LimitX && FMath::Abs(Point.Y) <= LimitY; };
+    auto Inside = [Radius, HalfHeight](const FVector& Point)
+    { return BBArena::ContainsCapsule(Point, Radius, HalfHeight); };
     FVector Destination = PointAlong(Direction);
     if (!Inside(Destination)) Destination = PointAlong(-Direction);
     if (!Inside(Destination)) Destination = PointAlong((-Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector));
-    // This moves only the rider's position. In particular, preserve downward
-    // aim and altitude so an official cannot lift another carried ball through
-    // the roof by forcing pitch zero or pushing the rider upward.
+    Destination = BBArena::ClampCapsule(Destination, Radius, HalfHeight);
+    // Preserve aim and altitude wherever roof clearance permits. Clamping at
+    // a sloped face can only lower the rider, never push a held ball outside.
     Rider->GetCharacterMovement()->StopMovementImmediately();
     Rider->ConsumeMovementInputVector();
     Rider->SetActorLocation(Destination, false, nullptr, ETeleportType::TeleportPhysics);
@@ -151,9 +156,7 @@ void ABBMatchState::ResetMatchRules()
     for (ABBRiderCharacter* R : Riders)
         if (IsValid(R))
         {
-            R->StunRemaining = R->SpellCooldownRemaining = R->ShieldRemaining = 0;
-            R->ImpedimentRemaining = R->DisarmRemaining = R->LumosRemaining = 0;
-            R->Vitality = 100.f; R->bInteractHeld = false; R->ForceNetUpdate();
+            R->ResetSportSpellState();
         }
 }
 void ABBMatchState::ResetOpeningLayout()
@@ -194,7 +197,8 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, bBloodbroom); DOREPLIFETIME(ABBMatchState, ConductFoulCount);
     DOREPLIFETIME(ABBMatchState, LastConductCall); DOREPLIFETIME(ABBMatchState, bConductReviewPending);
     DOREPLIFETIME(ABBMatchState, ConductReviewStatus);
-    DOREPLIFETIME(ABBMatchState, bPenaltyShotActive); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
+    DOREPLIFETIME(ABBMatchState, bPenaltyShotActive);
+    DOREPLIFETIME(ABBMatchState, bFreeShot); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
     DOREPLIFETIME(ABBMatchState, PenaltyShotSecondsLeft); DOREPLIFETIME(ABBMatchState, PenaltyShotBall);
     DOREPLIFETIME(ABBMatchState, PenaltyShooterSlot); DOREPLIFETIME(ABBMatchState, PenaltyKeeperSlot);
     DOREPLIFETIME(ABBMatchState, PenaltyShotStatus);
@@ -217,7 +221,7 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
         if (!IsValid(R) || R == Rider || R->RosterIndex < 0 || R->RosterIndex >= 16) continue;
         const bool bHuman = R->IsPlayerControlled();
         if (bHuman) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
-        Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->StunRemaining > 0;
+        Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->HasSpellMovementLock();
     }
     if (bConductReviewPending && ConductOffender >= 0 && ConductOffender < 16)
         Occupied[ConductOffender] = true;
@@ -279,8 +283,12 @@ bool ABBMatchState::CanInteract(const ABBRiderCharacter* R, const ABBBall* B) co
 {
     if (!HasAuthority() || !Rules || !bLive || !IsValid(R) || !IsValid(B) || !Riders.Contains(R) || !Balls.Contains(B)
         || !B->bActive || B->BallIndex < 0 || B->BallIndex >= 7 || !Rules->balls[B->BallIndex].live
-        || R->StunRemaining > 0 || R->RosterIndex < 0 || R->RosterIndex >= 16) return false;
+        || R->HasSpellMovementLock() || R->RosterIndex < 0 || R->RosterIndex >= 16) return false;
     if (!Rules->eligible(R->RosterIndex, B->BallIndex)) return false;
+    const UCapsuleComponent* Capsule = R->GetCapsuleComponent();
+    if (!BBArena::ContainsCapsule(R->GetActorLocation(), Capsule->GetScaledCapsuleRadius(),
+                                Capsule->GetScaledCapsuleHalfHeight())
+        || !BBArena::ContainsSphere(B->GetActorLocation(), B->Radius())) return false;
     for (const ABBBall* Other : Balls) if (IsValid(Other) && Other->Holder == R && Other != B) return false;
     FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomInteraction), false, R);
     Query.AddIgnoredActor(B);
@@ -306,7 +314,9 @@ bool ABBMatchState::TryCatch(ABBRiderCharacter* R, ABBBall* B)
     BB::PointEvent Event; Event.kind = BB::EventKind::Catch; Event.ball = B->BallIndex; Event.player = R->RosterIndex;
     Event.secure_ms = Rules->config.catch_control_ms; Event.by_hand = true; Event.mounted = true;
     const FVector P = R->GetActorLocation();
-    Event.inside_envelope = FMath::Abs(P.X) < 6850.8f && FMath::Abs(P.Y) < 3200.4f && P.Z <= 6309.36f && P.Z > 0;
+    const UCapsuleComponent* Capsule = R->GetCapsuleComponent();
+    Event.inside_envelope = BBArena::ContainsCapsule(P, Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight())
+        && BBArena::ContainsSphere(B->GetActorLocation(), B->Radius());
     if (!Event.inside_envelope) return false;
     PendingPoints.push_back(Event);
     return true;
@@ -421,7 +431,7 @@ void ABBMatchState::ChangePosition(ABBRiderCharacter* R, int32 NewPosition, int3
 {
     if (!HasAuthority() || !Rules || !IsValid(R) || NewPosition < 0 || NewPosition > 5 || NewTeam < 0 || NewTeam > 1) return;
     if (bLive) { Say(TEXT("Positions are locked during live play. Choose at the next stoppage.")); return; }
-    if (bPenaltyShotActive) { Say(TEXT("Finish the penalty shot before changing positions.")); return; }
+    if (bPenaltyShotActive) { Say(TEXT("Finish the shot before changing positions.")); return; }
     if (bConductReviewPending) { Say(TEXT("Resolve the BB-0 conduct call before changing positions.")); return; }
     if (Rules->status == BB::Status::Review || Rules->status == BB::Status::Complete) return;
     if (R->Position == NewPosition && R->TeamIndex == NewTeam) return;
@@ -460,7 +470,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
     if (bPenaltyShotActive)
     {
         if (Action == 1) ReleasePenaltyShot(R, Aim);
-        else R->NotifySpellResult(TEXT("Penalty shot: designated shooter throws once; no wandwork, pass or role change."));
+        else R->NotifySpellResult(TEXT("Shot: designated shooter throws once; no wandwork, pass or role change."));
         return;
     }
     if (Action == 2) { ChangePosition(R, Value, R->TeamIndex); return; }
@@ -477,7 +487,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
-    if (Action >= 9 && Action <= 11) { ReviewConduct(R, Action); return; }
+    if (Action >= 9 && Action <= 12) { ReviewConduct(R, Action); return; }
     if (Action == 4 || Action == 5)
     {
         // Listen-server period control belongs to the host. A dedicated server
@@ -485,7 +495,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         if (!CanOfficiate(R)) return;
         if (bConductReviewPending)
         {
-            R->NotifySpellResult(TEXT("Resolve the BB-0 call: F7 possession, F8 penalty shot + removal, F9 ejection."));
+            R->NotifySpellResult(TEXT("Resolve BB-0: F6 free shot, F7 possession, F8 shot + removal, F9 ejection."));
             return;
         }
         const bool bRematch = Rules->status == BB::Status::Complete && Action == 4;
@@ -519,7 +529,7 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
-    if (!bLive || R->StunRemaining > 0) return;
+    if (!bLive || R->HasSpellMovementLock()) return;
     if (Action == 6 || Action == 7) { CastSpell(R, Action == 7 ? 1 : Value, Aim); return; }
     if (Action == 0)
     {
@@ -574,10 +584,10 @@ void ABBMatchState::Tick(float Dt)
                     if (!IsValid(R) || R->TeamIndex != State.restart_team) continue;
                     if (I < 3 && !bCrownRestart && I != ConductRestartBall)
                     {
-                        if (R->Position == 0) { Receiver = R; break; }
+                        if (R->Position == 0 && !R->HasSpellMovementLock() && Rules->eligible(R->RosterIndex, I)) { Receiver = R; break; }
                         continue;
                     }
-                    if (R->StunRemaining > 0 || !Rules->eligible(R->RosterIndex, I)) continue;
+                    if (R->HasSpellMovementLock() || !Rules->eligible(R->RosterIndex, I)) continue;
                     bool bAlreadyHolding = false;
                     for (const ABBBall* Other : Balls)
                         if (IsValid(Other) && Other != B && Other->Holder == R) { bAlreadyHolding = true; break; }
@@ -593,7 +603,7 @@ void ABBMatchState::Tick(float Dt)
                 if (Receiver && Rules->restart(I,Receiver->RosterIndex))
                 {
                     const bool bConductRestart = I == ConductRestartBall;
-                    const FVector Mark = bConductRestart ? ConductMark : bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
+                    const FVector Mark = bConductRestart ? ConductMark : bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (BBArena::GoalPlaneX - BBArena::RestartDistance), 0, I == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight);
                     PlaceRider(Receiver, Mark, Receiver->TeamIndex ? 180.f : 0.f);
                     B->ResetBall(Mark + FVector(0,0,80));
                     for (ABBRiderCharacter* Other : Riders)
@@ -691,7 +701,7 @@ void ABBMatchState::SyncRules()
         if (P.ejected || P.donnybrook_excluded || P.removed_until >= 0)
         {
             R->StunRemaining = 1.f;
-            const FVector PenaltyBox(R->TeamIndex == 0 ? -7200 : 7200, 0, 600);
+            const FVector PenaltyBox((R->TeamIndex == 0 ? -1.0 : 1.0) * (BBArena::HalfLength + 349.2), 0, 600);
             if (FVector::DistSquared(R->GetActorLocation(), PenaltyBox) > 2500.f)
                 PlaceRider(R, PenaltyBox, R->TeamIndex ? 180.f : 0.f);
         }
@@ -721,18 +731,20 @@ void ABBMatchState::UpdateBots(float Dt)
 {
     for (ABBRiderCharacter* R : Riders)
     {
-        if (!IsValid(R) || R->IsPlayerControlled() || R->StunRemaining > 0) continue;
+        if (!IsValid(R) || R->IsPlayerControlled() || R->HasSpellMovementLock()) continue;
         ABBBall* Held = nullptr; for (ABBBall* B : Balls) if (B->Holder == R) Held = B;
         FVector Target = StartLocation(R->RosterIndex);
         R->bInteractHeld = false;
         if (Held)
         {
             float Sign = R->TeamIndex == 0 ? 1.f : -1.f;
-            FVector GoalMark(Sign * 6500.f, Held->BallIndex == 0 ? ((R->RosterIndex % 3)-1) * 1066.8f : 0.f, Held->BallIndex == 0 ? 2103.12f : 3048.f);
+            FVector GoalMark(Sign * (BBArena::GoalPlaneX + 99.2),
+                Held->BallIndex == 0 ? ((R->RosterIndex % 3)-1) * BBArena::HoopSpacing : 0.0,
+                Held->BallIndex == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight);
             Target = GoalMark - FVector(Sign * 2100.f,0,0);
             if (Held->IsBludger())
             {
-                for (ABBRiderCharacter* Enemy : Riders) if (Enemy->TeamIndex != R->TeamIndex) { GoalMark = Enemy->GetActorLocation(); break; }
+                for (ABBRiderCharacter* Enemy : Riders) if (Enemy->TeamIndex != R->TeamIndex && !Enemy->IsConcealedFrom(R)) { GoalMark = Enemy->GetActorLocation(); break; }
                 Release(R,(GoalMark-R->GetCarryLocation()).GetSafeNormal());
             }
             else if (R->Position == 0 || FVector::DistSquared(R->GetActorLocation(), Target) < FMath::Square(500.f))
@@ -740,7 +752,7 @@ void ABBMatchState::UpdateBots(float Dt)
                 const auto& BallRule = Rules->balls[Held->BallIndex];
                 if (BallRule.protection_until < 0 || Rules->now_ms >= BallRule.protection_until)
                 {
-                    if (R->Position == 0) GoalMark = FVector(Sign * 1000, (R->RosterIndex % 2 ? 900 : -900), 1800);
+                    if (R->Position == 0) GoalMark = BBArena::ScaleLayout(FVector(Sign * 1000, (R->RosterIndex % 2 ? 900 : -900), 1800));
                     FVector To = GoalMark - R->GetCarryLocation(); const float Flight = To.Size()/4400.f;
                     To.Z += .5f * 380.f * Flight * Flight;
                     Release(R,To.GetSafeNormal());

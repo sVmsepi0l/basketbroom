@@ -6,6 +6,12 @@ Blueprint gameplay supplies flight and decisions without Python at runtime.
 Only BB.Bot actors are replaced by this script.
 """
 
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
+
 import json
 import os
 from pathlib import Path
@@ -39,6 +45,11 @@ ROSTER = (
     (1, 4, (4000, 2100, 1450), "BB Quark B"),
     (1, 5, (900, 500, 3550), "BB Quaffle"),
 )
+# Keeper clearance and hoop height stay sporting distances. Other homes move
+# with the wider/longer pitch; rider sizes and patrol speeds remain unchanged.
+ROSTER = tuple((team, role, ((-1 if team == 0 else 1)*(dimensions.GOAL_PLANE_X-660.8) if role == 0
+                            else home[0]*dimensions.LINEAR_SCALE, home[1]*dimensions.LINEAR_SCALE, home[2]), target)
+               for team, role, home, target in ROSTER)
 
 
 def rider_materials(builder):

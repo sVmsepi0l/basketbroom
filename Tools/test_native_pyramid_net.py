@@ -6,6 +6,12 @@ ordinary pickup/throw inputs, native movement and guarded free-ball trajectories
 Never writes score, custody, activation, clocks, collision receipts or outcomes.
 The explicit physical fixtures isolate geometric behavior, not human flight skill.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -46,7 +52,7 @@ _spec = importlib.util.spec_from_file_location("_bb_pyramid_receipts", ROOT / "T
 receipts = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(receipts)
 
-HALF_X, HALF_Y, EAVE, APEX = 6850.8, 3200.4, 4206.24, 6309.36
+HALF_X, HALF_Y, EAVE, APEX = dimensions.HALF_LENGTH, dimensions.HALF_WIDTH, dimensions.EAVE_HEIGHT, dimensions.APEX_HEIGHT
 SLOPE_X, SLOPE_Y = (APEX-EAVE)/HALF_X, (APEX-EAVE)/HALF_Y
 PLANES = ((SLOPE_X, 0, 1), (-SLOPE_X, 0, 1), (0, SLOPE_Y, 1), (0, -SLOPE_Y, 1))
 
@@ -203,10 +209,19 @@ class PyramidNetTests(base.NativePlayableTests):
         if bool(prop(self.match, "bBloodbroom")) != wanted:
             self.request(8)
             yield self.wait_until(lambda: bool(prop(self.match, "bBloodbroom")) == wanted)
-        self.request(2, 3)
-        yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == 3)
+            self.require(bool(prop(self.match, "bBloodbroom")) == wanted, "Native variant input must execute")
+            yield self.wait(.09)
+        # The default Ranger predicate can already be true before the first
+        # pawn Tick drains its input queue. Do not queue that no-op before Start:
+        # two actions in the same native Tick correctly hit the 60ms RPC limit.
+        if int(prop(self.pawn, "Position")) != 3:
+            self.request(2, 3)
+            yield self.wait_until(lambda: int(prop(self.pawn, "Position")) == 3)
+            self.require(int(prop(self.pawn, "Position")) == 3, "Native Ranger selection must execute")
+            yield self.wait(.09)
         self.request(4)
         yield self.wait_until(lambda: bool(prop(self.match, "bLive")))
+        self.require(bool(prop(self.match, "bLive")), "Actual native Start must succeed before physical fixtures")
         self.isolate()
         self.move_pawn((-2500, -1700, 1200))
         self.record(CASES[0], bool(prop(self.match, "bBloodbroom")) == wanted and bool(prop(self.match, "bPractice"))
@@ -217,7 +232,7 @@ class PyramidNetTests(base.NativePlayableTests):
         self.live_begin = float(prop(self.match, "LiveSeconds"))
         # Cross the former horizontal plane and remain above it longer than the
         # historical neutral-return delay. The hollow cap has no flat bottom.
-        ball = self.seed_ball(2, (0, 0, 4090), (0, 0, 1250))
+        ball = self.seed_ball(2, (0, 0, EAVE-116.24), (0, 0, 1250))
         rows = []
         yield self.wait(1.4, lambda: self.sample(ball, rows))
         ball.set_actor_tick_enabled(False)
@@ -286,7 +301,7 @@ class PyramidNetTests(base.NativePlayableTests):
         self.record(CASES[13], held(), role=int(prop(self.pawn, "Position")))
         self.require(held(), "Actual pickup required before held-sphere roof check")
         self.interact(False)
-        self.move_pawn((0, 0, 4700))
+        self.move_pawn((0, 0, EAVE+493.76))
         yield self.wait(.3)
         self.record(CASES[14], held() and self.balls[2].get_actor_location().z > EAVE
                     and str(prop(self.balls[2], "BallStatus")) == "", ball=xyz(self.balls[2].get_actor_location()))
@@ -294,7 +309,7 @@ class PyramidNetTests(base.NativePlayableTests):
         radius, height = capsule.get_scaled_capsule_radius(), capsule.get_scaled_capsule_half_height()
         ball_radius = self.balls[2].get_collision_radius()
         held_samples = []
-        self.move_pawn((0, 0, 5950))
+        self.move_pawn((0, 0, APEX-359.36))
         self.controller.set_control_rotation(unreal.Rotator(pitch=60, yaw=0, roll=0))
         def fly_held():
             self.pawn.add_movement_input(vector((0, 0, 1)), 1, False)
@@ -348,12 +363,12 @@ class PyramidNetTests(base.NativePlayableTests):
                         and row["status"] == "" for row in rows), radius=radius, samples=rows)
         self.isolate()
         before = self.scores()
-        self.seed_ball(0, (6200, 0, 2103.12), (2000, 0, 0))
+        self.seed_ball(0, ((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), (2000, 0, 0))
         yield self.wait_until(lambda: self.scores() != before, timeout=2)
         self.balls[0].set_actor_tick_enabled(False)
         self.record(CASES[21], self.score_delta(before) == [13, 0], delta=self.score_delta(before))
         before = self.scores()
-        self.seed_ball(1, (-6200, 0, 3048), (-2000, 0, 0))
+        self.seed_ball(1, (-(dimensions.GOAL_PLANE_X-200.8), 0, 3048), (-2000, 0, 0))
         yield self.wait_until(lambda: self.scores() != before, timeout=2)
         self.balls[1].set_actor_tick_enabled(False)
         self.record(CASES[22], self.score_delta(before) == [0, 37], delta=self.score_delta(before))

@@ -137,11 +137,11 @@ the single-world tests. These runs do not establish human key timing, visual
 quality, audio, match balance, sustained performance, remote-machine latency,
 loss, reconnects, dedicated-server operation or sixteen human participants.
 
-## Implemented scope and remaining work
+## Scope and remaining work at this milestone
 
-The native menu has **18 implemented sporting adapters and 13 pending adapters**
-among its 31 choices. The pending group contains eleven base spells and both
-Ancient Magic actions. The broader source catalog separately includes three
+The September 12 build had **18 implemented sporting adapters and 13 pending adapters**
+among its 31 choices. That pending group contained eleven base spells and both
+Ancient Magic actions. Current source has [23 sporting adapters and eight pending actions](native-sport-spells.md); the earlier receipts here do not validate those later additions. The broader source catalog separately includes three
 beast-care tools. The passing suites exercise selected adapters and contracts;
 they do not independently validate every implemented spell.
 

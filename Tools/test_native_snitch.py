@@ -1,8 +1,10 @@
 """Native Snitch release/catch/result/rematch checks in disposable practice PIE.
 
 Run in the staged BB_Regulation UE5.8 editor with PIE stopped. If this engine
-omits the PlayNetMode Python enum, select Play As Listen Server in the UI and
-pass settings_already_configured=True, as with test_native_network.py. The suite
+omits the PlayNetMode Python enum, configure Play As Listen Server through the
+UI or normal editor config while the editor is closed. Pass
+settings_already_configured=True and settings_source="editor_ui" (default) or
+"editor_config", matching the actual route as with test_native_network.py. The suite
 sets the live EditorEngine's editable InEditorGameURLOptions to include
 '?Practice=1' and one in-process player, then restores all settings it changed.
 AdditionalServerGameOptions only reaches new-process launches in UE5.8.
@@ -26,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "Tools") not in sys.path:
     sys.path.insert(0, str(ROOT / "Tools"))
 from test_native_playable import NativePlayableTests, prop, unreal
+from test_native_network import net_mode_restore_actions
 
 REPORT = ROOT / ".local/native-snitch-test-results.json"
 ARGS = globals().get("BRIDGE_ARGS", {})
@@ -41,6 +44,22 @@ TESTS = (
     "rematch_reschedules_snitch",
     "play_settings_restored_and_pie_ended",
 )
+
+
+def external_net_mode_provenance(source="editor_ui"):
+    """Record the declared external route; this does not read an absent enum."""
+    source = str(source)
+    if source not in ("editor_ui", "editor_config"):
+        raise ValueError("Unknown preconfigured Play Net Mode source")
+    result = {"net_mode_configuration_source": source,
+              "net_mode_configured_in_editor": source == "editor_ui"}
+    if source == "editor_config":
+        result["net_mode_config_entry"] = {
+            "file": "EditorPerProjectUserSettings.ini", "section": "/Script/UnrealEd.LevelEditorPlaySettings",
+            "key": "PlayNetMode", "declared_value": "PIE_ListenServer",
+            "verification": "Subsequent native world authority and owning-client checks; no absent enum readback is claimed",
+        }
+    return result
 
 
 def setting_slot(obj, name):
@@ -95,8 +114,7 @@ class NativeSnitchTests(NativePlayableTests):
             "settings_restored": self.settings_restored, "dilation_restored": self.dilation_restored,
             "editor_url_restored": self.editor_url_restored,
             "reason": self.reason,
-            "external_restore_required": ["Restore the previous editor UI Play Net Mode"]
-                if self.provenance.get("net_mode_configured_in_editor") else [],
+            "external_restore_required": net_mode_restore_actions(self.provenance),
             "not_covered": ["physical piloting or keyboard timing", "normal-speed catch difficulty",
                             "22-minute regulation release", "overtime 300-point catch",
                             "network transport or remote ownership", "full-roster autonomous match quality"],
@@ -137,10 +155,11 @@ class NativeSnitchTests(NativePlayableTests):
         if net_mode is not None:
             wanted["PlayNetMode"] = net_mode
         elif ARGS.get("settings_already_configured", False):
-            self.provenance["net_mode_configured_in_editor"] = True
+            self.provenance.update(external_net_mode_provenance(ARGS.get("settings_source", "editor_ui")))
         else:
-            self.finish("not_run", "PlayNetMode Python enum is unavailable. Select Play As Listen Server in the "
-                        "editor UI, record its prior value, and run with settings_already_configured=True.")
+            self.finish("not_run", "PlayNetMode Python enum is unavailable. Configure Play As Listen Server through the "
+                        "editor UI or normal config while the editor is closed, record its prior value, and run with "
+                        "settings_already_configured=True and settings_source='editor_ui' or 'editor_config'.")
             return False
         resolved = {}
         for name, value in wanted.items():
