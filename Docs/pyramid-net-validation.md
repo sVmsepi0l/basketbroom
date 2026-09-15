@@ -1,4 +1,4 @@
-# Pyramid-net validation — 2026-09-14
+# Pyramid-net validation ï¿½2026/09/-14
 
 This record covers the closed roof revision in the standalone Unreal Engine 5.8.1 prototype. It does not certify full regulation, a completed Hogwarts Legacy mod, final art, remote multiplayer, or physical controller transport testing.
 
@@ -49,7 +49,7 @@ The owned editor was closed after a clean-package checkpoint. Its original Stand
 
 The first package built successfully at `.local/Build/Development-20260914-161309-327`; all three modes rendered and exited with code 0, and both two-process loopback checks passed. Visual inspection caught a stale "OPEN CROWN" subtitle in the training HUD, so the package was refreshed after a HUD-only correction. The gameplay binaries and maps were not changed by that correction.
 
-The isolated HUD-stage receipt is `.local/training-pyramid-stage/20260914-161806-021428/results.json`. The final package is `.local/Build/Development-20260914-161847-377`. Basketbroom, Bloodbroom and training each rendered at 1600×900, showed the closed roof, and exited normally with code 0 and no logged runtime errors. Visual review confirmed the corrected training subtitle. The native executable hash matches the prior tested roof package; only the training HUD asset changed in the final refresh.
+The isolated HUD-stage receipt is `.local/training-pyramid-stage/20260914-161806-021428/results.json`. The final package is `.local/Build/Development-20260914-161847-377`. Basketbroom, Bloodbroom and training each rendered at 1600ï¿½900, showed the closed roof, and exited normally with code 0 and no logged runtime errors. Visual review confirmed the corrected training subtitle. The native executable hash matches the prior tested roof package; only the training HUD asset changed in the final refresh.
 
 Final render/exit receipt: `.local/pyramid-packaged-visual-20260914-162042/results.json`.
 

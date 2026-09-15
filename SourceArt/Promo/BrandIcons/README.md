@@ -34,7 +34,7 @@ GitHub clear-space SVG is available when the layout needs explicit padding.
 Keep each icon next to its own destination; do not form a sponsorship row.
 Use a general "Follow the development" call to action for the social array.
 
-Brand resources consulted on 2026-09-13:
+Brand resources consulted on 2026/09/13:
 
 - [Instagram brand assets and guidelines](https://www.meta.com/brand/resources/instagram/instagram-brand/)
 - [X brand toolkit](https://about.x.com/en/who-we-are/brand-toolkit)

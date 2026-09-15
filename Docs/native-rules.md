@@ -26,13 +26,13 @@ Penalty records support minor, moderate, serious, severe, and catastrophic condu
 
 ## Verification
 
-The 2026-09-14 [pyramid-net amendment](pyramid-net.md) supersedes historical Crown assertions. Current portable runs explicitly label legacy fixtures; the dated results below are retained as observations of their original builds, not new-roof evidence.
+The 2026/09/14 [pyramid-net amendment](pyramid-net.md) supersedes historical Crown assertions. Current portable runs explicitly label legacy fixtures; the dated results below are retained as observations of their original builds, not new-roof evidence.
 
 Run `python Tools/test_native_rules.py --compiler <compiler>` with `g++`, `clang++`, or MSVC available. On Windows, `--vcvars <vcvars64.bat>` loads the compiler environment only into the test child process. `--emit-only` generates a driver and explicitly reports `not_run`.
 
-The original 2026-09-10 harness contained **60 native scenarios**: one port of each of the 54 Python reference scenarios, plus six checks for zero-index player control, double chase capture, atomic correction validation, severe/catastrophic discipline, invalid indices/nonfinite evidence, and integer overflow. Clock chunking and repeated replay compare the complete public state and event payloads. Temporary sources, binaries, compilation output, and results are written under `.local/native-rules`.
+The original 2026/09/10 harness contained **60 native scenarios**: one port of each of the 54 Python reference scenarios, plus six checks for zero-index player control, double chase capture, atomic correction validation, severe/catastrophic discipline, invalid indices/nonfinite evidence, and integer overflow. Clock chunking and repeated replay compare the complete public state and event payloads. Temporary sources, binaries, compilation output, and results are written under `.local/native-rules`.
 
-On 2026-09-10, the suite compiled with the locally bundled GCC using C++17, warnings as errors, and exceptions disabled; **60/60 passed**. The compiler is at `C:/Program Files/HogwartsLegacyCreatorKit/Engine/Binaries/ThirdParty/perl/c/bin/g++.exe`. This validates portable rules behavior; it does not substitute for the Unreal module build, replicated gameplay, or packaged-game integration tests.
+On 2026/09/10, the suite compiled with the locally bundled GCC using C++17, warnings as errors, and exceptions disabled; **60/60 passed**. The compiler is at `C:/Program Files/HogwartsLegacyCreatorKit/Engine/Binaries/ThirdParty/perl/c/bin/g++.exe`. This validates portable rules behavior; it does not substitute for the Unreal module build, replicated gameplay, or packaged-game integration tests.
 
 ## Explicit limits
 

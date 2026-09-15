@@ -100,7 +100,7 @@ bool ABBMatchState::BeginConductPenaltyShot(int32 PenaltyId, bool bModerate)
         PenaltyShooterMark = FVector(Direction * (BBArena::GoalPlaneX - BBArena::FreeShotDistance), 0, Height - 25.f);
         if (bFreeShot)
         {
-            // User-confirmed 2026-09-14 interpretation: preserve lateral
+            // User-confirmed 2026/09/14 interpretation: preserve lateral
             // position and altitude; project backwards to 44ft from the plane.
             PenaltyShooterMark = ConductFoulPoint;
             PenaltyShooterMark.X = Direction * FMath::Min(Direction * ConductFoulPoint.X, BBArena::GoalPlaneX - BBArena::FreeShotDistance);

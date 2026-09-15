@@ -32,7 +32,7 @@ instructions are preserved as `OFL-from-download.txt` and
 `README-from-download.txt`. `TRADEMARKS.txt` is the upstream project's
 trademark notice. The font is not relicensed as Basketbroom code or artwork.
 
-Sources inspected 2026-09-13:
+Sources inspected 2026/09/13:
 
 - [Google Sans Flex project](https://github.com/googlefonts/googlesans-flex)
 - [Google Fonts source metadata](https://github.com/google/fonts/blob/main/ofl/googlesansflex/METADATA.pb)

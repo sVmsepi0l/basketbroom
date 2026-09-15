@@ -1,4 +1,4 @@
-# Development checkpoint — 2026-09-15
+# Development checkpoint — 2026/09/15
 
 This is an unfinished development checkpoint on `sprint-3-spells-graphics`, after user reported 4% remaining usage. Continue the authorized full regulation, spellwork, Hogwarts integration and two environment/art tracks. Do not treat this checkpoint as a completed game or release.
 
@@ -6,7 +6,7 @@ This is an unfinished development checkpoint on `sprint-3-spells-graphics`, afte
 
 - All eight remaining standalone contextual spell adapters: owned workshop unlock/conjure/alter/levitate/damage/repair/vanish, earned Ancient Magic meter, pulse and physical swept throw. See native-contextual-spells.md. Gameplay tuning remains provisional.
 - Terminal Moderate/Serious restitution and conservative, explicit host-selected Moderate advantage. Original immutable foul evidence survives endings and subsequent incidents; lost possession stops advantage; owed remedies block certification. F10 toggles the one-use safe Basic-Cast mobbing adjudication; controller View opens roster then Menu toggles. See native-restitution.md for precise gates and the unfinished live acceptance recipe.
-- UE5.8.1 BasketbroomDevEditor compilation succeeded, 2026-09-15 13:27 UTC. Log: `.local/ue5/spells-advantage-editor-build.log`. New runtime PIE, game-target build and package were NOT run.
+- UE5.8.1 BasketbroomDevEditor compilation succeeded, 2026/09/15 13:27 UTC. Log: `.local/ue5/spells-advantage-editor-build.log`. New runtime PIE, game-target build and package were NOT run.
 - Portable evidence: 40 combat cases; 28 new restitution cases; 13 environment source/guard cases; 5 existing spell fixture cases. These are not live gameplay proof.
 
 ## New arenas and visual defect

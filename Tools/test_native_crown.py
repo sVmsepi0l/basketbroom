@@ -1,4 +1,4 @@
-"""RETIRED: superseded by the closed pyramid-net amendment on 2026-09-14.
+"""RETIRED: superseded by the closed pyramid-net amendment on 2026/09/14.
 
 Ordinary No Crown attribution, delayed enforcement and native restitution.
 
@@ -246,7 +246,7 @@ def main():
     # earlier real test evidence untouched.
     retired_report = ROOT / ".local/native-crown-retired-results.json"
     data = {"status": "not_run", "retired": True,
-            "reason": "No Crown was retired by the closed pyramid-net amendment on 2026-09-14.",
+            "reason": "No Crown was retired by the closed pyramid-net amendment on 2026/09/14.",
             "replacement": "Tools/test_native_pyramid_net.py",
             "passed": 0, "failed": 0, "not_run": len(CASES),
             "planned_tests": [], "historical_tests": list(CASES),

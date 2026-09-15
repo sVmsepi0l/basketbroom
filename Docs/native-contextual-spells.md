@@ -84,4 +84,4 @@ written. Syntax checks and `--list` are not runtime success.
 
 The portable combat suite passes 40 scenarios, including two new read-only
 pending-hit checks for immutable attack identity, single use, live admission,
-expiry, unavailable/replaced participants and phase reset. The integrated UE5.8 editor module compiled successfully on 2026-09-15. These new PIE runs, network replication, rendered/package checks and a genuine rematch remain pending until their actual receipts pass.
+expiry, unavailable/replaced participants and phase reset. The integrated UE5.8 editor module compiled successfully on 2026/09/15. These new PIE runs, network replication, rendered/package checks and a genuine rematch remain pending until their actual receipts pass.

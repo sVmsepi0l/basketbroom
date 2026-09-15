@@ -105,7 +105,7 @@ Local results live under `.local/native-penalty-*`. Their timestamps and binary
 provenance identify each run; prior controller/wandplay counts are historical
 milestones and should not be silently added to a new total.
 
-### 2026-09-14 native validation
+### 2026/09/14 native validation
 
 The penalty implementation build succeeded under UE 5.8.1. Its runtime DLL SHA-256 is
 `d4d79e306b7a966178032e6887c1189aec4f9006cb3de14e1763bc71e2df9f61`.

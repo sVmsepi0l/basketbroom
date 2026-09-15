@@ -1,6 +1,6 @@
-# Native wandplay validation — 2026-09-12
+# Native wandplay validation — 2026/09/12
 
-> **Historical roof evidence:** The Crown reservation used by this milestone predates the user’s 2026-09-14 [closed pyramid-net amendment](pyramid-net.md). These original results remain historical evidence of their named builds; they do not validate the replacement roof. Current native matches cannot create No Crown exit reservations.
+> **Historical roof evidence:** The Crown reservation used by this milestone predates the user’s 2026/09/14 [closed pyramid-net amendment](pyramid-net.md). These original results remain historical evidence of their named builds; they do not validate the replacement roof. Current native matches cannot create No Crown exit reservations.
 
 The BB-0 wandplay and controller milestone has **229 passing checks: 130 portable
 C++ cases and 99 native Unreal PIE checks**. Every receipt listed below has `status: passed`;

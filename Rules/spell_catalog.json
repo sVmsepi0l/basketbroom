@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "catalog_id": "hogwarts_legacy_base_game_player_actions",
-  "verified_on": "2026-09-12",
+  "verified_on": "2026/09/12",
   "scope": "Base-game player spell repertoire after relevant unlocks. Enemy, unused, debug and mod-added spells are not admitted merely because an internal asset exists.",
   "counting": {
     "spells": 29,
@@ -63,7 +63,7 @@
     }
   ],
   "confirmed_bb0_rules": {
-    "source": "User direction 2026-09-12; later than the original bible's provisional alpha spell whitelist.",
+    "source": "User direction 2026/09/12; later than the original bible's provisional alpha spell whitelist.",
     "all_base_game_spells_available_offensively_and_defensively": true,
     "unforgivables_prohibited": true,
     "max_teammates_mobbing_one_opponent": 3,

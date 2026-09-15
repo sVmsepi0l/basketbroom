@@ -142,8 +142,8 @@ pass `--review-from` the previous export JSON and choose a fresh `--name`:
 python Tools/assemble_gameplay_demo.py `
   --capture .local/gameplay-demo/take-01/capture.json `
   --manifest .local/gameplay-demo/take-01/director.json `
-  --review-from "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-12\basketbroom-prototype-4k-export.json" `
-  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-12" `
+  --review-from "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026/09/12\basketbroom-prototype-4k-export.json" `
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026/09/12" `
   --name basketbroom-prototype-4k-v2
 ```
 
@@ -193,9 +193,9 @@ from the standalone UE5.8 prototype; it does not establish a completed HLCK port
 
 ```powershell
 python Tools/finish_gameplay_promo.py `
-  --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Lowercase\basketbroom-prototype-4k60-lowercase-review.mp4" `
+  --gameplay "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026/09/13-Lowercase\basketbroom-prototype-4k60-lowercase-review.mp4" `
   --art SourceArt/Promo/basketbroom-redrock-cliff-alcove-keyart-v2.png `
-  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026-09-13-Lowercase" `
+  --output-dir "$env:USERPROFILE\Videos\Basketbroom\Prototype-2026/09/13-Lowercase" `
   --name basketbroom-prototype-4k60-lowercase
 ```
 
@@ -224,7 +224,7 @@ before delivery.
 ### Current six-position showcase
 
 The expanded delivery is in
-`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-Positions\`.
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026/09/13-Positions\`.
 `basketbroom-prototype-4k60-positions.mp4` is the complete **4:00** Southwest
 promo. Matching `-clean.mp4` and `-review.mp4` files contain **222 seconds** of
 fresh gameplay, with 23 cards in the review. Each of Netminder, Chaser, Trapper,
@@ -264,7 +264,7 @@ referee and result samples, and both encoded bookends.
 ### Earlier lowercase revision
 
 The preceding delivery is in
-`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-Lowercase\`.
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026/09/13-Lowercase\`.
 `basketbroom-prototype-4k60-lowercase.mp4` is the complete 3:18 Southwest promo;
 `basketbroom-prototype-4k60-lowercase-review.mp4` is the 180-second gameplay edit.
 Both use lowercase editorial copy. Matching `-intro.png` and `-outro.png` files
@@ -286,7 +286,7 @@ inspection. The adjacent media and visual receipts record the evidence.
 
 ### Native 60 fps take and illustrated promo
 
-The 2026-09-13 take in `.local/gameplay-demo/take-60-01` completed **44/44
+The 2026/09/13 take in `.local/gameplay-demo/take-60-01` completed **44/44
 observed gameplay checks**, ending **232–37**. Its capture audit verified all
 **10,818 frames** at native **3840 × 2160**, with contiguous names and **10,818
 distinct SHA256 hashes**. The first **10,800 frames** supply exactly 180 seconds
@@ -300,7 +300,7 @@ mix; the prior 30 fps event timings and WAV are not reused.
 
 The delivered `basketbroom-prototype-4k60-promo.mp4` is **198 seconds**, **11,880
 frames**, 4K60, with matching red-rock bookends in **Google Sans Flex Black**.
-It lives under `%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-4K60\`.
+It lives under `%USERPROFILE%\Videos\Basketbroom\Prototype-2026/09/13-4K60\`.
 The folder also holds the 180-second clean and captioned gameplay exports,
 editable bookend PNGs/ASS/layout, fonts and official icons, the separate cue WAV,
 source receipts, editing notes and selected encoded frames used for visual QA.
@@ -318,7 +318,7 @@ Georgia/Segoe typography intermediate. The **`-promo`** prefix identifies the
 Google Sans Flex Black version before the environment revision. No social uploads were performed.
 
 The later environment revision lives in
-`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-13-Environment-v2\`.
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026/09/13-Environment-v2\`.
 Its Southwest video is `basketbroom-prototype-4k60-cliff-alcove.mp4`, using the
 same validated gameplay/card source with revised red-rock cliff-alcove and adobe
 bookends. `basketbroom-redwoods-coast-intro.png` and `-outro.png` provide the
@@ -333,7 +333,7 @@ are in the new delivery folder; earlier videos remain available.
 
 ### Earlier 30 fps versions
 
-The first full take on 2026-09-12 completed **44/44 observed gameplay checks**
+The first full take on 2026/09/12 completed **44/44 observed gameplay checks**
 and reached a certified **232–37 Teal win** after the Snitch catch. The capture
 protocol wrote all **5,409 native 3840 × 2160 frames** with no failure. The edit
 uses the first 5,400 frames for exactly 180 seconds at 30 fps; the extra nine
@@ -342,7 +342,7 @@ throttle settings were restored, and the editor reported no dirty map or content
 packages after the owned capture session ended.
 
 The clean and captioned review MP4s were exported to
-`%USERPROFILE%\Videos\Basketbroom\Prototype-2026-09-12\` as
+`%USERPROFILE%\Videos\Basketbroom\Prototype-2026/09/12\` as
 `basketbroom-prototype-4k-clean.mp4` and
 `basketbroom-prototype-4k-review.mp4`. Both stream inspections confirm 3840 × 2160,
 30 fps and 5,400 frames / 180 seconds. The folder also contains chapter captions,
