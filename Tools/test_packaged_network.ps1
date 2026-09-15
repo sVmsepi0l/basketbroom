@@ -13,7 +13,8 @@ No editor or firewall changes.
 param(
     [ValidateRange(1024, 65535)][int]$Port = 18779,
     [ValidateRange(5, 30)][int]$TimeoutSeconds = 30,
-    [switch]$Bloodbroom
+    [switch]$Bloodbroom,
+    [ValidateSet('Classic', 'Redrock', 'Redwoods')][string]$Arena = 'Classic'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -214,7 +215,13 @@ try {
     } finally { $reservation.Dispose() }
 
     $common = @('-nullrhi', '-unattended', '-nosound', '-nosplash', '-MULTIHOME=127.0.0.1', '-FORCELOGFLUSH')
-    $hostMap = '/Basketbroom/Maps/BB_Regulation?listen?Practice=1'
+    . (Join-Path $PSScriptRoot 'Resolve-BBArena.ps1')
+    $availableMaps = @('/Basketbroom/Maps/BB_Regulation')
+    if ($null -ne $package.PSObject.Properties['ArenaMaps']) { $availableMaps = @($package.ArenaMaps) }
+    $selectedMap = Resolve-BBArenaMap -Arena $Arena -AvailableMaps $availableMaps
+    $report.Arena = $selectedMap
+    $mapPattern = [regex]::Escape($selectedMap)
+    $hostMap = $selectedMap + '?listen?Practice=1'
     if ($Bloodbroom) { $hostMap += '?Bloodbroom=1' }
     $serverArguments = @($hostMap, "-port=$Port") + $common + @(('-abslog="{0}"' -f $serverLog))
     # NMT_Challenge copies URL options but overrides Name= with GetNickname().
@@ -259,12 +266,12 @@ try {
             $requestIndex = $serverText.IndexOf($request, [StringComparison]::Ordinal)
             if ($requestIndex -ge 0) { $joined = Find-Evidence ($serverText.Substring($requestIndex)) '^.*Join succeeded:.*$' }
         }
-        $welcomed = Find-Evidence $clientText '^.*Welcomed by server \(Level: /Basketbroom/Maps/BB_Regulation.*$'
+        $welcomed = Find-Evidence $clientText ('^.*Welcomed by server \(Level: ' + $mapPattern + '(?:\?|\)|\s|$).*$')
         $loaded = $null
         if ($welcomed) {
             $welcomeIndex = $clientText.IndexOf($welcomed, [StringComparison]::Ordinal)
             if ($welcomeIndex -ge 0) {
-                $loaded = Find-Evidence ($clientText.Substring($welcomeIndex)) '^.*LogLoad: Took .*LoadMap\(/Basketbroom/Maps/BB_Regulation\).*$'
+                $loaded = Find-Evidence ($clientText.Substring($welcomeIndex)) ('^.*LogLoad: Took .*LoadMap\(' + $mapPattern + '\).*$')
             }
         }
         $report.Evidence = [ordered]@{

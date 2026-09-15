@@ -69,6 +69,9 @@ public:
     // and prior occupant's individual confirmation state must not be inherited.
     bool set_actor(int player, int team, bool eligible, bool new_identity = false);
     CombatDecision begin_attack(int attacker, int target, const AttackSpec& spec);
+    // Read-only admission before a delayed effect: exact original caster and
+    // target, unresolved receipt, live availability and unexpired lifetime.
+    CombatDecision validate_pending_hit(std::uint64_t id, int attacker, int target) const;
     // Resolve the SAME server-bound target once. Contact does not mean impaired.
     // Impeded requires a server-verified successful effect and a catalogue trait;
     // -1 uses the configured maximum, otherwise supply actual remaining life.

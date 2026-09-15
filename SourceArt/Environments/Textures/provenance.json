@@ -1,0 +1,42 @@
+{
+  "tool": "built-in image_gen",
+  "intent": "original albedo sources used by actual 3D environment materials",
+  "images": [
+    {
+      "file": "T_BB_RedSandstone_Albedo.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: original seamless square base-color texture for real-time Unreal Engine sandstone cliff geometry. Generate one 2048x2048 image, surface texture only, not a landscape, scene or mockup. Weathered warm red sandstone from the American Southwest Four Corners region, reddish burnt-sienna minerals, fine sandy pores, delicate horizontal sediment lamination and restrained pale ochre streaks. Flat orthographic view perpendicular to the rock, uniformly diffuse cross-polarized scan-like color with no directional shadows or specular highlights. Continuous material across all four edges for tiling; no isolated big boulders, brickwork, deep cast-shadow cracks, vegetation, animals, text, frame or watermark. Natural fine and medium variation, enough subtle striation to complement layered 3D cliff ledges without baked-in large forms. This is albedo only, no fake normal-map colors or channel pack.",
+      "source": "C:/Users/bigdi/.codex/generated_images/01a08ab2-5505-7e03-a50a-12bdde623c7e/exec-41c2cf08-9757-43ef-96db-ab1563bae42a.png"
+    },
+    {
+      "file": "T_BB_Adobe_Albedo.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: original seamless square albedo/base-color texture for traditional Puebloan adobe walls in an Unreal Engine American Southwest arena. Generate one 2048x2048 texture image only, no building or scene. Warm matte sun-baked earthen adobe plaster, restrained sandy peach/ochre clay, delicate hand-smoothed irregularity and extremely fine straw/mineral grains, occasional subtle hairline weathering. Uniform flat orthographic surface, diffuse scan-like color, no directional lighting, cast shadows, glossy highlights or vignette. Consistent material edge to edge designed for seamless four-way tiling, no bricks, stones, mortar joints, lettering, painted patterns, recognizable forms, vegetation, borders or watermark. Natural restrained variation at roughly one-metre surface scale. Albedo only; no normal-map colors or packed channels.",
+      "source": "C:/Users/bigdi/.codex/generated_images/01a08ab2-5505-7e03-a50a-12bdde623c7e/exec-4b5580f1-fe28-48e1-a88b-b8a07ccef930.png"
+    },
+    {
+      "file": "T_BB_RedwoodBark_Albedo.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: original seamless square base-color texture for old-growth coast redwood trunks in an Unreal Engine forest arena. Generate one 2048x2048 texture image only. Orthographic close-up of Sequoia sempervirens fibrous bark, deeply textured long vertical reddish-brown ridges, warm cinnamon and dark russet fibres, restrained grey weathered flecks, natural irregular vertical grain. Uniform diffuse cross-polarized scan-like color; subtle intrinsic dark creases but no directional cast shadows, sunlight, specular highlights or vignette. Continuous material edge to edge designed for seamless tiling; vertical fibres continue through top and bottom. No whole tree, curved trunk silhouette, branches, knots resembling faces, moss carpet, leaves, objects, text, borders or watermark. Albedo only, no fake normal-map colors or packed channels. Realistic fine detail suitable for applying to separately modelled fluted trunks.",
+      "source": "C:/Users/bigdi/.codex/generated_images/01a08ab2-5505-7e03-a50a-12bdde623c7e/exec-3c0dab15-6d1c-41da-a3ef-0d5a7a777799.png"
+    }
+  ],
+  "limitations": "Albedo only, no scanned normal/roughness data. Requested seamless tiling still needs in-engine repetition review. Engine capture and gameplay remain separate.",
+  "verified_files": [
+    {
+      "file": "T_BB_Adobe_Albedo.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "3c5f5fc2a577b7ee94f5e11a2ba95839b3b01f6aa096cdb7a6a83e8b47a81646"
+    },
+    {
+      "file": "T_BB_RedSandstone_Albedo.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "a7e010aed81b25c063a6a109a5cb8614a6ccb2ea72f2187208eb52fbdb08d200"
+    },
+    {
+      "file": "T_BB_RedwoodBark_Albedo.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "e906bdb57aa8e7ded332fdffc089d0c05d90f7b40d602700748a441968b29b7b"
+    }
+  ]
+}

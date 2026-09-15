@@ -1,6 +1,6 @@
 # Sprint 3 sporting spell adapters
 
-The UE5.8 prototype now implements 23 of the 31 spell-menu actions. Five new
+This sprint initially implemented 23 of the 31 spell-menu actions. These five
 adapters extend [native wandplay](native-wandplay.md) without changing stable
 catalog indices or claiming Hogwarts Legacy's combat implementation. Their
 numbers and restrictions are provisional sporting tuning, not new BB-0 laws.
@@ -80,11 +80,12 @@ claim runtime success; the final receipts establish that separately. Network
 replication, packaged rendering, physical input devices and genuine rematch cleanup
 need their own checks.
 
-Eight actions remain contextual: Alohomora, Wingardium Leviosa, Reparo, Conjuring,
-Altering, Evanesco, Ancient Magic and Ancient Magic Throw. World construction,
-object permissions, repair/lock state, throwables and Ancient Magic resources
-need real adapters. CPU wand tactics, advanced elemental effects and the full
-Creator Kit integration also remain outstanding.
+The remaining eight contextual actions now have separate [bounded workshop and
+resource adapters](native-contextual-spells.md): Alohomora, Wingardium Leviosa,
+Reparo, Conjuring, Altering, Evanesco, Ancient Magic and Ancient Magic Throw.
+Their dedicated tests establish their own validation, separate from the five
+status adapters documented here. CPU wand tactics, advanced elemental effects
+and the full Creator Kit integration remain outstanding.
 
 ## Separate network coverage
 

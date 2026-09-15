@@ -127,16 +127,16 @@ startup logs and physical device checks remain separate evidence.
 
 ## Validation status
 
-The 2026-09-14 source adds an eighteenth controller case: D-pad Right must
+The 2026/09/14 source adds an eighteenth controller case: D-pad Right must
 select Serious during a real conduct review without applying a penalty,
 starting a shot, changing the score or selecting another spell. The test then
 chooses Moderate and exercises the existing separate Menu confirmation. This
-eighteen-case suite passed on 2026-09-14 with zero failures or skipped cases.
+eighteen-case suite passed on 2026/09/14 with zero failures or skipped cases.
 The preserved receipt is `.local/penalty-validation-solo-20260914-141926/02-native-controller-test-results.json`.
 This run precedes the final result-message-only patch; the dated 17-case evidence
 and totals below remain historical and do not include the new case.
 
-On 2026-09-12, **17 controller checks passed in 14.172 seconds**, with zero failed
+On 2026/09/12, **17 controller checks passed in 14.172 seconds**, with zero failed
 and zero not run, under `5.8.1-56057345+++UE5+Release-5.8`. The receipt is
 `.local/native-controller-test-results.json`, produced by
 `Tools/test_native_controller.py` in the owned `BB_Regulation` PIE world. It
@@ -189,7 +189,7 @@ continued. Alt+F4 closed the game normally, with a clean exit in its log.
 `.local/controller-packaged-smoke.json` records the observations and limits.
 This manual smoke check adds no cases to the 229 automated-check total.
 
-In a subsequent physical check on 2026-09-12, Windows detected the user's Sony
+In a subsequent physical check on 2026/09/12, Windows detected the user's Sony
 DualSense (VID `054c`, PID `0ce6`) over USB. The same packaged build registered
 it through GameInput as a gamepad on device 1, platform user 0. The user confirmed
 that pressing Triangle opened the spellbook. This is actual hardware button

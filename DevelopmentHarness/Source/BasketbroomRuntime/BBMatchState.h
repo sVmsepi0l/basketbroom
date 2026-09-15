@@ -7,6 +7,7 @@
 #include "BBMatchState.generated.h"
 class ABBRiderCharacter;
 class ABBBall;
+class ABBSpellArenaObject;
 
 UCLASS()
 class BASKETBROOMRUNTIME_API ABBMatchState : public AGameStateBase
@@ -36,6 +37,12 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly) FString LastConductCall;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bConductReviewPending = false;
     UPROPERTY(Replicated, BlueprintReadOnly) FString ConductReviewStatus;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bModerateAdvantageArmed = false;
+    UPROPERTY(Replicated, BlueprintReadOnly) bool bConductAdvantageLive = false;
+    /** Read-only PIE: armed, live, queued, original time, penalty, offender,
+     * victim, ball, attack, rules status, ending time, post-termination shot. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<double> DevelopmentGetConductAdvantageState() const;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotActive = false;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bFreeShot = false;
     UPROPERTY(Replicated, BlueprintReadOnly) bool bPenaltyShotReleased = false;
@@ -64,9 +71,16 @@ public:
     bool CanInteract(const ABBRiderCharacter* Rider, const ABBBall* Ball) const;
     bool TryPossess(ABBRiderCharacter* Rider, ABBBall* Ball);
     bool TryCatch(ABBRiderCharacter* Rider, ABBBall* Ball);
-    void Release(ABBRiderCharacter* Rider, FVector Aim);
+    void Release(ABBRiderCharacter* Rider, FVector Aim, bool bDeferConductBoundary = false);
     void CastSpell(ABBRiderCharacter* Rider, int32 SpellIndex, FVector Aim);
     void ConfirmImpediment(ABBRiderCharacter* Rider, uint64 AttackId);
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
+    ABBSpellArenaObject* GetSpellWorkshop(const ABBRiderCharacter* Rider) const;
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
+    int32 GetAncientMagicCharge(const ABBRiderCharacter* Rider) const;
+    /** Only the server-owned workshop calls this after swept physical contact. */
+    void ResolveThrownSpellImpact(ABBSpellArenaObject* Object, ABBRiderCharacter* Target,
+        FVector ImpactPoint, FVector Direction, uint64 AttackId);
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     TArray<int32> DevelopmentGetConductState() const;
     /** Server GameMode teardown only; clears custody, never historical sanctions. */
@@ -90,6 +104,25 @@ private:
     int32 ConductVictimTeam = -1;
     int32 ConductRestartBall = -1;
     int32 ConductBall = -1, ConductVictimSlot = -1;
+    struct FConductEvidence
+    {
+        int32 Offender = -1, VictimTeam = -1, VictimSlot = -1, Ball = -1, Spell = -1;
+        uint32 Violations = 0;
+        uint64 Attack = 0;
+        BB::Millis CommittedMs = 0;
+        int32 PenaltyId = -1;
+        FVector FoulPoint = FVector::ZeroVector;
+        FString Reason;
+        TWeakObjectPtr<ABBRiderCharacter> OriginalOffender, OriginalVictim;
+    };
+    TArray<FConductEvidence> ConductEvidence;
+    FConductEvidence LastServedConductEvidence;
+    void RegisterConductHit(ABBRiderCharacter* Offender, ABBRiderCharacter* Victim,
+        int32 Spell, int32 AffectedBall, uint32 Violations, uint64 Attack, bool bHeadHit);
+    void PresentConductEvidence();
+    void CompleteConductEvidence();
+    void TickConductAdvantage();
+    bool IsUnreviewedConductPenalty(int32 Id) const;
     TMap<int32, FTransform> PenaltySavedRiders;
     TMap<int32, FRotator> PenaltySavedViews;
     FVector PenaltyShooterMark = FVector::ZeroVector;
@@ -114,6 +147,13 @@ private:
     void SyncCombatRoster();
     int32 CombatIndex(const ABBRiderCharacter* Rider) const;
     void TickSpells(float LiveDelta);
+    UPROPERTY() TArray<TObjectPtr<ABBSpellArenaObject>> SpellWorkshops;
+    void ResetContextualSpells();
+    void TickContextualSpells(float LiveDelta);
+    ABBSpellArenaObject* EnsureSpellWorkshop(ABBRiderCharacter* Rider);
+    bool TryCastContextualSpell(ABBRiderCharacter* Rider, int32 SpellIndex, FVector Aim);
+    void ResolveSpellHit(ABBRiderCharacter* Rider, ABBRiderCharacter* Target, int32 SpellIndex,
+        FVector Aim, FVector ImpactPoint, FVector Start, uint64 ExistingAttackId = 0);
     void ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition);
     bool CanOfficiate(const ABBRiderCharacter* Rider) const;
     double MillisecondCarry = 0;

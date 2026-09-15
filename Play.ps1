@@ -4,12 +4,15 @@ param(
     [ValidateRange(480, 4320)][int]$Height = 900,
     [switch]$EditorGame,
     [ValidateSet('Auto','Training','Regulation')][string]$Mode = 'Auto',
+    [ValidateSet('Auto','Classic','Redrock','Redwoods')][string]$Arena = 'Auto',
     [switch]$Practice,
     [switch]$Bloodbroom,
     [switch]$Plan
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Tools/Resolve-BBArena.ps1')
+if ($Mode -eq 'Training' -and $Arena -notin @('Auto','Classic')) { throw 'Environment arenas use the regulation game; omit -Mode Training.' }
 $gameArguments = @('-windowed', '-NoSplash', "-ResX=$Width", "-ResY=$Height")
 $map = $null
 if ($Mode -eq 'Training') { $map = '/Basketbroom/Maps/BB_Arena' }
@@ -42,7 +45,10 @@ if ($packageExecutable) {
     if (($Mode -eq 'Regulation' -or $Practice -or $Bloodbroom) -and -not $package.NativeRuntime) {
         throw 'The latest playable package is the training build. Native regulation is waiting for a successful C++ build and packaging.'
     }
-    if ($Practice -and -not $map) { $map = '/Basketbroom/Maps/BB_Regulation' }
+    if ($Mode -ne 'Training' -and $package.NativeRuntime) {
+        $available = if ($package.PSObject.Properties['ArenaMaps']) { @($package.ArenaMaps) } else { @('/Basketbroom/Maps/BB_Regulation') }
+        $map = Resolve-BBArenaMap -Arena $Arena -AvailableMaps $available
+    }
     if ($map) { $gameArguments = @($map + $mapOptions) + $gameArguments }
     if ($Plan) {
         [pscustomobject]@{Runtime='Packaged game';Executable=$packageExecutable;Arguments=$gameArguments;WorkingDirectory=(Split-Path -Parent $packageExecutable)}
@@ -61,7 +67,8 @@ if (-not $map) {
     $descriptor = Get-Content -LiteralPath $project -Raw | ConvertFrom-Json
     $map = if (@($descriptor.Modules).Where({ $null -ne $_ }).Count -gt 0) { '/Basketbroom/Maps/BB_Regulation' } else { '/Basketbroom/Maps/BB_Arena' }
 }
-$arena = Join-Path $PSScriptRoot ('DevelopmentHarness\Plugins\Basketbroom\Content\Maps\' + ($map.Split('/')[-1]) + '.umap')
+if ($map -ne '/Basketbroom/Maps/BB_Arena') { $map = Resolve-BBArenaMap -Arena $Arena -AvailableMaps @(Get-BBEditorArenaMaps -Repository $PSScriptRoot) }
+$arenaFile = Join-Path $PSScriptRoot ('DevelopmentHarness\Plugins\Basketbroom\Content\Maps\' + ($map.Split('/')[-1]) + '.umap')
 
 if (-not (Test-Path -LiteralPath $editor -PathType Leaf)) {
     throw "Unreal Engine 5.8 was not found at '$EngineRoot'. Pass -EngineRoot with your UE_5.8 folder."
@@ -76,7 +83,7 @@ if ($version.MajorVersion -ne 5 -or $version.MinorVersion -ne 8) {
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) {
     throw "Basketbroom project is missing: '$project'."
 }
-if (-not (Test-Path -LiteralPath $arena -PathType Leaf)) {
+if (-not (Test-Path -LiteralPath $arenaFile -PathType Leaf)) {
     throw 'The generated arena is missing. Open the editor and run Tools/build_all.py as described in README.md.'
 }
 

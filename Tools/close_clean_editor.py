@@ -27,7 +27,7 @@ def check():
         raise RuntimeError('Preserving unsaved editor packages: ' + repr(dirty))
     world = unreal.EditorLevelLibrary.get_editor_world()
     path = world.get_path_name().split('.')[0] if world else None
-    allowed = ('/Basketbroom/Maps/Basketbroom_DungeonMap', '/Basketbroom/Maps/BB_Arena_Port') if project == kit else ('/Basketbroom/Maps/BB_Regulation', '/Basketbroom/Maps/BB_Arena')
+    allowed = ('/Basketbroom/Maps/Basketbroom_DungeonMap', '/Basketbroom/Maps/BB_Arena_Port') if project == kit else ('/Basketbroom/Maps/BB_Regulation', '/Basketbroom/Maps/BB_Arena', '/Basketbroom/Maps/BB_Redrock', '/Basketbroom/Maps/BB_Redwoods')
     if path not in allowed:
         raise RuntimeError('Expected an already-open owned arena map')
     if project == kit:

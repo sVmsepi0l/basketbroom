@@ -661,6 +661,7 @@ void ABBRiderCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindKey(EKeys::F7, IE_Pressed, this, &ABBRiderCharacter::RequestPossessionAward);
     Input->BindKey(EKeys::F8, IE_Pressed, this, &ABBRiderCharacter::RequestPenaltyShot);
     Input->BindKey(EKeys::F9, IE_Pressed, this, &ABBRiderCharacter::RequestEjection);
+    Input->BindKey(EKeys::F10, IE_Pressed, this, &ABBRiderCharacter::RequestModerateAdvantage);
 }
 
 void ABBRiderCharacter::MovementPressed(FKey Key) { bUsingGamepad = false; MovementKeys.Add(Key); }
@@ -712,6 +713,7 @@ void ABBRiderCharacter::RequestFreeShot() { SubmitAction(12); }
 void ABBRiderCharacter::RequestPossessionAward() { SubmitAction(9); }
 void ABBRiderCharacter::RequestPenaltyShot() { SubmitAction(10); }
 void ABBRiderCharacter::RequestEjection() { SubmitAction(11); }
+void ABBRiderCharacter::RequestModerateAdvantage() { SubmitAction(13); }
 
 void ABBRiderCharacter::SubmitAction(int32 Action, int32 Value)
 {
@@ -727,7 +729,7 @@ bool ABBRiderCharacter::DevelopmentRequestAction(int32 Action, int32 Value)
     return false;
 #else
     if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 12
+        || !IsValid(Cast<APlayerController>(GetController())) || Action < 0 || Action > 13
         || (Action == 2 && (Value < 0 || Value > 5))
         || (Action == 3 && (Value < 0 || Value > 1))
         || (Action == 6 && (Value < 0 || Value >= BBSpellCatalog::Count()))
@@ -785,7 +787,7 @@ void ABBRiderCharacter::ServerStopInteract_Implementation()
 
 void ABBRiderCharacter::ServerAction_Implementation(int32 Action, int32 Value, FVector Aim)
 {
-    if (!HasAuthority() || !Controller || Action < 0 || Action > 12)
+    if (!HasAuthority() || !Controller || Action < 0 || Action > 13)
     {
         return;
     }

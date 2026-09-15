@@ -119,6 +119,18 @@ CombatPolicy::Attack* CombatPolicy::find(std::uint64_t id) {
     return found == attacks_.end() ? nullptr : &*found;
 }
 
+CombatDecision CombatPolicy::validate_pending_hit(std::uint64_t id, int attacker, int target) const {
+    if (!valid_) return deny(CombatDenial::InvalidConfiguration, id);
+    if (!live_) return deny(CombatDenial::NotLive, id);
+    const auto found = std::find_if(attacks_.begin(), attacks_.end(), [id](const Attack& attack) { return attack.id == id; });
+    if (id == 0 || found == attacks_.end() || now_ >= found->expires) return deny(CombatDenial::UnknownAttack, id);
+    if (found->attacker != attacker) return deny(CombatDenial::InvalidActor, id);
+    if (found->target != target) return deny(CombatDenial::InvalidTarget, id);
+    if (found->resolved) return deny(CombatDenial::AlreadyResolved, id);
+    if (!actors_[attacker].eligible || !actors_[target].eligible) return deny(CombatDenial::Unavailable, id);
+    auto result = accept(id); result.attempt_violations = found->attempt_violations; return result;
+}
+
 CombatDecision CombatPolicy::resolve_hit(std::uint64_t id, HitOutcome outcome, bool hit_head,
                                         std::int64_t impediment_ms) {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration, id);

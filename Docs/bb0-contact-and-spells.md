@@ -1,6 +1,6 @@
 # BB-0 contact and spell direction
 
-User direction recorded **2026-09-12**. These later instructions supersede the original bible's provisional five-effect alpha spell whitelist. The [original bible](basketbroom_rules_bible_v0.1.md) remains unchanged as the historical source; this note does not silently replace its penalty ladder or invent missing timings.
+User direction recorded **2026/09/12**. These later instructions supersede the original bible's provisional five-effect alpha spell whitelist. The [original bible](basketbroom_rules_bible_v0.1.md) remains unchanged as the historical source; this note does not silently replace its penalty ladder or invent missing timings.
 
 ## Confirmed by the user
 

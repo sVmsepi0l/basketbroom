@@ -275,6 +275,7 @@ private:
     void RequestPossessionAward();
     void RequestPenaltyShot();
     void RequestEjection();
+    void RequestModerateAdvantage();
     void ShowNextSpellNotice();
     void RefreshSpellVisuals();
     void SubmitAction(int32 Action, int32 Value = 0);

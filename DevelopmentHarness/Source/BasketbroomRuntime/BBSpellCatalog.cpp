@@ -8,7 +8,7 @@ const FBBSpellSpec Spells[] = {
     {TEXT("Protego"), E::Shield, 2.f, 0, 0, false,false,false, TEXT("One-second shield. R casts directly. Curses pierce it.")},
     {TEXT("Stupefy"), E::Stun, 2.f, 3000, 0, false,true,false, TEXT("Stuns for 1.2 seconds. No stun after a confirmed impediment.")},
     {TEXT("Revelio"), E::Reveal, 2.f, 2200, 0, false,false,false, TEXT("Reveal concealed opponents within 22m for 6 live seconds. Does not see through walls.")},
-    {TEXT("Alohomora"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a locked world object; arena adapter pending.")},
+    {TEXT("Alohomora"), E::Workshop, .5f, 900, 0, false,false,false, TEXT("Within 9m, aim at your side-bay locker to unlock it. No world doors or official equipment edits.")},
     {TEXT("Petrificus Totalus"), E::BodyBind, 3.f, 350, 0, false,true,false, TEXT("Concealed, within 3.5m and behind a rider: bind for 2.5s. Protego blocks; no double-taps.")},
     {TEXT("Accio"), E::Pull, 1.5f, 2200, 0, false,false,false, TEXT("Pulls a rider toward the caster. Does not grab chase balls.")},
     {TEXT("Depulso"), E::Push, 1.5f, 2200, 0, false,false,false, TEXT("Pushes a rider away; physical arena bounds still apply.")},
@@ -25,16 +25,16 @@ const FBBSpellSpec Spells[] = {
     {TEXT("Bombarda"), E::Push, 2.5f, 2800, 40, false,false,false, TEXT("Heavy impact and knockback. Splash adapter pending.")},
     {TEXT("Lumos"), E::Light, .3f, 0, 0, false,false,false, TEXT("Toggle wand light. Does not count toward mob attacks.")},
     {TEXT("Disillusionment"), E::Conceal, 2.f, 0, 0, false,false,false, TEXT("Conceal for 6 live seconds. Casting at riders or taking a hit breaks it. Revelio counters.")},
-    {TEXT("Wingardium Leviosa"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a legal movable world object; adapter pending.")},
-    {TEXT("Reparo"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a repairable world object; adapter pending.")},
-    {TEXT("Conjuring Spell"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a supported construction space; adapter pending.")},
-    {TEXT("Altering Spell"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a conjured editable world object; adapter pending.")},
-    {TEXT("Evanesco"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a removable conjured object; adapter pending.")},
+    {TEXT("Wingardium Leviosa"), E::Workshop, .6f, 900, 0, false,false,false, TEXT("Aim at your intact construct within 9m: lift/lower it 1.6m inside its own bay. Never moves official balls.")},
+    {TEXT("Reparo"), E::Workshop, 1.f, 900, 0, false,false,false, TEXT("Aim at your damaged or broken bay construct within 9m to restore it. Does not heal riders.")},
+    {TEXT("Conjuring Spell"), E::Workshop, 1.f, 900, 0, false,false,false, TEXT("Aim at your unlocked bay within 9m to create one nonblocking practice construct. One per rider.")},
+    {TEXT("Altering Spell"), E::Workshop, .6f, 900, 0, false,false,false, TEXT("Aim at your intact bay construct within 9m: cube, sphere or cylinder. Size and permissions stay fixed.")},
+    {TEXT("Evanesco"), E::Workshop, .6f, 900, 0, false,false,false, TEXT("Aim at your bay construct within 9m to remove it. Cannot erase opponents, goals, nets or official equipment.")},
     {TEXT("Avada Kedavra"), E::Knockout, 6.f, 2800, 100, false,false,true, TEXT("Prototype: six-second knockout. Illegal outside Bloodbroom.")},
     {TEXT("Crucio"), E::Curse, 4.f, 2800, 25, false,false,true, TEXT("Prototype: two-second disable. Illegal outside Bloodbroom.")},
     {TEXT("Imperio"), E::Confuse, 4.f, 2800, 0, false,false,true, TEXT("Sport adaptation: reverse horizontal flight input for 3s. Keep look/up/down control. Unforgivable.")},
-    {TEXT("Ancient Magic"), E::Context, 0, 0, 0, false,false,false, TEXT("Meter, finisher and sporting adaptation pending.")},
-    {TEXT("Ancient Magic Throw"), E::Context, 0, 0, 0, false,false,false, TEXT("Needs a legal throwable world object; adapter pending.")}
+    {TEXT("Ancient Magic"), E::Ancient, 4.f, 2600, 55, false,false,false, TEXT("100 charge: 55-vitality pulse plus push. Legal enemy hits earn 20. Protego blocks; BB-0 still applies.")},
+    {TEXT("Ancient Magic Throw"), E::Throw, 2.f, 3000, 35, false,false,false, TEXT("25 charge: within 6m of your intact construct, aim at a rider to launch it. Swept flight, Protego and BB-0 apply.")}
 };
 }
 int32 BBSpellCatalog::Count() { return UE_ARRAY_COUNT(Spells); }

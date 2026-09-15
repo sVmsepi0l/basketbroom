@@ -78,6 +78,14 @@ void ABBHUD::DrawHUD()
         : Rider->SpellCooldownRemaining > 0.f ? FString::Printf(TEXT("%.1fs"),Rider->SpellCooldownRemaining) : TEXT("READY");
     Text(SpellState,335,86,.70f,!Penalty && SpellReady && Rider->SpellCooldownRemaining <= 0.f ? Teal : Gold);
     Text(Match->bBloodbroom ? TEXT("BLOODBROOM  /  BB-0 PLAYTEST") : TEXT("BASKETBROOM  /  BB-0 PLAYTEST"),UW/2-170,128,.77f,Match->bBloodbroom ? Copper : Muted);
+    if ((Rider->SelectedSpell == 29 || Rider->SelectedSpell == 30) && Match->PendingPenaltyCount == 0)
+    {
+        const int32 Charge = Match->GetAncientMagicCharge(Rider);
+        Rect(22,137,420,32,Ink);
+        Text(FString::Printf(TEXT("ANCIENT MAGIC  %d / 100"),Charge),38,144,.78f,Gold);
+        Rect(272,148,150,5,FLinearColor(.12,.16,.18,1));
+        Rect(272,148,150.f * FMath::Clamp(Charge / 100.f,0.f,1.f),5,Gold);
+    }
     if (Match->PendingPenaltyCount > 0)
     {
         Rect(22,142,420,117,Ink);
@@ -87,6 +95,13 @@ void ABBHUD::DrawHUD()
         Match->PendingPenaltySummary.ParseIntoArray(Details,TEXT(" | "),false);
         for (int32 I=0;I<FMath::Min(Details.Num(),3);++I)
             Text(Details[I].ToUpper().Left(48),40,181+I*23,.76f,I==0?Cream:Muted);
+    }
+    if (Match->bModerateAdvantageArmed || Match->bConductAdvantageLive)
+    {
+        Rect(UW/2-305,153,610,47,Ink);
+        Rect(UW/2-305,153,4,47,Gold);
+        Text(Match->bConductAdvantageLive ? TEXT("ADVANTAGE / MODERATE SHOT OWED") : TEXT("HOST PLAYTEST CALL / NEXT SAFE BASIC-CAST MOBBING: MODERATE"),UW/2-289,161,.74f,Gold);
+        Text(Match->bConductAdvantageLive ? TEXT("Play continues while the offended team keeps the ball.") : (Pad ? TEXT("View opens roster; Menu toggles the one-use advantage call.") : TEXT("F10 toggles this one-use call. Dangerous fouls still stop play.")),UW/2-289,181,.68f,Muted);
     }
     if (Match->ConductFoulCount > 0 || Match->bConductReviewPending)
     {
@@ -317,8 +332,8 @@ void ABBHUD::DrawHUD()
         }
         Text(TEXT("QUAFFLE 13   /   QUARK 37   /   SNIPE 69   /   SNITCH 150 (OT 300)"),UW/2-275,459,.75,Gold);
         if (Pad)
-            Text(Rider->bShowRoster ? TEXT("D-pad Left: team / Right: Bloodbroom (lobby). Y: book.") : TEXT("View: roster + team / variant controls. Y: spellbook."),UW/2-275,489,.77f,Muted);
-        else Text(Match->Status == TEXT("LOBBY") ? TEXT("V  Spellbook    Host: B toggles Bloodbroom before play") : TEXT("V  Spellbook    Q  Cast    R  Protego"),UW/2-275,489,.77f,Muted);
+            Text(Rider->bShowRoster ? TEXT("D-pad Left: team / Right: Bloodbroom. Menu: advantage call.") : TEXT("View: roster + team / variant controls. Y: spellbook."),UW/2-275,489,.77f,Muted);
+        else Text(Match->Status == TEXT("LOBBY") ? TEXT("V  Spellbook    Host: B toggles Bloodbroom before play") : TEXT("V  Spellbook    Q  Cast    R  Protego    F10  Host advantage call"),UW/2-275,489,.77f,Muted);
     }
     // Keep server feedback below overlays, and acknowledge only text actually
     // presented by this owner's HUD. The Rider sends the RPC on a later Tick.

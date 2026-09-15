@@ -6,10 +6,13 @@ param(
     [string]$EngineRoot = 'C:\Program Files\Epic Games\UE_5.8',
     [switch]$EditorGame,
     [switch]$Practice,
+    [ValidateSet('Auto','Classic','Redrock','Redwoods')][string]$Arena = 'Auto',
     [switch]$Bloodbroom,
     [switch]$Plan
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Tools/Resolve-BBArena.ps1')
+if ($Mode -eq 'Join' -and $Arena -ne 'Auto') { throw 'The host selects the arena; join without -Arena.' }
 if ($Mode -eq 'Join' -and $Bloodbroom) { throw '-Bloodbroom is a host option. Join without this flag; the server selects the match variant.' }
 if ($Address -notmatch '^[a-zA-Z0-9.-]+$') { throw 'Use a hostname or IPv4 address without a port or URL options.' }
 $project = Join-Path $PSScriptRoot 'DevelopmentHarness\BasketbroomDev.uproject'
@@ -35,7 +38,12 @@ if (-not $EditorGame) {
         }
     }
 }
-$map = '/Basketbroom/Maps/BB_Regulation?listen'
+if ($runtime -eq 'Packaged game') {
+    $available = if ($package.PSObject.Properties['ArenaMaps']) { @($package.ArenaMaps) } else { @('/Basketbroom/Maps/BB_Regulation') }
+} else { $available = @(Get-BBEditorArenaMaps -Repository $PSScriptRoot) }
+$venue = Resolve-BBArenaMap -Arena $Arena -AvailableMaps $available
+$mapFile = Join-Path $PSScriptRoot ('DevelopmentHarness/Plugins/Basketbroom/Content/Maps/' + ($venue.Split('/')[-1]) + '.umap')
+$map = $venue + '?listen'
 if ($Practice) { $map += '?Practice=1' }
 if ($Bloodbroom) { $map += '?Bloodbroom=1' }
 if ($Mode -eq 'LocalTest') { $Address = '127.0.0.1' }

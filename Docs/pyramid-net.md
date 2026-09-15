@@ -1,6 +1,6 @@
 # Closed pyramid net — Basketbroom and Bloodbroom
 
-The 2026-09-14 user amendment replaces the open roof and No Crown exit procedure
+The 2026/09/14 user amendment replaces the open roof and No Crown exit procedure
 with a stout, hollow, upward-pointing pyramidion net. This applies to both
 Basketbroom and Bloodbroom. Balls remain inside the arena and rebound from the
 sloping roof; crossing the former roofline does not kill, respawn or return a

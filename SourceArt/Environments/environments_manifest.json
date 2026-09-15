@@ -1,0 +1,3015 @@
+{
+  "schema": 1,
+  "units": "centimetres_z_up",
+  "ownership_tag": "BB.Environment.v1",
+  "source_map": "/Basketbroom/Maps/BB_Regulation",
+  "sporting_dimensions": {
+    "half_x": 7754.086173302982,
+    "half_y": 3622.3765675598274,
+    "eave": 4760.837774507201,
+    "apex": 7141.256661760803,
+    "goal_x": 7244.753135119655
+  },
+  "materials": {
+    "Sandstone": {
+      "color": [
+        0.45,
+        0.15,
+        0.062
+      ],
+      "roughness": 0.91,
+      "texture": "T_BB_RedSandstone_Albedo",
+      "texture_cm": 850
+    },
+    "SandstoneLight": {
+      "color": [
+        0.63,
+        0.28,
+        0.13
+      ],
+      "roughness": 0.92,
+      "texture": "T_BB_RedSandstone_Albedo",
+      "texture_cm": 850
+    },
+    "SandstoneDark": {
+      "color": [
+        0.28,
+        0.075,
+        0.027
+      ],
+      "roughness": 0.94,
+      "texture": "T_BB_RedSandstone_Albedo",
+      "texture_cm": 850
+    },
+    "Adobe": {
+      "color": [
+        0.58,
+        0.35,
+        0.19
+      ],
+      "roughness": 0.97,
+      "texture": "T_BB_Adobe_Albedo",
+      "texture_cm": 250
+    },
+    "AdobeLight": {
+      "color": [
+        0.73,
+        0.49,
+        0.27
+      ],
+      "roughness": 0.98,
+      "texture": "T_BB_Adobe_Albedo",
+      "texture_cm": 250
+    },
+    "Timber": {
+      "color": [
+        0.13,
+        0.061,
+        0.023
+      ],
+      "roughness": 0.91,
+      "texture": "T_BB_RedwoodBark_Albedo",
+      "texture_cm": 180
+    },
+    "DoorShadow": {
+      "color": [
+        0.023,
+        0.013,
+        0.009
+      ],
+      "roughness": 1.0
+    },
+    "Sage": {
+      "color": [
+        0.15,
+        0.2,
+        0.11
+      ],
+      "roughness": 0.97
+    },
+    "Needles": {
+      "color": [
+        0.024,
+        0.12,
+        0.071
+      ],
+      "roughness": 0.93,
+      "foliage": true
+    },
+    "NeedlesLight": {
+      "color": [
+        0.05,
+        0.21,
+        0.11
+      ],
+      "roughness": 0.94,
+      "foliage": true
+    },
+    "Bark": {
+      "color": [
+        0.27,
+        0.105,
+        0.047
+      ],
+      "roughness": 0.96,
+      "texture": "T_BB_RedwoodBark_Albedo",
+      "texture_cm": 320
+    },
+    "BarkDark": {
+      "color": [
+        0.115,
+        0.048,
+        0.024
+      ],
+      "roughness": 0.98,
+      "texture": "T_BB_RedwoodBark_Albedo",
+      "texture_cm": 320
+    },
+    "Moss": {
+      "color": [
+        0.062,
+        0.135,
+        0.06
+      ],
+      "roughness": 1.0
+    },
+    "BasaltCoast": {
+      "color": [
+        0.07,
+        0.095,
+        0.095
+      ],
+      "roughness": 0.94
+    },
+    "ForestFloor": {
+      "color": [
+        0.048,
+        0.067,
+        0.033
+      ],
+      "roughness": 1.0
+    },
+    "Sea": {
+      "color": [
+        0.023,
+        0.18,
+        0.2
+      ],
+      "roughness": 0.27,
+      "metallic": 0.12,
+      "water": true
+    },
+    "Foam": {
+      "color": [
+        0.49,
+        0.67,
+        0.6
+      ],
+      "roughness": 0.78
+    }
+  },
+  "venues": [
+    {
+      "id": "redrock",
+      "map": "/Basketbroom/Maps/BB_Redrock",
+      "meshes": [
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed0",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed0.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "21230bfea9480867767b717d765a3af538a75027260756c2dd432aefe15fd042",
+          "bounds": [
+            [
+              -21011.485625555084,
+              639.0011793823096,
+              -1959.8602452443092
+            ],
+            [
+              21237.76882618094,
+              19449.68674862316,
+              1160.0
+            ]
+          ],
+          "material": "SandstoneDark"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed1",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed1.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "4094b613645a3f36fcb06dc45f537f9be940a52b265f76bf5b73ecc566617b1f",
+          "bounds": [
+            [
+              -21011.485625555084,
+              530.2637920479553,
+              840.063152259739
+            ],
+            [
+              21404.670814789442,
+              19449.68674862316,
+              3959.9849803378233
+            ]
+          ],
+          "material": "Sandstone"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed2",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed2.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "dd22c0b7044bdebcce5dad086c90a10e28b468f1e8f5989c280eeeb322fd857e",
+          "bounds": [
+            [
+              -20489.88540240351,
+              530.2637920479553,
+              3640.01657723157
+            ],
+            [
+              21404.670814789442,
+              18908.635693000186,
+              6759.939924171173
+            ]
+          ],
+          "material": "SandstoneLight"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed3",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed3.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "47c447f98e851a9c2d636150535581d0f4ea65d67afb5450ff2a46fde024b89e",
+          "bounds": [
+            [
+              -20743.98982536788,
+              530.7651661192372,
+              6440.000038415449
+            ],
+            [
+              20686.497210914884,
+              18417.483248697157,
+              9559.864839959151
+            ]
+          ],
+          "material": "Sandstone"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed4",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed4.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "ec6972d33d14394b69a58a5e9de5cdcb2a39b490d9e5a87a034b1934a10a7ad6",
+          "bounds": [
+            [
+              -21291.516726165064,
+              579.285295159716,
+              9240.013538916468
+            ],
+            [
+              20537.12666359641,
+              19283.149692858715,
+              12359.933694508776
+            ]
+          ],
+          "material": "SandstoneDark"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed5",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed5.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "96473711211983015285df130caadab0848165dc00550b443b252124897e8cdd",
+          "bounds": [
+            [
+              -20692.54332038703,
+              667.5359658004345,
+              12040.057076199966
+            ],
+            [
+              20472.19512351804,
+              18872.699040311105,
+              15159.981788376099
+            ]
+          ],
+          "material": "SandstoneLight"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AlcoveBed6",
+          "file": "Meshes/SM_BB_ENV_RR_AlcoveBed6.obj",
+          "vertices": 726,
+          "triangles": 1200,
+          "sha256": "d2717484bafba8a9ef332c06399b7ca1f11486ef5469997e4a04f711e77af0c0",
+          "bounds": [
+            [
+              -19810.530057623648,
+              603.5362523399756,
+              14840.130642092003
+            ],
+            [
+              20875.945707967472,
+              18605.488087051963,
+              17959.99984633822
+            ]
+          ],
+          "material": "Sandstone"
+        },
+        {
+          "name": "SM_BB_ENV_RR_Overhang",
+          "file": "Meshes/SM_BB_ENV_RR_Overhang.obj",
+          "vertices": 5934,
+          "triangles": 11864,
+          "sha256": "dbd19889af442698bae119c6ebd8ebd16b3f65dc39b1d97fbd95818a4132ffc4",
+          "bounds": [
+            [
+              -18800.0,
+              -9475.711447684513,
+              9768.07173792454
+            ],
+            [
+              18800.0,
+              17700.0,
+              17664.135991669023
+            ]
+          ],
+          "material": "Sandstone"
+        },
+        {
+          "name": "SM_BB_ENV_RR_DistantMesa",
+          "file": "Meshes/SM_BB_ENV_RR_DistantMesa.obj",
+          "vertices": 5040,
+          "triangles": 10032,
+          "sha256": "f156c60b684cdf1207521c10ff063e26e6bf3196cb2584e0ec0a5bb8856e3745",
+          "bounds": [
+            [
+              -71764.28365897112,
+              -74968.62065129154,
+              -9403.300924767607
+            ],
+            [
+              68388.10388453986,
+              -47448.68947035751,
+              17763.548708240647
+            ]
+          ],
+          "material": "SandstoneLight"
+        },
+        {
+          "name": "SM_BB_ENV_RR_Terrace",
+          "file": "Meshes/SM_BB_ENV_RR_Terrace.obj",
+          "vertices": 1596,
+          "triangles": 3188,
+          "sha256": "6cb464d974b1e40970eb38c806c3de2742f62c11044c9c7117ffa208c9a8deba",
+          "bounds": [
+            [
+              -17373.031618182093,
+              -15680.81754353011,
+              -8954.864798961455
+            ],
+            [
+              17050.286597081253,
+              18736.830254525958,
+              -443.9009834568169
+            ]
+          ],
+          "material": "SandstoneDark"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AdobeRooms",
+          "file": "Meshes/SM_BB_ENV_RR_AdobeRooms.obj",
+          "vertices": 512,
+          "triangles": 856,
+          "sha256": "dfc61aa3785dd5d2fb114765350d37e9f2796c34f14775b3fd890ffabc622f1b",
+          "bounds": [
+            [
+              -15800.0,
+              6850.0,
+              -300.0
+            ],
+            [
+              15800.0,
+              12850.0,
+              3400.0
+            ]
+          ],
+          "material": "Adobe"
+        },
+        {
+          "name": "SM_BB_ENV_RR_AdobeParapets",
+          "file": "Meshes/SM_BB_ENV_RR_AdobeParapets.obj",
+          "vertices": 1472,
+          "triangles": 2296,
+          "sha256": "e1cda7bb4d0135b9b7f4254e85bd5e91b63d7c03b4670448defb8f5fe6c149d6",
+          "bounds": [
+            [
+              -15800.0,
+              6787.0,
+              395.0
+            ],
+            [
+              15800.0,
+              12850.0,
+              3550.0
+            ]
+          ],
+          "material": "AdobeLight"
+        },
+        {
+          "name": "SM_BB_ENV_RR_Recesses",
+          "file": "Meshes/SM_BB_ENV_RR_Recesses.obj",
+          "vertices": 976,
+          "triangles": 1464,
+          "sha256": "895efbec5430e330eb7c18a7af4f0f071201d0c4215ac7d547c0c2b67cd43c47",
+          "bounds": [
+            [
+              -14915.0,
+              6841.0,
+              -230.0
+            ],
+            [
+              14915.0,
+              10953.0,
+              2603.209795825812
+            ]
+          ],
+          "material": "DoorShadow"
+        },
+        {
+          "name": "SM_BB_ENV_RR_VigasLadders",
+          "file": "Meshes/SM_BB_ENV_RR_VigasLadders.obj",
+          "vertices": 5654,
+          "triangles": 9936,
+          "sha256": "e3cab5a8e7b4a8332db23e7be15ea8e908b9afc5b1f6b6670c785f6d92eb7b99",
+          "bounds": [
+            [
+              -13614.589993437992,
+              6453.217759575487,
+              -304.2659931779001
+            ],
+            [
+              13274.053001272321,
+              12930.0,
+              3142.3101381374017
+            ]
+          ],
+          "material": "Timber"
+        },
+        {
+          "name": "SM_BB_ENV_RR_Talus",
+          "file": "Meshes/SM_BB_ENV_RR_Talus.obj",
+          "vertices": 9240,
+          "triangles": 18040,
+          "sha256": "a2aeb7d6a7e93adec9fc61e77bb85b8e185239dbc2e77b9c87ff7dfb843182e0",
+          "bounds": [
+            [
+              -17238.52781417319,
+              -6511.402120846998,
+              -787.7972367874904
+            ],
+            [
+              17396.71926197309,
+              6819.663531910548,
+              387.7075781765699
+            ]
+          ],
+          "material": "SandstoneLight"
+        },
+        {
+          "name": "SM_BB_ENV_RR_Sage",
+          "file": "Meshes/SM_BB_ENV_RR_Sage.obj",
+          "vertices": 3108,
+          "triangles": 6068,
+          "sha256": "f3e876fa1b333127834abcf3ff2c9aade3686c4cf28de267f3d544df23239143",
+          "bounds": [
+            [
+              -16458.531570894575,
+              -6598.156099514919,
+              -223.3490818217176
+            ],
+            [
+              16243.873585813742,
+              6614.750118531065,
+              182.6647628097769
+            ]
+          ],
+          "material": "Sage"
+        }
+      ],
+      "instances": [
+        {
+          "label": "redrock / stratified alcove bed 00",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed0",
+          "material": "SandstoneDark",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 01",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed1",
+          "material": "Sandstone",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 02",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed2",
+          "material": "SandstoneLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 03",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed3",
+          "material": "Sandstone",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 04",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed4",
+          "material": "SandstoneDark",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 05",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed5",
+          "material": "SandstoneLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / stratified alcove bed 06",
+          "mesh": "SM_BB_ENV_RR_AlcoveBed6",
+          "material": "Sandstone",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / great sculpted cliff overhang",
+          "mesh": "SM_BB_ENV_RR_Overhang",
+          "material": "Sandstone",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / distant canyon mesas",
+          "mesh": "SM_BB_ENV_RR_DistantMesa",
+          "material": "SandstoneLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / canyon terrace",
+          "mesh": "SM_BB_ENV_RR_Terrace",
+          "material": "SandstoneDark",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / terraced pueblo rooms",
+          "mesh": "SM_BB_ENV_RR_AdobeRooms",
+          "material": "Adobe",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / adobe roof coping",
+          "mesh": "SM_BB_ENV_RR_AdobeParapets",
+          "material": "AdobeLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / recessed doors and windows",
+          "mesh": "SM_BB_ENV_RR_Recesses",
+          "material": "DoorShadow",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / timber vigas and roof ladders",
+          "mesh": "SM_BB_ENV_RR_VigasLadders",
+          "material": "Timber",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / sandstone talus",
+          "mesh": "SM_BB_ENV_RR_Talus",
+          "material": "SandstoneLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redrock / sagebrush",
+          "mesh": "SM_BB_ENV_RR_Sage",
+          "material": "Sage",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        }
+      ],
+      "clearance_audit": {
+        "triangles_checked": 72144,
+        "protected_box_min": [
+          -7904.086173302982,
+          -3772.3765675598274,
+          -50
+        ],
+        "protected_box_max": [
+          7904.086173302982,
+          3772.3765675598274,
+          7391.256661760803
+        ],
+        "decorative_intrusions": 0
+      }
+    },
+    {
+      "id": "redwoods",
+      "map": "/Basketbroom/Maps/BB_Redwoods",
+      "meshes": [
+        {
+          "name": "SM_BB_ENV_RW_Trunk0",
+          "file": "Meshes/SM_BB_ENV_RW_Trunk0.obj",
+          "vertices": 3038,
+          "triangles": 5688,
+          "sha256": "b47962d8cab1b05d478e822c84b3b649b6ff2e21ec15963aa7252d37b8b985ca",
+          "bounds": [
+            [
+              -1885.5099740432936,
+              -1719.2579673475223,
+              -127.3687637606393
+            ],
+            [
+              1960.398311881139,
+              1661.7487396112697,
+              13600.0
+            ]
+          ],
+          "material": "Bark"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Crown0",
+          "file": "Meshes/SM_BB_ENV_RW_Crown0.obj",
+          "vertices": 25125,
+          "triangles": 49286,
+          "sha256": "0d48fdf2f2bc93287f1a3c415832059829af7afead9a36a2ef8d62cd9804e7b8",
+          "bounds": [
+            [
+              -2316.040390085098,
+              -2019.5634646066587,
+              6063.8276333049025
+            ],
+            [
+              2378.199637473849,
+              1912.1802043164255,
+              14571.865924674168
+            ]
+          ],
+          "material": "Needles"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Trunk1",
+          "file": "Meshes/SM_BB_ENV_RW_Trunk1.obj",
+          "vertices": 3038,
+          "triangles": 5688,
+          "sha256": "a4ea477d41248251425e655255cfc8e74d7c70bc0d416425614a86fc9c1a4087",
+          "bounds": [
+            [
+              -1767.4896116545656,
+              -1744.7601396065754,
+              -130.31006188334135
+            ],
+            [
+              1805.4676545903587,
+              1771.6422585368173,
+              14350.0
+            ]
+          ],
+          "material": "BarkDark"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Crown1",
+          "file": "Meshes/SM_BB_ENV_RW_Crown1.obj",
+          "vertices": 25125,
+          "triangles": 49286,
+          "sha256": "ec1f50d1fe6039b8c2e924fd13ba121a235991464ffcf2d38f0ecbf8a9981c5e",
+          "bounds": [
+            [
+              -2230.6371188856365,
+              -1892.5226879955637,
+              6385.28856848235
+            ],
+            [
+              2170.6193129528983,
+              1986.6067535928505,
+              15322.429821650581
+            ]
+          ],
+          "material": "NeedlesLight"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Trunk2",
+          "file": "Meshes/SM_BB_ENV_RW_Trunk2.obj",
+          "vertices": 3038,
+          "triangles": 5688,
+          "sha256": "4b98dd4e702badc5c2e82ac91296d9e0cfd78d00c7d401ab7db0a9ec37da812e",
+          "bounds": [
+            [
+              -2072.210324672317,
+              -2015.3962758435364,
+              -132.61591381444654
+            ],
+            [
+              2275.1469114493107,
+              2265.277130124248,
+              15100.0
+            ]
+          ],
+          "material": "Bark"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Crown2",
+          "file": "Meshes/SM_BB_ENV_RW_Crown2.obj",
+          "vertices": 25125,
+          "triangles": 49286,
+          "sha256": "87be46d2115b701151c26776fcf6240593ad35650e8bec5d04d319fb5c2a6aae",
+          "bounds": [
+            [
+              -2577.278746731938,
+              -2058.7026215207206,
+              6713.472783231934
+            ],
+            [
+              2762.3982166269634,
+              2642.0319580462096,
+              16069.264300832929
+            ]
+          ],
+          "material": "Needles"
+        },
+        {
+          "name": "SM_BB_ENV_RW_ForestShelf",
+          "file": "Meshes/SM_BB_ENV_RW_ForestShelf.obj",
+          "vertices": 2501,
+          "triangles": 4800,
+          "sha256": "903ec39c2fc42eb9d85e9cd155087ebaab65c83d71a5bd538ee0e671562d53f0",
+          "bounds": [
+            [
+              -39000.0,
+              -10800.0,
+              -719.8869778866869
+            ],
+            [
+              39000.0,
+              39200.0,
+              -600.1130221133131
+            ]
+          ],
+          "material": "ForestFloor"
+        },
+        {
+          "name": "SM_BB_ENV_RW_CoastalBluff",
+          "file": "Meshes/SM_BB_ENV_RW_CoastalBluff.obj",
+          "vertices": 584,
+          "triangles": 1008,
+          "sha256": "7deb94fbd7917b3e3f9dc646ef6f4699d8a985b364d9fcd4e647de4de655158d",
+          "bounds": [
+            [
+              -42000.0,
+              -11476.609655390343,
+              -8817.930482433598
+            ],
+            [
+              42000.0,
+              -6583.390344609657,
+              -272.6443093752873
+            ]
+          ],
+          "material": "BasaltCoast"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Ocean",
+          "file": "Meshes/SM_BB_ENV_RW_Ocean.obj",
+          "vertices": 8181,
+          "triangles": 16000,
+          "sha256": "8602bdc5ca51c301594fccf4e668c2b166248ea6479c023f3853a9be0fef480c",
+          "bounds": [
+            [
+              -220000.0,
+              -238500.0,
+              -6178.999284682124
+            ],
+            [
+              220000.0,
+              -8500.0,
+              -6021.1692822436535
+            ]
+          ],
+          "material": "Sea"
+        },
+        {
+          "name": "SM_BB_ENV_RW_SeaStacks",
+          "file": "Meshes/SM_BB_ENV_RW_SeaStacks.obj",
+          "vertices": 6375,
+          "triangles": 12682,
+          "sha256": "8a481aad687011890d44b4d8d9c597729e9c86c93f3b7f8e838a656f9015e489",
+          "bounds": [
+            [
+              -95173.69050214515,
+              -86275.38098460373,
+              -8926.857795687454
+            ],
+            [
+              98071.08869435193,
+              -17667.15611899578,
+              -1263.9813345577663
+            ]
+          ],
+          "material": "BasaltCoast"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Surf",
+          "file": "Meshes/SM_BB_ENV_RW_Surf.obj",
+          "vertices": 10608,
+          "triangles": 15912,
+          "sha256": "b02d3780dadf5f78967908be9f7f1016e5ffff753758495a39ce06959a6ee2af",
+          "bounds": [
+            [
+              -96456.88068875998,
+              -86179.32895289453,
+              -6064.0
+            ],
+            [
+              99493.17592340703,
+              -17662.742187329746,
+              -5996.0
+            ]
+          ],
+          "material": "Foam"
+        },
+        {
+          "name": "SM_BB_ENV_RW_MossRocks",
+          "file": "Meshes/SM_BB_ENV_RW_MossRocks.obj",
+          "vertices": 6885,
+          "triangles": 13566,
+          "sha256": "884ca2fc20cb16249a8585cfb5ad21ab0db985579e1cfc673efee1e794e4122d",
+          "bounds": [
+            [
+              -28329.14297599974,
+              -7649.118585671902,
+              -1168.647660778948
+            ],
+            [
+              26241.053553279373,
+              28091.595618968688,
+              210.65785726888032
+            ]
+          ],
+          "material": "Moss"
+        },
+        {
+          "name": "SM_BB_ENV_RW_Ferns",
+          "file": "Meshes/SM_BB_ENV_RW_Ferns.obj",
+          "vertices": 29008,
+          "triangles": 14504,
+          "sha256": "1958359e6d769e21c58c9dbe1250e8472e84f87265f8c47fc39ef6831aab071a",
+          "bounds": [
+            [
+              -28297.17162639818,
+              -9087.102271899248,
+              -449.3725067927314
+            ],
+            [
+              26016.385768419917,
+              28295.778150028687,
+              -181.01983991971088
+            ]
+          ],
+          "material": "NeedlesLight"
+        },
+        {
+          "name": "SM_BB_ENV_RW_FallenLog",
+          "file": "Meshes/SM_BB_ENV_RW_FallenLog.obj",
+          "vertices": 64,
+          "triangles": 124,
+          "sha256": "147c234cb5c49619570d15588276152d2c1acd266d606e3703092c2d8362db02",
+          "bounds": [
+            [
+              -2810.7710796212186,
+              -450.4506388162449,
+              -153.85226226321754
+            ],
+            [
+              2808.27028804416,
+              419.6123867011799,
+              746.26785158926
+            ]
+          ],
+          "material": "BarkDark"
+        }
+      ],
+      "instances": [
+        {
+          "label": "redwoods / old growth 00 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -24394.869822415003,
+            9194.770369388803,
+            -500
+          ],
+          "scale": [
+            1.218323785257776,
+            1.218323785257776,
+            1.218323785257776
+          ],
+          "yaw": 25.92613612049018,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 00 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -24394.869822415003,
+            9194.770369388803,
+            -500
+          ],
+          "scale": [
+            1.218323785257776,
+            1.218323785257776,
+            1.218323785257776
+          ],
+          "yaw": 25.92613612049018,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 01 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -20656.956219618583,
+            9188.914612637842,
+            -500
+          ],
+          "scale": [
+            0.9036482790720253,
+            0.9036482790720253,
+            0.9036482790720253
+          ],
+          "yaw": 280.2674546150807,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 01 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -20656.956219618583,
+            9188.914612637842,
+            -500
+          ],
+          "scale": [
+            0.9036482790720253,
+            0.9036482790720253,
+            0.9036482790720253
+          ],
+          "yaw": 280.2674546150807,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 02 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -15511.750452578259,
+            10409.68499057184,
+            -500
+          ],
+          "scale": [
+            1.1780672441647961,
+            1.1780672441647961,
+            1.1780672441647961
+          ],
+          "yaw": 28.514877757987605,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 02 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -15511.750452578259,
+            10409.68499057184,
+            -500
+          ],
+          "scale": [
+            1.1780672441647961,
+            1.1780672441647961,
+            1.1780672441647961
+          ],
+          "yaw": 28.514877757987605,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 03 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -9830.284232579534,
+            10118.793816001198,
+            -500
+          ],
+          "scale": [
+            0.8958462320321466,
+            0.8958462320321466,
+            0.8958462320321466
+          ],
+          "yaw": 113.79781923998148,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 03 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -9830.284232579534,
+            10118.793816001198,
+            -500
+          ],
+          "scale": [
+            0.8958462320321466,
+            0.8958462320321466,
+            0.8958462320321466
+          ],
+          "yaw": 113.79781923998148,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 04 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -5917.126093691445,
+            10378.861420946472,
+            -500
+          ],
+          "scale": [
+            1.1833458084563262,
+            1.1833458084563262,
+            1.1833458084563262
+          ],
+          "yaw": 130.33114900763712,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 04 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -5917.126093691445,
+            10378.861420946472,
+            -500
+          ],
+          "scale": [
+            1.1833458084563262,
+            1.1833458084563262,
+            1.1833458084563262
+          ],
+          "yaw": 130.33114900763712,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 05 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -55.61766966649293,
+            9238.33074123679,
+            -500
+          ],
+          "scale": [
+            0.9995513159720726,
+            0.9995513159720726,
+            0.9995513159720726
+          ],
+          "yaw": 54.81524063329,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 05 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -55.61766966649293,
+            9238.33074123679,
+            -500
+          ],
+          "scale": [
+            0.9995513159720726,
+            0.9995513159720726,
+            0.9995513159720726
+          ],
+          "yaw": 54.81524063329,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 06 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            4477.310730016688,
+            10134.54760180666,
+            -500
+          ],
+          "scale": [
+            1.2679912512554514,
+            1.2679912512554514,
+            1.2679912512554514
+          ],
+          "yaw": 163.67074398761144,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 06 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            4477.310730016688,
+            10134.54760180666,
+            -500
+          ],
+          "scale": [
+            1.2679912512554514,
+            1.2679912512554514,
+            1.2679912512554514
+          ],
+          "yaw": 163.67074398761144,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 07 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            8771.97074796937,
+            9151.26754431136,
+            -500
+          ],
+          "scale": [
+            0.8877602679449546,
+            0.8877602679449546,
+            0.8877602679449546
+          ],
+          "yaw": 204.10326828383555,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 07 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            8771.97074796937,
+            9151.26754431136,
+            -500
+          ],
+          "scale": [
+            0.8877602679449546,
+            0.8877602679449546,
+            0.8877602679449546
+          ],
+          "yaw": 204.10326828383555,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 08 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            13767.757505934867,
+            9212.231161415217,
+            -500
+          ],
+          "scale": [
+            1.1996948291419465,
+            1.1996948291419465,
+            1.1996948291419465
+          ],
+          "yaw": 234.02166408248826,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 08 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            13767.757505934867,
+            9212.231161415217,
+            -500
+          ],
+          "scale": [
+            1.1996948291419465,
+            1.1996948291419465,
+            1.1996948291419465
+          ],
+          "yaw": 234.02166408248826,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 09 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            19182.037036502352,
+            10574.732683864366,
+            -500
+          ],
+          "scale": [
+            1.09198848393519,
+            1.09198848393519,
+            1.09198848393519
+          ],
+          "yaw": 141.12132310066087,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 09 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            19182.037036502352,
+            10574.732683864366,
+            -500
+          ],
+          "scale": [
+            1.09198848393519,
+            1.09198848393519,
+            1.09198848393519
+          ],
+          "yaw": 141.12132310066087,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 10 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            24088.637990985095,
+            9841.246286049101,
+            -500
+          ],
+          "scale": [
+            1.1493045861577127,
+            1.1493045861577127,
+            1.1493045861577127
+          ],
+          "yaw": 142.06706524415998,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 10 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            24088.637990985095,
+            9841.246286049101,
+            -500
+          ],
+          "scale": [
+            1.1493045861577127,
+            1.1493045861577127,
+            1.1493045861577127
+          ],
+          "yaw": 142.06706524415998,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 11 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -24714.568044505,
+            17187.11096726015,
+            -500
+          ],
+          "scale": [
+            1.0675484124554036,
+            1.0675484124554036,
+            1.0675484124554036
+          ],
+          "yaw": 189.47969543670584,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 11 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -24714.568044505,
+            17187.11096726015,
+            -500
+          ],
+          "scale": [
+            1.0675484124554036,
+            1.0675484124554036,
+            1.0675484124554036
+          ],
+          "yaw": 189.47969543670584,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 12 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -19617.61455494009,
+            17351.152955927777,
+            -500
+          ],
+          "scale": [
+            1.0440240625798372,
+            1.0440240625798372,
+            1.0440240625798372
+          ],
+          "yaw": 193.2827861555541,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 12 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -19617.61455494009,
+            17351.152955927777,
+            -500
+          ],
+          "scale": [
+            1.0440240625798372,
+            1.0440240625798372,
+            1.0440240625798372
+          ],
+          "yaw": 193.2827861555541,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 13 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -14885.654901462864,
+            16680.209320253107,
+            -500
+          ],
+          "scale": [
+            1.2504340742879727,
+            1.2504340742879727,
+            1.2504340742879727
+          ],
+          "yaw": 357.00431466945423,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 13 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -14885.654901462864,
+            16680.209320253107,
+            -500
+          ],
+          "scale": [
+            1.2504340742879727,
+            1.2504340742879727,
+            1.2504340742879727
+          ],
+          "yaw": 357.00431466945423,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 14 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -10305.713641951801,
+            15682.331573434813,
+            -500
+          ],
+          "scale": [
+            0.8836743258438154,
+            0.8836743258438154,
+            0.8836743258438154
+          ],
+          "yaw": 194.7994667455145,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 14 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -10305.713641951801,
+            15682.331573434813,
+            -500
+          ],
+          "scale": [
+            0.8836743258438154,
+            0.8836743258438154,
+            0.8836743258438154
+          ],
+          "yaw": 194.7994667455145,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 15 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -5706.566121544062,
+            16001.946964891684,
+            -500
+          ],
+          "scale": [
+            0.9344684147389428,
+            0.9344684147389428,
+            0.9344684147389428
+          ],
+          "yaw": 3.990887031860364,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 15 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -5706.566121544062,
+            16001.946964891684,
+            -500
+          ],
+          "scale": [
+            0.9344684147389428,
+            0.9344684147389428,
+            0.9344684147389428
+          ],
+          "yaw": 3.990887031860364,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 16 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -1088.4834448369709,
+            16177.230283218476,
+            -500
+          ],
+          "scale": [
+            1.0635780123225025,
+            1.0635780123225025,
+            1.0635780123225025
+          ],
+          "yaw": 74.0122829098522,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 16 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -1088.4834448369709,
+            16177.230283218476,
+            -500
+          ],
+          "scale": [
+            1.0635780123225025,
+            1.0635780123225025,
+            1.0635780123225025
+          ],
+          "yaw": 74.0122829098522,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 17 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            3892.3533126317598,
+            16737.960167210174,
+            -500
+          ],
+          "scale": [
+            1.0720750968938806,
+            1.0720750968938806,
+            1.0720750968938806
+          ],
+          "yaw": 18.45870575706009,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 17 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            3892.3533126317598,
+            16737.960167210174,
+            -500
+          ],
+          "scale": [
+            1.0720750968938806,
+            1.0720750968938806,
+            1.0720750968938806
+          ],
+          "yaw": 18.45870575706009,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 18 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            8943.37153248853,
+            15795.59618924315,
+            -500
+          ],
+          "scale": [
+            1.2261143359183007,
+            1.2261143359183007,
+            1.2261143359183007
+          ],
+          "yaw": 35.596537226046074,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 18 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            8943.37153248853,
+            15795.59618924315,
+            -500
+          ],
+          "scale": [
+            1.2261143359183007,
+            1.2261143359183007,
+            1.2261143359183007
+          ],
+          "yaw": 35.596537226046074,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 19 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            14253.57158724292,
+            17167.71889666697,
+            -500
+          ],
+          "scale": [
+            0.9633104466247724,
+            0.9633104466247724,
+            0.9633104466247724
+          ],
+          "yaw": 158.75760069562537,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 19 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            14253.57158724292,
+            17167.71889666697,
+            -500
+          ],
+          "scale": [
+            0.9633104466247724,
+            0.9633104466247724,
+            0.9633104466247724
+          ],
+          "yaw": 158.75760069562537,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 20 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            18914.116895878753,
+            16434.694731494565,
+            -500
+          ],
+          "scale": [
+            1.1761791177574898,
+            1.1761791177574898,
+            1.1761791177574898
+          ],
+          "yaw": 130.05721701674284,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 20 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            18914.116895878753,
+            16434.694731494565,
+            -500
+          ],
+          "scale": [
+            1.1761791177574898,
+            1.1761791177574898,
+            1.1761791177574898
+          ],
+          "yaw": 130.05721701674284,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 21 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            23956.1941967833,
+            15945.339035716961,
+            -500
+          ],
+          "scale": [
+            1.0468040317924385,
+            1.0468040317924385,
+            1.0468040317924385
+          ],
+          "yaw": 57.094103072908226,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 21 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            23956.1941967833,
+            15945.339035716961,
+            -500
+          ],
+          "scale": [
+            1.0468040317924385,
+            1.0468040317924385,
+            1.0468040317924385
+          ],
+          "yaw": 57.094103072908226,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 22 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -25040.61798685005,
+            22487.092416947457,
+            -500
+          ],
+          "scale": [
+            0.9246217782493742,
+            0.9246217782493742,
+            0.9246217782493742
+          ],
+          "yaw": 118.2507163715403,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 22 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -25040.61798685005,
+            22487.092416947457,
+            -500
+          ],
+          "scale": [
+            0.9246217782493742,
+            0.9246217782493742,
+            0.9246217782493742
+          ],
+          "yaw": 118.2507163715403,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 23 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -20628.01199709932,
+            23391.324475159676,
+            -500
+          ],
+          "scale": [
+            0.9463535815603334,
+            0.9463535815603334,
+            0.9463535815603334
+          ],
+          "yaw": 73.98457534420987,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 23 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -20628.01199709932,
+            23391.324475159676,
+            -500
+          ],
+          "scale": [
+            0.9463535815603334,
+            0.9463535815603334,
+            0.9463535815603334
+          ],
+          "yaw": 73.98457534420987,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 24 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -15836.004369867122,
+            24058.81751588745,
+            -500
+          ],
+          "scale": [
+            1.1028765609356634,
+            1.1028765609356634,
+            1.1028765609356634
+          ],
+          "yaw": 204.34114684965886,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 24 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -15836.004369867122,
+            24058.81751588745,
+            -500
+          ],
+          "scale": [
+            1.1028765609356634,
+            1.1028765609356634,
+            1.1028765609356634
+          ],
+          "yaw": 204.34114684965886,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 25 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -10473.932747823916,
+            23366.911882656706,
+            -500
+          ],
+          "scale": [
+            1.1554314425635668,
+            1.1554314425635668,
+            1.1554314425635668
+          ],
+          "yaw": 248.2385130027705,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 25 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -10473.932747823916,
+            23366.911882656706,
+            -500
+          ],
+          "scale": [
+            1.1554314425635668,
+            1.1554314425635668,
+            1.1554314425635668
+          ],
+          "yaw": 248.2385130027705,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 26 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -4881.721065851074,
+            24100.105277501705,
+            -500
+          ],
+          "scale": [
+            0.9582037839542685,
+            0.9582037839542685,
+            0.9582037839542685
+          ],
+          "yaw": 292.40138058070715,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 26 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -4881.721065851074,
+            24100.105277501705,
+            -500
+          ],
+          "scale": [
+            0.9582037839542685,
+            0.9582037839542685,
+            0.9582037839542685
+          ],
+          "yaw": 292.40138058070715,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 27 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -269.1675743490922,
+            22649.375931062357,
+            -500
+          ],
+          "scale": [
+            0.9287951298230942,
+            0.9287951298230942,
+            0.9287951298230942
+          ],
+          "yaw": 82.148357347434,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 27 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -269.1675743490922,
+            22649.375931062357,
+            -500
+          ],
+          "scale": [
+            0.9287951298230942,
+            0.9287951298230942,
+            0.9287951298230942
+          ],
+          "yaw": 82.148357347434,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 28 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            4301.578109235613,
+            23936.143159323656,
+            -500
+          ],
+          "scale": [
+            0.9499971234642175,
+            0.9499971234642175,
+            0.9499971234642175
+          ],
+          "yaw": 11.849875136469459,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 28 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            4301.578109235613,
+            23936.143159323656,
+            -500
+          ],
+          "scale": [
+            0.9499971234642175,
+            0.9499971234642175,
+            0.9499971234642175
+          ],
+          "yaw": 11.849875136469459,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 29 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            8924.338528077711,
+            23380.59066498391,
+            -500
+          ],
+          "scale": [
+            1.040406170957899,
+            1.040406170957899,
+            1.040406170957899
+          ],
+          "yaw": 57.80810876472956,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 29 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            8924.338528077711,
+            23380.59066498391,
+            -500
+          ],
+          "scale": [
+            1.040406170957899,
+            1.040406170957899,
+            1.040406170957899
+          ],
+          "yaw": 57.80810876472956,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 30 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            14243.674649767243,
+            24025.575344721885,
+            -500
+          ],
+          "scale": [
+            1.1669660454994701,
+            1.1669660454994701,
+            1.1669660454994701
+          ],
+          "yaw": 79.34639363443112,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 30 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            14243.674649767243,
+            24025.575344721885,
+            -500
+          ],
+          "scale": [
+            1.1669660454994701,
+            1.1669660454994701,
+            1.1669660454994701
+          ],
+          "yaw": 79.34639363443112,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 31 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            19519.22946993845,
+            22643.43858817755,
+            -500
+          ],
+          "scale": [
+            1.1645726407348995,
+            1.1645726407348995,
+            1.1645726407348995
+          ],
+          "yaw": 215.70831387691533,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 31 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            19519.22946993845,
+            22643.43858817755,
+            -500
+          ],
+          "scale": [
+            1.1645726407348995,
+            1.1645726407348995,
+            1.1645726407348995
+          ],
+          "yaw": 215.70831387691533,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 32 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            23685.932912434277,
+            22802.180334324043,
+            -500
+          ],
+          "scale": [
+            1.2473457365778788,
+            1.2473457365778788,
+            1.2473457365778788
+          ],
+          "yaw": 257.5320785992255,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 32 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            23685.932912434277,
+            22802.180334324043,
+            -500
+          ],
+          "scale": [
+            1.2473457365778788,
+            1.2473457365778788,
+            1.2473457365778788
+          ],
+          "yaw": 257.5320785992255,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 33 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -15000,
+            -8210.831819221821,
+            -500
+          ],
+          "scale": [
+            0.9349162486460033,
+            0.9349162486460033,
+            0.9349162486460033
+          ],
+          "yaw": 304.977741455609,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 33 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -15000,
+            -8210.831819221821,
+            -500
+          ],
+          "scale": [
+            0.9349162486460033,
+            0.9349162486460033,
+            0.9349162486460033
+          ],
+          "yaw": 304.977741455609,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 34 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -18900,
+            -8185.81529520339,
+            -500
+          ],
+          "scale": [
+            1.0667280206956962,
+            1.0667280206956962,
+            1.0667280206956962
+          ],
+          "yaw": 38.647574987447165,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 34 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -18900,
+            -8185.81529520339,
+            -500
+          ],
+          "scale": [
+            1.0667280206956962,
+            1.0667280206956962,
+            1.0667280206956962
+          ],
+          "yaw": 38.647574987447165,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 35 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -22800,
+            -8112.125968998669,
+            -500
+          ],
+          "scale": [
+            0.9349643799819198,
+            0.9349643799819198,
+            0.9349643799819198
+          ],
+          "yaw": 346.9410432425454,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 35 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -22800,
+            -8112.125968998669,
+            -500
+          ],
+          "scale": [
+            0.9349643799819198,
+            0.9349643799819198,
+            0.9349643799819198
+          ],
+          "yaw": 346.9410432425454,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 36 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -15000,
+            -4329.016757930349,
+            -500
+          ],
+          "scale": [
+            1.1926640891348623,
+            1.1926640891348623,
+            1.1926640891348623
+          ],
+          "yaw": 139.2836578114121,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 36 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -15000,
+            -4329.016757930349,
+            -500
+          ],
+          "scale": [
+            1.1926640891348623,
+            1.1926640891348623,
+            1.1926640891348623
+          ],
+          "yaw": 139.2836578114121,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 37 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -18900,
+            -3490.56269102433,
+            -500
+          ],
+          "scale": [
+            1.265194221746766,
+            1.265194221746766,
+            1.265194221746766
+          ],
+          "yaw": 5.380559749225884,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 37 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -18900,
+            -3490.56269102433,
+            -500
+          ],
+          "scale": [
+            1.265194221746766,
+            1.265194221746766,
+            1.265194221746766
+          ],
+          "yaw": 5.380559749225884,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 38 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            -22800,
+            -3232.824187224746,
+            -500
+          ],
+          "scale": [
+            0.9194666613064418,
+            0.9194666613064418,
+            0.9194666613064418
+          ],
+          "yaw": 220.53077523725915,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 38 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            -22800,
+            -3232.824187224746,
+            -500
+          ],
+          "scale": [
+            0.9194666613064418,
+            0.9194666613064418,
+            0.9194666613064418
+          ],
+          "yaw": 220.53077523725915,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 39 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            -15000,
+            874.5375953803048,
+            -500
+          ],
+          "scale": [
+            1.0325669745426038,
+            1.0325669745426038,
+            1.0325669745426038
+          ],
+          "yaw": 323.41006754862957,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 39 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            -15000,
+            874.5375953803048,
+            -500
+          ],
+          "scale": [
+            1.0325669745426038,
+            1.0325669745426038,
+            1.0325669745426038
+          ],
+          "yaw": 323.41006754862957,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 40 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            -18900,
+            273.96956627120824,
+            -500
+          ],
+          "scale": [
+            0.9318089418111618,
+            0.9318089418111618,
+            0.9318089418111618
+          ],
+          "yaw": 239.23387905214943,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 40 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            -18900,
+            273.96956627120824,
+            -500
+          ],
+          "scale": [
+            0.9318089418111618,
+            0.9318089418111618,
+            0.9318089418111618
+          ],
+          "yaw": 239.23387905214943,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 41 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            15000,
+            -8089.565497343917,
+            -500
+          ],
+          "scale": [
+            0.9501234030018424,
+            0.9501234030018424,
+            0.9501234030018424
+          ],
+          "yaw": 171.67250132418192,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 41 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            15000,
+            -8089.565497343917,
+            -500
+          ],
+          "scale": [
+            0.9501234030018424,
+            0.9501234030018424,
+            0.9501234030018424
+          ],
+          "yaw": 171.67250132418192,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 42 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            18900,
+            -7631.8105718186125,
+            -500
+          ],
+          "scale": [
+            0.9208727096681564,
+            0.9208727096681564,
+            0.9208727096681564
+          ],
+          "yaw": 125.29067940181726,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 42 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            18900,
+            -7631.8105718186125,
+            -500
+          ],
+          "scale": [
+            0.9208727096681564,
+            0.9208727096681564,
+            0.9208727096681564
+          ],
+          "yaw": 125.29067940181726,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 43 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            22800,
+            -8305.280282959096,
+            -500
+          ],
+          "scale": [
+            1.2431289115828164,
+            1.2431289115828164,
+            1.2431289115828164
+          ],
+          "yaw": 164.88189408218375,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 43 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            22800,
+            -8305.280282959096,
+            -500
+          ],
+          "scale": [
+            1.2431289115828164,
+            1.2431289115828164,
+            1.2431289115828164
+          ],
+          "yaw": 164.88189408218375,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 44 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            15000,
+            -3414.805715161377,
+            -500
+          ],
+          "scale": [
+            1.043001942008899,
+            1.043001942008899,
+            1.043001942008899
+          ],
+          "yaw": 236.24930570089978,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 44 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            15000,
+            -3414.805715161377,
+            -500
+          ],
+          "scale": [
+            1.043001942008899,
+            1.043001942008899,
+            1.043001942008899
+          ],
+          "yaw": 236.24930570089978,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 45 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            18900,
+            -3328.486083004711,
+            -500
+          ],
+          "scale": [
+            1.2254500075095884,
+            1.2254500075095884,
+            1.2254500075095884
+          ],
+          "yaw": 342.2878602852786,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 45 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            18900,
+            -3328.486083004711,
+            -500
+          ],
+          "scale": [
+            1.2254500075095884,
+            1.2254500075095884,
+            1.2254500075095884
+          ],
+          "yaw": 342.2878602852786,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 46 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk1",
+          "material": "BarkDark",
+          "location": [
+            22800,
+            -4349.775054465356,
+            -500
+          ],
+          "scale": [
+            0.8815631537702093,
+            0.8815631537702093,
+            0.8815631537702093
+          ],
+          "yaw": 87.7558634569752,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 46 crown",
+          "mesh": "SM_BB_ENV_RW_Crown1",
+          "material": "NeedlesLight",
+          "location": [
+            22800,
+            -4349.775054465356,
+            -500
+          ],
+          "scale": [
+            0.8815631537702093,
+            0.8815631537702093,
+            0.8815631537702093
+          ],
+          "yaw": 87.7558634569752,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 47 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk2",
+          "material": "Bark",
+          "location": [
+            15000,
+            164.73447966854462,
+            -500
+          ],
+          "scale": [
+            0.906818024007583,
+            0.906818024007583,
+            0.906818024007583
+          ],
+          "yaw": 63.14874198531314,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 47 crown",
+          "mesh": "SM_BB_ENV_RW_Crown2",
+          "material": "Needles",
+          "location": [
+            15000,
+            164.73447966854462,
+            -500
+          ],
+          "scale": [
+            0.906818024007583,
+            0.906818024007583,
+            0.906818024007583
+          ],
+          "yaw": 63.14874198531314,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 48 trunk",
+          "mesh": "SM_BB_ENV_RW_Trunk0",
+          "material": "Bark",
+          "location": [
+            18900,
+            792.3821131205873,
+            -500
+          ],
+          "scale": [
+            1.250189559862763,
+            1.250189559862763,
+            1.250189559862763
+          ],
+          "yaw": 346.04624240177435,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / old growth 48 crown",
+          "mesh": "SM_BB_ENV_RW_Crown0",
+          "material": "Needles",
+          "location": [
+            18900,
+            792.3821131205873,
+            -500
+          ],
+          "scale": [
+            1.250189559862763,
+            1.250189559862763,
+            1.250189559862763
+          ],
+          "yaw": 346.04624240177435,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / coastal forest shelf",
+          "mesh": "SM_BB_ENV_RW_ForestShelf",
+          "material": "ForestFloor",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / weathered sea cliff",
+          "mesh": "SM_BB_ENV_RW_CoastalBluff",
+          "material": "BasaltCoast",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / pacific ocean surface",
+          "mesh": "SM_BB_ENV_RW_Ocean",
+          "material": "Sea",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / basalt sea stacks",
+          "mesh": "SM_BB_ENV_RW_SeaStacks",
+          "material": "BasaltCoast",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / distant breakers",
+          "mesh": "SM_BB_ENV_RW_Surf",
+          "material": "Foam",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / mossy boulder floor",
+          "mesh": "SM_BB_ENV_RW_MossRocks",
+          "material": "Moss",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / sword fern understory",
+          "mesh": "SM_BB_ENV_RW_Ferns",
+          "material": "NeedlesLight",
+          "location": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 0,
+          "cast_shadow": false,
+          "collision": "NoCollision"
+        },
+        {
+          "label": "redwoods / fallen giant",
+          "mesh": "SM_BB_ENV_RW_FallenLog",
+          "material": "BarkDark",
+          "location": [
+            13300,
+            2500,
+            -350
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "yaw": 27,
+          "cast_shadow": true,
+          "collision": "NoCollision"
+        }
+      ],
+      "clearance_audit": {
+        "triangles_checked": 2772322,
+        "protected_box_min": [
+          -7904.086173302982,
+          -3772.3765675598274,
+          -50
+        ],
+        "protected_box_max": [
+          7904.086173302982,
+          3772.3765675598274,
+          7391.256661760803
+        ],
+        "decorative_intrusions": 0
+      }
+    }
+  ],
+  "collision": "Environment instances use NoCollision; existing sporting collision is preserved.",
+  "native_status": "Original source ready for native import; this manifest does not claim native map or match integration."
+}

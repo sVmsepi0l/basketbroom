@@ -79,10 +79,16 @@ removal are existing provisional alpha defaults from the design reference. Goal-
 CPU shot selection, keeper reaction speed and result-display time need playtesting.
 
 Host-selected Moderate free shots and the Serious path are implemented in source.
-Automatic escalation, comprehensive contact detection, post-termination restorative
-shots, unavailable-Netminder replacement decisions and Catastrophic adjudication
-remain separate work. An already active terminal review or unavailable defending
-Netminder is rejected without clearing the owed remedy. Generic portable
+Pre-termination remedies can now run during Snitch, regulation-horn, overtime-
+margin and overtime-horn review, with the original event and clock preserved;
+see [post-termination restitution](native-restitution.md) for scope and evidence.
+The native source now includes a narrow host-selected F10 Moderate advantage
+route to retain an actual pre-ending foul; its native gameplay acceptance is
+still pending and must not be inferred from the portable results.
+Automatic escalation, comprehensive contact detection, unavailable-Netminder
+replacement decisions and Catastrophic adjudication remain separate work. A
+terminal Donnybrook conflict or unavailable defending Netminder is rejected
+without clearing the owed remedy. Generic portable
 `resolve_penalty` remains an external-official API for unreserved penalties;
 the native adapter does not auto-dismiss Serious penalties.
 
@@ -99,7 +105,7 @@ Local results live under `.local/native-penalty-*`. Their timestamps and binary
 provenance identify each run; prior controller/wandplay counts are historical
 milestones and should not be silently added to a new total.
 
-### 2026-09-14 native validation
+### 2026/09/14 native validation
 
 The penalty implementation build succeeded under UE 5.8.1. Its runtime DLL SHA-256 is
 `d4d79e306b7a966178032e6887c1189aec4f9006cb3de14e1763bc71e2df9f61`.

@@ -1,5 +1,7 @@
 # Sprint 3: spells, regulation and flight equipment
 
+> Current development checkpoint (2026/09/15): [resume notes](development-checkpoint-20260915.md). New code compiles; contextual/advantage live tests and arena visual correction are still pending. The milestone details below predate this checkpoint.
+
 Sprint 3 adds five sporting spell adapters, a host-selected Moderate free shot, original broom/wand art and a guarded source update for the native Hogwarts Legacy Creator Kit arena. Both Basketbroom and Bloodbroom share the new standalone gameplay. The native gameplay, multiplayer and packaged startup checks pass. The new Windows package is selected by the existing desktop shortcut; the exact scope and remaining native-kit work are recorded below.
 
 ## Spellwork

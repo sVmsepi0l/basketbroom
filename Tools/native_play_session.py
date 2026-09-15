@@ -23,7 +23,7 @@ finish, or stop), and verifies the match's actual bPractice before continuing.
 An existing session must already match the requested mode. No persistent editor
 settings or time dilation change; presentation/input mutations target PIE copies.
 The helper never assigns scores, clocks, ball states, role fields, or rules.
-It does not load/save editor maps: BB_Regulation must already be selected.
+It does not load/save editor maps: a supported regulation arena must already be selected.
 """
 
 from datetime import datetime, timezone
@@ -38,7 +38,7 @@ import traceback
 import unreal
 
 ROOT = Path(__file__).resolve().parents[1]
-MAP = "/Basketbroom/Maps/BB_Regulation"
+MAPS = tuple("/Basketbroom/Maps/" + name for name in ("BB_Regulation", "BB_Redrock", "BB_Redwoods"))
 REPORT = ROOT / ".local/native-play-session.json"
 ARGS = globals().get("BRIDGE_ARGS", {})
 RUNNER_NAME = "_basketbroom_native_play_session"
@@ -92,8 +92,8 @@ def context():
     if not levels.is_in_play_in_editor():
         raise RuntimeError("A native Play In Editor session is required")
     world = editor.get_game_world()
-    if world is None or not re.fullmatch(r"/Basketbroom/Maps/UEDPIE_\d+_BB_Regulation\.BB_Regulation", world.get_path_name()):
-        raise RuntimeError("Only a PIE copy of BB_Regulation is supported")
+    if world is None or not re.fullmatch(r"/Basketbroom/Maps/UEDPIE_\d+_(BB_Regulation|BB_Redrock|BB_Redwoods)\.\1", world.get_path_name()):
+        raise RuntimeError("Only a supported owned regulation arena PIE copy is supported")
     game_mode = unreal.GameplayStatics.get_game_mode(world)
     pawn = unreal.GameplayStatics.get_player_pawn(world, 0)
     controller = unreal.GameplayStatics.get_player_controller(world, 0)
@@ -238,8 +238,8 @@ class SessionOperation:
             if self.operation != "start":
                 raise RuntimeError("Start native PIE before capture")
             selected = editor.get_editor_world()
-            if selected is None or selected.get_path_name().split(".", 1)[0] != MAP:
-                raise RuntimeError("Select BB_Regulation before starting; the helper does not load maps")
+            if selected is None or selected.get_path_name().split(".", 1)[0] not in MAPS:
+                raise RuntimeError("Select a supported regulation arena before starting; the helper does not load maps")
             if unreal.load_class(None, "/Script/BasketbroomRuntime.BBGameMode") is None:
                 raise RuntimeError("The compiled native module must be loaded")
             self.configure_practice_url()
