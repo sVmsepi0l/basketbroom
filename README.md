@@ -19,9 +19,13 @@ with Hogwarts Legacy's Creator Kit engine.
 
 The Creator Kit port now has a saved dungeon, native return actor and registered
 entrance SQL. Launching the Kit through Epic resolved its WB sign-in failure.
-A normal Play session displayed the Hogwarts character standing in the arena;
-the automated runtime checks remain incomplete. See
-[Hogwarts integration](Docs/hogwarts-integration.md) for the evidence and next steps.
+Normal Creator Kit Play now passes 16 runtime checks for native player spawn,
+mod tables and exit setup, followed by clean shutdown. Actual entry/return
+interaction and match gameplay remain in development. See
+[Hogwarts sprint 3](Docs/hogwarts-sprint3.md) for the evidence and next steps.
+
+The next geometry change is [40–50% more enclosed arena volume](Docs/arena-volume-expansion.md),
+targeting 45%; the current game has not yet been resized.
 
 ## Play
 

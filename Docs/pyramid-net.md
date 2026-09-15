@@ -22,6 +22,8 @@ remain **provisional playtest values**. The four slopes use the same central
 apex, including at their seams and the wall junctions. The visible structure
 uses netting and supporting ribs. It is not a solid pyramid or a flat ceiling.
 
+The September 15 [arena-volume expansion](arena-volume-expansion.md) requests 40–50% more enclosed space, targeting 45%. That work is pending; the dimensions above describe the current validated roof.
+
 ## Native gameplay behavior
 
 `BBArenaGeometry.h` provides the shared plane and containment equations. The
