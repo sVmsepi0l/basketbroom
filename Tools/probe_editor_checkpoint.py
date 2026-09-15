@@ -18,5 +18,10 @@ RESULT = {
     "pie_worlds": [world.get_path_name() for world in unreal.EditorLevelLibrary.get_pie_worlds(True)],
     "read_only": True,
 }
+mod_manager = getattr(unreal, "GameModManagerSubsystem", None)
+if mod_manager is not None:
+    RESULT["has_active_editor_mod"] = bool(mod_manager.has_active_editor_mod_bp())
+    RESULT["active_mod"] = str(mod_manager.get_active_mod_name_bp())
+    RESULT["active_mod_content_path"] = str(mod_manager.get_active_mod_content_path_bp())
 path = ROOT / ".local" / LABEL / "editor-checkpoint.json"
 path.write_text(json.dumps(RESULT, indent=2) + "\n", encoding="utf-8")
