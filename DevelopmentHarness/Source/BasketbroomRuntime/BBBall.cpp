@@ -14,491 +14,491 @@
 
 namespace
 {
-// The authored hoops are visual toruses without engine collision. Sweep the
+// the authored hoops are visual toruses without engine collision. sweep the
 // ball against their exact expanded tube so a rim strike cannot become a goal.
-bool SweepRims(const FVector& Start, const FVector& End, float BallRadius,
-               float& HitTime, FVector& HitNormal)
+bool sweeprims(const fvector& start, const fvector& end, float ballradius,
+               float& hittime, fvector& hitnormal)
 {
-    bool bHit = false;
-    const FVector Delta = End - Start;
-    for (int32 Side : {-1, 1})
+    bool bhit = false;
+    const fvector delta = end - start;
+    for (int32 side : {-1, 1})
     {
-        const double PlaneX = Side * BBArena::GoalPlaneX;
-        for (int32 Hoop = 0; Hoop < 4; ++Hoop)
+        const double planex = side * BBArena::GoalPlaneX;
+        for (int32 hoop = 0; hoop < 4; ++hoop)
         {
-            const bool bSmall = Hoop == 3;
-            const double Tube = bSmall ? 16.0 : 20.0;
-            const double Major = (bSmall ? BBArena::SmallHoopRadius : BBArena::LargeHoopRadius) + Tube;
-            const FVector Center(PlaneX, bSmall ? 0.0 : (Hoop - 1) * BBArena::HoopSpacing, bSmall ? BBArena::SmallHoopHeight : BBArena::LargeHoopHeight);
-            const double Expanded = BallRadius + Tube;
-            if (FMath::Min(Start.X, End.X) > PlaneX + Expanded || FMath::Max(Start.X, End.X) < PlaneX - Expanded) continue;
-            auto ClosestRingPoint = [&Center, Major](const FVector& Point)
+            const bool bsmall = hoop == 3;
+            const double tube = bsmall ? 16.0 : 20.0;
+            const double major = (bsmall ? BBArena::SmallHoopRadius : BBArena::LargeHoopRadius) + tube;
+            const fvector center(planex, bsmall ? 0.0 : (hoop - 1) * BBArena::HoopSpacing, bsmall ? BBArena::SmallHoopHeight : BBArena::LargeHoopHeight);
+            const double expanded = ballradius + tube;
+            if (FMath::Min(Start.X, End.X) > planex + expanded || FMath::Max(Start.X, End.X) < planex - expanded) continue;
+            auto closestringpoint = [&center, major](const fvector& point)
             {
-                const FVector Radial(0, Point.Y - Center.Y, Point.Z - Center.Z);
-                return Center + Radial.GetSafeNormal(UE_SMALL_NUMBER, FVector::UpVector) * Major;
+                const fvector radial(0, Point.Y - Center.Y, Point.Z - Center.Z);
+                return center + Radial.GetSafeNormal(UE_SMALL_NUMBER, FVector::UpVector) * major;
             };
-            // A physics step is at most 1/120 second. Samples spaced at no more
+            // a physics step is at most 1/120 second. samples spaced at no more
             // than a quarter expanded radius also cover high-speed releases.
-            const int32 Samples = FMath::Clamp(FMath::CeilToInt(Delta.Size() / (Expanded * .25)), 1, 32);
-            float Previous = 0.f;
-            for (int32 Index = 0; Index <= Samples; ++Index)
+            const int32 samples = FMath::Clamp(FMath::CeilToInt(Delta.Size() / (expanded * .25)), 1, 32);
+            float previous = 0.f;
+            for (int32 index = 0; index <= samples; ++index)
             {
-                const float Time = static_cast<float>(Index) / Samples;
-                if (Time > HitTime) break;
-                const FVector Point = Start + Delta * Time;
-                const FVector Offset = Point - ClosestRingPoint(Point);
-                if (Offset.SizeSquared() <= Expanded * Expanded)
+                const float time = static_cast<float>(index) / samples;
+                if (time > hittime) break;
+                const fvector point = start + delta * time;
+                const fvector offset = point - closestringpoint(point);
+                if (Offset.SizeSquared() <= expanded * expanded)
                 {
-                    float Low = Previous, High = Time;
-                    for (int32 Refine = 0; Refine < 8; ++Refine)
+                    float low = previous, high = time;
+                    for (int32 refine = 0; refine < 8; ++refine)
                     {
-                        const float Mid = (Low + High) * .5f;
-                        const FVector Probe = Start + Delta * Mid;
-                        if (FVector::DistSquared(Probe, ClosestRingPoint(Probe)) <= Expanded * Expanded) High = Mid;
-                        else Low = Mid;
+                        const float mid = (low + high) * .5f;
+                        const fvector probe = start + delta * mid;
+                        if (FVector::DistSquared(Probe, closestringpoint(probe)) <= expanded * expanded) high = mid;
+                        else low = mid;
                     }
-                    const FVector Contact = Start + Delta * High;
-                    const FVector Normal = (Contact - ClosestRingPoint(Contact)).GetSafeNormal();
-                    if (FVector::DotProduct(Delta, Normal) < 0)
+                    const fvector contact = start + delta * high;
+                    const fvector normal = (contact - ClosestRingPoint(Contact)).GetSafeNormal();
+                    if (FVector::DotProduct(Delta, normal) < 0)
                     {
-                        HitTime = High;
-                        HitNormal = Normal;
-                        bHit = true;
+                        hittime = high;
+                        hitnormal = normal;
+                        bhit = true;
                     }
                     break;
                 }
-                Previous = Time;
+                previous = time;
             }
         }
     }
-    return bHit;
+    return bhit;
 }
 }
 
 ABBBall::ABBBall()
 {
     PrimaryActorTick.bCanEverTick = true;
-    bReplicates = true;
-    bAlwaysRelevant = true;
-    SetReplicateMovement(true);
-    SetNetUpdateFrequency(30);
-    USceneComponent* TransformRoot = CreateDefaultSubobject<USceneComponent>(TEXT("BallRoot"));
-    SetRootComponent(TransformRoot);
+    breplicates = true;
+    balwaysrelevant = true;
+    setreplicatemovement(true);
+    setnetupdatefrequency(30);
+    uscenecomponent* transformroot = createdefaultsubobject<uscenecomponent>(text("ballroot"));
+    setrootcomponent(transformroot);
     TransformRoot->SetMobility(EComponentMobility::Movable);
-    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BallMesh"));
-    Mesh->SetupAttachment(TransformRoot);
+    mesh = createdefaultsubobject<ustaticmeshcomponent>(text("ballmesh"));
+    mesh->setupattachment(transformroot);
     Mesh->SetMobility(EComponentMobility::Movable);
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere"));
     Mesh->SetStaticMesh(Sphere.Object);
-    Mesh->SetCollisionProfileName(TEXT("NoCollision"));
-    Mesh->SetCastShadow(true);
-    LeftWing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftWing"));
-    RightWing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightWing"));
-    for (UStaticMeshComponent* Wing : {LeftWing.Get(), RightWing.Get()})
+    mesh->setcollisionprofilename(text("nocollision"));
+    mesh->setcastshadow(true);
+    leftwing = createdefaultsubobject<ustaticmeshcomponent>(text("leftwing"));
+    rightwing = createdefaultsubobject<ustaticmeshcomponent>(text("rightwing"));
+    for (ustaticmeshcomponent* wing : {LeftWing.Get(), RightWing.Get()})
     {
-        // Follow the smoothed ball mesh, retaining authored centimeter scale.
-        Wing->SetupAttachment(Mesh);
-        Wing->SetAbsolute(false, false, true);
+        // follow the smoothed ball mesh, retaining authored centimeter scale.
+        wing->setupattachment(mesh);
+        wing->setabsolute(false, false, true);
         Wing->SetMobility(EComponentMobility::Movable);
-        Wing->SetCollisionProfileName(TEXT("NoCollision"));
-        Wing->SetGenerateOverlapEvents(false);
-        Wing->SetCanEverAffectNavigation(false);
-        Wing->SetVisibility(false);
+        wing->setcollisionprofilename(text("nocollision"));
+        wing->setgenerateoverlapevents(false);
+        wing->setcaneveraffectnavigation(false);
+        wing->setvisibility(false);
     }
-    LeftWing->SetRelativeLocation(FVector(0, -50, 0));
-    RightWing->SetRelativeLocation(FVector(0, 50, 0));
-    for (const TCHAR* Path : {TEXT("/Basketbroom/Art/Equipment/SM_BB_SnipeWingLeft"),
+    leftwing->setrelativelocation(fvector(0, -50, 0));
+    rightwing->setrelativelocation(fvector(0, 50, 0));
+    for (const tchar* path : {TEXT("/Basketbroom/Art/Equipment/SM_BB_SnipeWingLeft"),
          TEXT("/Basketbroom/Art/Equipment/SM_BB_SnipeWingRight"),
          TEXT("/Basketbroom/Art/Equipment/SM_BB_SnitchWingLeft"),
          TEXT("/Basketbroom/Art/Equipment/SM_BB_SnitchWingRight")})
     {
-        ConstructorHelpers::FObjectFinder<UStaticMesh> WingMesh(Path);
+        ConstructorHelpers::FObjectFinder<UStaticMesh> wingmesh(path);
         ChaseWingMeshes.Add(WingMesh.Object);
     }
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> WingIvory(TEXT("/Basketbroom/Art/Materials/M_BB_Cream"));
-    SnitchWingMaterial = WingIvory.Object;
-    for (const TCHAR* Path : {TEXT("/Basketbroom/Art/Materials/M_BB_BallQuaffle"),
+    snitchwingmaterial = WingIvory.Object;
+    for (const tchar* path : {TEXT("/Basketbroom/Art/Materials/M_BB_BallQuaffle"),
          TEXT("/Basketbroom/Art/Materials/M_BB_BallQuark"), TEXT("/Basketbroom/Art/Materials/M_BB_Copper"),
          TEXT("/Basketbroom/Art/Materials/M_BB_BallSnitch"), TEXT("/Basketbroom/Art/Materials/M_BB_Iron")})
     {
-        ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(Path);
+        ConstructorHelpers::FObjectFinder<UMaterialInterface> material(path);
         BallMaterials.Add(Material.Object);
     }
 }
 void ABBBall::BeginPlay()
 {
     Super::BeginPlay();
-    Match = GetWorld()->GetGameState<ABBMatchState>();
-    Home = GetActorLocation();
-    LastLocation = Home;
-    PreviousVisualLocation = Home;
-    ChaseTime = BallIndex * 2.4f;
-    OnRep_Appearance();
+    match = getworld()->getgamestate<abbmatchstate>();
+    home = getactorlocation();
+    lastlocation = home;
+    previousvisuallocation = home;
+    chasetime = ballindex * 2.4f;
+    onrep_appearance();
 }
-void ABBBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ABBBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& outlifetimeprops) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ABBBall, BallIndex); DOREPLIFETIME(ABBBall, Holder);
-    DOREPLIFETIME(ABBBall, CapturingRider); DOREPLIFETIME(ABBBall, CaptureProgress);
-    DOREPLIFETIME(ABBBall, bActive); DOREPLIFETIME(ABBBall, ReturnIn);
-    DOREPLIFETIME(ABBBall, BallStatus); DOREPLIFETIME(ABBBall, FlightVelocity);
+    doreplifetime(abbball, ballindex); doreplifetime(abbball, holder);
+    doreplifetime(abbball, capturingrider); doreplifetime(abbball, captureprogress);
+    doreplifetime(abbball, bactive); doreplifetime(abbball, returnin);
+    doreplifetime(abbball, ballstatus); doreplifetime(abbball, flightvelocity);
 }
-FString ABBBall::DisplayName() const
+fstring ABBBall::DisplayName() const
 {
-    const TCHAR* Names[] = {TEXT("QUAFFLE"), TEXT("QUARK A"), TEXT("QUARK B"), TEXT("SNIPE"), TEXT("SNITCH"), TEXT("BLUDGER A"), TEXT("BLUDGER B")};
+    const tchar* names[] = {text("quaffle"), text("quark a"), text("quark b"), text("snipe"), text("snitch"), text("bludger a"), text("bludger b")};
     return Names[FMath::Clamp(BallIndex, 0, 6)];
 }
 void ABBBall::OnRep_Appearance()
 {
-    Mesh->SetRelativeScale3D(FVector(Radius() / 50.f));
-    const int32 MaterialIndex = IsBludger() ? 4 : Kind();
-    if (BallMaterials.IsValidIndex(MaterialIndex)) Mesh->SetMaterial(0, BallMaterials[MaterialIndex]);
-    const int32 WingIndex = BallIndex == 3 ? 0 : 2;
-    const bool bWingsReady = IsChase() && ChaseWingMeshes.IsValidIndex(WingIndex + 1)
-        && ChaseWingMeshes[WingIndex] && ChaseWingMeshes[WingIndex + 1];
-    LeftWing->SetVisibility(bWingsReady);
-    RightWing->SetVisibility(bWingsReady);
-    if (bWingsReady)
+    mesh->setrelativescale3d(fvector(radius() / 50.f));
+    const int32 materialindex = isbludger() ? 4 : kind();
+    if (BallMaterials.IsValidIndex(MaterialIndex)) mesh->setmaterial(0, ballmaterials[materialindex]);
+    const int32 wingindex = ballindex == 3 ? 0 : 2;
+    const bool bwingsready = ischase() && ChaseWingMeshes.IsValidIndex(WingIndex + 1)
+        && chasewingmeshes[wingindex] && chasewingmeshes[wingindex + 1];
+    leftwing->setvisibility(bwingsready);
+    rightwing->setvisibility(bwingsready);
+    if (bwingsready)
     {
-        LeftWing->SetStaticMesh(ChaseWingMeshes[WingIndex]);
-        RightWing->SetStaticMesh(ChaseWingMeshes[WingIndex + 1]);
-        UMaterialInterface* WingMaterial = BallIndex == 4 ? SnitchWingMaterial.Get()
+        leftwing->setstaticmesh(chasewingmeshes[wingindex]);
+        rightwing->setstaticmesh(chasewingmeshes[wingindex + 1]);
+        umaterialinterface* wingmaterial = ballindex == 4 ? SnitchWingMaterial.Get()
             : (BallMaterials.IsValidIndex(2) ? BallMaterials[2].Get() : nullptr);
-        LeftWing->SetMaterial(0, WingMaterial);
-        RightWing->SetMaterial(0, WingMaterial);
+        leftwing->setmaterial(0, wingmaterial);
+        rightwing->setmaterial(0, wingmaterial);
     }
-    SetActorHiddenInGame(!bActive);
+    setactorhiddeningame(!bactive);
 }
-void ABBBall::UpdateChaseVisual(float DeltaSeconds)
+void ABBBall::UpdateChaseVisual(float deltaseconds)
 {
-    if (!IsChase()) return;
-    const FVector Location = Mesh->GetComponentLocation();
-    const FVector Travel = Location - PreviousVisualLocation;
-    PreviousVisualLocation = Location;
-    // Cosmetic heading and flap only: neither actor transforms nor the
+    if (!ischase()) return;
+    const fvector location = mesh->getcomponentlocation();
+    const fvector travel = location - previousvisuallocation;
+    previousvisuallocation = location;
+    // cosmetic heading and flap only: neither actor transforms nor the
     // authority's capture sphere, flight velocity, or custody are modified.
     if (Travel.SizeSquared2D() > 1 && Travel.SizeSquared() < FMath::Square(1800.f))
     {
-        const FRotator Heading(0, Travel.Rotation().Yaw, 0);
-        Mesh->SetWorldRotation(FMath::RInterpTo(Mesh->GetComponentRotation(), Heading, DeltaSeconds, 7.f));
+        const frotator heading(0, Travel.Rotation().Yaw, 0);
+        Mesh->SetWorldRotation(FMath::RInterpTo(Mesh->GetComponentRotation(), heading, deltaseconds, 7.f));
     }
-    const bool bFlying = Match && Match->bLive && bActive;
-    const float Frequency = bFlying ? (BallIndex == 3 ? 5.f : 7.f) : 1.4f;
-    BobTime = FMath::Fmod(BobTime + DeltaSeconds * Frequency * UE_TWO_PI, UE_TWO_PI);
-    const float Flap = FMath::Sin(BobTime) * (bFlying ? 34.f : 10.f);
-    LeftWing->SetRelativeRotation(FRotator(0, 0, -Flap));
-    RightWing->SetRelativeRotation(FRotator(0, 0, Flap));
+    const bool bflying = match && match->blive && bactive;
+    const float frequency = bflying ? (ballindex == 3 ? 5.f : 7.f) : 1.4f;
+    bobtime = FMath::Fmod(BobTime + deltaseconds * frequency * ue_two_pi, ue_two_pi);
+    const float flap = FMath::Sin(BobTime) * (bflying ? 34.f : 10.f);
+    leftwing->setrelativerotation(frotator(0, 0, -flap));
+    rightwing->setrelativerotation(frotator(0, 0, flap));
 }
-TArray<double> ABBBall::DevelopmentGetRoofContactState() const
+tarray<double> ABBBall::DevelopmentGetRoofContactState() const
 {
-    if (!HasAuthority() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE) return {};
-    return {static_cast<double>(RoofContactCount), LastRoofNormal.X, LastRoofNormal.Y, LastRoofNormal.Z,
+    if (!hasauthority() || !getworld() || getworld()->worldtype != EWorldType::PIE) return {};
+    return {static_cast<double>(roofcontactcount), LastRoofNormal.X, LastRoofNormal.Y, LastRoofNormal.Z,
         LastRoofIncoming.X, LastRoofIncoming.Y, LastRoofIncoming.Z,
         LastRoofOutgoing.X, LastRoofOutgoing.Y, LastRoofOutgoing.Z};
 }
-bool ABBBall::DevelopmentSetFlightFixture(FVector Location, FVector Velocity)
+bool ABBBall::DevelopmentSetFlightFixture(FVector location, fvector velocity)
 {
-#if UE_BUILD_SHIPPING
+#if ue_build_shipping
     return false;
 #else
-    // The explicit runtime checks matter: DevelopmentOnly metadata alone is
+    // the explicit runtime checks matter: developmentonly metadata alone is
     // not an authorization boundary for a reflected callable function.
-    if (!HasAuthority() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE
-        || Holder || Location.ContainsNaN() || Velocity.ContainsNaN())
+    if (!hasauthority() || !getworld() || getworld()->worldtype != EWorldType::PIE
+        || holder || Location.ContainsNaN() || Velocity.ContainsNaN())
         return false;
-    if (!SetActorLocation(Location, false, nullptr, ETeleportType::TeleportPhysics))
+    if (!setactorlocation(location, false, nullptr, ETeleportType::TeleportPhysics))
         return false;
-    LastLocation = Location;
-    FlightVelocity = Velocity;
-    DistanceSinceReleaseCm = 0;
-    ForceNetUpdate();
+    lastlocation = location;
+    flightvelocity = velocity;
+    distancesincereleasecm = 0;
+    forcenetupdate();
     return true;
 #endif
 }
-void ABBBall::ResetBall(FVector Location)
+void ABBBall::ResetBall(FVector location)
 {
-    if (!HasAuthority() || Location.ContainsNaN()) return;
-    Location = BBArena::ClampSphere(Location, Radius());
-    SetActorLocation(Location);
-    LastLocation = Location;
-    FlightVelocity = FVector::ZeroVector;
-    DistanceSinceReleaseCm = 0;
+    if (!hasauthority() || Location.ContainsNaN()) return;
+    location = BBArena::ClampSphere(Location, radius());
+    setactorlocation(location);
+    lastlocation = location;
+    flightvelocity = FVector::ZeroVector;
+    distancesincereleasecm = 0;
     RecentThrower.Reset();
-    ThrowerIgnoreRemaining = ImpactCooldown = 0;
-    Holder = nullptr;
-    CaptureProgress = 0;
-    CapturingRider = nullptr;
-    Cooldown = .25f;
-    ForceNetUpdate();
+    throwerignoreremaining = impactcooldown = 0;
+    holder = nullptr;
+    captureprogress = 0;
+    capturingrider = nullptr;
+    cooldown = .25f;
+    forcenetupdate();
 }
-void ABBBall::Tick(float DeltaSeconds)
+void ABBBall::Tick(float deltaseconds)
 {
     Super::Tick(DeltaSeconds);
-    if (!Match) Match = GetWorld()->GetGameState<ABBMatchState>();
-    UpdateChaseVisual(DeltaSeconds);
-    if (!HasAuthority())
+    if (!match) match = getworld()->getgamestate<abbmatchstate>();
+    updatechasevisual(deltaseconds);
+    if (!hasauthority())
     {
-        // Interpolate only presentation: the actor root remains the replicated
-        // authority transform. Held equipment follows the visible rider each
+        // interpolate only presentation: the actor root remains the replicated
+        // authority transform. held equipment follows the visible rider each
         // frame, including the local player's predicted camera movement.
-        const FVector Target = IsValid(Holder) ? Holder->GetCarryLocation() : GetActorLocation();
-        if (IsValid(Holder) || FVector::DistSquared(LastLocation, Target) > FMath::Square(1800.f)) LastLocation = Target;
-        else LastLocation = FMath::VInterpTo(LastLocation, Target, DeltaSeconds, 16.f);
-        Mesh->SetWorldLocation(LastLocation);
+        const fvector target = isvalid(holder) ? holder->getcarrylocation() : getactorlocation();
+        if (isvalid(holder) || FVector::DistSquared(LastLocation, target) > FMath::Square(1800.f)) lastlocation = target;
+        else lastlocation = FMath::VInterpTo(LastLocation, target, deltaseconds, 16.f);
+        mesh->setworldlocation(lastlocation);
         return;
     }
-    // Match Tick owns all penalty time/physics. Running even one ordinary
+    // match tick owns all penalty time/physics. running even one ordinary
     // flight step here would make deadline outcomes depend on actor tick order.
-    if (Match && Match->bPenaltyShotActive) return;
-    if (!Match || !Match->bLive || !bActive) { CaptureProgress = 0; CapturingRider = nullptr; return; }
-    Cooldown = FMath::Max(0.f, Cooldown - DeltaSeconds);
-    LastLocation = GetActorLocation();
-    if (Holder)
+    if (match && match->bpenaltyshotactive) return;
+    if (!match || !match->blive || !bactive) { captureprogress = 0; capturingrider = nullptr; return; }
+    cooldown = FMath::Max(0.f, cooldown - deltaseconds);
+    lastlocation = getactorlocation();
+    if (holder)
     {
-        SetActorLocation(Holder->GetCarryLocation());
+        setactorlocation(holder->getcarrylocation());
         return;
     }
-    if (IsChase())
+    if (ischase())
     {
-        // Constant bounded speed; copper Snipe is exactly 60% of Snitch speed.
-        const float Speed = BallIndex == 3 ? 1020.f : 1700.f;
-        // Widen the route without speeding up either chase ball or its moving
+        // constant bounded speed; copper snipe is exactly 60% of snitch speed.
+        const float speed = ballindex == 3 ? 1020.f : 1700.f;
+        // widen the route without speeding up either chase ball or its moving
         // target: one larger circuit takes proportionally longer.
-        ChaseTime += DeltaSeconds * (BallIndex == 3 ? .18f : .30f) / BBArena::LinearScale;
-        const FVector Target = BBArena::ScaleLayout(FVector(
+        chasetime += deltaseconds * (ballindex == 3 ? .18f : .30f) / BBArena::LinearScale;
+        const fvector target = BBArena::ScaleLayout(FVector(
             FMath::Sin(ChaseTime) * 4200.f, FMath::Cos(ChaseTime * 1.31f) * 2300.f,
             2450.f + FMath::Sin(ChaseTime * .73f) * 1100.f));
         SetActorLocation(BBArena::ClampSphere(
-            FMath::VInterpConstantTo(GetActorLocation(), Target, DeltaSeconds, Speed), Radius()));
-        StepCapture(DeltaSeconds);
+            FMath::VInterpConstantTo(GetActorLocation(), target, deltaseconds, speed), radius()));
+        stepcapture(deltaseconds);
     }
     else
     {
-        // Fixed maximum physics step keeps the whole-ball goal sweep stable at low FPS.
-        float Remaining = FMath::Clamp(DeltaSeconds, 0.f, 1.f);
-        while (Remaining > UE_SMALL_NUMBER && bActive && !Holder)
+        // fixed maximum physics step keeps the whole-ball goal sweep stable at low FPS.
+        float remaining = FMath::Clamp(DeltaSeconds, 0.f, 1.f);
+        while (remaining > ue_small_number && bactive && !holder)
         {
-            const float Step = FMath::Min(Remaining, 1.f / 120.f);
-            StepFlight(Step);
-            Remaining -= Step;
+            const float step = FMath::Min(Remaining, 1.f / 120.f);
+            stepflight(step);
+            remaining -= step;
         }
     }
 }
-void ABBBall::StepPenaltyFlight(double DeltaSeconds)
+void ABBBall::StepPenaltyFlight(double deltaseconds)
 {
-    if (!HasAuthority() || !IsValid(Match) || !Match->IsPenaltyBallActive(this)
-        || !Match->bPenaltyShotReleased || !bActive || Holder || DeltaSeconds <= 0) return;
-    Cooldown = FMath::Max(0.f, Cooldown - static_cast<float>(DeltaSeconds));
-    LastLocation = GetActorLocation();
-    StepFlight(DeltaSeconds);
+    if (!hasauthority() || !isvalid(match) || !match->ispenaltyballactive(this)
+        || !match->bpenaltyshotreleased || !bactive || holder || deltaseconds <= 0) return;
+    cooldown = FMath::Max(0.f, cooldown - static_cast<float>(deltaseconds));
+    lastlocation = getactorlocation();
+    stepflight(deltaseconds);
 }
-void ABBBall::StepCapture(float DeltaSeconds)
+void ABBBall::StepCapture(float deltaseconds)
 {
-    if (!HasAuthority() || !IsValid(Match)) return;
-    ABBRiderCharacter* Best = nullptr;
-    float BestDist = FMath::Square(380.f);
-    for (ABBRiderCharacter* Rider : Match->Riders)
+    if (!hasauthority() || !isvalid(match)) return;
+    abbridercharacter* best = nullptr;
+    float bestdist = FMath::Square(380.f);
+    for (abbridercharacter* rider : match->riders)
     {
-        if (!IsValid(Rider) || !Rider->bInteractHeld || !Match->CanInteract(Rider, this)) continue;
-        const float Dist = FVector::DistSquared(GetActorLocation(), Rider->GetActorLocation());
-        if (Dist < BestDist) { BestDist = Dist; Best = Rider; }
+        if (!isvalid(rider) || !rider->binteractheld || !match->caninteract(rider, this)) continue;
+        const float dist = FVector::DistSquared(GetActorLocation(), rider->getactorlocation());
+        if (dist < bestdist) { bestdist = dist; best = rider; }
     }
-    if (CapturingRider != Best) { CaptureProgress = 0; CapturingRider = Best; }
-    if (!Best) { CaptureProgress = 0; return; }
-    CaptureProgress = FMath::Min(1.f, CaptureProgress + DeltaSeconds);
-    if (CaptureProgress >= 1.f && Cooldown <= 0 && Match->TryCatch(Best, this))
+    if (capturingrider != best) { captureprogress = 0; capturingrider = best; }
+    if (!best) { captureprogress = 0; return; }
+    captureprogress = FMath::Min(1.f, captureprogress + deltaseconds);
+    if (captureprogress >= 1.f && cooldown <= 0 && match->trycatch(best, this))
     {
-        Cooldown = .25f;
-        CaptureProgress = 0;
+        cooldown = .25f;
+        captureprogress = 0;
     }
 }
-void ABBBall::StepFlight(double Dt)
+void ABBBall::StepFlight(double dt)
 {
-    if (!HasAuthority() || !IsValid(Match) || Dt <= 0) return;
-    ThrowerIgnoreRemaining = FMath::Max(0.f, ThrowerIgnoreRemaining - static_cast<float>(Dt));
-    ImpactCooldown = FMath::Max(0.f, ImpactCooldown - static_cast<float>(Dt));
-    const float R = Radius();
-    // Spawn/possession fixtures may begin outside the new volume. Recover to
+    if (!hasauthority() || !isvalid(match) || dt <= 0) return;
+    throwerignoreremaining = FMath::Max(0.f, throwerignoreremaining - static_cast<float>(dt));
+    impactcooldown = FMath::Max(0.f, impactcooldown - static_cast<float>(dt));
+    const float r = radius();
+    // Spawn/possession fixtures may begin outside the new volume. recover to
     // its nearest vertical interior, preserving identity, custody and velocity.
-    const FVector BoundedStart = BBArena::ClampSphere(GetActorLocation(), R);
+    const fvector boundedstart = BBArena::ClampSphere(GetActorLocation(), r);
     if (!GetActorLocation().Equals(BoundedStart, .001))
     {
-        SetActorLocation(BoundedStart);
-        BBArena::ReboundRoof(FlightVelocity, BoundedStart, R, R);
+        setactorlocation(boundedstart);
+        BBArena::ReboundRoof(FlightVelocity, boundedstart, r, r);
     }
     if (FlightVelocity.IsNearlyZero()) return;
-    FlightVelocity.Z -= (IsBludger() ? 60.f : 380.f) * Dt;
-    const bool bPenaltyFlight = Match->IsPenaltyBallActive(this) && Match->bPenaltyShotReleased;
-    double Remaining = Dt;
-    double Elapsed = 0;
-    // Continue the unused portion after a rebound. A bounded contact count
+    FlightVelocity.Z -= (isbludger() ? 60.f : 380.f) * dt;
+    const bool bpenaltyflight = match->ispenaltyballactive(this) && match->bpenaltyshotreleased;
+    double remaining = dt;
+    double elapsed = 0;
+    // continue the unused portion after a rebound. a bounded contact count
     // prevents pathological overlapping fixtures from hanging a server tick.
-    for (int32 Bounce = 0; Bounce < 12 && Remaining > 1.e-9; ++Bounce)
+    for (int32 bounce = 0; bounce < 12 && remaining > 1.e-9; ++bounce)
     {
-        const FVector Old = GetActorLocation();
-        FVector P = Old + FlightVelocity * Remaining;
-        FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomBallFlight), false, this);
-        FCollisionObjectQueryParams StaticObjects;
+        const fvector old = getactorlocation();
+        fvector p = old + flightvelocity * remaining;
+        fcollisionqueryparams query(scene_query_stat(basketbroomballflight), false, this);
+        fcollisionobjectqueryparams staticobjects;
         StaticObjects.AddObjectTypesToQuery(ECC_WorldStatic);
-        TArray<FHitResult> WorldHits;
-        GetWorld()->SweepMultiByObjectType(WorldHits, Old, P, FQuat::Identity,
-            StaticObjects, FCollisionShape::MakeSphere(R), Query);
-        FHitResult WorldHit;
-        bool bCollision = false;
-        float HitTime = 1.f;
-        FVector HitNormal = FVector::ZeroVector;
-        for (const FHitResult& Hit : WorldHits)
+        tarray<fhitresult> worldhits;
+        getworld()->sweepmultibyobjecttype(worldhits, old, p, FQuat::Identity,
+            staticobjects, FCollisionShape::MakeSphere(R), query);
+        fhitresult worldhit;
+        bool bcollision = false;
+        float hittime = 1.f;
+        fvector hitnormal = FVector::ZeroVector;
+        for (const fhitresult& hit : worldhits)
         {
-            const AActor* Surface = Hit.GetActor();
-            // The net mesh provides physical collision for native characters.
-            // Balls use the exact four planes, avoiding triangle back-face,
+            const aactor* surface = Hit.GetActor();
+            // the net mesh provides physical collision for native characters.
+            // balls use the exact four planes, avoiding triangle back-face,
             // seam and mesh-thickness artifacts or two bounces for one touch.
-            if (Surface && Surface->ActorHasTag(TEXT("BB.Net.Roof"))) continue;
-            if (Hit.Time <= HitTime)
+            if (surface && Surface->ActorHasTag(TEXT("BB.Net.Roof"))) continue;
+            if (Hit.Time <= hittime)
             {
-                WorldHit = Hit;
-                HitTime = Hit.Time;
-                HitNormal = Hit.Normal;
-                bCollision = true;
+                worldhit = hit;
+                hittime = Hit.Time;
+                hitnormal = Hit.Normal;
+                bcollision = true;
             }
         }
-        const bool bRimHit = SweepRims(Old, P, R, HitTime, HitNormal);
-        if (bRimHit) bCollision = true;
-        const bool bRoofHit = BBArena::SweepRoof(Old, P, R, HitTime, HitNormal);
-        if (bRoofHit) bCollision = true;
-        BB::Contact Contact = bRoofHit ? BB::Contact::Net : bRimHit ? BB::Contact::Goal : BB::Contact::None;
-        ABBRiderCharacter* StruckRider = nullptr;
-        ABBRiderCharacter* SavingKeeper = nullptr;
-        if (bPenaltyFlight)
+        const bool brimhit = sweeprims(old, p, r, hittime, hitnormal);
+        if (brimhit) bcollision = true;
+        const bool broofhit = BBArena::SweepRoof(Old, p, r, hittime, hitnormal);
+        if (broofhit) bcollision = true;
+        BB::Contact contact = broofhit ? BB::Contact::Net : brimhit ? BB::Contact::Goal : BB::Contact::None;
+        abbridercharacter* struckrider = nullptr;
+        abbridercharacter* savingkeeper = nullptr;
+        if (bpenaltyflight)
         {
-            for (ABBRiderCharacter* Rider : Match->Riders)
-                if (IsValid(Rider) && Rider->RosterIndex != Match->PenaltyKeeperSlot) Query.AddIgnoredActor(Rider);
-            FCollisionObjectQueryParams KeeperObjects; KeeperObjects.AddObjectTypesToQuery(ECC_Pawn);
-            FHitResult KeeperHit;
-            if (GetWorld()->SweepSingleByObjectType(KeeperHit, Old, P, FQuat::Identity,
-                KeeperObjects, FCollisionShape::MakeSphere(R), Query) && KeeperHit.Time <= HitTime)
+            for (abbridercharacter* rider : match->riders)
+                if (isvalid(rider) && rider->rosterindex != match->penaltykeeperslot) Query.AddIgnoredActor(Rider);
+            fcollisionobjectqueryparams keeperobjects; KeeperObjects.AddObjectTypesToQuery(ECC_Pawn);
+            fhitresult keeperhit;
+            if (getworld()->sweepsinglebyobjecttype(keeperhit, old, p, FQuat::Identity,
+                keeperobjects, FCollisionShape::MakeSphere(R), query) && KeeperHit.Time <= hittime)
             {
-                ABBRiderCharacter* Keeper = Cast<ABBRiderCharacter>(KeeperHit.GetActor());
-                if (Keeper && Keeper->RosterIndex == Match->PenaltyKeeperSlot)
+                abbridercharacter* keeper = Cast<ABBRiderCharacter>(KeeperHit.GetActor());
+                if (keeper && keeper->rosterindex == match->penaltykeeperslot)
                 {
-                    SavingKeeper = Keeper;
-                    HitTime = KeeperHit.Time;
-                    HitNormal = KeeperHit.Normal;
-                    bCollision = true;
+                    savingkeeper = keeper;
+                    hittime = KeeperHit.Time;
+                    hitnormal = KeeperHit.Normal;
+                    bcollision = true;
                 }
             }
         }
-        if (IsBludger() && ImpactCooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
+        if (isbludger() && impactcooldown <= 0 && FlightVelocity.SizeSquared() > FMath::Square(500.f))
         {
-            if (ThrowerIgnoreRemaining > 0 && RecentThrower.IsValid()) Query.AddIgnoredActor(RecentThrower.Get());
-            FCollisionObjectQueryParams PawnObjects; PawnObjects.AddObjectTypesToQuery(ECC_Pawn);
-            FHitResult RiderHit;
-            if (GetWorld()->SweepSingleByObjectType(RiderHit, Old, P, FQuat::Identity,
-                PawnObjects, FCollisionShape::MakeSphere(R), Query) && RiderHit.Time <= HitTime)
+            if (throwerignoreremaining > 0 && RecentThrower.IsValid()) Query.AddIgnoredActor(RecentThrower.Get());
+            fcollisionobjectqueryparams pawnobjects; PawnObjects.AddObjectTypesToQuery(ECC_Pawn);
+            fhitresult riderhit;
+            if (getworld()->sweepsinglebyobjecttype(riderhit, old, p, FQuat::Identity,
+                pawnobjects, FCollisionShape::MakeSphere(R), query) && RiderHit.Time <= hittime)
             {
-                if (ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(RiderHit.GetActor()))
+                if (abbridercharacter* rider = Cast<ABBRiderCharacter>(RiderHit.GetActor()))
                 {
                     if (Match->Riders.Contains(Rider))
                     {
-                        StruckRider = Rider;
-                        HitTime = RiderHit.Time;
-                        HitNormal = RiderHit.Normal;
-                        bCollision = true;
+                        struckrider = rider;
+                        hittime = RiderHit.Time;
+                        hitnormal = RiderHit.Normal;
+                        bcollision = true;
                     }
                 }
             }
         }
-        // Compare whole-ball goal passage only with the unobstructed portion
+        // compare whole-ball goal passage only with the unobstructed portion
         // before the earliest rim, net, world or keeper contact.
-        const FVector TravelEnd = FMath::Lerp(Old, P, HitTime);
-        if (!IsBludger())
+        const fvector travelend = FMath::Lerp(Old, p, hittime);
+        if (!isbludger())
         {
-            for (int32 Side : {-1, 1})
+            for (int32 side : {-1, 1})
             {
-                const double Plane = Side * (BBArena::GoalPlaneX + R);
-                if (Old.X * Side < Plane * Side && TravelEnd.X * Side >= Plane * Side)
+                const double plane = side * (BBArena::GoalPlaneX + r);
+                if (Old.X * side < plane * side && TravelEnd.X * side >= plane * side)
                 {
-                    const double T = (Plane - Old.X) / (TravelEnd.X - Old.X);
-                    const FVector Cross = FMath::Lerp(Old, TravelEnd, T);
-                    bool bGoal = false;
-                    if (BallIndex == 0)
-                        for (double Y : {-BBArena::HoopSpacing, 0.0, BBArena::HoopSpacing}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - BBArena::LargeHoopHeight).SizeSquared() < FMath::Square(BBArena::LargeHoopRadius - R);
-                    else bGoal = FVector2D(Cross.Y, Cross.Z - BBArena::SmallHoopHeight).SizeSquared() < FMath::Square(BBArena::SmallHoopRadius - R);
-                    if (bGoal)
+                    const double t = (plane - Old.X) / (TravelEnd.X - Old.X);
+                    const fvector cross = FMath::Lerp(Old, travelend, t);
+                    bool bgoal = false;
+                    if (ballindex == 0)
+                        for (double y : {-BBArena::HoopSpacing, 0.0, BBArena::HoopSpacing}) bgoal |= FVector2D(Cross.Y - y, Cross.Z - BBArena::LargeHoopHeight).SizeSquared() < FMath::Square(BBArena::LargeHoopRadius - r);
+                    else bgoal = FVector2D(Cross.Y, Cross.Z - BBArena::SmallHoopHeight).SizeSquared() < FMath::Square(BBArena::SmallHoopRadius - r);
+                    if (bgoal)
                     {
-                        DistanceSinceReleaseCm += FVector::Distance(Old, Cross);
-                        SetActorLocation(Cross);
-                        Match->Goal(this, Side > 0 ? 0 : 1, (Elapsed + Remaining * HitTime * T) / Dt);
+                        distancesincereleasecm += FVector::Distance(Old, cross);
+                        setactorlocation(cross);
+                        match->goal(this, side > 0 ? 0 : 1, (elapsed + remaining * hittime * t) / dt);
                         return;
                     }
                 }
             }
         }
-        const double ContactFraction = (Elapsed + Remaining * HitTime) / Dt;
-        if (SavingKeeper)
+        const double contactfraction = (elapsed + remaining * hittime) / dt;
+        if (savingkeeper)
         {
-            SetActorLocation(TravelEnd);
-            Match->PenaltyBallStopped(this, TEXT("SAVED BY THE NETMINDER"), ContactFraction);
+            setactorlocation(travelend);
+            match->penaltyballstopped(this, text("saved by the netminder"), contactfraction);
             return;
         }
-        if (bCollision)
+        if (bcollision)
         {
-            P = TravelEnd + HitNormal * .5f;
-            if (StruckRider)
+            p = travelend + hitnormal * .5f;
+            if (struckrider)
             {
-                Contact = BB::Contact::Player;
-                StruckRider->ConcealRemaining = 0.f;
-                StruckRider->StunRemaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
-                StruckRider->ForceNetUpdate();
-                Match->Release(StruckRider, FVector::ZeroVector);
-                Cooldown = ImpactCooldown = .7f;
-                Match->Say(TEXT("Bludger impact - rider recovers in 1.5 seconds"));
+                contact = BB::Contact::Player;
+                struckrider->concealremaining = 0.f;
+                struckrider->stunremaining = FMath::Max(StruckRider->StunRemaining, 1.5f);
+                struckrider->forcenetupdate();
+                match->release(struckrider, FVector::ZeroVector);
+                cooldown = impactcooldown = .7f;
+                match->say(text("bludger impact - rider recovers in 1.5 seconds"));
             }
-            else if (!bRoofHit && !bRimHit)
+            else if (!broofhit && !brimhit)
             {
-                const AActor* Surface = WorldHit.GetActor();
-                if (Surface && (Surface->ActorHasTag(TEXT("BB.Goal.Rim")) || Surface->ActorHasTag(TEXT("BB.Support"))))
-                    Contact = BB::Contact::Goal;
-                else if ((Surface && Surface->ActorHasTag(TEXT("BB.Floor"))) || (HitNormal.Z > .5 && P.Z < R + 5.f))
-                    Contact = BB::Contact::Floor;
-                else if ((Surface && Surface->ActorHasTag(TEXT("BB.Net")))
-                    || FMath::Abs(P.X) >= BBArena::HalfLength - R - 5.f || FMath::Abs(P.Y) >= BBArena::HalfWidth - R - 5.f)
-                    Contact = BB::Contact::Net;
+                const aactor* surface = WorldHit.GetActor();
+                if (surface && (Surface->ActorHasTag(TEXT("BB.Goal.Rim")) || Surface->ActorHasTag(TEXT("BB.Support"))))
+                    contact = BB::Contact::Goal;
+                else if ((surface && Surface->ActorHasTag(TEXT("BB.Floor"))) || (HitNormal.Z > .5 && P.Z < r + 5.f))
+                    contact = BB::Contact::Floor;
+                else if ((surface && Surface->ActorHasTag(TEXT("BB.Net")))
+                    || FMath::Abs(P.X) >= BBArena::HalfLength - r - 5.f || FMath::Abs(P.Y) >= BBArena::HalfWidth - r - 5.f)
+                    contact = BB::Contact::Net;
             }
-            if (bRoofHit && !StruckRider)
+            if (broofhit && !struckrider)
             {
-                ++RoofContactCount;
-                LastRoofNormal = -HitNormal;
-                LastRoofIncoming = FlightVelocity;
-                BBArena::ReboundRoof(FlightVelocity, TravelEnd, R, R);
-                LastRoofOutgoing = FlightVelocity;
+                ++roofcontactcount;
+                lastroofnormal = -hitnormal;
+                lastroofincoming = flightvelocity;
+                BBArena::ReboundRoof(FlightVelocity, travelend, r, r);
+                lastroofoutgoing = flightvelocity;
             }
             else
             {
-                const double IntoSurface = FVector::DotProduct(FlightVelocity, HitNormal);
-                if (IntoSurface < 0) FlightVelocity = (FlightVelocity - 2.0 * IntoSurface * HitNormal) * BBArena::Restitution;
+                const double intosurface = FVector::DotProduct(FlightVelocity, hitnormal);
+                if (intosurface < 0) flightvelocity = (flightvelocity - 2.0 * intosurface * hitnormal) * BBArena::Restitution;
             }
-            ForceNetUpdate();
+            forcenetupdate();
         }
-        // Lower walls and floor keep their existing fallback for incomplete
-        // authored collision. The roof is already swept, never a respawn plane.
-        if (FMath::Abs(P.X) > BBArena::HalfLength - R) { P.X = FMath::Sign(P.X) * (BBArena::HalfLength - R); FlightVelocity.X *= -.75f; Contact = BB::Contact::Net; }
-        if (FMath::Abs(P.Y) > BBArena::HalfWidth - R) { P.Y = FMath::Sign(P.Y) * (BBArena::HalfWidth - R); FlightVelocity.Y *= -.75f; Contact = BB::Contact::Net; }
-        if (P.Z < R) { P.Z = R; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); Contact = BB::Contact::Floor; }
-        P = BBArena::ClampSphere(P, R);
-        DistanceSinceReleaseCm += FVector::Distance(Old, P);
-        SetActorLocation(P);
-        if (bPenaltyFlight && (Contact == BB::Contact::Floor || Contact == BB::Contact::Net
-            || FMath::Abs(P.X) > BBArena::GoalPlaneX + R))
+        // lower walls and floor keep their existing fallback for incomplete
+        // authored collision. the roof is already swept, never a respawn plane.
+        if (FMath::Abs(P.X) > BBArena::HalfLength - r) { P.X = FMath::Sign(P.X) * (BBArena::HalfLength - r); FlightVelocity.X *= -.75f; contact = BB::Contact::Net; }
+        if (FMath::Abs(P.Y) > BBArena::HalfWidth - r) { P.Y = FMath::Sign(P.Y) * (BBArena::HalfWidth - r); FlightVelocity.Y *= -.75f; contact = BB::Contact::Net; }
+        if (P.Z < r) { P.Z = r; FlightVelocity.Z = FMath::Max(390.f, FMath::Abs(FlightVelocity.Z) * .75f); contact = BB::Contact::Floor; }
+        p = BBArena::ClampSphere(P, r);
+        distancesincereleasecm += FVector::Distance(Old, p);
+        setactorlocation(p);
+        if (bpenaltyflight && (contact == BB::Contact::Floor || contact == BB::Contact::Net
+            || FMath::Abs(P.X) > BBArena::GoalPlaneX + r))
         {
-            Match->PenaltyBallStopped(this, bRoofHit ? TEXT("PENALTY SHOT MISSED - ROOF NET")
-                : TEXT("PENALTY SHOT MISSED"), ContactFraction);
+            match->penaltyballstopped(this, broofhit ? text("penalty shot missed - roof net")
+                : text("penalty shot missed"), contactfraction);
             return;
         }
-        if (IsBludger()) Match->ObserveBludgerFlight(this, Contact);
-        if (!bCollision) break;
-        const double Consumed = Remaining * HitTime;
-        Elapsed += Consumed;
-        Remaining -= Consumed;
+        if (isbludger()) match->observebludgerflight(this, contact);
+        if (!bcollision) break;
+        const double consumed = remaining * hittime;
+        elapsed += consumed;
+        remaining -= consumed;
     }
 }

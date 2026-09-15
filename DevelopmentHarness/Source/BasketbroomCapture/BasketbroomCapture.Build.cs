@@ -1,13 +1,13 @@
-using UnrealBuildTool;
+using unrealbuildtool;
 
-public class BasketbroomCapture : ModuleRules
+public class basketbroomcapture : modulerules
 {
-    public BasketbroomCapture(ReadOnlyTargetRules Target) : base(Target)
+    public basketbroomcapture(readonlytargetrules target) : base(target)
     {
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "MovieSceneCapture" });
+        pchusage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        PublicDependencyModuleNames.AddRange(new[] { "core", "coreuobject", "moviescenecapture" });
         PrivateDependencyModuleNames.AddRange(new[] {
-            "Engine", "RenderCore", "RHI", "Slate", "SlateCore", "ImageWriteQueue", "ImageWrapper"
+            "engine", "rendercore", "rhi", "slate", "slatecore", "imagewritequeue", "imagewrapper"
         });
     }
 }

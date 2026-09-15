@@ -1,2 +1,2 @@
 #include "Modules/ModuleManager.h"
-IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, BasketbroomRuntime, "BasketbroomDev");
+implement_primary_game_module(fdefaultgamemoduleimpl, basketbroomruntime, "basketbroomdev");

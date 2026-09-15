@@ -3,30 +3,30 @@
 *.wav binary
 *.png binary
 
-# Preserve promo assets and their provenance bytes across platforms.
+# preserve promo assets and their provenance bytes across platforms.
 SourceArt/Promo/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
-# The unmodified upstream legal notices contain trailing spaces.
+# the unmodified upstream legal notices contain trailing spaces.
 SourceArt/Promo/Fonts/OFL*.txt -whitespace
 SourceArt/Promo/Fonts/TRADEMARKS.txt -whitespace
 
-# Preserve the exact native registration SQL bytes across checkouts.
+# preserve the exact native registration sql bytes across checkouts.
 Mod/Basketbroom/Content/ModEdits.sql text eol=lf
 
-# These immutable expansion records are identified by their exact bytes.
+# these immutable expansion records are identified by their exact bytes.
 SourceArt/Arena/arena_expansion_baseline.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 SourceArt/Arena/arena_expansion_source_hashes.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 DevelopmentHarness/Source/BasketbroomRuntime/BBArenaDimensions.generated.h text eol=lf
 
-# Native import and expansion receipts hash these exact source bytes.
-# Retain mixed historical CRLF and generated LF rather than normalizing content.
+# native import and expansion receipts hash these exact source bytes.
+# retain mixed historical crlf and generated lf rather than normalizing content.
 SourceArt/Arena/*.obj -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 SourceArt/Arena/arena_manifest.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 Mod/SourceData/port-manifest.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
-# These source-contract inputs are authored and hashed as LF.
+# these source-contract inputs are authored and hashed as LF.
 Rules/alpha_rules.json text eol=lf
 Tools/build_arena.py text eol=lf
 
-# Preserve exact environment source/import provenance bytes.
+# preserve exact environment source/import provenance bytes.
 SourceArt/Environments/Meshes/*.obj -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 SourceArt/Environments/environments_manifest.json -text
 SourceArt/Environments/Textures/provenance.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

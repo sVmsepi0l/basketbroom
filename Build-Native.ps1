@@ -1,36 +1,36 @@
-[CmdletBinding()]
+[cmdletbinding()]
 param(
-    [string]$EngineRoot = 'C:\Program Files\Epic Games\UE_5.8',
-    [ValidateSet('Editor','Game')][string]$Target = 'Editor',
-    [switch]$Plan
+    [string]$engineroot = 'C:\Program Files\Epic Games\UE_5.8',
+    [validateset('editor','game')][string]$target = 'editor',
+    [switch]$plan
 )
-$ErrorActionPreference = 'Stop'
-$project = Join-Path $PSScriptRoot 'DevelopmentHarness\BasketbroomDev.uproject'
-$build = Join-Path $EngineRoot 'Engine\Build\BatchFiles\Build.bat'
-$version = Get-Content -LiteralPath (Join-Path $EngineRoot 'Engine\Build\Build.version') -Raw | ConvertFrom-Json
-if ($version.MajorVersion -ne 5 -or $version.MinorVersion -ne 8) { throw 'Native Basketbroom requires Unreal Engine 5.8.' }
-$targetName = if ($Target -eq 'Editor') { 'BasketbroomDevEditor' } else { 'BasketbroomDev' }
-$arguments = @($targetName, 'Win64', 'Development', ('-Project=' + $project), '-WaitMutex', '-NoHotReloadFromIDE')
-if ($Plan) { [pscustomobject]@{ Executable = $build; Arguments = $arguments }; return }
-$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-if (-not (Test-Path -LiteralPath $vswhere)) { throw 'C++ compiler setup is needed. Run Install-BuildTools.cmd, then retry.' }
-$installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-if (-not $installation) { throw 'MSVC is missing. Run Install-BuildTools.cmd, then retry.' }
-$original = Get-Content -LiteralPath $project -Raw
-$descriptor = $original | ConvertFrom-Json
+$erroractionpreference = 'stop'
+$project = join-path $psscriptroot 'DevelopmentHarness\BasketbroomDev.uproject'
+$build = join-path $engineroot 'Engine\Build\BatchFiles\Build.bat'
+$version = get-content -literalpath (join-path $engineroot 'Engine\Build\Build.version') -raw | convertfrom-json
+if ($version.MajorVersion -ne 5 -or $version.MinorVersion -ne 8) { throw 'native basketbroom requires unreal engine 5.8.' }
+$targetname = if ($target -eq 'editor') { 'basketbroomdeveditor' } else { 'basketbroomdev' }
+$arguments = @($targetname, 'win64', 'development', ('-project=' + $project), '-waitmutex', '-nohotreloadfromide')
+if ($plan) { [pscustomobject]@{ executable = $build; arguments = $arguments }; return }
+$vswhere = join-path ${env:ProgramFiles(x86)} 'microsoft visual Studio\Installer\vswhere.exe'
+if (-not (test-path -literalpath $vswhere)) { throw 'c++ compiler setup is needed. run Install-BuildTools.cmd, then retry.' }
+$installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationpath
+if (-not $installation) { throw 'msvc is missing. run Install-BuildTools.cmd, then retry.' }
+$original = get-content -literalpath $project -raw
+$descriptor = $original | convertfrom-json
 $modules = @($descriptor.Modules).Where({ $null -ne $_ })
-if (-not $modules.Where({ $_.Name -eq 'BasketbroomRuntime' }).Count) {
-    $modules += [pscustomobject]@{ Name='BasketbroomRuntime'; Type='Runtime'; LoadingPhase='Default' }
-    $descriptor | Add-Member NoteProperty Modules $modules -Force
+if (-not $modules.Where({ $_.Name -eq 'basketbroomruntime' }).Count) {
+    $modules += [pscustomobject]@{ name='basketbroomruntime'; type='runtime'; loadingphase='default' }
+    $descriptor | add-member noteproperty modules $modules -force
 }
-$descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $project -Encoding UTF8
-$log = Join-Path $PSScriptRoot '.local\native-build.log'
+$descriptor | convertto-json -depth 8 | set-content -literalpath $project -encoding utf8
+$log = join-path $psscriptroot '.local\native-build.log'
 try {
-    & $build @arguments 2>&1 | Tee-Object -FilePath $log
-    if ($LASTEXITCODE -ne 0) { throw "Unreal build failed with $LASTEXITCODE. See $log" }
+    & $build @arguments 2>&1 | tee-object -filepath $log
+    if ($lastexitcode -ne 0) { throw "unreal build failed with $LASTEXITCODE. see $log" }
 } catch {
-    # Preserve the content-only playable editor configuration on an unsuccessful first migration.
-    Set-Content -LiteralPath $project -Value $original -Encoding UTF8
+    # preserve the content-only playable editor configuration on an unsuccessful first migration.
+    set-content -literalpath $project -value $original -encoding utf8
     throw
 }
-Write-Host 'Native build completed. Reopen the editor and stage Tools/stage_regulation.py.'
+write-host 'native build completed. reopen the editor and stage Tools/stage_regulation.py.'

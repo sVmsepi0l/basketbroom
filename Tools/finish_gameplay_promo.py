@@ -1,17 +1,17 @@
-"""Add illustrated bookends to verified native 4K60 Basketbroom gameplay.
+"""add illustrated bookends to verified native 4k60 basketbroom gameplay.
 
 Production: --gameplay take.mp4 --art plate.png --output-dir folder --name name
-Use --prepare-only with --art to review the editable layout and PNG posters
+use --prepare-only with --art to review the editable layout and png posters
 before the gameplay file is ready. --layout accepts a previously emitted JSON.
 --preflight creates a short, clearly labelled synthetic test in a fresh folder.
 
-Only bookends are video-encoded. All validated gameplay video packets/frames pass
-through stream copy; no interpolation or duplicated gameplay frames. Gameplay
+only bookends are video-encoded. all validated gameplay video packets/frames pass
+through stream copy; no interpolation or duplicated gameplay frames. gameplay
 audio is shifted by exactly six seconds without gain changes, then encoded once
-to stereo AAC with silence around it. Official link icons are composited from
-the supplied PNGs, proportionally and without recolouring or drawing substitutes.
-Requires FFmpeg/ffprobe, Pillow, and the supplied static Google Sans
-Flex 72pt Black font. Every intro/outro text style uses that exact weight900 face.
+to stereo aac with silence around it. official link icons are composited from
+the supplied pngs, proportionally and without recolouring or drawing substitutes.
+requires FFmpeg/ffprobe, pillow, and the supplied static google sans
+flex 72pt black font. every intro/outro text style uses that exact weight900 face.
 """
 
 from __future__ import annotations
@@ -20,27 +20,27 @@ import argparse
 from array import array
 import copy
 from datetime import datetime, timezone
-from fractions import Fraction
+from fractions import fraction
 import hashlib
 import json
 import math
-from pathlib import Path
+from pathlib import path
 import re
 import shutil
 import subprocess
 
-from PIL import Image, ImageFont
+from pil import image, imagefont
 
 
-ROOT = Path(__file__).resolve().parents[1]
-BRANDS = ROOT / "SourceArt/Promo/BrandIcons"
-FONTS = ROOT / "SourceArt/Promo/Fonts"
-FONT = FONTS / "GoogleSansFlex_72pt-Black.ttf"
-FONT_FAMILY = "Google Sans Flex 72pt Black"
-FONT_SHA256 = "2c74c29ab728c089dff8c5b36d3dc21f8858bbdb7c5fa410574faf98ff59c3e1"
-WIDTH, HEIGHT, FPS = 3840, 2160, 60
-INTRO, GAMEPLAY, OUTRO = 6, 180, 12
-ICON_NAMES = {
+root = Path(__file__).resolve().parents[1]
+brands = root / "SourceArt/Promo/BrandIcons"
+fonts = root / "SourceArt/Promo/Fonts"
+font = fonts / "GoogleSansFlex_72pt-Black.ttf"
+font_family = "google sans flex 72pt black"
+font_sha256 = "2c74c29ab728c089dff8c5b36d3dc21f8858bbdb7c5fa410574faf98ff59c3e1"
+width, height, fps = 3840, 2160, 60
+intro, gameplay, outro = 6, 180, 12
+icon_names = {
     "instagram": "instagram-glyph-white.png", "x": "x-logo-white.png",
     "curseforge": "curseforge-logo-white.png", "website": "website-globe-white.png",
     "github": "github-invertocat-white.png",
@@ -55,14 +55,14 @@ def sha(path):
     return digest.hexdigest()
 
 
-def run(command, *, cwd=None, log=None):
+def run(command, *, cwd=none, log=None):
     if log:
         with Path(log).open("x", encoding="utf-8") as stream:
             result = subprocess.run(command, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT)
         if result.returncode:
-            raise RuntimeError("FFmpeg failed; inspect " + str(log))
+            raise runtimeerror("ffmpeg failed; inspect " + str(log))
         return ""
-    result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
+    result = subprocess.run(command, cwd=cwd, capture_output=true, text=true)
     if result.returncode:
         raise RuntimeError(result.stderr[-6000:])
     return result.stdout
@@ -76,33 +76,33 @@ def media_contract(data, width, height, seconds, *, audio=True):
     videos = [s for s in data["streams"] if s["codec_type"] == "video"]
     audios = [s for s in data["streams"] if s["codec_type"] == "audio"]
     if len(videos) != 1 or (audio and len(audios) != 1):
-        raise ValueError("Expected one video stream and one gameplay audio stream")
+        raise valueerror("expected one video stream and one gameplay audio stream")
     video = videos[0]
     if (video["width"], video["height"]) != (width, height):
-        raise ValueError("Gameplay must already have the native target dimensions; no gameplay scaling is allowed")
-    if video["codec_name"] != "h264" or video.get("profile") != "High" or video.get("pix_fmt") != "yuv420p":
-        raise ValueError("Require H.264 High, 8-bit yuv420p for lossless video stream concatenation")
-    if Fraction(video["avg_frame_rate"]) != FPS or Fraction(video["r_frame_rate"]) != FPS:
-        raise ValueError("Require real constant 60 fps gameplay; no frame duplication/interpolation is performed")
+        raise valueerror("gameplay must already have the native target dimensions; no gameplay scaling is allowed")
+    if video["codec_name"] != "h264" or video.get("profile") != "high" or video.get("pix_fmt") != "yuv420p":
+        raise valueerror("require H.264 high, 8-bit yuv420p for lossless video stream concatenation")
+    if fraction(video["avg_frame_rate"]) != fps or fraction(video["r_frame_rate"]) != FPS:
+        raise valueerror("require real constant 60 fps gameplay; no frame duplication/interpolation is performed")
     if int(video.get("nb_frames", -1)) != round(seconds * FPS):
-        raise ValueError("Unexpected video frame count")
-    if abs(float(video["duration"]) - seconds) > 1 / FPS / 2:
-        raise ValueError("Unexpected video duration")
+        raise valueerror("unexpected video frame count")
+    if abs(float(video["duration"]) - seconds) > 1 / fps / 2:
+        raise valueerror("unexpected video duration")
     if video.get("sample_aspect_ratio", "1:1") not in ("1:1", "N/A"):
-        raise ValueError("Require square pixels")
-    timebase = Fraction(video["time_base"])
+        raise valueerror("require square pixels")
+    timebase = fraction(video["time_base"])
     if timebase.numerator != 1 or timebase.denominator % FPS:
-        raise ValueError("Video timebase must express exact 60 fps frames")
-    if abs(float(video.get("start_time", 0))) > 1 / FPS / 2:
-        raise ValueError("Video must begin at timestamp zero")
+        raise valueerror("video timebase must express exact 60 fps frames")
+    if abs(float(video.get("start_time", 0))) > 1 / fps / 2:
+        raise valueerror("video must begin at timestamp zero")
     if audio:
         sound = audios[0]
         if int(sound["sample_rate"]) != 48000 or sound["channels"] != 2:
-            raise ValueError("Require 48 kHz stereo gameplay audio")
+            raise valueerror("require 48 khz stereo gameplay audio")
         if abs(float(sound.get("start_time", 0))) > 1 / 48000:
-            raise ValueError("Gameplay audio must begin at timestamp zero")
+            raise valueerror("gameplay audio must begin at timestamp zero")
         if abs(float(sound["duration"]) - seconds) > .025:
-            raise ValueError("Audio and video durations differ")
+            raise valueerror("audio and video durations differ")
     return video
 
 
@@ -111,7 +111,7 @@ def default_layout():
               "basketbroom.fun", "github.com/svmsepi0l"]
     destinations = {row["brand"]: row["url"] for row in json.loads((BRANDS / "sources.json").read_text(encoding="utf-8"))["destinations"]}
     return {
-        "schema": 1, "canvas": [WIDTH, HEIGHT], "art_fit": "cover_center",
+        "schema": 1, "canvas": [width, height], "art_fit": "cover_center",
         "title": {"text": "basketbroom", "x": 200, "y": 390, "size": 320, "max_width": 1900},
         "description": {"lines": ["an aerial team sport of broom flight,", "ball play and spellwork."],
                         "x": 210, "y": 680, "size": 109, "line_spacing": 96, "max_width": 1900},
@@ -121,17 +121,17 @@ def default_layout():
         "links": [{"brand": brand, "text": label, "url": destinations[brand], "x": 240,
                    "y": 1100 + index * 130, "icon_size": 112 if brand == "curseforge" else 72,
                    "icon_area": 72, "text_x": 352, "size": 84}
-                  for index, (brand, label) in enumerate(zip(ICON_NAMES, labels))],
+                  for index, (brand, label) in enumerate(zip(icon_names, labels))],
         "badge": {"x": 2350, "y": 1460, "size": 78, "line_spacing": 76,
                   "lines": ["hogwarts legacy creator kit", "mod in development"],
                   "prototype": "prototype built in unreal engine 5.8", "prototype_y": 1655, "prototype_size": 60},
         "fade_in_seconds": .55, "fade_out_seconds": .45,
-        "note": "Coordinates are editable 3840x2160 presentation pixels; the explicit requested left positions take precedence over approximate safe-margin guidance.",
+        "note": "coordinates are editable 3840x2160 presentation pixels; the explicit requested left positions take precedence over approximate safe-margin guidance.",
     }
 
 
 def normalize_display_text(layout):
-    """Lowercase visible copy only; destinations, font names and paths keep case."""
+    """lowercase visible copy only; destinations, font names and paths keep case."""
     layout = copy.deepcopy(layout)
     layout["title"]["text"] = layout["title"]["text"].lower()
     layout["description"]["lines"] = [line.lower() for line in layout["description"]["lines"]]
@@ -144,7 +144,7 @@ def normalize_display_text(layout):
 
 def ass_text(text):
     if any(c in text for c in "{}\\\r\n"):
-        raise ValueError("Use separate layout lines; ASS override syntax is not allowed in text")
+        raise valueerror("use separate layout lines; ass override syntax is not allowed in text")
     return text
 
 
@@ -154,27 +154,27 @@ def ass_time(seconds):
 
 
 def validate_layout(layout):
-    if layout.get("canvas") != [WIDTH, HEIGHT] or layout.get("art_fit") not in ("cover_center", "contain"):
-        raise ValueError("Layout needs a 3840x2160 canvas and cover_center or contain art fit")
-    if not FONT.is_file() or sha(FONT) != FONT_SHA256:
-        raise ValueError("The approved static Google Sans Flex Black font is missing or changed")
+    if layout.get("canvas") != [width, height] or layout.get("art_fit") not in ("cover_center", "contain"):
+        raise valueerror("layout needs a 3840x2160 canvas and cover_center or contain art fit")
+    if not FONT.is_file() or sha(font) != FONT_SHA256:
+        raise valueerror("the approved static google sans flex black font is missing or changed")
     data = FONT.read_bytes()
     tables = {data[index:index + 4]: int.from_bytes(data[index + 8:index + 12], "big")
               for index in range(12, 12 + 16 * int.from_bytes(data[4:6], "big"), 16)}
     weight_offset = tables[b"OS/2"] + 4
     if b"fvar" in tables or int.from_bytes(data[weight_offset:weight_offset + 2], "big") != 900:
-        raise ValueError("Bookends require the actual static weight900 face, not synthesized bold")
+        raise valueerror("bookends require the actual static weight900 face, not synthesized bold")
     for key in ("header_panel", "links_panel", "badge_panel"):
         box = layout[key]
         if not 0 <= box["opacity"] <= 1 or min(box["x"], box["y"], box["width"], box["height"]) < 0:
-            raise ValueError("Invalid text panel")
-        if box["x"] + box["width"] > WIDTH or box["y"] + box["height"] > HEIGHT:
-            raise ValueError("Text panel exceeds canvas")
+            raise valueerror("invalid text panel")
+        if box["x"] + box["width"] > width or box["y"] + box["height"] > HEIGHT:
+            raise valueerror("text panel exceeds canvas")
     if [row["brand"] for row in layout["links"]] != list(ICON_NAMES):
-        raise ValueError("Keep the five distinct brand/destination rows")
+        raise valueerror("keep the five distinct brand/destination rows")
     for value in (layout["fade_in_seconds"], layout["fade_out_seconds"]):
         if not math.isfinite(value) or not 0 < value <= 1:
-            raise ValueError("Bookend fades must be gentle, positive and at most one second")
+            raise valueerror("bookend fades must be gentle, positive and at most one second")
 
 
 def make_ass(path, layout, duration, outro, width_scale):
@@ -184,18 +184,18 @@ def make_ass(path, layout, duration, outro, width_scale):
         size -= 1
     font = ImageFont.truetype(str(FONT), size)
     if font.getlength(title["text"]) * width_scale > title["max_width"]:
-        raise ValueError("Title does not fit")
-    metrics = [{"text": title["text"], "font": FONT_FAMILY, "weight": 900, "requested_size": title["size"],
+        raise valueerror("title does not fit")
+    metrics = [{"text": title["text"], "font": font_family, "weight": 900, "requested_size": title["size"],
                 "render_size": size, "calibrated_visible_width": round(font.getlength(title["text"]) * width_scale, 2)}]
     lines = []
-    def text(value, x, y, fontsize, style="Body", max_width=None):
+    def text(value, x, y, fontsize, style="body", max_width=None):
         width = ImageFont.truetype(str(FONT), int(fontsize)).getlength(value) * width_scale
-        if x < 0 or y < 0 or x + width > WIDTH - 140 or y + fontsize * 1.5 > HEIGHT - 140:
-            raise ValueError("Text exceeds safe canvas: " + value)
-        if max_width is not None and width > max_width:
-            raise ValueError("Text exceeds its panel: " + value)
+        if x < 0 or y < 0 or x + width > width - 140 or y + fontsize * 1.5 > height - 140:
+            raise valueerror("text exceeds safe canvas: " + value)
+        if max_width is not none and width > max_width:
+            raise valueerror("text exceeds its panel: " + value)
         lines.append(f"Dialogue: 0,0:00:00.00,{ass_time(duration)},{style},,0,0,0,,{{\\an7\\pos({x},{y})\\fs{fontsize}}}" + ass_text(value))
-    text(title["text"], title["x"], title["y"], size, "Title", title["max_width"])
+    text(title["text"], title["x"], title["y"], size, "title", title["max_width"])
     description = layout["description"]
     for index, value in enumerate(description["lines"]):
         text(value, description["x"], description["y"] + index * description["line_spacing"], description["size"], max_width=description["max_width"])
@@ -204,42 +204,42 @@ def make_ass(path, layout, duration, outro, width_scale):
             text(row["text"], row["text_x"], row["y"], row["size"], max_width=layout["links_panel"]["x"] + layout["links_panel"]["width"] - row["text_x"] - 45)
         badge = layout["badge"]
         for index, value in enumerate(badge["lines"]):
-            text(value, badge["x"], badge["y"] + index * badge["line_spacing"], badge["size"], "Badge", 1240)
+            text(value, badge["x"], badge["y"] + index * badge["line_spacing"], badge["size"], "badge", 1240)
         text(badge["prototype"], badge["x"], badge["prototype_y"], badge["prototype_size"], max_width=1240)
-    header = """[Script Info]
+    header = """[script info]
 ScriptType: v4.00+
 PlayResX: 3840
 PlayResY: 2160
 WrapStyle: 2
 ScaledBorderAndShadow: yes
 
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Title,Google Sans Flex 72pt Black,200,&H00E9F0F5,&H00FFFFFF,&HA010151B,&H00000000,0,0,0,0,100,100,0,0,1,1,0,7,0,0,0,1
-Style: Body,Google Sans Flex 72pt Black,78,&H00DFE5EA,&H00FFFFFF,&HA010151B,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
-Style: Badge,Google Sans Flex 72pt Black,56,&H00E9F0F5,&H00FFFFFF,&HA010151B,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
+[v4+ styles]
+Format: name, fontname, fontsize, primarycolour, secondarycolour, outlinecolour, backcolour, bold, italic, underline, strikeout, scalex, scaley, spacing, angle, borderstyle, outline, shadow, alignment, marginl, marginr, marginv, encoding
+Style: title,google sans flex 72pt black,200,&h00e9f0f5,&h00ffffff,&ha010151b,&h00000000,0,0,0,0,100,100,0,0,1,1,0,7,0,0,0,1
+Style: body,google sans flex 72pt black,78,&h00dfe5ea,&h00ffffff,&ha010151b,&h00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
+Style: badge,google sans flex 72pt black,56,&h00e9f0f5,&h00ffffff,&ha010151b,&h00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+[events]
+Format: layer, start, end, style, name, marginl, marginr, marginv, effect, text
 """
     path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8-sig")
     return metrics
 
 
 def measure_ass_font(ffmpeg, output, name, font_directory, layout):
-    """Measure real libass ink bounds; its font-size metric differs from Pillow."""
+    """measure real libass ink bounds; its font-size metric differs from Pillow."""
     title = layout["title"]
     path = output / f"{name}-font-measure.ass"
-    text = f"""[Script Info]
+    text = f"""[script info]
 ScriptType: v4.00+
 PlayResX: 3840
 PlayResY: 2160
 WrapStyle: 2
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, Bold, Italic, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Measure,{FONT_FAMILY},{title['size']},&H00FFFFFF,0,0,100,100,0,0,1,0,0,7,0,0,0,1
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+[v4+ styles]
+Format: name, fontname, fontsize, primarycolour, bold, italic, scalex, scaley, spacing, angle, borderstyle, outline, shadow, alignment, marginl, marginr, marginv, encoding
+Style: measure,{font_family},{title['size']},&h00ffffff,0,0,100,100,0,0,1,0,0,7,0,0,0,1
+[events]
+Format: layer, start, end, style, name, marginl, marginr, marginv, effect, text
 Dialogue: 0,0:00:00.00,0:00:01.00,Measure,,0,0,0,,{{\\an7\\pos({title['x']},{title['y']})}}{ass_text(title['text'])}
 """
     path.write_text(text, encoding="utf-8-sig")
@@ -249,16 +249,16 @@ Dialogue: 0,0:00:00.00,0:00:01.00,Measure,,0,0,0,,{{\\an7\\pos({title['x']},{tit
          "-vf", f"ass=filename={path.name}:fontsdir={font_directory.name},format=rgb24", "-frames:v", "1", "-c:v", "png", "-threads", "1", str(png)], cwd=output, log=log)
     with Image.open(png) as image:
         bounds = image.convert("L").getbbox()
-    if not bounds or bounds[2] >= WIDTH - 1 or bounds[3] >= HEIGHT - 1:
-        raise ValueError("Title measurement is empty or clipped")
+    if not bounds or bounds[2] >= width - 1 or bounds[3] >= height - 1:
+        raise valueerror("title measurement is empty or clipped")
     selected = [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if "fontselect:" in line]
-    if not selected or any("-> GoogleSansFlex72pt-Black," not in line for line in selected):
-        raise RuntimeError("libass selected an unintended font fallback")
+    if not selected or any("-> googlesansflex72pt-black," not in line for line in selected):
+        raise runtimeerror("libass selected an unintended font fallback")
     measured = bounds[2] - bounds[0]
     pillow_width = ImageFont.truetype(str(FONT), int(title["size"])).getlength(title["text"])
-    return {"measurement": "Actual libass raster ink bounds on a black calibration frame", "title_ink_bbox": list(bounds),
+    return {"measurement": "actual libass raster ink bounds on a black calibration frame", "title_ink_bbox": list(bounds),
             "title_visible_width": measured, "pillow_to_libass_width_scale": measured / pillow_width,
-            "font_selection_verified": True, "postscript_name": "GoogleSansFlex72pt-Black"}
+            "font_selection_verified": true, "postscript_name": "googlesansflex72pt-black"}
 
 
 def posters(ffmpeg, art, output, name, layout):
@@ -275,15 +275,15 @@ def posters(ffmpeg, art, output, name, layout):
     font_measurement = measure_ass_font(ffmpeg, output, name, font_directory, layout)
     icons = []
     for key, filename in ICON_NAMES.items():
-        path = BRANDS / filename
+        path = brands / filename
         if sha(path) != approved[filename]:
             raise ValueError("Official/source icon differs from its recorded provenance: " + filename)
         with Image.open(path) as image:
-            if image.format != "PNG" or "A" not in image.getbands():
-                raise ValueError("Expected the supplied transparent PNG icon")
+            if image.format != "png" or "a" not in image.getbands():
+                raise valueerror("expected the supplied transparent png icon")
             icons.append({"brand": key, "path": str(path), "sha256": sha(path), "dimensions": list(image.size)})
-    title_metrics = None
-    for part, duration in (("intro", INTRO), ("outro", OUTRO)):
+    title_metrics = none
+    for part, duration in (("intro", intro), ("outro", OUTRO)):
         ass = output / f"{name}-{part}.ass"
         title_metrics = make_ass(ass, layout, duration, part == "outro", font_measurement["pillow_to_libass_width_scale"])
         command = [ffmpeg, "-hide_banner", "-nostdin", "-n", "-i", str(art)]
@@ -312,18 +312,18 @@ def posters(ffmpeg, art, output, name, layout):
         graph.write_text(";\n".join(filters) + "\n", encoding="utf-8")
         command += ["-filter_complex", ";".join(filters), "-map", "[poster]", "-frames:v", "1", "-c:v", "png", "-threads", "1", str(output / f"{name}-{part}.png")]
         run(command, cwd=output, log=output / f"{name}-{part}-poster.log")
-    sx, sy = WIDTH / dimensions[0], HEIGHT / dimensions[1]
+    sx, sy = width / dimensions[0], height / dimensions[1]
     scale = max(sx, sy) if layout["art_fit"] == "cover_center" else min(sx, sy)
     return {"art": str(art), "art_sha256": sha(art), "native_art_dimensions": dimensions,
-            "art_fit": layout["art_fit"], "art_scale_factor": scale, "art_resized": dimensions != [WIDTH, HEIGHT],
+            "art_fit": layout["art_fit"], "art_scale_factor": scale, "art_resized": dimensions != [width, height],
             "art_upscaled": scale > 1, "art_center_crop_pixels_before_scaling":
-            [max(0, dimensions[0] - WIDTH / scale), max(0, dimensions[1] - HEIGHT / scale)],
-            "art_resize_disclosure": "The raster illustration may be resized/cropped for bookends only. Gameplay remains native resolution.",
-            "same_art_used_for_both_ends": True, "icons": icons, "brand_sources_sha256": sha(BRANDS / "sources.json"),
-            "icons_redrawn_or_recoloured": False, "title_metrics": title_metrics,
+            [max(0, dimensions[0] - width / scale), max(0, dimensions[1] - height / scale)],
+            "art_resize_disclosure": "the raster illustration may be resized/cropped for bookends only. gameplay remains native resolution.",
+            "same_art_used_for_both_ends": true, "icons": icons, "brand_sources_sha256": sha(brands / "sources.json"),
+            "icons_redrawn_or_recoloured": false, "title_metrics": title_metrics,
             "font_render_measurement": font_measurement,
-            "font": {"file": str(FONT), "family": FONT_FAMILY, "weight": 900, "sha256": sha(FONT),
-                     "static_font": True, "applies_to": "all intro/outro title, description, link and badge text",
+            "font": {"file": str(font), "family": font_family, "weight": 900, "sha256": sha(font),
+                     "static_font": true, "applies_to": "all intro/outro title, description, link and badge text",
                      "editable_font_copy": str(font_directory / FONT.name)}}
 
 
@@ -340,11 +340,11 @@ def avcc_content_without_parameter_sets(path, packet):
     units, position = [], 0
     while position < len(data):
         if position + 4 > len(data):
-            raise RuntimeError("Incomplete H.264 packet length")
+            raise runtimeerror("incomplete H.264 packet length")
         length = int.from_bytes(data[position:position + 4], "big")
         position += 4
         if length <= 0 or position + length > len(data):
-            raise RuntimeError("Expected standard four-byte AVCC NAL lengths")
+            raise runtimeerror("expected standard four-byte avcc nal lengths")
         unit = data[position:position + length]
         position += length
         if unit[0] & 31 not in (7, 8):
@@ -356,40 +356,40 @@ def verify_copied_packets(ffprobe, source, final, intro_frames, gameplay_frames)
     original = packet_fingerprints(ffprobe, source)
     result = packet_fingerprints(ffprobe, final)[intro_frames:intro_frames + gameplay_frames]
     if len(original) != gameplay_frames or len(result) != gameplay_frames:
-        raise RuntimeError("Gameplay packet/frame count changed during concatenation")
-    # The concat demuxer's H.264 conversion can insert in-band SPS/PPS on key
-    # packets. Non-key packet payloads must remain byte-identical; for modified
-    # key packets compare every NAL except SPS/PPS, including the picture data.
+        raise runtimeerror("gameplay packet/frame count changed during concatenation")
+    # the concat demuxer's H.264 conversion can insert in-band SPS/PPS on key
+    # packets. non-key packet payloads must remain byte-identical; for modified
+    # key packets compare every nal except SPS/PPS, including the picture data.
     key_header_differences = []
     for index, (before, after) in enumerate(zip(original, result)):
-        if abs(float(after["pts_time"]) - float(before["pts_time"]) - intro_frames / FPS) > 2e-5:
-            raise RuntimeError("Gameplay timestamps were altered or reordered")
+        if abs(float(after["pts_time"]) - float(before["pts_time"]) - intro_frames / fps) > 2e-5:
+            raise runtimeerror("gameplay timestamps were altered or reordered")
         if before["data_hash"] != after["data_hash"]:
-            if "K" not in before.get("flags", "") or "K" not in after.get("flags", ""):
-                raise RuntimeError("A non-key gameplay packet payload changed")
+            if "k" not in before.get("flags", "") or "k" not in after.get("flags", ""):
+                raise runtimeerror("a non-key gameplay packet payload changed")
             if avcc_content_without_parameter_sets(source, before) != avcc_content_without_parameter_sets(final, after):
-                raise RuntimeError("A key gameplay picture payload changed beyond SPS/PPS insertion")
+                raise runtimeerror("a key gameplay picture payload changed beyond SPS/PPS insertion")
             key_header_differences.append(index)
     return {"original_gameplay_packets": len(original), "copied_gameplay_packets": len(result),
-            "timestamp_shift_seconds": intro_frames / FPS, "non_key_payloads_identical": True,
-            "all_gameplay_picture_payloads_identical": True,
+            "timestamp_shift_seconds": intro_frames / fps, "non_key_payloads_identical": true,
+            "all_gameplay_picture_payloads_identical": true,
             "key_packets_with_sps_pps_differences_only": key_header_differences,
-            "proof_scope": "Video was stream-copied, without a decoder/filter/encoder. Every gameplay timestamp and encoded picture payload checked; automatic H.264 SPS/PPS insertion is the only permitted packet difference."}
+            "proof_scope": "video was stream-copied, without a decoder/filter/encoder. every gameplay timestamp and encoded picture payload checked; automatic H.264 SPS/PPS insertion is the only permitted packet difference."}
 
 
 def finish(args, *, test_spec=None):
-    gameplay_seconds = getattr(args, "gameplay_seconds", GAMEPLAY)
+    gameplay_seconds = getattr(args, "gameplay_seconds", gameplay)
     if not test_spec and (not math.isfinite(gameplay_seconds) or not 180 <= gameplay_seconds <= 600
-                          or abs(gameplay_seconds * FPS - round(gameplay_seconds * FPS)) > 1e-6):
-        raise ValueError("Gameplay duration must be 180..600 seconds and contain a whole number of 60 fps frames")
-    width, height, intro, gameplay, outro = test_spec or (WIDTH, HEIGHT, INTRO, gameplay_seconds, OUTRO)
+                          or abs(gameplay_seconds * fps - round(gameplay_seconds * fps)) > 1e-6):
+        raise valueerror("gameplay duration must be 180..600 seconds and contain a whole number of 60 fps frames")
+    width, height, intro, gameplay, outro = test_spec or (width, height, intro, gameplay_seconds, outro)
     output = args.output_dir.resolve()
     name = args.name
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,80}", name):
-        raise ValueError("Use a plain filename stem containing letters, digits, underscores or hyphens")
-    output.mkdir(parents=True, exist_ok=True)
-    # The source review and its caption/export receipts may share this stem.
-    # Refuse every path this tool writes, without rejecting unrelated inputs.
+        raise valueerror("use a plain filename stem containing letters, digits, underscores or hyphens")
+    output.mkdir(parents=True, exist_ok=true)
+    # the source review and its caption/export receipts may share this stem.
+    # refuse every path this tool writes, without rejecting unrelated inputs.
     output_suffixes = [".mp4", "-layout.json", "-production.json", "-fonts",
                        "-font-measure.ass", "-font-measure.png", "-font-measure.log",
                        "-gameplay-copy.mp4", "-gameplay-copy.log", "-concat.txt", "-finish.log"]
@@ -397,14 +397,14 @@ def finish(args, *, test_spec=None):
         output_suffixes.extend(f"-{part}{suffix}" for suffix in
                                (".ass", ".png", ".mp4", "-composite.txt", "-poster.log", "-encode.log"))
     if any((output / (name + suffix)).exists() for suffix in output_suffixes):
-        raise FileExistsError("This output name already exists; choose a fresh name. Nothing will be overwritten.")
+        raise fileexistserror("this output name already exists; choose a fresh name. nothing will be overwritten.")
     art = args.art.resolve()
     if not art.is_file():
-        raise ValueError("Provide the final artwork file")
-    source_probe = None
+        raise valueerror("provide the final artwork file")
+    source_probe = none
     if not args.prepare_only:
         if not args.gameplay or not args.gameplay.is_file():
-            raise ValueError("Provide the completed, validated native 60 fps gameplay MP4")
+            raise valueerror("provide the completed, validated native 60 fps gameplay mp4")
         source_probe = probe(args.ffprobe, args.gameplay)
         video = media_contract(source_probe, width, height, gameplay)
     layout = json.loads(args.layout.read_text(encoding="utf-8-sig")) if args.layout else default_layout()
@@ -412,12 +412,12 @@ def finish(args, *, test_spec=None):
     validate_layout(layout)
     layout_path = output / f"{name}-layout.json"
     layout_path.write_text(json.dumps(layout, indent=2) + "\n", encoding="utf-8")
-    receipt = {"status": "prepared", "synthetic_preflight": test_spec is not None,
+    receipt = {"status": "prepared", "synthetic_preflight": test_spec is not none,
                "created_utc": datetime.now(timezone.utc).isoformat(), "layout": str(layout_path),
-               "duration_seconds": intro + gameplay + outro, "fps": FPS, "resolution": [width, height],
+               "duration_seconds": intro + gameplay + outro, "fps": fps, "resolution": [width, height],
                "sections": {"intro": intro, "gameplay": gameplay, "outro": outro},
-               "editorial_display_text_case": "lowercase; destination URLs and font identifiers retain their original case",
-               "publishing": "Local output only; nothing uploaded"}
+               "editorial_display_text_case": "lowercase; destination urls and font identifiers retain their original case",
+               "publishing": "local output only; nothing uploaded"}
     receipt.update(posters(args.ffmpeg, art, output, name, layout))
     receipt_path = output / f"{name}-production.json"
     if args.prepare_only:
@@ -434,18 +434,18 @@ def finish(args, *, test_spec=None):
         fade_out = min(layout["fade_out_seconds"], duration / 3)
         encoder = (["-c:v", "h264_nvenc", "-preset", "p6", "-tune", "hq", "-rc", "vbr", "-cq", "17", "-b:v", "0"]
                    if args.encoder == "h264_nvenc" else ["-c:v", "libx264", "-preset", "fast", "-crf", "16"])
-        command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-loop", "1", "-framerate", str(FPS), "-i", str(output / f"{name}-{part}.png"),
-                   "-an", "-frames:v", str(round(duration * FPS)), "-vf",
+        command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-loop", "1", "-framerate", str(fps), "-i", str(output / f"{name}-{part}.png"),
+                   "-an", "-frames:v", str(round(duration * fps)), "-vf",
                    f"scale={width}:{height}:flags=lanczos:in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p,fade=t=in:st=0:d={fade_in},fade=t=out:st={duration-fade_out}:d={fade_out}"]
         command += encoder + ["-profile:v", "high", "-level:v", level, "-pix_fmt", "yuv420p", "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-video_track_timescale", str(timescale), "-movflags", "+faststart", str(path)]
         commands.append(command)
         run(command, log=output / f"{name}-{part}-encode.log")
-        bookend_video = media_contract(probe(args.ffprobe, path), width, height, duration, audio=False)
+        bookend_video = media_contract(probe(args.ffprobe, path), width, height, duration, audio=false)
         if bookend_video["time_base"] != video["time_base"]:
-            raise RuntimeError("Bookend and gameplay video timebases differ")
+            raise runtimeerror("bookend and gameplay video timebases differ")
         segments.append(path)
-    # A video-only remux prevents source audio packet duration/padding from
-    # affecting concat's section boundaries. No video decoder is invoked.
+    # a video-only remux prevents source audio packet duration/padding from
+    # affecting concat's section boundaries. no video decoder is invoked.
     middle = output / f"{name}-gameplay-copy.mp4"
     command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-i", str(args.gameplay.resolve()), "-map", "0:v:0", "-c:v", "copy", "-an", "-video_track_timescale", str(timescale), str(middle)]
     commands.append(command)
@@ -457,20 +457,20 @@ def finish(args, *, test_spec=None):
     audio_graph = f"[1:a:0]atrim=start=0:end={gameplay},asetpts=PTS-STARTPTS,adelay={round(intro*48000)}S:all=1,apad=whole_dur={total},atrim=duration={total}[audio]"
     command = [args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-f", "concat", "-safe", "1", "-i", str(concat), "-i", str(args.gameplay.resolve()),
                "-filter_complex", audio_graph, "-map", "0:v:0", "-map", "[audio]", "-c:v", "copy", "-c:a", "aac", "-b:a", "320k", "-ar", "48000", "-ac", "2",
-               "-video_track_timescale", str(timescale), "-movflags", "+faststart", "-metadata", "title=Basketbroom gameplay showcase", str(final)]
+               "-video_track_timescale", str(timescale), "-movflags", "+faststart", "-metadata", "title=basketbroom gameplay showcase", str(final)]
     commands.append(command)
     run(command, cwd=output, log=output / f"{name}-finish.log")
     result_probe = probe(args.ffprobe, final)
     final_video = media_contract(result_probe, width, height, total)
     if final_video["time_base"] != video["time_base"]:
-        raise RuntimeError("Final video timebase differs from the gameplay source")
-    packets = verify_copied_packets(args.ffprobe, args.gameplay.resolve(), final, round(intro * FPS), round(gameplay * FPS))
+        raise runtimeerror("final video timebase differs from the gameplay source")
+    packets = verify_copied_packets(args.ffprobe, args.gameplay.resolve(), final, round(intro * fps), round(gameplay * fps))
     receipt.update(status="complete", output=str(final), output_sha256=sha(final), gameplay=str(args.gameplay.resolve()),
                    gameplay_sha256=sha(args.gameplay), gameplay_probe=source_probe, final_probe=result_probe,
-                   verification=packets, commands=commands, video_processing="Bookends encoded; gameplay video stream-copy only. No optical interpolation, frame doubling or gameplay scaling.",
-                   audio={"format": "AAC 48 kHz stereo, 320 kbps", "leading_silence_seconds": intro, "trailing_silence_seconds": outro,
-                          "gameplay_shift_samples": round(intro * 48000), "gain_or_effect_changes": False,
-                          "encoding_disclosure": "Gameplay audio decoded and encoded once to AAC for sample-aligned silence padding. It is not a bit-identical copy of a lossy source track."},
+                   verification=packets, commands=commands, video_processing="bookends encoded; gameplay video stream-copy only. no optical interpolation, frame doubling or gameplay scaling.",
+                   audio={"format": "aac 48 khz stereo, 320 kbps", "leading_silence_seconds": intro, "trailing_silence_seconds": outro,
+                          "gameplay_shift_samples": round(intro * 48000), "gain_or_effect_changes": false,
+                          "encoding_disclosure": "gameplay audio decoded and encoded once to aac for sample-aligned silence padding. it is not a bit-identical copy of a lossy source track."},
                    subjective_art_and_playback_review="not_performed_by_this_script")
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     return receipt
@@ -478,11 +478,11 @@ def finish(args, *, test_spec=None):
 
 def preflight(args):
     output = args.output_dir.resolve()
-    output.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=true)
     if any(output.iterdir()):
-        raise ValueError("Preflight requires an empty output directory")
+        raise valueerror("preflight requires an empty output directory")
     art = output / "synthetic-test-plate.png"
-    Image.new("RGB", (WIDTH, HEIGHT), (23, 31, 42)).save(art)
+    Image.new("RGB", (width, height), (23, 31, 42)).save(art)
     gameplay = output / "synthetic-gameplay.mp4"
     run([args.ffmpeg, "-hide_banner", "-nostdin", "-n", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=60:duration=2",
          "-f", "lavfi", "-i", "aevalsrc=0.08*sin(2*PI*440*t)|0.08*sin(2*PI*440*t):s=48000:d=2",
@@ -490,7 +490,7 @@ def preflight(args):
     args.gameplay, args.art, args.encoder = gameplay, art, "libx264"
     result = finish(args, test_spec=(640, 360, .25, 2, .5))
     def audio_pcm(path):
-        decoded = subprocess.run([args.ffmpeg, "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", "f32le", "-c:a", "pcm_f32le", "-"], capture_output=True)
+        decoded = subprocess.run([args.ffmpeg, "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", "f32le", "-c:a", "pcm_f32le", "-"], capture_output=true)
         if decoded.returncode:
             raise RuntimeError(decoded.stderr.decode(errors="replace"))
         values = array("f")
@@ -500,27 +500,27 @@ def preflight(args):
     final_audio = audio_pcm(result["output"])
     shifted = final_audio[round(.25 * 48000) * 2:round(2.25 * 48000) * 2]
     if len(shifted) != len(original_audio):
-        raise RuntimeError("Synthetic shifted audio length mismatch")
+        raise runtimeerror("synthetic shifted audio length mismatch")
     energy_a = sum(value * value for value in original_audio)
     energy_b = sum(value * value for value in shifted)
     correlation = sum(a * b for a, b in zip(original_audio, shifted)) / math.sqrt(energy_a * energy_b)
     rms_error = math.sqrt(sum((a - b) ** 2 for a, b in zip(original_audio, shifted)) / len(shifted))
-    # AAC can have a short transform tail at silence boundaries; inspect silence
+    # aac can have a short transform tail at silence boundaries; inspect silence
     # 30 ms away from those edges and disclose the unavoidable lossy re-encode.
     quiet = final_audio[:round(.22 * 48000) * 2] + final_audio[round(2.28 * 48000) * 2:round(2.75 * 48000) * 2]
     if correlation < .995 or rms_error > .003 or max(map(abs, quiet)) > 1e-4:
-        raise RuntimeError("Synthetic audio shift/silence preservation failed")
+        raise runtimeerror("synthetic audio shift/silence preservation failed")
     result["preflight_audio"] = {"sample_shift": 12000, "correlation_after_aac_encode": correlation,
                                   "rms_error_after_aac_encode": rms_error, "silence_peak_away_from_aac_edges": max(map(abs, quiet))}
-    rejected = False
+    rejected = false
     try:
-        media_contract(probe(args.ffprobe, gameplay), WIDTH, HEIGHT, GAMEPLAY)
+        media_contract(probe(args.ffprobe, gameplay), width, height, gameplay)
     except ValueError:
-        rejected = True
+        rejected = true
     if not rejected:
-        raise RuntimeError("Production unexpectedly accepted synthetic non-4K/short gameplay")
-    result["preflight_rejects_nonproduction_gameplay"] = True
-    result["preflight_note"] = "Synthetic 2.75-second fixture only; not a final promotional export or generated-art review."
+        raise runtimeerror("production unexpectedly accepted synthetic non-4K/short gameplay")
+    result["preflight_rejects_nonproduction_gameplay"] = true
+    result["preflight_note"] = "synthetic 2.75-second fixture only; not a final promotional export or generated-art review."
     path = output / f"{args.name}-production.json"
     path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result
@@ -528,13 +528,13 @@ def preflight(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--gameplay", type=Path)
-    parser.add_argument("--gameplay-seconds", type=float, default=GAMEPLAY,
-                        help="Expected completed gameplay duration; verified against video frames and audio (default: 180)")
-    parser.add_argument("--art", type=Path)
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--gameplay", type=path)
+    parser.add_argument("--gameplay-seconds", type=float, default=gameplay,
+                        help="expected completed gameplay duration; verified against video frames and audio (default: 180)")
+    parser.add_argument("--art", type=path)
+    parser.add_argument("--output-dir", type=path, required=true)
     parser.add_argument("--name", default="basketbroom-gameplay-promo")
-    parser.add_argument("--layout", type=Path)
+    parser.add_argument("--layout", type=path)
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--encoder", choices=("h264_nvenc", "libx264"), default="h264_nvenc")

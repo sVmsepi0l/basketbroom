@@ -15,221 +15,221 @@
 
 namespace
 {
-bool IsMappedControllerKey(const FKey Key)
+bool ismappedcontrollerkey(const fkey key)
 {
-    return Key == EKeys::Gamepad_LeftX || Key == EKeys::Gamepad_LeftY
-        || Key == EKeys::Gamepad_RightX || Key == EKeys::Gamepad_RightY
-        || Key == EKeys::Gamepad_FaceButton_Bottom || Key == EKeys::Gamepad_FaceButton_Right
-        || Key == EKeys::Gamepad_FaceButton_Left || Key == EKeys::Gamepad_FaceButton_Top
-        || Key == EKeys::Gamepad_RightTrigger || Key == EKeys::Gamepad_RightShoulder
-        || Key == EKeys::Gamepad_LeftShoulder || Key == EKeys::Gamepad_Special_Left
-        || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Gamepad_DPad_Left
-        || Key == EKeys::Gamepad_DPad_Right || Key == EKeys::Gamepad_DPad_Up
-        || Key == EKeys::Gamepad_DPad_Down;
+    return key == EKeys::Gamepad_LeftX || key == EKeys::Gamepad_LeftY
+        || key == EKeys::Gamepad_RightX || key == EKeys::Gamepad_RightY
+        || key == EKeys::Gamepad_FaceButton_Bottom || key == EKeys::Gamepad_FaceButton_Right
+        || key == EKeys::Gamepad_FaceButton_Left || key == EKeys::Gamepad_FaceButton_Top
+        || key == EKeys::Gamepad_RightTrigger || key == EKeys::Gamepad_RightShoulder
+        || key == EKeys::Gamepad_LeftShoulder || key == EKeys::Gamepad_Special_Left
+        || key == EKeys::Gamepad_Special_Right || key == EKeys::Gamepad_DPad_Left
+        || key == EKeys::Gamepad_DPad_Right || key == EKeys::Gamepad_DPad_Up
+        || key == EKeys::Gamepad_DPad_Down;
 }
 }
 
-void ABBRiderCharacter::BindControllerInput(UInputComponent* Input)
+void ABBRiderCharacter::BindControllerInput(UInputComponent* input)
 {
-    // AxisConfig performs the existing deadzone, exponent, sensitivity and
-    // inversion. No OS transport assumption, duplicate deadzone or global edit.
+    // axisconfig performs the existing deadzone, exponent, sensitivity and
+    // inversion. no os transport assumption, duplicate deadzone or global edit.
     Input->BindAxisKey(EKeys::Gamepad_LeftX, this, &ABBRiderCharacter::GamepadMoveAxis);
     Input->BindAxisKey(EKeys::Gamepad_LeftY, this, &ABBRiderCharacter::GamepadMoveAxis);
     Input->BindAxisKey(EKeys::Gamepad_RightX, this, &ABBRiderCharacter::GamepadLookYaw);
     Input->BindAxisKey(EKeys::Gamepad_RightY, this, &ABBRiderCharacter::GamepadLookPitch);
-    for (const FKey Key : {EKeys::Gamepad_FaceButton_Bottom, EKeys::Gamepad_FaceButton_Right,
+    for (const fkey key : {EKeys::Gamepad_FaceButton_Bottom, EKeys::Gamepad_FaceButton_Right,
         EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_RightTrigger,
         EKeys::Gamepad_RightShoulder, EKeys::Gamepad_LeftShoulder, EKeys::Gamepad_Special_Left,
         EKeys::Gamepad_Special_Right, EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Right,
         EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Down})
     {
-        Input->BindKey(Key, IE_Pressed, this, &ABBRiderCharacter::GamepadPressed);
-        Input->BindKey(Key, IE_Released, this, &ABBRiderCharacter::GamepadReleased);
+        input->bindkey(key, ie_pressed, this, &ABBRiderCharacter::GamepadPressed);
+        input->bindkey(key, ie_released, this, &ABBRiderCharacter::GamepadReleased);
     }
-    Input->BindKey(EKeys::AnyKey, IE_Pressed, this, &ABBRiderCharacter::ObserveInputDevice).bConsumeInput = false;
+    Input->BindKey(EKeys::AnyKey, ie_pressed, this, &ABBRiderCharacter::ObserveInputDevice).bConsumeInput = false;
 }
 
-void ABBRiderCharacter::ObserveInputDevice(FKey Key)
+void ABBRiderCharacter::ObserveInputDevice(FKey key)
 {
-    if (Key != EKeys::AnyKey) bUsingGamepad = Key.IsGamepadKey();
+    if (key != EKeys::AnyKey) businggamepad = Key.IsGamepadKey();
 }
 
-void ABBRiderCharacter::GamepadMoveAxis(float Value)
+void ABBRiderCharacter::GamepadMoveAxis(float value)
 {
-    if (!bGamepadRequiresNeutral && FMath::IsFinite(Value) && FMath::Abs(Value) > .001f) bUsingGamepad = true;
+    if (!bgamepadrequiresneutral && FMath::IsFinite(Value) && FMath::Abs(Value) > .001f) businggamepad = true;
 }
 
-float ABBRiderCharacter::ControllerAxis(const FKey Key) const
+float ABBRiderCharacter::ControllerAxis(const fkey key) const
 {
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    if (bGamepadRequiresNeutral || !Player || !Player->PlayerInput) return 0.f;
-    // FlushPressedKeys zeros RawValue immediately; its processed Value may
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (bgamepadrequiresneutral || !player || !player->playerinput) return 0.f;
+    // flushpressedkeys zeros rawvalue immediately; its processed value may
     // otherwise survive until the next input-stack evaluation.
     if (FMath::IsNearlyZero(Player->PlayerInput->GetRawKeyValue(Key))) return 0.f;
-    const float Value = Player->PlayerInput->GetKeyValue(Key);
+    const float value = player->playerinput->getkeyvalue(key);
     return FMath::IsFinite(Value) ? FMath::Clamp(Value, -1.f, 1.f) : 0.f;
 }
 
-void ABBRiderCharacter::GamepadLookYaw(float Value)
+void ABBRiderCharacter::GamepadLookYaw(float value)
 {
-    if (bGamepadRequiresNeutral || !FMath::IsFinite(Value) || FMath::IsNearlyZero(Value)) return;
-    APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!Player || !GetWorld()) return;
-    bUsingGamepad = true;
-    // Keep the mouse's existing legacy scale intact while making stick speed
-    // an explicit degrees/second rate. AxisConfig still controls sensitivity.
-    float Scale = 1.f;
-    PRAGMA_DISABLE_DEPRECATION_WARNINGS
-    if (GetDefault<UInputSettings>()->bEnableLegacyInputScales) Scale = Player->GetDeprecatedInputYawScale();
-    PRAGMA_ENABLE_DEPRECATION_WARNINGS
-    if (!FMath::IsNearlyZero(Scale)) AddControllerYawInput(Value * GamepadYawDegreesPerSecond * GetWorld()->GetDeltaSeconds() / Scale);
+    if (bgamepadrequiresneutral || !FMath::IsFinite(Value) || FMath::IsNearlyZero(Value)) return;
+    aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!player || !getworld()) return;
+    businggamepad = true;
+    // keep the mouse's existing legacy scale intact while making stick speed
+    // an explicit degrees/second rate. axisconfig still controls sensitivity.
+    float scale = 1.f;
+    pragma_disable_deprecation_warnings
+    if (getdefault<uinputsettings>()->benablelegacyinputscales) scale = player->getdeprecatedinputyawscale();
+    pragma_enable_deprecation_warnings
+    if (!FMath::IsNearlyZero(Scale)) addcontrolleryawinput(value * gamepadyawdegreespersecond * getworld()->getdeltaseconds() / scale);
 }
 
-void ABBRiderCharacter::GamepadLookPitch(float Value)
+void ABBRiderCharacter::GamepadLookPitch(float value)
 {
-    if (bGamepadRequiresNeutral || !FMath::IsFinite(Value) || FMath::IsNearlyZero(Value)) return;
-    APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!Player || !GetWorld()) return;
-    bUsingGamepad = true;
-    float Scale = 1.f;
-    PRAGMA_DISABLE_DEPRECATION_WARNINGS
-    if (GetDefault<UInputSettings>()->bEnableLegacyInputScales) Scale = Player->GetDeprecatedInputPitchScale();
-    PRAGMA_ENABLE_DEPRECATION_WARNINGS
-    if (!FMath::IsNearlyZero(Scale)) AddControllerPitchInput(Value * GamepadPitchDegreesPerSecond * GetWorld()->GetDeltaSeconds() / Scale);
+    if (bgamepadrequiresneutral || !FMath::IsFinite(Value) || FMath::IsNearlyZero(Value)) return;
+    aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!player || !getworld()) return;
+    businggamepad = true;
+    float scale = 1.f;
+    pragma_disable_deprecation_warnings
+    if (getdefault<uinputsettings>()->benablelegacyinputscales) scale = player->getdeprecatedinputpitchscale();
+    pragma_enable_deprecation_warnings
+    if (!FMath::IsNearlyZero(Scale)) addcontrollerpitchinput(value * gamepadpitchdegreespersecond * getworld()->getdeltaseconds() / scale);
 }
 
 void ABBRiderCharacter::SyncGamepadRefereeChoice()
 {
-    const ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
-    const bool bReview = Match && Match->bConductReviewPending;
-    const int32 FoulCount = Match ? Match->ConductFoulCount : -1;
-    if (!bReview || bReview != bLastConductReviewPending || FoulCount != LastGamepadConductFoulCount)
-        GamepadRefereeChoice = 0;
-    bLastConductReviewPending = bReview;
-    LastGamepadConductFoulCount = FoulCount;
+    const abbmatchstate* match = getworld() ? getworld()->getgamestate<abbmatchstate>() : nullptr;
+    const bool breview = match && match->bconductreviewpending;
+    const int32 foulcount = match ? match->conductfoulcount : -1;
+    if (!breview || breview != blastconductreviewpending || foulcount != lastgamepadconductfoulcount)
+        gamepadrefereechoice = 0;
+    blastconductreviewpending = breview;
+    lastgamepadconductfoulcount = foulcount;
 }
 
-void ABBRiderCharacter::GamepadPressed(FKey Key)
+void ABBRiderCharacter::GamepadPressed(FKey key)
 {
-    bUsingGamepad = true;
-    if (bGamepadRequiresNeutral) return;
-    SyncGamepadRefereeChoice();
-    ABBMatchState* Match = GetWorld() ? GetWorld()->GetGameState<ABBMatchState>() : nullptr;
-    if (Key == EKeys::Gamepad_FaceButton_Left) StartInteract();
-    else if (Key == EKeys::Gamepad_RightTrigger) ReleaseBall();
-    else if (Key == EKeys::Gamepad_RightShoulder) CastSelectedSpell();
-    else if (Key == EKeys::Gamepad_LeftShoulder) RequestShield();
-    else if (Key == EKeys::Gamepad_FaceButton_Top) ToggleSpellbook();
-    else if (Key == EKeys::Gamepad_Special_Left) ToggleRoster();
-    else if (Key == EKeys::Gamepad_Special_Right)
+    businggamepad = true;
+    if (bgamepadrequiresneutral) return;
+    syncgamepadrefereechoice();
+    abbmatchstate* match = getworld() ? getworld()->getgamestate<abbmatchstate>() : nullptr;
+    if (key == EKeys::Gamepad_FaceButton_Left) startinteract();
+    else if (key == EKeys::Gamepad_RightTrigger) releaseball();
+    else if (key == EKeys::Gamepad_RightShoulder) castselectedspell();
+    else if (key == EKeys::Gamepad_LeftShoulder) requestshield();
+    else if (key == EKeys::Gamepad_FaceButton_Top) togglespellbook();
+    else if (key == EKeys::Gamepad_Special_Left) toggleroster();
+    else if (key == EKeys::Gamepad_Special_Right)
     {
-        if (Match && Match->bConductReviewPending)
+        if (match && match->bconductreviewpending)
         {
-            const int32 Choice = GamepadRefereeChoice;
-            GamepadRefereeChoice = 0;
-            if (Choice == 1) RequestPossessionAward();
-            else if (Choice == 2) RequestEjection();
-            else if (Choice == 3) RequestPenaltyShot();
-            else if (Choice == 4) RequestFreeShot();
-            // A fresh review and a lone Menu press never choose a sanction.
+            const int32 choice = gamepadrefereechoice;
+            gamepadrefereechoice = 0;
+            if (choice == 1) requestpossessionaward();
+            else if (choice == 2) requestejection();
+            else if (choice == 3) requestpenaltyshot();
+            else if (choice == 4) requestfreeshot();
+            // a fresh review and a lone menu press never choose a sanction.
         }
-        else if (bShowRoster) RequestModerateAdvantage();
-        else if (Match && Match->bLive) RequestStoppage();
-        else RequestReady();
+        else if (bshowroster) requestmoderateadvantage();
+        else if (match && match->blive) requeststoppage();
+        else requestready();
     }
-    else if (Key == EKeys::Gamepad_DPad_Up || Key == EKeys::Gamepad_DPad_Down)
+    else if (key == EKeys::Gamepad_DPad_Up || key == EKeys::Gamepad_DPad_Down)
     {
-        if (Match && Match->bConductReviewPending)
-            GamepadRefereeChoice = Key == EKeys::Gamepad_DPad_Up ? 1 : 2;
-        else if (Match && !Match->bLive && !Match->bPenaltyShotActive)
-            SubmitAction(2, (Position + (Key == EKeys::Gamepad_DPad_Up ? 1 : 5)) % 6);
+        if (match && match->bconductreviewpending)
+            gamepadrefereechoice = key == EKeys::Gamepad_DPad_Up ? 1 : 2;
+        else if (match && !match->blive && !match->bpenaltyshotactive)
+            submitaction(2, (position + (key == EKeys::Gamepad_DPad_Up ? 1 : 5)) % 6);
     }
-    else if (Key == EKeys::Gamepad_DPad_Left)
+    else if (key == EKeys::Gamepad_DPad_Left)
     {
-        if (Match && Match->bConductReviewPending) GamepadRefereeChoice = 4;
-        else if (bShowRoster) { if (Match && !Match->bLive) RequestTeam(); }
-        else PreviousSpell();
+        if (match && match->bconductreviewpending) gamepadrefereechoice = 4;
+        else if (bshowroster) { if (match && !match->blive) requestteam(); }
+        else previousspell();
     }
-    else if (Key == EKeys::Gamepad_DPad_Right)
+    else if (key == EKeys::Gamepad_DPad_Right)
     {
-        if (Match && Match->bConductReviewPending) GamepadRefereeChoice = 3;
-        else if (bShowRoster) { if (Match && Match->Status == TEXT("LOBBY")) RequestBloodbroom(); }
-        else NextSpell();
+        if (match && match->bconductreviewpending) gamepadrefereechoice = 3;
+        else if (bshowroster) { if (match && match->status == text("lobby")) requestbloodbroom(); }
+        else nextspell();
     }
 }
 
 void ABBRiderCharacter::ReleaseInteractInput()
 {
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!bDevelopmentInteractHeld && (!Player || (!Player->IsInputKeyDown(EKeys::E)
-        && !Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Left)))) StopInteract();
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!bdevelopmentinteractheld && (!player || (!Player->IsInputKeyDown(EKeys::E)
+        && !Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Left)))) stopinteract();
 }
 
-void ABBRiderCharacter::GamepadReleased(FKey Key)
+void ABBRiderCharacter::GamepadReleased(FKey key)
 {
-    if (Key == EKeys::Gamepad_FaceButton_Left) ReleaseInteractInput();
+    if (key == EKeys::Gamepad_FaceButton_Left) releaseinteractinput();
 }
 
-bool ABBRiderCharacter::HasControllerViewportFocus(APlayerController* Player) const
+bool ABBRiderCharacter::HasControllerViewportFocus(APlayerController* player) const
 {
-    const ULocalPlayer* Local = Player ? Player->GetLocalPlayer() : nullptr;
-    const FViewport* Viewport = Local && Local->ViewportClient ? Local->ViewportClient->Viewport : nullptr;
-    return Viewport && Viewport->HasFocus() && Viewport->IsForegroundWindow();
+    const ulocalplayer* local = player ? player->getlocalplayer() : nullptr;
+    const fviewport* viewport = local && local->viewportclient ? local->viewportclient->viewport : nullptr;
+    return viewport && viewport->hasfocus() && viewport->isforegroundwindow();
 }
 
-bool ABBRiderCharacter::IsGamepadNeutral(APlayerController* Player) const
+bool ABBRiderCharacter::IsGamepadNeutral(APlayerController* player) const
 {
-    if (!Player || !Player->PlayerInput) return true;
-    for (const FKey Key : {EKeys::Gamepad_LeftX, EKeys::Gamepad_LeftY, EKeys::Gamepad_RightX, EKeys::Gamepad_RightY})
+    if (!player || !player->playerinput) return true;
+    for (const fkey key : {EKeys::Gamepad_LeftX, EKeys::Gamepad_LeftY, EKeys::Gamepad_RightX, EKeys::Gamepad_RightY})
     {
-        const float Raw = Player->PlayerInput->GetRawKeyValue(Key);
+        const float raw = player->playerinput->getrawkeyvalue(key);
         if (!FMath::IsFinite(Raw)) return false;
-        // An engine flush is neutral immediately, even before the next input
-        // stack updates processed Value. Otherwise use the configured deadzone,
+        // an engine flush is neutral immediately, even before the next input
+        // stack updates processed Value. otherwise use the configured deadzone,
         // so harmless stick drift cannot trap a controller behind this latch.
         if (FMath::IsNearlyZero(Raw)) continue;
-        const float Processed = Player->PlayerInput->GetKeyValue(Key);
+        const float processed = player->playerinput->getkeyvalue(key);
         if (!FMath::IsFinite(Processed) || FMath::Abs(Processed) > .001f) return false;
     }
-    for (const FKey Key : {EKeys::Gamepad_FaceButton_Bottom, EKeys::Gamepad_FaceButton_Right,
+    for (const fkey key : {EKeys::Gamepad_FaceButton_Bottom, EKeys::Gamepad_FaceButton_Right,
         EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_RightTrigger,
         EKeys::Gamepad_RightShoulder, EKeys::Gamepad_LeftShoulder, EKeys::Gamepad_Special_Left,
         EKeys::Gamepad_Special_Right, EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Right,
         EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Down})
-        if (Player->IsInputKeyDown(Key)) return false;
+        if (player->isinputkeydown(key)) return false;
     return true;
 }
 
 void ABBRiderCharacter::FlushOwnedControllerInput()
 {
-    APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!Player || !Player->IsLocalController()) return;
-    Player->FlushPressedKeys();
+    aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!player || !player->islocalcontroller()) return;
+    player->flushpressedkeys();
     PendingControllerInputs.Reset();
     MovementKeys.Empty();
-    ConsumeMovementInputVector();
-    GetCharacterMovement()->StopMovementImmediately();
-    bGamepadRequiresNeutral = true;
-    GamepadRefereeChoice = 0;
-    ++ControllerInputFlushCount;
-    // The older explicit development interaction fixture is independent of
-    // physical focus. It is never enabled by packaged-game input.
-    if (!bDevelopmentInteractHeld) StopInteract();
+    consumemovementinputvector();
+    getcharactermovement()->stopmovementimmediately();
+    bgamepadrequiresneutral = true;
+    gamepadrefereechoice = 0;
+    ++controllerinputflushcount;
+    // the older explicit development interaction fixture is independent of
+    // physical focus. it is never enabled by packaged-game input.
+    if (!bdevelopmentinteractheld) stopinteract();
 }
 
-void ABBRiderCharacter::HandleInputDeviceConnection(EInputDeviceConnectionState State, FPlatformUserId User, FInputDeviceId Device)
+void ABBRiderCharacter::HandleInputDeviceConnection(EInputDeviceConnectionState state, fplatformuserid user, finputdeviceid device)
 {
-    if (State != EInputDeviceConnectionState::Disconnected) return;
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    const ULocalPlayer* Local = Player ? Player->GetLocalPlayer() : nullptr;
-    if (Local && Local->GetPlatformUserId() == User) FlushOwnedControllerInput();
+    if (state != EInputDeviceConnectionState::Disconnected) return;
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    const ulocalplayer* local = player ? player->getlocalplayer() : nullptr;
+    if (local && local->getplatformuserid() == user) flushownedcontrollerinput();
 }
 
-void ABBRiderCharacter::HandleInputDevicePairing(FInputDeviceId Device, FPlatformUserId NewUser, FPlatformUserId OldUser)
+void ABBRiderCharacter::HandleInputDevicePairing(FInputDeviceId device, fplatformuserid newuser, fplatformuserid olduser)
 {
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    const ULocalPlayer* Local = Player ? Player->GetLocalPlayer() : nullptr;
-    if (Local && Local->GetPlatformUserId() == OldUser && NewUser != OldUser) FlushOwnedControllerInput();
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    const ulocalplayer* local = player ? player->getlocalplayer() : nullptr;
+    if (local && local->getplatformuserid() == olduser && newuser != olduser) flushownedcontrollerinput();
 }
 
 void ABBRiderCharacter::RegisterControllerInputLifecycle()
@@ -240,9 +240,9 @@ void ABBRiderCharacter::RegisterControllerInputLifecycle()
     FCoreDelegates::ApplicationWillEnterBackgroundDelegate.AddUObject(this, &ABBRiderCharacter::FlushOwnedControllerInput);
 }
 
-void ABBRiderCharacter::EndPlay(const EEndPlayReason::Type Reason)
+void ABBRiderCharacter::EndPlay(const EEndPlayReason::Type reason)
 {
-    ClearConcealmentViews();
+    clearconcealmentviews();
     IPlatformInputDeviceMapper::Get().GetOnInputDeviceConnectionChange().RemoveAll(this);
     IPlatformInputDeviceMapper::Get().GetOnInputDevicePairingChange().RemoveAll(this);
     FCoreDelegates::ApplicationWillDeactivateDelegate.RemoveAll(this);
@@ -251,70 +251,70 @@ void ABBRiderCharacter::EndPlay(const EEndPlayReason::Type Reason)
     Super::EndPlay(Reason);
 }
 
-void ABBRiderCharacter::TickControllerInput(APlayerController* Player)
+void ABBRiderCharacter::TickControllerInput(APlayerController* player)
 {
-    const bool bFocused = HasControllerViewportFocus(Player);
-    if (bObservedViewportFocus && bLastViewportFocused && !bFocused) FlushOwnedControllerInput();
-    bObservedViewportFocus = true;
-    bLastViewportFocused = bFocused;
-    if (bGamepadRequiresNeutral && bFocused && IsGamepadNeutral(Player)) bGamepadRequiresNeutral = false;
-    SyncGamepadRefereeChoice();
-#if !UE_BUILD_SHIPPING
-    if (GetWorld()->WorldType == EWorldType::PIE && !PendingControllerInputs.IsEmpty())
+    const bool bfocused = hascontrollerviewportfocus(player);
+    if (bobservedviewportfocus && blastviewportfocused && !bfocused) flushownedcontrollerinput();
+    bobservedviewportfocus = true;
+    blastviewportfocused = bfocused;
+    if (bgamepadrequiresneutral && bfocused && isgamepadneutral(player)) bgamepadrequiresneutral = false;
+    syncgamepadrefereechoice();
+#if !ue_build_shipping
+    if (getworld()->worldtype == EWorldType::PIE && !PendingControllerInputs.IsEmpty())
     {
-        // Dispatch outside Python's editor script guard. PlayerInput later
-        // evaluates real bindings, applies AxisConfig and reaches ordinary RPCs.
-        TArray<FDevelopmentControllerInput> Inputs = MoveTemp(PendingControllerInputs);
-        for (const FDevelopmentControllerInput& Input : Inputs)
+        // dispatch outside python's editor script guard. playerinput later
+        // evaluates real bindings, applies axisconfig and reaches ordinary RPCs.
+        tarray<fdevelopmentcontrollerinput> inputs = movetemp(pendingcontrollerinputs);
+        for (const fdevelopmentcontrollerinput& input : inputs)
         {
-            if (Input.bFlush) { FlushOwnedControllerInput(); break; }
-            const EInputEvent Event = Input.Key.IsAnalog() ? IE_Axis : Input.Value > .5f ? IE_Pressed : IE_Released;
-            Player->InputKey(FInputKeyEventArgs::CreateSimulated(Input.Key, Event, Input.Value));
+            if (Input.bFlush) { flushownedcontrollerinput(); break; }
+            const einputevent event = Input.Key.IsAnalog() ? ie_axis : Input.Value > .5f ? ie_pressed : ie_released;
+            Player->InputKey(FInputKeyEventArgs::CreateSimulated(Input.Key, event, Input.Value));
         }
     }
 #endif
 }
 
-bool ABBRiderCharacter::DevelopmentInjectGamepadInput(FName KeyName, float Value)
+bool ABBRiderCharacter::DevelopmentInjectGamepadInput(FName keyname, float value)
 {
-#if UE_BUILD_SHIPPING
+#if ue_build_shipping
     return false;
 #else
-    const FKey Key(KeyName);
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !Player || !Player->PlayerInput || !IsMappedControllerKey(Key) || !FMath::IsFinite(Value)
-        || Value < -1.f || Value > 1.f || (!Key.IsAnalog() && Value != 0.f && Value != 1.f)
+    const fkey key(keyname);
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!getworld() || getworld()->worldtype != EWorldType::PIE || !islocallycontrolled()
+        || !player || !player->playerinput || !ismappedcontrollerkey(key) || !FMath::IsFinite(Value)
+        || value < -1.f || value > 1.f || (!Key.IsAnalog() && value != 0.f && value != 1.f)
         || PendingControllerInputs.Num() >= 32) return false;
-    PendingControllerInputs.Add({Key, Value, false});
+    PendingControllerInputs.Add({Key, value, false});
     return true;
 #endif
 }
 
 bool ABBRiderCharacter::DevelopmentFlushControllerInput()
 {
-#if UE_BUILD_SHIPPING
+#if ue_build_shipping
     return false;
 #else
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
-        || !Player || !Player->PlayerInput || PendingControllerInputs.Num() >= 32) return false;
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (!getworld() || getworld()->worldtype != EWorldType::PIE || !islocallycontrolled()
+        || !player || !player->playerinput || PendingControllerInputs.Num() >= 32) return false;
     PendingControllerInputs.Add({EKeys::Invalid, 0.f, true});
     return true;
 #endif
 }
 
-TArray<float> ABBRiderCharacter::DevelopmentGetControllerInputState() const
+tarray<float> ABBRiderCharacter::DevelopmentGetControllerInputState() const
 {
-#if !UE_BUILD_SHIPPING
-    const APlayerController* Player = Cast<APlayerController>(Controller);
-    if (GetWorld() && GetWorld()->WorldType == EWorldType::PIE && IsLocallyControlled() && Player)
+#if !ue_build_shipping
+    const aplayercontroller* player = cast<aplayercontroller>(controller);
+    if (getworld() && getworld()->worldtype == EWorldType::PIE && islocallycontrolled() && player)
         return {ControllerAxis(EKeys::Gamepad_LeftX), ControllerAxis(EKeys::Gamepad_LeftY),
             ControllerAxis(EKeys::Gamepad_RightX), ControllerAxis(EKeys::Gamepad_RightY),
             Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Left) ? 1.f : 0.f,
             Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Bottom) ? 1.f : 0.f,
             Player->IsInputKeyDown(EKeys::Gamepad_FaceButton_Right) ? 1.f : 0.f,
-            bLocalInteractHeld ? 1.f : 0.f, static_cast<float>(ControllerInputFlushCount)};
+            blocalinteractheld ? 1.f : 0.f, static_cast<float>(controllerinputflushcount)};
 #endif
     return {};
 }
