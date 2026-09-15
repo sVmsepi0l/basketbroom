@@ -64,6 +64,8 @@ def inspect():
     owners = [actor for actor in actors if actor.actor_has_tag(OWNER_TAG)]
     checks = []
     roof_amendment = None
+    expansion_amendment = None
+    geometry_dimensions = {"goal_x": 6400.8, "eave": 4206.24}
     roof_audit = None
     expected_generated, expected_meshes, expected_materials = 900, 14, 18
     if any(actor.actor_has_tag("BB.Net.Roof") for actor in actors):
@@ -76,10 +78,18 @@ def inspect():
             baseline = json.loads((ROOT / ".local/hlck/dungeon-anchor-result.json").read_text(encoding="utf-8-sig"))["map_sha256_after"]
         else:
             raise RuntimeError("No exact roof amendment contract exists for this map")
-        roof_amendment = roof.verified_amendment(LEVEL_PATH, baseline)
-        if roof_amendment is None:
-            raise RuntimeError("The saved roof map lacks its verified original-map amendment chain")
-        roof_audit = roof.collision_audit(unreal, world, actors)
+        expansion_spec = importlib.util.spec_from_file_location("_bb_inspect_native_expansion", ROOT / "Tools/stage_hlck_arena_expansion.py")
+        expansion = importlib.util.module_from_spec(expansion_spec)
+        expansion_spec.loader.exec_module(expansion)
+        expansion_amendment = expansion.verified_amendment(LEVEL_PATH, baseline)
+        if expansion_amendment is not None:
+            geometry_dimensions = expansion_amendment["dimensions"]
+            roof_audit = expansion.geometry_audit(unreal, world, actors, geometry_dimensions)
+        else:
+            roof_amendment = roof.verified_amendment(LEVEL_PATH, baseline)
+            if roof_amendment is None:
+                raise RuntimeError("The saved roof map lacks its verified original-map amendment chain")
+            roof_audit = roof.collision_audit(unreal, world, actors)
         expected_generated, expected_meshes, expected_materials = 905, 18, 19
 
     def check(name, passed, detail):
@@ -130,17 +140,17 @@ def inspect():
     for tag, expected_count, height in (("BB.Goal.Large", 6, 2103.12), ("BB.Goal.Small", 2, 3048.0)):
         positions = [xyz(actor.get_actor_location()) for actor in generated if actor.actor_has_tag(tag)]
         goal_positions[tag] = positions
-        expected_positions = [(side * 6400.8, y, height) for side in (-1, 1)
+        expected_positions = [(side * geometry_dimensions["goal_x"], y, height) for side in (-1, 1)
                               for y in ((-1066.8, 0.0, 1066.8) if tag.endswith("Large") else (0.0,))]
         matches = len(positions) == expected_count and all(
             any(all(abs(actual[axis] - wanted[axis]) < 1.0 for axis in range(3)) for actual in positions)
             for wanted in expected_positions)
         check(tag + "_centers_cm", matches, positions)
-    reference_tag = "BB.Net.Eave" if roof_amendment else "BB.NoCrown.Plane"
+    reference_tag = "BB.Net.Eave" if roof_amendment or expansion_amendment else "BB.NoCrown.Plane"
     eaves = [xyz(actor.get_actor_location()) for actor in generated if actor.actor_has_tag(reference_tag)]
-    check("roofline_reference_and_current_collision", len(eaves) == 1 and abs(eaves[0][2] - 4206.24) < 1.0 if eaves else False,
-          {"reference": eaves, "roof_amendment": roof_amendment, "collision": roof_audit,
-           "legacy_open_roof": roof_amendment is None})
+    check("roofline_reference_and_current_collision", len(eaves) == 1 and abs(eaves[0][2] - geometry_dimensions["eave"]) < 1.0 if eaves else False,
+          {"reference": eaves, "roof_amendment": roof_amendment, "expansion_amendment": expansion_amendment, "collision": roof_audit,
+           "legacy_open_roof": roof_amendment is None and expansion_amendment is None})
     screenshot_api = getattr(getattr(unreal, "AutomationLibrary", None), "take_high_res_screenshot", None)
     screenshot_doc = str(screenshot_api.__doc__) if screenshot_api is not None else None
     report = {"status": "passed" if all(item["passed"] for item in checks) else "failed",

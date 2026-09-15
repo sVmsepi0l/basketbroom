@@ -7,6 +7,12 @@ receives a guarded free-ball physical starting trajectory. Clients receive
 native replication; no client transform, velocity, custody, score, clock,
 collision outcome or other protected gameplay field is assigned.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -52,11 +58,11 @@ def dot(a, b):
 
 def inside_sphere(point, radius, tolerance=1.0):
     x, y, z = point
-    if abs(x)+radius > 6850.8+tolerance or abs(y)+radius > 3200.4+tolerance or z-radius < -tolerance:
+    if abs(x)+radius > dimensions.HALF_LENGTH+tolerance or abs(y)+radius > dimensions.HALF_WIDTH+tolerance or z-radius < -tolerance:
         return False
-    for nx, ny in ((2103.12/6850.8, 0), (-2103.12/6850.8, 0),
-                   (0, 2103.12/3200.4), (0, -2103.12/3200.4)):
-        if (nx*x+ny*y+z-6309.36)/math.sqrt(nx*nx+ny*ny+1)+radius > tolerance:
+    for nx, ny in (((dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_LENGTH, 0), (-(dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_LENGTH, 0),
+                   (0, (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH), (0, -(dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH)):
+        if (nx*x+ny*y+z-dimensions.APEX_HEIGHT)/math.sqrt(nx*nx+ny*ny+1)+radius > tolerance:
             return False
     return True
 
@@ -159,8 +165,8 @@ class PyramidNetworkTests(base.NativeNetworkTests):
         pending_before = [int(prop(side["match"], "PendingPenaltyCount")) for side in (self.host, self.client)]
         crown_before = self.crown_state()
         before = self.roof_receipt()
-        start, velocity = vec(0, 1600, 4700), vec(0, 0, 1800)
-        self.require(inside_sphere(xyz(start), self.ball_radius) and start.z > 4206.24,
+        start, velocity = vec(0, 1600*dimensions.LINEAR_SCALE, dimensions.EAVE_HEIGHT+493.76), vec(0, 0, 1800)
+        self.require(inside_sphere(xyz(start), self.ball_radius) and start.z > dimensions.EAVE_HEIGHT,
                      "Physical start must be inside the hollow roof above the former crown plane")
         self.require(server_ball.development_set_flight_fixture(start, velocity), "Authority physical trajectory rejected")
         server_ball.set_actor_tick_enabled(True)
@@ -177,7 +183,7 @@ class PyramidNetworkTests(base.NativeNetworkTests):
         self.require(bounced, "Native flight did not create the expected positive-Y roof contact")
 
         def received():
-            return (client_ball.get_actor_location().z > 4206.24
+            return (client_ball.get_actor_location().z > dimensions.EAVE_HEIGHT
                     and dot(xyz(client_ball.get_flight_velocity()), receipt["normal"]) < -100
                     and inside_sphere(xyz(client_ball.get_actor_location()), self.ball_radius))
         yield self.wait(1.2, received)

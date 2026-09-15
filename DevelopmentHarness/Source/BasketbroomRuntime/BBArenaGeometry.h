@@ -1,14 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "BBArenaDimensions.generated.h"
 
 // Centimetres. The eave has no horizontal collision plane: the playable volume
 // continues into a hollow four-face pyramid, enclosed only by its sloping net.
 namespace BBArena
 {
-inline constexpr double HalfLength = 6850.8;
-inline constexpr double HalfWidth = 3200.4;
-inline constexpr double EaveHeight = 4206.24;
-inline constexpr double ApexHeight = 6309.36;
 inline constexpr double RoofRise = ApexHeight - EaveHeight;
 inline constexpr double Restitution = .75;
 
@@ -27,6 +24,32 @@ inline double CapsuleRoofLimit(double X, double Y, double Radius, double HalfHei
     return ApexHeight - FMath::Max(SX * FMath::Abs(X) + Radius * FMath::Sqrt(1.0 + SX * SX),
                                    SY * FMath::Abs(Y) + Radius * FMath::Sqrt(1.0 + SY * SY))
                       - FMath::Max(0.0, HalfHeight - Radius);
+}
+
+// Unlike an apex-height box, this tests the entire capsule against every
+// sloped roof face, the side/end nets and the trampoline floor. A one-micron
+// tolerance admits numerical contact, never a meaningful excursion outside.
+inline bool ContainsCapsule(const FVector& Point, double Radius, double HalfHeight,
+                            double Tolerance = .0001)
+{
+    if (Point.ContainsNaN() || !FMath::IsFinite(Radius) || !FMath::IsFinite(HalfHeight)
+        || Radius < 0.0 || HalfHeight < Radius) return false;
+    return FMath::Abs(Point.X) + Radius <= HalfLength + Tolerance
+        && FMath::Abs(Point.Y) + Radius <= HalfWidth + Tolerance
+        && Point.Z - HalfHeight >= -Tolerance
+        && Point.Z <= CapsuleRoofLimit(Point.X, Point.Y, Radius, HalfHeight) + Tolerance;
+}
+
+inline bool ContainsSphere(const FVector& Point, double Radius, double Tolerance = .0001)
+{
+    return ContainsCapsule(Point, Radius, Radius, Tolerance);
+}
+
+// Only provisional venue-relative placements use this. Sporting distances,
+// goal apertures/heights, rider bodies and equipment retain their own sizes.
+inline FVector ScaleLayout(const FVector& Point)
+{
+    return Point * LinearScale;
 }
 
 inline FVector ClampCapsule(const FVector& Point, double Radius, double HalfHeight)

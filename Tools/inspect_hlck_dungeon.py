@@ -50,9 +50,11 @@ def inspect():
         current_source_hash = stage.digest(stage.checked_file(stage.SOURCE_MAP, ".umap"))
         amendment = None
         if current_source_hash != original:
-            amendment = module("_bb_dungeon_roof_amendment", "Tools/stage_hlck_pyramid_net.py").verified_amendment(stage.SOURCE_MAP, original)
-        check("source_arena_preserved_or_verified_roof_amendment", current_source_hash == original or amendment is not None,
-              {"original_sha256": original, "current_sha256": current_source_hash, "roof_amendment": amendment})
+            amendment = module("_bb_dungeon_expansion_amendment", "Tools/stage_hlck_arena_expansion.py").verified_amendment(stage.SOURCE_MAP, original)
+            if amendment is None:
+                amendment = module("_bb_dungeon_roof_amendment", "Tools/stage_hlck_pyramid_net.py").verified_amendment(stage.SOURCE_MAP, original)
+        check("source_arena_preserved_or_verified_arena_amendment", current_source_hash == original or amendment is not None,
+              {"original_sha256": original, "current_sha256": current_source_hash, "arena_amendment": amendment})
         library = unreal.EditorAssetLibrary
         owned = {}
         for source, destination in stage.DESTINATIONS.items():

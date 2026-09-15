@@ -9,7 +9,7 @@ and audio suites pass. Two packaged processes also share role changes, scores,
 stoppages, certified results and host rematches in local play. Full regulation,
 remote multiplayer validation, and final art remain in development.
 
-![Actual UE5.8 native Scout flight with the regulation HUD](Docs/Screenshots/native-flight.png)
+![Actual UE5.8 flight in the expanded pyramid-net arena](Docs/Screenshots/arena-expanded-flight.png)
 
 The active project is `DevelopmentHarness/BasketbroomDev.uproject`. The folder
 name is historical: this is now a standalone UE5.8 game project. It is not an
@@ -19,13 +19,17 @@ with Hogwarts Legacy's Creator Kit engine.
 
 The Creator Kit port now has a saved dungeon, native return actor and registered
 entrance SQL. Launching the Kit through Epic resolved its WB sign-in failure.
-Normal Creator Kit Play now passes 16 runtime checks for native player spawn,
-mod tables and exit setup, followed by clean shutdown. Actual entry/return
+The enlarged dungeon passes 17 live Creator Kit checks for native player spawn,
+mod tables, exit setup and an advancing game clock, followed by clean shutdown. Actual entry/return
 interaction and match gameplay remain in development. See
 [Hogwarts sprint 3](Docs/hogwarts-sprint3.md) for the evidence and next steps.
 
-The next geometry change is [40–50% more enclosed arena volume](Docs/arena-volume-expansion.md),
-targeting 45%; the current game has not yet been resized.
+The arena now has [45% more enclosed volume](Docs/arena-volume-expansion.md)
+in Basketbroom, Bloodbroom, training and the Creator Kit port. The enclosure is
+13.19% longer, wider and taller; rider/ball sizes, hoop measurements and fixed
+free-shot distances are preserved. The September 15 Windows package includes
+the expansion, with 142 focused gameplay checks, two-mode local connection
+checks and rendered startup checks passing.
 
 ## Play
 

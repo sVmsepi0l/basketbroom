@@ -13,6 +13,12 @@ shot outcome, penalty or feedback receipt is injected. Actor/camera fixture
 positions are arranged in disposable worlds, so movement replication is not
 claimed. --list reports planned coverage without starting Unreal.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -123,7 +129,7 @@ class PenaltyShotNetworkTests(spells.SpellNetworkTests):
             ball.set_actor_tick_enabled(True)
 
     def aim_quark(self):
-        target = vec(-6400.8, 0, 3048)
+        target = vec(-dimensions.GOAL_PLANE_X, 0, 3048)
         controller = unreal.GameplayStatics.get_player_controller(self.client["world"], 0)
         for unused in range(2):
             start = self.client["pawn"].get_carry_location()

@@ -1,4 +1,10 @@
 """Derive a native UE5.8 regulation map while preserving the training map."""
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 from pathlib import Path
 import sys
 import unreal
@@ -39,7 +45,7 @@ def build():
         if any(actor.actor_has_tag(tag) for tag in ("BB.Gameplay", "BB.Bot", "BB.Regulation")):
             if not actors.destroy_actor(actor):
                 raise RuntimeError("Could not remove a prior generated gameplay actor")
-    start = actors.spawn_actor_from_class(unreal.PlayerStart, unreal.Vector(-4400,0,1400),unreal.Rotator(pitch=0,yaw=0,roll=0))
+    start = actors.spawn_actor_from_class(unreal.PlayerStart, unreal.Vector(-4400*dimensions.LINEAR_SCALE,0,1400),unreal.Rotator(pitch=0,yaw=0,roll=0))
     if start is None:
         raise RuntimeError("Could not create the regulation PlayerStart")
     start.set_actor_label("BB Regulation Player Start")

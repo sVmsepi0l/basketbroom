@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "rules_version": "0.2.0-pyramid-net",
+  "rules_version": "0.2.1-arena-volume",
   "source": "Docs/basketbroom_rules_bible_v0.1.md",
   "time_unit": "integer_live_milliseconds",
   "score": {
@@ -39,10 +39,10 @@
     "scout": 1
   },
   "geometry_ft": {
-    "length": 420,
-    "width": 210,
-    "roof": 138,
-    "chase_ceiling": 207,
+    "length": 475.3775023044393,
+    "width": 237.68875115221965,
+    "roof": 156.19546504288718,
+    "chase_ceiling": 234.2931975643308,
     "large_hoop_center_z": 69,
     "large_hoop_diameter": 22,
     "large_hoop_spacing": 35,
@@ -55,8 +55,10 @@
     "snitch_launch_z": 100,
     "self_toss_reset_distance": 10,
     "roof_shape": "closed_rectangular_pyramid",
-    "net_apex": 207,
-    "net_rise": 69
+    "net_apex": 234.2931975643308,
+    "net_rise": 78.09773252144362,
+    "enclosure_length": 508.79830533484136,
+    "behind_goal_bay": 16.710401515201035
   },
   "physics": {
     "rebound_speed_retention": 0.75,
@@ -69,10 +71,19 @@
     "Own-goal credit, simultaneous event grouping, and exact-tie capture tiebreak",
     "Donnybrook participation, reset, and final point credit",
     "Removal duration and ejection replacement timing",
-    "Closed pyramid net: 138-foot eaves, 207-foot apex, visibility and rebound tuning"
+    "Expanded closed pyramid net: +45% enclosed volume; visibility, chase room and rebound tuning"
   ],
   "amendments": [
-    "Docs/pyramid-net.md"
+    "Docs/pyramid-net.md",
+    "Docs/arena-volume-expansion.md"
   ],
-  "enable_legacy_crown_exit": false
+  "enable_legacy_crown_exit": false,
+  "arena_volume": {
+    "baseline_scale": 1.0,
+    "volume_scale": 1.45,
+    "linear_scale": 1.1318511959629507,
+    "baseline_volume_m3": 430374.3510173184,
+    "volume_m3": 624042.8089751116,
+    "source": "Tools/arena_dimensions.py"
+  }
 }

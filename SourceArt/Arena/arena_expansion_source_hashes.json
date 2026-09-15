@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "baseline_file_sha256": "83a0b5e8bbfefe25429b21576e393d19ab689c3b9b6f5f947eff868d16fbdbe9",
+  "git_revision": "c7a58b1ee7f32f20e9446174eed63858beb287b0",
+  "method": "Verified git source LF/CRLF variants; no numeric or textual source changes",
+  "meshes": {
+    "SM_BB_CenterCircle": {
+      "source": "SourceArt/Arena/SM_BB_CenterCircle.obj",
+      "baseline_sha256": "1f1ae734bba73cfed6753c4cbf3324a56ce090189b3500400d5e7f3e75df898b",
+      "text_variants": {
+        "lf": "bc055a92b3a4cb192d71f1c686dc68768590d097d918e5534e0e57a1d4fd37cf",
+        "crlf": "1f1ae734bba73cfed6753c4cbf3324a56ce090189b3500400d5e7f3e75df898b"
+      },
+      "git_source_sha256": "bc055a92b3a4cb192d71f1c686dc68768590d097d918e5534e0e57a1d4fd37cf"
+    },
+    "SM_BB_CopperDetail": {
+      "source": "SourceArt/Arena/SM_BB_CopperDetail.obj",
+      "baseline_sha256": "faff316b759ad9e38d938ad453fe725794fc33f5e6ddd137a8ed98d7a2475a4b",
+      "text_variants": {
+        "lf": "3d86679401fe03d9d3d886476e3c8b439de92fca21b8d2c16ec179caad146d7a",
+        "crlf": "faff316b759ad9e38d938ad453fe725794fc33f5e6ddd137a8ed98d7a2475a4b"
+      },
+      "git_source_sha256": "3d86679401fe03d9d3d886476e3c8b439de92fca21b8d2c16ec179caad146d7a"
+    },
+    "SM_BB_CopperSeats": {
+      "source": "SourceArt/Arena/SM_BB_CopperSeats.obj",
+      "baseline_sha256": "8ed1238382bebfc40763979198e6433b9fdd9960ff75bb58ff16cb639700955c",
+      "text_variants": {
+        "lf": "88a9c925cec0f724f2366157dadfa97b0370e278e2f302c576100b8ef45b27c8",
+        "crlf": "8ed1238382bebfc40763979198e6433b9fdd9960ff75bb58ff16cb639700955c"
+      },
+      "git_source_sha256": "88a9c925cec0f724f2366157dadfa97b0370e278e2f302c576100b8ef45b27c8"
+    },
+    "SM_BB_IronDetail": {
+      "source": "SourceArt/Arena/SM_BB_IronDetail.obj",
+      "baseline_sha256": "d49610e1ad5235b5fa5d5d8513bcf613eead9aaae135b481a5303ec9c08fc3c7",
+      "text_variants": {
+        "lf": "48bb6ecb6e66351dbfd1785e19857ee4b6636b47c9cdc0b93e6a8c95e59449f2",
+        "crlf": "d49610e1ad5235b5fa5d5d8513bcf613eead9aaae135b481a5303ec9c08fc3c7"
+      },
+      "git_source_sha256": "48bb6ecb6e66351dbfd1785e19857ee4b6636b47c9cdc0b93e6a8c95e59449f2"
+    },
+    "SM_BB_LargeHoop": {
+      "source": "SourceArt/Arena/SM_BB_LargeHoop.obj",
+      "baseline_sha256": "a6be7f377e33b9e176e6526194bb8fbc7071c72be6cac658aa423f57cfee97e4",
+      "text_variants": {
+        "lf": "c722254585d46a8c494021a744b921c7c8a75fb963162b23f1acf29a06582e9c",
+        "crlf": "a6be7f377e33b9e176e6526194bb8fbc7071c72be6cac658aa423f57cfee97e4"
+      },
+      "git_source_sha256": "c722254585d46a8c494021a744b921c7c8a75fb963162b23f1acf29a06582e9c"
+    },
+    "SM_BB_LargeHoopLight": {
+      "source": "SourceArt/Arena/SM_BB_LargeHoopLight.obj",
+      "baseline_sha256": "fce9a93774f8e9e4a39af22f9dfd269b63d345953124b37b8bf4c950d8f470cb",
+      "text_variants": {
+        "lf": "06af7b9c8dce3d83ce8dad67254c7467b2fe013c5f1dadce1551fe3f7940c5ec",
+        "crlf": "fce9a93774f8e9e4a39af22f9dfd269b63d345953124b37b8bf4c950d8f470cb"
+      },
+      "git_source_sha256": "06af7b9c8dce3d83ce8dad67254c7467b2fe013c5f1dadce1551fe3f7940c5ec"
+    },
+    "SM_BB_PyramidCollision": {
+      "source": "SourceArt/Arena/SM_BB_PyramidCollision.obj",
+      "baseline_sha256": "184ad74c58158b2af70afa2fb10d3bca980da6bfef5593a1161756dd52333067",
+      "text_variants": {
+        "lf": "afb86bcecbf0e360faded50d05ca144983174e5e5ceba9e141bae06d24133313",
+        "crlf": "184ad74c58158b2af70afa2fb10d3bca980da6bfef5593a1161756dd52333067"
+      },
+      "git_source_sha256": "afb86bcecbf0e360faded50d05ca144983174e5e5ceba9e141bae06d24133313"
+    },
+    "SM_BB_PyramidCopper": {
+      "source": "SourceArt/Arena/SM_BB_PyramidCopper.obj",
+      "baseline_sha256": "8166e8e393c6b58df09150aacd28436ce2157a681d6613de721523d7408cd6a7",
+      "text_variants": {
+        "lf": "142e59e78546cd5090deef4a8b57f4f6b46917007fbf24624fcfd984bec3da7e",
+        "crlf": "8166e8e393c6b58df09150aacd28436ce2157a681d6613de721523d7408cd6a7"
+      },
+      "git_source_sha256": "142e59e78546cd5090deef4a8b57f4f6b46917007fbf24624fcfd984bec3da7e"
+    },
+    "SM_BB_PyramidNet": {
+      "source": "SourceArt/Arena/SM_BB_PyramidNet.obj",
+      "baseline_sha256": "52037ac257180043afed22faa563e2afc41ba2ff3a041e554d9d71b922284826",
+      "text_variants": {
+        "lf": "22135ec018350d2a7f1cc4b40ff93047bf175d8043ec66b56eeef85079383c4b",
+        "crlf": "52037ac257180043afed22faa563e2afc41ba2ff3a041e554d9d71b922284826"
+      },
+      "git_source_sha256": "22135ec018350d2a7f1cc4b40ff93047bf175d8043ec66b56eeef85079383c4b"
+    },
+    "SM_BB_PyramidRibs": {
+      "source": "SourceArt/Arena/SM_BB_PyramidRibs.obj",
+      "baseline_sha256": "1fdb12988faa81744d735bd140f17e81393e4a9ee93b0a053db0bb16789c210c",
+      "text_variants": {
+        "lf": "b77ada81c1333718489dcc6868c187df578bd9dd761710c6497c00e3045ff89c",
+        "crlf": "1fdb12988faa81744d735bd140f17e81393e4a9ee93b0a053db0bb16789c210c"
+      },
+      "git_source_sha256": "b77ada81c1333718489dcc6868c187df578bd9dd761710c6497c00e3045ff89c"
+    },
+    "SM_BB_ReboundNet": {
+      "source": "SourceArt/Arena/SM_BB_ReboundNet.obj",
+      "baseline_sha256": "5100ed0911e4cf621f4636b2be452ac6f2121f234780e30ae985469a58226243",
+      "text_variants": {
+        "lf": "b09284c93055916555534e182cfeace5f2f7e513e5e69276bf2b6fe8ad96fd68",
+        "crlf": "5100ed0911e4cf621f4636b2be452ac6f2121f234780e30ae985469a58226243"
+      },
+      "git_source_sha256": "b09284c93055916555534e182cfeace5f2f7e513e5e69276bf2b6fe8ad96fd68"
+    },
+    "SM_BB_SmallHoop": {
+      "source": "SourceArt/Arena/SM_BB_SmallHoop.obj",
+      "baseline_sha256": "b0dc1187ccf83bf6d2b3a05b42327c2d4d27a02c24458af328ecd7b6ace50cc3",
+      "text_variants": {
+        "lf": "268625d1f06dc7d6ff2637ce273c31384722226341b51b70211cde1994eba299",
+        "crlf": "b0dc1187ccf83bf6d2b3a05b42327c2d4d27a02c24458af328ecd7b6ace50cc3"
+      },
+      "git_source_sha256": "268625d1f06dc7d6ff2637ce273c31384722226341b51b70211cde1994eba299"
+    },
+    "SM_BB_SmallHoopLight": {
+      "source": "SourceArt/Arena/SM_BB_SmallHoopLight.obj",
+      "baseline_sha256": "9f59d8dbb20b96f663de026ae3a7dceec664a0751d87be83edcd6754dfac2d35",
+      "text_variants": {
+        "lf": "753c1b6dea7c6511d5b5491172497e629f6a2c763c2b21a1eb14d415f06d4094",
+        "crlf": "9f59d8dbb20b96f663de026ae3a7dceec664a0751d87be83edcd6754dfac2d35"
+      },
+      "git_source_sha256": "753c1b6dea7c6511d5b5491172497e629f6a2c763c2b21a1eb14d415f06d4094"
+    },
+    "SM_BB_Stars": {
+      "source": "SourceArt/Arena/SM_BB_Stars.obj",
+      "baseline_sha256": "dbb4d58ce5e83d09ad6953b9b614b5ea8d189c9c19745596e2baf5d08b1e68a0",
+      "text_variants": {
+        "lf": "4fe97ac05740a6981b2fd42697fec431d1923562e568bd1a3d4f6433dfc0229c",
+        "crlf": "dbb4d58ce5e83d09ad6953b9b614b5ea8d189c9c19745596e2baf5d08b1e68a0"
+      },
+      "git_source_sha256": "4fe97ac05740a6981b2fd42697fec431d1923562e568bd1a3d4f6433dfc0229c"
+    },
+    "SM_BB_StoneDetail": {
+      "source": "SourceArt/Arena/SM_BB_StoneDetail.obj",
+      "baseline_sha256": "8d65e6675bc9af53a6bebcb0ab5bd8d5b5e2c66f8ab8d1e818e9f109ae430178",
+      "text_variants": {
+        "lf": "01c965b4a61c5a2115456360eca6b115ad6c7549c70f3e62fc95ecaa36074c69",
+        "crlf": "8d65e6675bc9af53a6bebcb0ab5bd8d5b5e2c66f8ab8d1e818e9f109ae430178"
+      },
+      "git_source_sha256": "01c965b4a61c5a2115456360eca6b115ad6c7549c70f3e62fc95ecaa36074c69"
+    },
+    "SM_BB_TealSeats": {
+      "source": "SourceArt/Arena/SM_BB_TealSeats.obj",
+      "baseline_sha256": "517aeb7e20f71f150949fe43b702f8dc535896b61749fccdb778a3d98ac08d30",
+      "text_variants": {
+        "lf": "761074a10f526d769341b4d1a84f10d5fa391c25b861c37efb87a00cf9a1c134",
+        "crlf": "517aeb7e20f71f150949fe43b702f8dc535896b61749fccdb778a3d98ac08d30"
+      },
+      "git_source_sha256": "761074a10f526d769341b4d1a84f10d5fa391c25b861c37efb87a00cf9a1c134"
+    },
+    "SM_BB_Terrain": {
+      "source": "SourceArt/Arena/SM_BB_Terrain.obj",
+      "baseline_sha256": "f76e07086a20e2e8bdbc85e862c6924d8db82ff40ab1e8ec741933104c7359f1",
+      "text_variants": {
+        "lf": "bad802f148d3b560d1a53cf5705cfafd31616141b825b4352a93e78714df5f43",
+        "crlf": "f76e07086a20e2e8bdbc85e862c6924d8db82ff40ab1e8ec741933104c7359f1"
+      },
+      "git_source_sha256": "bad802f148d3b560d1a53cf5705cfafd31616141b825b4352a93e78714df5f43"
+    },
+    "SM_BB_Treeline": {
+      "source": "SourceArt/Arena/SM_BB_Treeline.obj",
+      "baseline_sha256": "38c55b512acad348dc1d14f31cc06b97fc447f63106f4546518af15e70dde7f9",
+      "text_variants": {
+        "lf": "e7f2ce01d7584b9d8c7cec90e603bf50fbea6f7770305a6fd903b8807e9bfa50",
+        "crlf": "38c55b512acad348dc1d14f31cc06b97fc447f63106f4546518af15e70dde7f9"
+      },
+      "git_source_sha256": "e7f2ce01d7584b9d8c7cec90e603bf50fbea6f7770305a6fd903b8807e9bfa50"
+    }
+  }
+}

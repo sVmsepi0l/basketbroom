@@ -8,6 +8,12 @@ Missing DLL/classes/test bridge produce NOT_RUN, never a passing test report.
 Outside Unreal, --list prints the test plan without pretending to run gameplay.
 """
 
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
+
 import json
 from pathlib import Path
 import re
@@ -393,14 +399,14 @@ class NativePlayableTests:
 
         self.isolate()
         flight_samples = []
-        self.move_pawn((0, 0, 4100))
+        self.move_pawn((0, 0, dimensions.EAVE_HEIGHT-106.24))
         yield self.wait(0.55, lambda: self.fly_fixture((0, 0, 1), flight_samples))
         self.record("native_flight_enters_hollow_pyramid_above_old_crown", bool(flight_samples)
-                    and max(row[2] for row in flight_samples) > 4300,
+                    and max(row[2] for row in flight_samples) > dimensions.EAVE_HEIGHT+93.76,
                     max_height_cm=max((row[2] for row in flight_samples), default=0),
                     samples=len(flight_samples), input="AddMovementInput into native CharacterMovement")
         capsule = self.component(self.pawn, unreal.CapsuleComponent)
-        ceiling = 6309.36 - capsule.get_scaled_capsule_half_height()
+        ceiling = dimensions.APEX_HEIGHT - capsule.get_scaled_capsule_half_height()
         self.move_pawn((0, 0, ceiling - 100))
         flight_samples = []
         yield self.wait(0.55, lambda: self.fly_fixture((0, 0, 1), flight_samples))
@@ -408,39 +414,39 @@ class NativePlayableTests:
         self.record("native_flight_respects_pyramid_apex", bool(flight_samples)
                     and ceiling - 25 <= peak <= ceiling + 1,
                     capsule_center_limit_cm=ceiling, observed_max_height_cm=peak)
-        side_limit = 3200.4 - capsule.get_scaled_capsule_radius()
-        self.move_pawn((0, 1900, 5000))
-        flight_samples = []
-        yield self.wait(0.55, lambda: self.fly_fixture((0, 1, 0), flight_samples))
-        slope = (6309.36-4206.24)/3200.4
+        slope = (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH
         normal_length = (1+slope*slope)**.5
         support = capsule.get_scaled_capsule_radius()*normal_length + (
             capsule.get_scaled_capsule_half_height()-capsule.get_scaled_capsule_radius())
-        clearances = [6309.36-row[2]-slope*abs(row[1])-support for row in flight_samples]
+        # Begin with whole-capsule clearance, then fly into the real roof bound.
+        self.move_pawn((0, 1900, dimensions.APEX_HEIGHT-slope*1900-support-80))
+        flight_samples = []
+        yield self.wait(0.55, lambda: self.fly_fixture((0, 1, 0), flight_samples))
+        clearances = [dimensions.APEX_HEIGHT-row[2]-slope*abs(row[1])-support for row in flight_samples]
         self.record("native_flight_respects_sloping_roof_above_eave", bool(flight_samples)
                     and min(clearances) >= -1 and min(clearances) <= 10
-                    and max(row[2] for row in flight_samples) > 4206.24,
+                    and max(row[2] for row in flight_samples) > dimensions.EAVE_HEIGHT,
                     minimum_roof_clearance_cm=min(clearances, default=-999),
                     capsule_radius_cm=capsule.get_scaled_capsule_radius(), samples=flight_samples)
         self.move_pawn((-3200, -2200, 1000))
-        ball = self.seed_ball(2, (0, 3100, 1600), (0, 1000, 0))
+        ball = self.seed_ball(2, (0, dimensions.HALF_WIDTH-100.4, 1600), (0, 1000, 0))
         yield self.wait(0.16)
         velocity = ball.get_flight_velocity()
-        self.record("side_net_restitution", abs(velocity.y + 750) < 5 and ball.get_actor_location().y < 3136,
+        self.record("side_net_restitution", abs(velocity.y + 750) < 5 and ball.get_actor_location().y < dimensions.HALF_WIDTH-64.4,
                     velocity=xyz(velocity), location=xyz(ball.get_actor_location()))
         ball = self.seed_ball(2, (0, 0, 80), (0, 0, -500))
         yield self.wait(0.20)
         velocity = ball.get_flight_velocity()
         self.record("trampoline_floor_rebound", ball.get_actor_location().z >= 64.9 and velocity.z > 0,
                     velocity=xyz(velocity), location=xyz(ball.get_actor_location()))
-        ball = self.seed_ball(2, (0, 0, 4190), (0, 0, 700))
+        ball = self.seed_ball(2, (0, 0, dimensions.EAVE_HEIGHT-16.24), (0, 0, 700))
         yield self.wait(0.16)
         self.record("free_ball_crosses_old_plane_without_respawn", str(prop(ball, "BallStatus")) == ""
-                    and prop(ball, "bActive") and prop(ball, "Holder") is None and ball.get_actor_location().z > 4206.24,
+                    and prop(ball, "bActive") and prop(ball, "Holder") is None and ball.get_actor_location().z > dimensions.EAVE_HEIGHT,
                     status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
         yield self.wait(1.2)
         self.record("free_ball_remains_live_in_hollow_pyramid", bool(prop(ball, "bActive"))
-                    and str(prop(ball, "BallStatus")) == "" and ball.get_actor_location().z > 4206.24
+                    and str(prop(ball, "BallStatus")) == "" and ball.get_actor_location().z > dimensions.EAVE_HEIGHT
                     and int(prop(self.match, "PendingPenaltyCount")) == 0,
                     active=bool(prop(ball, "bActive")), status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
         self.close_ball(2)
@@ -451,11 +457,11 @@ class NativePlayableTests:
                     held=prop(ball, "Holder") == self.pawn, role=int(prop(self.pawn, "Position")))
         self.require(prop(ball, "Holder") == self.pawn, "Carried roof fixture needs an actual pickup")
         self.interact(False)
-        self.move_pawn((-2000, -1200, 4450))
+        self.move_pawn((-2000, -1200, dimensions.EAVE_HEIGHT+243.76))
         yield self.wait(0.16)
         self.record("carried_ball_crosses_old_plane_without_losing_custody", prop(ball, "Holder") == self.pawn
                     and str(prop(ball, "BallStatus")) == "" and prop(ball, "bActive")
-                    and ball.get_actor_location().z > 4206.24 and int(prop(self.match, "PendingPenaltyCount")) == 0,
+                    and ball.get_actor_location().z > dimensions.EAVE_HEIGHT and int(prop(self.match, "PendingPenaltyCount")) == 0,
                     held=prop(ball, "Holder") == self.pawn, status=str(prop(ball, "BallStatus")), location=xyz(ball.get_actor_location()))
         self.request(1)
         yield self.wait_until(lambda: prop(ball, "Holder") is None, timeout=1)
@@ -467,34 +473,34 @@ class NativePlayableTests:
 
         self.isolate()
         before = self.scores()
-        wrong = self.seed_ball(2, (6200, 1066.8, 2103.12), (2000, 0, 0))
+        wrong = self.seed_ball(2, ((dimensions.GOAL_PLANE_X-200.8), 1066.8, 2103.12), (2000, 0, 0))
         yield self.wait(0.22)
         wrong_location = xyz(wrong.get_actor_location())
         # Freeze the completed sweep and allow MatchState one more game tick to
         # flush any pending award, including an incorrect one this test rejects.
         wrong.set_actor_tick_enabled(False)
         yield self.wait(0)
-        self.record("quark_wrong_hoop_rejected", self.scores() == before and wrong_location[0] > 6465.8,
+        self.record("quark_wrong_hoop_rejected", self.scores() == before and wrong_location[0] > dimensions.GOAL_PLANE_X+65,
                     delta=self.score_delta(before), location=wrong_location)
         # The outer hoop avoids the taller central mast behind the goal plane.
-        reverse = self.seed_ball(0, (6585.8, 1066.8, 2103.12), (-2000, 0, 0))
+        reverse = self.seed_ball(0, (dimensions.GOAL_PLANE_X+185, 1066.8, 2103.12), (-2000, 0, 0))
         yield self.wait(0.22)
         reverse.set_actor_tick_enabled(False)
         yield self.wait(0)
-        self.record("quaffle_reverse_crossing_rejected", self.scores() == before and reverse.get_actor_location().x < 6400.8,
+        self.record("quaffle_reverse_crossing_rejected", self.scores() == before and reverse.get_actor_location().x < dimensions.GOAL_PLANE_X,
                     delta=self.score_delta(before), location=xyz(reverse.get_actor_location()))
-        rim = self.seed_ball(0, (6200, 350, 2103.12), (2000, 0, 0))
+        rim = self.seed_ball(0, ((dimensions.GOAL_PLANE_X-200.8), 350, 2103.12), (2000, 0, 0))
         yield self.wait(0.22)
         rim.set_actor_tick_enabled(False)
         yield self.wait(0)
         self.record("quaffle_rim_hit_rebounds_without_score", self.scores() == before and rim.get_flight_velocity().x < 0,
                     delta=self.score_delta(before), velocity=xyz(rim.get_flight_velocity()))
-        self.seed_ball(0, (6200, 0, 2103.12), (2000, 0, 0))
+        self.seed_ball(0, ((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), (2000, 0, 0))
         yield self.wait_until(lambda: self.scores() != before)
         self.record("quaffle_whole_ball_goal_awards_13", self.score_delta(before) == [13, 0], delta=self.score_delta(before))
         self.balls[0].set_actor_tick_enabled(False)
         before = self.scores()
-        self.seed_ball(1, (-6200, 0, 3048), (-2000, 0, 0))
+        self.seed_ball(1, (-(dimensions.GOAL_PLANE_X-200.8), 0, 3048), (-2000, 0, 0))
         yield self.wait_until(lambda: self.scores() != before)
         self.record("quark_whole_ball_goal_awards_37", self.score_delta(before) == [0, 37], delta=self.score_delta(before))
 

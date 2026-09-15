@@ -45,7 +45,10 @@ def capture():
         raise RuntimeError("Expected exactly one actual BB Hero Camera in the port arena")
     camera = cameras[0]
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    generated = project.parent / "Saved" / "Screenshots" / "Windows" / CAPTURE_NAME
+    # Epic-authenticated launches may redirect Saved into the user's profile.
+    # Use the engine's public path API rather than the installed project folder.
+    saved = Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_saved_dir()))
+    generated = saved / "Screenshots" / "Windows" / CAPTURE_NAME
     # Installed signature: (res_x, res_y, filename, camera=None,
     # mask_enabled=False, capture_hdr=False, comparison_tolerance=LOW,
     # comparison_notes='', delay=0.0) -> AutomationEditorTask.

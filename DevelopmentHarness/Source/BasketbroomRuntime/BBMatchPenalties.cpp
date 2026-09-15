@@ -1,6 +1,8 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
+#include "BBArenaGeometry.h"
 #include "BBRiderCharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -11,7 +13,9 @@ void PositionForShot(ABBRiderCharacter* Rider, const FVector& Location, const FR
 {
     Rider->ConsumeMovementInputVector();
     Rider->GetCharacterMovement()->StopMovementImmediately();
-    Rider->SetActorLocationAndRotation(Location, FRotator(0, Look.Yaw, 0), false, nullptr, ETeleportType::TeleportPhysics);
+    const UCapsuleComponent* Capsule = Rider->GetCapsuleComponent();
+    const FVector Bounded = BBArena::ClampCapsule(Location, Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight());
+    Rider->SetActorLocationAndRotation(Bounded, FRotator(0, Look.Yaw, 0), false, nullptr, ETeleportType::TeleportPhysics);
     if (AController* Controller = Rider->GetController())
     {
         Controller->SetControlRotation(Look);
@@ -92,16 +96,16 @@ bool ABBMatchState::BeginConductPenaltyShot(int32 PenaltyId, bool bModerate)
         bPenaltyShotActive = true; bFreeShot = bModerate;
         PenaltyShotSecondsLeft = Rules->config.penalty_shot_ms / 1000.f;
         const float Direction = Shooter->TeamIndex == 0 ? 1.f : -1.f;
-        const float Height = BallIndex == 0 ? 2103.12f : 3048.f;
-        PenaltyShooterMark = FVector(Direction * (6400.8f - 1341.12f), 0, Height - 25.f);
+        const float Height = BallIndex == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight;
+        PenaltyShooterMark = FVector(Direction * (BBArena::GoalPlaneX - BBArena::FreeShotDistance), 0, Height - 25.f);
         if (bFreeShot)
         {
             // User-confirmed 2026-09-14 interpretation: preserve lateral
             // position and altitude; project backwards to 44ft from the plane.
             PenaltyShooterMark = ConductFoulPoint;
-            PenaltyShooterMark.X = Direction * FMath::Min(Direction * ConductFoulPoint.X, 6400.8f - 1341.12f);
+            PenaltyShooterMark.X = Direction * FMath::Min(Direction * ConductFoulPoint.X, BBArena::GoalPlaneX - BBArena::FreeShotDistance);
         }
-        PenaltyKeeperMark = FVector(Direction * (6400.8f - 180.f), 0, Height);
+        PenaltyKeeperMark = FVector(Direction * (BBArena::GoalPlaneX - 180.f), 0, Height);
         for (ABBRiderCharacter* Rider : Riders)
         {
             if (!IsValid(Rider)) continue;
@@ -111,14 +115,14 @@ bool ABBMatchState::BeginConductPenaltyShot(int32 PenaltyId, bool bModerate)
             if (Rider != Shooter && Rider != Keeper)
             {
                 if (!bFreeShot)
-                    PositionForShot(Rider, FVector((Rider->RosterIndex % 8 - 3.5f) * 500.f,
-                        Rider->TeamIndex == 0 ? -2700.f : 2700.f, 1600.f), Rider->GetControlRotation());
+                    PositionForShot(Rider, BBArena::ScaleLayout(FVector((Rider->RosterIndex % 8 - 3.5f) * 500.f,
+                        Rider->TeamIndex == 0 ? -2700.f : 2700.f, 1600.f)), Rider->GetControlRotation());
                 else
                 {
                     FVector Mark = Rider->GetActorLocation();
                     // Nonkeeper defenders remain >=22ft away until release.
                     // Move into the arena along X, preserving roof clearance.
-                    const float Separation = Rider->TeamIndex != Shooter->TeamIndex ? 670.56f : 100.f;
+                    const double Separation = Rider->TeamIndex != Shooter->TeamIndex ? BBArena::RestartDistance : 100.0;
                     if (FVector::DistSquared(Mark, PenaltyShooterMark) < FMath::Square(Separation))
                         Mark.X = PenaltyShooterMark.X + (PenaltyShooterMark.X > 0 ? -1.f : 1.f) * (Separation + 90.f);
                     PositionForShot(Rider, Mark, Rider->GetControlRotation());
@@ -254,10 +258,10 @@ void ABBMatchState::TickPenaltyShot(float DeltaSeconds)
             if (bCpuShooter && Shot.stage == BB::PenaltyShotStage::Ready && Elapsed >= 1250.0)
             {
                 const FVector Origin = Shooter->GetCarryLocation();
-                const float Travel = FMath::Abs(Direction * 6400.8f - Origin.X) / 4400.f;
+                const float Travel = FMath::Abs(Direction * BBArena::GoalPlaneX - Origin.X) / 4400.f;
                 const float Offset = PenaltyShotBall == 0 ? (Shooter->RosterIndex % 2 ? 180.f : -180.f) : 110.f;
-                const FVector Target(Direction * (6400.8f + Ball->Radius()), Offset,
-                    (PenaltyShotBall == 0 ? 2103.12f : 3048.f) + 190.f * Travel * Travel);
+                const FVector Target(Direction * (BBArena::GoalPlaneX + Ball->Radius()), Offset,
+                    (PenaltyShotBall == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight) + 190.f * Travel * Travel);
                 ReleasePenaltyShot(Shooter, (Target - Origin).GetSafeNormal());
             }
             double StepMs = FMath::Min(RemainingFrameMs, FMath::Min(1000.0 / 120.0, RemainingShotMs));
@@ -274,6 +278,8 @@ void ABBMatchState::TickPenaltyShot(float DeltaSeconds)
                 Location.X = PenaltyKeeperMark.X;
                 Location.Y = FMath::Clamp(Location.Y, -1450.0, 1450.0);
                 Location.Z = FMath::Clamp(Location.Z, 900.0, 4000.0);
+                const UCapsuleComponent* Capsule = Keeper->GetCapsuleComponent();
+                Location = BBArena::ClampCapsule(Location, Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight());
                 Keeper->SetActorLocation(Location, false, nullptr, ETeleportType::TeleportPhysics);
             }
             PenaltyFlightStepMs = StepMs; PenaltyFlightConsumedMs = 0;
@@ -313,7 +319,7 @@ void ABBMatchState::TickPenaltyShot(float DeltaSeconds)
                     PositionForShot(Rider, Saved->GetLocation(), PenaltySavedViews.FindRef(Rider->RosterIndex));
             }
             const float RestartDirection = Keeper->TeamIndex == 0 ? -1.f : 1.f;
-            const FVector RestartMark(RestartDirection * (6400.8f - 670.56f), 0, PenaltyShotBall == 0 ? 2103.12f : 3048.f);
+            const FVector RestartMark(RestartDirection * (BBArena::GoalPlaneX - BBArena::RestartDistance), 0, PenaltyShotBall == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight);
             PositionForShot(Keeper, RestartMark, FRotator(0, Keeper->TeamIndex == 0 ? 0 : 180, 0));
             // Opponents cannot be restored on top of the protected receiver.
             for (ABBRiderCharacter* Other : Riders)

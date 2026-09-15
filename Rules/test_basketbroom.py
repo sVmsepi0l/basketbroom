@@ -54,7 +54,18 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(config["score"], dict(quaffle=13, quark=37, snipe=69,
                                              snitch_regulation=150, snitch_overtime=300))
         self.assertEqual(config["timing"]["quarter_ms"] * 4, 176 * 60 * 1000)
-        self.assertEqual(config["geometry_ft"]["length"], 420)
+        geometry = config["geometry_ft"]
+        scale = 1.45 ** (1.0 / 3.0)
+        self.assertAlmostEqual(geometry["length"], 420 * scale)
+        self.assertAlmostEqual(geometry["width"], 210 * scale)
+        self.assertAlmostEqual(geometry["roof"], 138 * scale)
+        self.assertAlmostEqual(geometry["net_apex"], 207 * scale)
+        self.assertAlmostEqual(geometry["enclosure_length"], (420 + 900 / 30.48) * scale)
+        self.assertEqual(geometry["large_hoop_diameter"], 22)
+        self.assertEqual(geometry["small_hoop_diameter"], 13)
+        self.assertEqual(geometry["restart_goal_offset"], 22)
+        self.assertAlmostEqual(config["arena_volume"]["volume_m3"] /
+                               config["arena_volume"]["baseline_volume_m3"], 1.45)
 
     def test_seven_balls_open_with_delayed_snitch(self):
         match = Match()

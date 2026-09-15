@@ -1,6 +1,7 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
 #include "BBAdmission.h"
+#include "BBArenaGeometry.h"
 #include "BBGameMode.h"
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
@@ -22,18 +23,20 @@ FVector StartLocation(int32 Slot, bool bDonnybrook = false, float CapsuleRadius 
 {
     const int32 Local = Slot % 8;
     const float Sign = Slot < 8 ? -1.f : 1.f;
-    // The whole capsule starts behind its own 105ft quarter line. Donnybrook
+    // The whole capsule starts behind its own quarter line. Donnybrook
     // instead lines every available rider up behind its own goal plane.
     const float Clearance = CapsuleRadius + 12.f;
     if (bDonnybrook)
-        return FVector(Sign * (6400.8f + Clearance), (Local - 3.5f) * 650.f, 1400.f + (Local % 2) * 180.f);
-    if (Local == 0) return FVector(Sign * 5400.f, 0, 2103.12f);
+        return FVector(Sign * (BBArena::GoalPlaneX + Clearance),
+            (Local - 3.5f) * 650.f * BBArena::LinearScale,
+            (1400.f + (Local % 2) * 180.f) * BBArena::LinearScale);
+    if (Local == 0) return FVector(Sign * (BBArena::GoalPlaneX - 1000.8), 0, BBArena::LargeHoopHeight);
     // Provisional tactical spacing staggers the second row so teammates do not
     // obstruct the first-person view while waiting for the opening horn.
     const int32 Row = (Local - 1) / 3;
-    return FVector(Sign * (3200.4f + Clearance + Row * 650.f),
-                   Local == 7 ? 0.f : ((Local - 1) % 3 - 1) * 950.f + (Row == 1 ? 450.f : 0.f),
-                   Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f);
+    return FVector(Sign * (BBArena::GoalPlaneX / 2.0 + Clearance + Row * 650.f * BBArena::LinearScale),
+                   (Local == 7 ? 0.f : ((Local - 1) % 3 - 1) * 950.f + (Row == 1 ? 450.f : 0.f)) * BBArena::LinearScale,
+                   (Local == 7 ? 2800.f : 1400.f + (Local % 3) * 350.f) * BBArena::LinearScale);
 }
 
 FVector OpeningBallLocation(int32 Index)
@@ -51,9 +54,11 @@ FVector CrownRestartLocation(const BB::Ball& Ball)
     // A safe mark directly below the recorded exit. The 4m vertical clearance
     // and 3m edge clearance are provisional physical implementation margins.
     // The carry point projects 175cm ahead plus the scoring ball's 65cm radius.
-    return FVector(FMath::Clamp(Ball.crown_mark[0] * 30.48, -6550.8, 6550.8),
-                   FMath::Clamp(Ball.crown_mark[1] * 30.48, -2900.4, 2900.4),
-                   FMath::Clamp(Ball.crown_mark[2] * 30.48 - 400.0, 250.0, 3806.24));
+    const double LimitX = BBArena::HalfLength - 300.0, LimitY = BBArena::HalfWidth - 300.0;
+    return BBArena::ClampSphere(FVector(
+        FMath::Clamp(Ball.crown_mark[0] * 30.48, -LimitX, LimitX),
+        FMath::Clamp(Ball.crown_mark[1] * 30.48, -LimitY, LimitY),
+        FMath::Clamp(Ball.crown_mark[2] * 30.48 - 400.0, 250.0, BBArena::EaveHeight - 400.0)), 250.0);
 }
 
 void PlaceRider(ABBRiderCharacter* Rider, const FVector& Location, float Yaw)
@@ -74,18 +79,18 @@ void ClearCrownRestartSpace(ABBRiderCharacter* Rider, const FVector& Mark)
 {
     const FVector Previous = Rider->GetActorLocation();
     const float Radius = Rider->GetCapsuleComponent()->GetScaledCapsuleRadius();
-    const double LimitX = 6850.8 - Radius, LimitY = 3200.4 - Radius;
+    const float HalfHeight = Rider->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
     FVector Direction = (Previous - Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector);
     auto PointAlong = [&Mark, &Previous](const FVector& Along)
     { return FVector(Mark.X + Along.X * 450.0, Mark.Y + Along.Y * 450.0, Previous.Z); };
-    auto Inside = [LimitX, LimitY](const FVector& Point)
-    { return FMath::Abs(Point.X) <= LimitX && FMath::Abs(Point.Y) <= LimitY; };
+    auto Inside = [Radius, HalfHeight](const FVector& Point)
+    { return BBArena::ContainsCapsule(Point, Radius, HalfHeight); };
     FVector Destination = PointAlong(Direction);
     if (!Inside(Destination)) Destination = PointAlong(-Direction);
     if (!Inside(Destination)) Destination = PointAlong((-Mark).GetSafeNormal2D(UE_SMALL_NUMBER, FVector::ForwardVector));
-    // This moves only the rider's position. In particular, preserve downward
-    // aim and altitude so an official cannot lift another carried ball through
-    // the roof by forcing pitch zero or pushing the rider upward.
+    Destination = BBArena::ClampCapsule(Destination, Radius, HalfHeight);
+    // Preserve aim and altitude wherever roof clearance permits. Clamping at
+    // a sloped face can only lower the rider, never push a held ball outside.
     Rider->GetCharacterMovement()->StopMovementImmediately();
     Rider->ConsumeMovementInputVector();
     Rider->SetActorLocation(Destination, false, nullptr, ETeleportType::TeleportPhysics);
@@ -280,6 +285,10 @@ bool ABBMatchState::CanInteract(const ABBRiderCharacter* R, const ABBBall* B) co
         || !B->bActive || B->BallIndex < 0 || B->BallIndex >= 7 || !Rules->balls[B->BallIndex].live
         || R->HasSpellMovementLock() || R->RosterIndex < 0 || R->RosterIndex >= 16) return false;
     if (!Rules->eligible(R->RosterIndex, B->BallIndex)) return false;
+    const UCapsuleComponent* Capsule = R->GetCapsuleComponent();
+    if (!BBArena::ContainsCapsule(R->GetActorLocation(), Capsule->GetScaledCapsuleRadius(),
+                                Capsule->GetScaledCapsuleHalfHeight())
+        || !BBArena::ContainsSphere(B->GetActorLocation(), B->Radius())) return false;
     for (const ABBBall* Other : Balls) if (IsValid(Other) && Other->Holder == R && Other != B) return false;
     FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomInteraction), false, R);
     Query.AddIgnoredActor(B);
@@ -305,7 +314,9 @@ bool ABBMatchState::TryCatch(ABBRiderCharacter* R, ABBBall* B)
     BB::PointEvent Event; Event.kind = BB::EventKind::Catch; Event.ball = B->BallIndex; Event.player = R->RosterIndex;
     Event.secure_ms = Rules->config.catch_control_ms; Event.by_hand = true; Event.mounted = true;
     const FVector P = R->GetActorLocation();
-    Event.inside_envelope = FMath::Abs(P.X) < 6850.8f && FMath::Abs(P.Y) < 3200.4f && P.Z <= 6309.36f && P.Z > 0;
+    const UCapsuleComponent* Capsule = R->GetCapsuleComponent();
+    Event.inside_envelope = BBArena::ContainsCapsule(P, Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight())
+        && BBArena::ContainsSphere(B->GetActorLocation(), B->Radius());
     if (!Event.inside_envelope) return false;
     PendingPoints.push_back(Event);
     return true;
@@ -592,7 +603,7 @@ void ABBMatchState::Tick(float Dt)
                 if (Receiver && Rules->restart(I,Receiver->RosterIndex))
                 {
                     const bool bConductRestart = I == ConductRestartBall;
-                    const FVector Mark = bConductRestart ? ConductMark : bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (6400.8f - 670.56f), 0, I == 0 ? 2103.12f : 3048.f);
+                    const FVector Mark = bConductRestart ? ConductMark : bCrownRestart ? SearchMark : FVector((Receiver->TeamIndex == 0 ? -1.f : 1.f) * (BBArena::GoalPlaneX - BBArena::RestartDistance), 0, I == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight);
                     PlaceRider(Receiver, Mark, Receiver->TeamIndex ? 180.f : 0.f);
                     B->ResetBall(Mark + FVector(0,0,80));
                     for (ABBRiderCharacter* Other : Riders)
@@ -690,7 +701,7 @@ void ABBMatchState::SyncRules()
         if (P.ejected || P.donnybrook_excluded || P.removed_until >= 0)
         {
             R->StunRemaining = 1.f;
-            const FVector PenaltyBox(R->TeamIndex == 0 ? -7200 : 7200, 0, 600);
+            const FVector PenaltyBox((R->TeamIndex == 0 ? -1.0 : 1.0) * (BBArena::HalfLength + 349.2), 0, 600);
             if (FVector::DistSquared(R->GetActorLocation(), PenaltyBox) > 2500.f)
                 PlaceRider(R, PenaltyBox, R->TeamIndex ? 180.f : 0.f);
         }
@@ -727,7 +738,9 @@ void ABBMatchState::UpdateBots(float Dt)
         if (Held)
         {
             float Sign = R->TeamIndex == 0 ? 1.f : -1.f;
-            FVector GoalMark(Sign * 6500.f, Held->BallIndex == 0 ? ((R->RosterIndex % 3)-1) * 1066.8f : 0.f, Held->BallIndex == 0 ? 2103.12f : 3048.f);
+            FVector GoalMark(Sign * (BBArena::GoalPlaneX + 99.2),
+                Held->BallIndex == 0 ? ((R->RosterIndex % 3)-1) * BBArena::HoopSpacing : 0.0,
+                Held->BallIndex == 0 ? BBArena::LargeHoopHeight : BBArena::SmallHoopHeight);
             Target = GoalMark - FVector(Sign * 2100.f,0,0);
             if (Held->IsBludger())
             {
@@ -739,7 +752,7 @@ void ABBMatchState::UpdateBots(float Dt)
                 const auto& BallRule = Rules->balls[Held->BallIndex];
                 if (BallRule.protection_until < 0 || Rules->now_ms >= BallRule.protection_until)
                 {
-                    if (R->Position == 0) GoalMark = FVector(Sign * 1000, (R->RosterIndex % 2 ? 900 : -900), 1800);
+                    if (R->Position == 0) GoalMark = BBArena::ScaleLayout(FVector(Sign * 1000, (R->RosterIndex % 2 ? 900 : -900), 1800));
                     FVector To = GoalMark - R->GetCarryLocation(); const float Flight = To.Size()/4400.f;
                     To.Z += .5f * 380.f * Flight * Flight;
                     Release(R,To.GetSafeNormal());

@@ -16,6 +16,12 @@ penalty, shot result, timer or confirmation receipt is injected. A read-only
 rule diagnostic establishes removal timing; camera/actor transforms arrange
 only disposable test geometry. --list prints the plan without running Unreal.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -155,8 +161,8 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         if FOUL_ALTITUDE is not None:
             self.require(FREE, "foul_altitude_cm is only valid for free-shot fixtures")
             self.require(isinstance(FOUL_ALTITUDE, (int, float)) and not isinstance(FOUL_ALTITUDE, bool)
-                         and math.isfinite(FOUL_ALTITUDE) and 150 <= FOUL_ALTITUDE <= 6000,
-                         "foul_altitude_cm must be a finite number from 150 to 6000 cm; local roof clearance is checked next")
+                         and math.isfinite(FOUL_ALTITUDE) and 150 <= FOUL_ALTITUDE <= dimensions.APEX_HEIGHT,
+                         "foul_altitude_cm must be a finite number between 150 cm and the arena apex; local roof clearance is checked next")
         self.require(OUTCOME in ("make", "miss", "roof", "timeout"), "Unknown shot outcome")
         self.require(AFFECTED_BALL in (0, 1, 2), "Affected ball must be Quaffle or Quark")
         self.shot()  # Fail explicitly on a stale DLL before any fixture action.
@@ -181,6 +187,10 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
             self.request(8)
             yield self.wait_until(lambda: bool(prop(self.match, "bBloodbroom")) == desired, timeout=1)
         self.require(bool(prop(self.match, "bBloodbroom")) == desired, "Host variant selection failed")
+        # The variant request may execute late in its observation frame. Start
+        # the input spacing after the accepted state is observed, so kickoff
+        # cannot fall inside the native 60ms action limit.
+        yield self.wait(.09)
         self.request(4)
         yield self.wait_until(lambda: bool(prop(self.match, "bLive")), timeout=2)
         self.require(prop(self.match, "bLive"), "Ordinary host kickoff failed")
@@ -205,7 +215,7 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         if FREE:
             sign = 1 if int(prop(self.guest, "TeamIndex")) == 0 else -1
             height = 2103.12 if AFFECTED_BALL == 0 else 3048.0
-            target = (sign*(5800 if FOUL_DISTANCE == "near" else 3400),
+            target = (sign*(dimensions.GOAL_PLANE_X-(600.8 if FOUL_DISTANCE == "near" else 3000.8)),
                       450 if FOUL_DISTANCE == "near" else -650,
                       float(FOUL_ALTITUDE) if FOUL_ALTITUDE is not None else height-25.)
             caster = (target[0]-800, target[1], target[2]+(8 if VARIANT == "regulation" else -72))
@@ -218,17 +228,17 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
                     capsule = self.component(rider, unreal.CapsuleComponent)
                     radius = float(capsule.get_scaled_capsule_radius())
                     half = float(capsule.get_scaled_capsule_half_height())
-                    sx, sy = (6309.36-4206.24)/6850.8, (6309.36-4206.24)/3200.4
-                    ceiling = 6309.36-max(sx*abs(point[0])+radius*math.sqrt(1+sx*sx),
+                    sx, sy = (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_LENGTH, (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH
+                    ceiling = dimensions.APEX_HEIGHT-max(sx*abs(point[0])+radius*math.sqrt(1+sx*sx),
                                          sy*abs(point[1])+radius*math.sqrt(1+sy*sy))-max(0, half-radius)
-                    self.require(abs(point[0]) < 6850.8-radius and abs(point[1]) < 3200.4-radius
+                    self.require(abs(point[0]) < dimensions.HALF_LENGTH-radius and abs(point[1]) < dimensions.HALF_WIDTH-radius
                                  and half+10 <= point[2] <= ceiling-10,
                                  "Custom foul altitude does not fit the %s capsule below the sloped roof" % label)
                     self.event("custom_altitude_inside_real_arena_contract", participant=label,
                                location=list(point), roof_limit_cm=ceiling, capsule_radius_cm=radius, half_height_cm=half)
             yield from self.anchor_pair(caster=caster, target=target)
             self.expected_foul_mark = list(target)
-            self.expected_shot_mark = [sign*min(sign*target[0], 6400.8-1341.12), target[1], target[2]]
+            self.expected_shot_mark = [sign*min(sign*target[0], dimensions.GOAL_PLANE_X-dimensions.FREE_SHOT_DISTANCE), target[1], target[2]]
             defenders = [r for r in self.riders if r not in (self.pawn, self.guest)
                          and int(prop(r, "TeamIndex")) != int(prop(self.guest, "TeamIndex"))
                          and int(prop(r, "Position")) != 0]
@@ -272,10 +282,8 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
             yield self.wait_until(lambda: float(prop(self.guest, "ImpedimentRemaining")) > 0, timeout=.8)
             self.require(float(prop(self.guest, "ImpedimentRemaining")) > 0 and self.conduct()[0] == before[0],
                          "Actual torso Arresto must apply without a Bloodbroom foul")
-            yield self.wait_until(lambda: self.ready_to_cast() and "target impeded" in str(prop(self.pawn, "SpellFeedback")), timeout=2)
-            self.require(self.ready_to_cast() and float(prop(self.guest, "ImpedimentRemaining")) > .15,
-                         "Double-tap fixture needs a naturally active, owner-notified impediment")
-            self.event("real_impediment_notice", notice=str(prop(self.pawn, "SpellFeedback")))
+            confirmation = yield from self.wait_for_displayed_impediment()
+            self.event("real_impediment_notice", **confirmation)
             self.request(6, 2)
             yield self.wait_until(lambda: bool(prop(self.match, "bConductReviewPending")), timeout=.8)
             effect = float(prop(self.guest, "StunRemaining")) > 0
@@ -311,7 +319,7 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         if FREE:
             location = xyz(self.shooter.get_actor_location())
             sign = 1 if int(prop(self.shooter, "TeamIndex")) == 0 else -1
-            gap = 6400.8-sign*location[0]
+            gap = dimensions.GOAL_PLANE_X-sign*location[0]
             geometric = dist(location, self.expected_shot_mark) < .1 and gap >= 1341.12-.1
             geometric = geometric and (abs(gap-1341.12) < .1 if FOUL_DISTANCE == "near"
                                        else dist(location, self.expected_foul_mark) < .1)
@@ -371,8 +379,8 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         # A real camera direction and ordinary release drive the native ball.
         # Corrections use observed carry origin; no in-flight fixture is used.
         sign = 1 if int(prop(self.guest, "TeamIndex")) == 0 else -1
-        target = ((sign*5000.0, 0, 7200.0) if OUTCOME == "roof" else
-                  (sign*6400.8, 0 if OUTCOME == "make" else 2400,
+        target = ((sign*5000.0*dimensions.LINEAR_SCALE, 0, dimensions.APEX_HEIGHT+890.64) if OUTCOME == "roof" else
+                  (sign*dimensions.GOAL_PLANE_X, 0 if OUTCOME == "make" else 2400,
                    2103.12 if AFFECTED_BALL == 0 else 3048.0))
         for unused in range(2):
             start = xyz(self.guest.get_carry_location())
@@ -479,13 +487,13 @@ class NativePenaltyShotTests(spells.NativeSpellTests):
         if FREE:
             self.record(CASES[11], self.removal() == 0 and int(prop(self.pawn, "Position")) == 5
                         and float(prop(self.pawn, "SpellCooldownRemaining")) > 0
-                        and abs(self.pawn.get_actor_location().x) < 7100,
+                        and abs(self.pawn.get_actor_location().x) < dimensions.HALF_LENGTH,
                         removal=self.removal(), previous_role=role, role=int(prop(self.pawn, "Position")),
                         effects=self.effects(self.pawn), location=xyz(self.pawn.get_actor_location()))
         else:
             self.record(CASES[11], self.removal() > 0 and role_locked_while_stopped and int(prop(self.pawn, "Position")) == role
                         and float(prop(self.pawn, "SpellCooldownRemaining")) == 0
-                        and abs(self.pawn.get_actor_location().x) >= 7100, removal=self.removal(), role=int(prop(self.pawn, "Position")),
+                        and abs(self.pawn.get_actor_location().x) >= dimensions.HALF_LENGTH, removal=self.removal(), role=int(prop(self.pawn, "Position")),
                         effects=self.effects(self.pawn), location=xyz(self.pawn.get_actor_location()))
         live, removal = float(prop(self.match, "LiveSeconds")), self.removal()
         yield self.wait(.5)

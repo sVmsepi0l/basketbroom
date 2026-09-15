@@ -16,6 +16,8 @@ It authors a venue; game rules and match execution belong to the runtime module.
 
 import argparse
 import json
+import io
+import importlib.util
 import math
 import os
 from pathlib import Path
@@ -33,21 +35,26 @@ MOUNT = "/Basketbroom"
 LEVEL_PATH = MOUNT + "/Maps/BB_Arena"
 ART_PATH = MOUNT + "/Art"
 GENERATED_TAG = "BB.Generated"
+_dimension_spec = importlib.util.spec_from_file_location("_bb_source_dimensions", Path(__file__).with_name("arena_dimensions.py"))
+dimensions = importlib.util.module_from_spec(_dimension_spec)
+_dimension_spec.loader.exec_module(dimensions)
 FT = 30.48
-HALF_LENGTH = 210.0 * FT
-HALF_WIDTH = 105.0 * FT
-ROOFLINE = 138.0 * FT
-PYRAMID_APEX = 207.0 * FT
+ARENA_SCALE = dimensions.LINEAR_SCALE
+# Historical name HALF_LENGTH means goal-plane distance, not the enclosing net.
+HALF_LENGTH = dimensions.GOAL_PLANE_X
+HALF_WIDTH = dimensions.HALF_WIDTH
+ROOFLINE = dimensions.EAVE_HEIGHT
+PYRAMID_APEX = dimensions.APEX_HEIGHT
 PYRAMID_TAG = "BB.PyramidNet"
 PYRAMID_MESHES = ("SM_BB_PyramidNet", "SM_BB_PyramidRibs",
                   "SM_BB_PyramidCopper", "SM_BB_PyramidCollision")
-LARGE_CENTER = 69.0 * FT
-SMALL_CENTER = 100.0 * FT
-LARGE_RADIUS = 11.0 * FT
-SMALL_RADIUS = 6.5 * FT
-GOAL_SPACING = 35.0 * FT
-BACKSTOP_X = HALF_LENGTH + 450.0
-CAMERA_LOCATION = (-12400.0, -11400.0, 9400.0)
+LARGE_CENTER = dimensions.LARGE_HOOP_HEIGHT
+SMALL_CENTER = dimensions.SMALL_HOOP_HEIGHT
+LARGE_RADIUS = dimensions.LARGE_HOOP_RADIUS
+SMALL_RADIUS = dimensions.SMALL_HOOP_RADIUS
+GOAL_SPACING = dimensions.HOOP_SPACING
+BACKSTOP_X = dimensions.HALF_LENGTH
+CAMERA_LOCATION = tuple(value * ARENA_SCALE for value in (-12400.0, -11400.0, 9400.0))
 CAMERA_ROTATION = (-25.0, 42.0, 0.0)
 SCENERY_TAG = "BB.Scenery"
 DETAIL_TAG = "BB.ArtDetail"
@@ -179,13 +186,19 @@ class ObjMesh:
 
     def save(self, filename):
         path = SOURCE_ROOT / filename
-        with path.open("w", encoding="ascii", newline="\n") as handle:
+        with io.StringIO() as handle:
             handle.write("# Original Basketbroom procedural mesh; units cm, Z up\n")
             handle.write("o " + path.stem + "\ns 1\n")
             for point in self.vertices:
                 handle.write("v %.5f %.5f %.5f\n" % point)
             for face in self.faces:
                 handle.write("f " + " ".join(str(v) for v in face) + "\n")
+            content = handle.getvalue()
+        # Preserve exact existing bytes (including checkout line endings) when
+        # regenerated geometry is identical, keeping native import hashes stable.
+        if not path.is_file() or path.read_text(encoding="ascii") != content:
+            with path.open("w", encoding="ascii", newline="\n") as destination:
+                destination.write(content)
         return {"file": filename, "vertices": len(self.vertices), "polygons": len(self.faces)}
 
 
@@ -315,7 +328,10 @@ def generate_source_meshes():
                  "net_spacing_cm_max": 230.0, "net_cord_radius_cm": 3.8,
                  "scope": "all balls and riders; no roof exit or respawn"},
         "end_net_x_cm": [-BACKSTOP_X, BACKSTOP_X], "side_net_y_cm": [-HALF_WIDTH, HALF_WIDTH],
-        "backstop_note": "450cm catch bay behind each goal plane; 420ft remains goal-to-goal.",
+        "backstop_note": "Goal plane and behind-goal bay expand together; hoop apertures and sporting distances stay fixed.",
+        "geometry_version": "arena-volume-1.45", "enclosed_volume_scale": dimensions.VOLUME_SCALE,
+        "linear_scale": ARENA_SCALE, "enclosed_volume_cm3": dimensions.enclosed_volume_cm3(),
+        "behind_goal_bay_cm": BACKSTOP_X - HALF_LENGTH,
         "restitution": 0.75, "level": LEVEL_PATH,
         "screenshot_camera": {"location": CAMERA_LOCATION, "rotation_pitch_yaw_roll": CAMERA_ROTATION},
         "meshes": meshes,
@@ -369,7 +385,7 @@ def generate_detail_meshes():
             y = side * (HALF_WIDTH + 350 + tier * 280)
             z = -30 + tier * 150
             for section in range(-5, 6):
-                x = section * 1060
+                x = section * 1060 * ARENA_SCALE
                 stone.box((x, y - side * 121, z + 76), (1028, 43, 29))
                 seats = teal_seats if section < 0 else copper_seats
                 for seat in range(7):
@@ -380,16 +396,18 @@ def generate_detail_meshes():
                 iron.rod((x + 508, y - side * 125, z + 95),
                          (x + 508, y + side * 125, z + 95), 5.5, 6)
         rail_y = side * (HALF_WIDTH + 1810)
-        for x in range(-5850, 5851, 450):
+        for baseline_x in range(-5850, 5851, 450):
+            x = baseline_x * ARENA_SCALE
             iron.rod((x, rail_y, 705), (x, rail_y, 1040), 9, 6)
-        iron.rod((-6030, rail_y, 1040), (6030, rail_y, 1040), 11, 8)
-        iron.rod((-6030, rail_y, 835), (6030, rail_y, 835), 6, 6)
+        iron.rod((-6030 * ARENA_SCALE, rail_y, 1040), (6030 * ARENA_SCALE, rail_y, 1040), 11, 8)
+        iron.rod((-6030 * ARENA_SCALE, rail_y, 835), (6030 * ARENA_SCALE, rail_y, 835), 6, 6)
         # Grandstand masonry courses break the silhouette into believable blocks.
-        for x in range(-5920, 5921, 370):
+        for baseline_x in range(-5920, 5921, 370):
+            x = baseline_x * ARENA_SCALE
             stone.box((x, side * (HALF_WIDTH + 1880), 72), (354, 245, 430))
             stone.box((x, side * (HALF_WIDTH + 1880), 520), (354, 245, 430))
         for index in range(-4, 5):
-            x = index * 1450
+            x = index * 1450 * ARENA_SCALE
             y = side * (HALF_WIDTH + 1960)
             copper.box((x, y, 1750), (177, 202, 43))
             copper.box((x, y, 1170), (177, 202, 43))
@@ -761,7 +779,7 @@ class ArenaBuilder:
         # Alternating broad strips retain the visual unity of one trampoline.
         for i in range(-6, 7):
             if i % 2 == 0:
-                self.box("Court weave %02d" % i, "M_BB_FloorAlternate", (i * 975, 0, 0.6), (970, 2 * HALF_WIDTH - 160, 0.8))
+                self.box("Court weave %02d" % i, "M_BB_FloorAlternate", (i * 975 * ARENA_SCALE, 0, 0.6), (970 * ARENA_SCALE, 2 * HALF_WIDTH - 160, 0.8))
         self.box("Midfield stripe", "M_BB_Cream", (0, 0, 2), (9, 2 * HALF_WIDTH - 100, 2))
         self.shape("Center court ring", "SM_BB_CenterCircle", "M_BB_Cream", (0, 0, 7), rotation=(90, 0, 0))
         self.cylinder("Center medallion", "M_BB_Copper", (0, 0, 2), 180, 3)
@@ -769,12 +787,12 @@ class ArenaBuilder:
             mat = "M_BB_TealLight" if side < 0 else "M_BB_CopperLight"
             self.box("Sideline ribbon %s" % side, "M_BB_TealLight", (0, side * (HALF_WIDTH - 40), 4), (2 * BACKSTOP_X, 7, 5))
             self.box("Goal line %s" % side, mat, (side * HALF_LENGTH, 0, 4), (10, 2 * HALF_WIDTH - 80, 5))
-            self.box("Attacking third %s" % side, "M_BB_Cream", (side * 3600, 0, 2), (6, 2 * HALF_WIDTH - 100, 2))
+            self.box("Attacking third %s" % side, "M_BB_Cream", (side * 3600 * ARENA_SCALE, 0, 2), (6, 2 * HALF_WIDTH - 100, 2))
             self.box("Goal bay accent %s" % side, mat, (side * (HALF_LENGTH - 900), 0, 4), (10, 3600, 4))
             for y in (-1800, 1800):
                 self.box("Goal bay edge %s %s" % (side, y), mat, (side * (HALF_LENGTH - 450), y, 4), (900, 7, 4))
             for index in range(9):
-                x = (index - 4) * 1350
+                x = (index - 4) * 1350 * ARENA_SCALE
                 self.box("Boundary marker %s %s" % (side, index), "M_BB_Cream", (x, side * (HALF_WIDTH - 110), 4), (10, 130, 4))
                 self.box("Deck inset %s %s" % (side, index), "M_BB_IvoryLight", (x, side * (HALF_WIDTH + 145), -18), (360, 12, 15))
 
@@ -867,8 +885,8 @@ class ArenaBuilder:
             net.set_actor_hidden_in_game(True)
             net.static_mesh_component.set_visibility(False)
             for z, thickness, material in ((75, 35, "M_BB_Iron"), (ROOFLINE, 12, "M_BB_IvoryLight")):
-                self.box("Side tension rail %s %s" % (side, z), material, (0, side * HALF_WIDTH, z), (2 * BACKSTOP_X, thickness, thickness), folder="Nets")
-                self.box("End tension rail %s %s" % (side, z), material, (side * BACKSTOP_X, 0, z), (thickness, 2 * HALF_WIDTH, thickness), folder="Nets")
+                self.box("Side tension rail %s %s" % (side, dimensions.BASELINE_EAVE_HEIGHT if z == ROOFLINE else z), material, (0, side * HALF_WIDTH, z), (2 * BACKSTOP_X, thickness, thickness), folder="Nets")
+                self.box("End tension rail %s %s" % (side, dimensions.BASELINE_EAVE_HEIGHT if z == ROOFLINE else z), material, (side * BACKSTOP_X, 0, z), (thickness, 2 * HALF_WIDTH, thickness), folder="Nets")
             for index in range(9):
                 x = -BACKSTOP_X + index * BACKSTOP_X / 4
                 y = side * (HALF_WIDTH + 35)
@@ -881,14 +899,14 @@ class ArenaBuilder:
             for tier in range(5):
                 y = side * (HALF_WIDTH + 350 + tier * 280)
                 z = -30 + tier * 150
-                self.box("Gallery tier %s %s" % (side, tier), "M_BB_Basalt", (0, y, z), (12200, 275, 160))
-                self.box("Gallery copper lip %s %s" % (side, tier), "M_BB_Copper", (0, y - side * 115, z + 80), (12200, 18, 12))
+                self.box("Gallery tier %s %s" % (side, tier), "M_BB_Basalt", (0, y, z), (12200 * ARENA_SCALE, 275, 160))
+                self.box("Gallery copper lip %s %s" % (side, tier), "M_BB_Copper", (0, y - side * 115, z + 80), (12200 * ARENA_SCALE, 18, 12))
                 for section in range(-5, 6):
                     # Empty bleachers, with clear geometric sections and aisles.
                     self.box("Gallery bench %s %s %s" % (side, tier, section), "M_BB_Teal" if section < 0 else "M_BB_Copper",
-                             (section * 1060, y, z + 105), (880, 86, 42))
+                             (section * 1060 * ARENA_SCALE, y, z + 105), (880, 86, 42))
             for index in range(-4, 5):
-                x = index * 1450
+                x = index * 1450 * ARENA_SCALE
                 y = side * (HALF_WIDTH + 1960)
                 self.box("Gallery buttress %s %s" % (side, index), "M_BB_Iron", (x, y, 840), (130, 170, 2100))
                 self.box("Gallery pennant %s %s" % (side, index), "M_BB_Teal" if x < 0 else "M_BB_Copper", (x, y - side * 110, 1680), (340, 18, 620))
@@ -1010,7 +1028,7 @@ class ArenaBuilder:
         self.configure_fog(fog_component)
         for index, x in enumerate((-4400, 0, 4400)):
             for side in (-1, 1):
-                lamp = self.actor(unreal.PointLight, "Court flood %s %s" % (side, index), (x, side * 2500, 3500), folder="Lighting")
+                lamp = self.actor(unreal.PointLight, "Court flood %s %s" % (side, index), (x * ARENA_SCALE, side * 2500 * ARENA_SCALE, 3500 * ARENA_SCALE), folder="Lighting")
                 component = lamp.get_component_by_class(unreal.PointLightComponent)
                 component.set_mobility(unreal.ComponentMobility.MOVABLE)
                 self.configure_flood(component)
@@ -1023,7 +1041,7 @@ class ArenaBuilder:
         camera = self.actor(unreal.CameraActor, "BB Hero Camera", CAMERA_LOCATION, CAMERA_ROTATION,
                             tags=("BB.Camera.Hero",), folder="Cameras")
         camera.get_component_by_class(unreal.CameraComponent).set_field_of_view(58.0)
-        self.actor(unreal.CameraActor, "BB Flight Camera", (-4400, -1300, 1500), (5, 14, 0), folder="Cameras")
+        self.actor(unreal.CameraActor, "BB Flight Camera", tuple(v * ARENA_SCALE for v in (-4400, -1300, 1500)), (5, 14, 0), folder="Cameras")
         self.actor(unreal.PlayerStart, "BB Player Start", (-3000, 0, 300), (0, 0, 0), tags=("BB.Spawn",), folder="Gameplay anchors")
         self.levels.set_level_viewport_camera_info(
             unreal.Vector(*CAMERA_LOCATION),

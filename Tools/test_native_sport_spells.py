@@ -5,6 +5,12 @@ No spell timer, hit receipt, possession, score, conduct or match clock is writte
 Transforms/ordinary movement inputs/PIE time dilation arrange disposable fixtures.
 --list only describes the plan. It does not execute or certify gameplay.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 from pathlib import Path
@@ -163,8 +169,8 @@ class SportingSpellTests(spells.NativeSpellTests):
             and not self.guest.development_is_hidden_from(self.pawn), observer=self.effects(self.pawn))
         self.guest.set_actor_location(vector((1800,0,1872)),False,True)
         range_hidden = self.concealed(self.guest,self.pawn)
-        self.pawn.set_actor_location(vector((-1200,2800,1800)),False,True)
-        self.guest.set_actor_location(vector((-1200,3400,1872)),False,True)
+        self.pawn.set_actor_location(vector((-1200,dimensions.HALF_WIDTH-400.4,1800)),False,True)
+        self.guest.set_actor_location(vector((-1200,dimensions.HALF_WIDTH+199.6,1872)),False,True)
         wall_hidden = self.concealed(self.guest,self.pawn)
         self.record(CASES[3], range_hidden and wall_hidden, outside_range_hidden=range_hidden, occluded_hidden=wall_hidden)
         yield from self.anchor_pair()

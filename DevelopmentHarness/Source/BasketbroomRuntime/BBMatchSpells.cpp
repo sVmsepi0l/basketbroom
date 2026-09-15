@@ -1,5 +1,6 @@
 #include "BBMatchState.h"
 #include "BBBall.h"
+#include "BBArenaGeometry.h"
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
 #include "BBSpellVisual.h"
@@ -264,9 +265,14 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     ConductVictimSlot = Target->RosterIndex; ConductBall = AffectedScoringBall;
     ConductFoulPoint = Target->GetActorLocation();
     ConductMark = ConductFoulPoint;
-    ConductMark.X = FMath::Clamp(ConductMark.X,-5900.f,5900.f);
-    ConductMark.Y = FMath::Clamp(ConductMark.Y,-2700.f,2700.f);
-    ConductMark.Z = FMath::Clamp(ConductMark.Z,400.f,3800.f);
+    // Preserve the existing restart margins, measured from the expanded
+    // goal, side net and eave. The final capsule bound covers the sloped cap.
+    const double LimitX = BBArena::GoalPlaneX - 500.8;
+    const double LimitY = BBArena::HalfWidth - 500.4;
+    ConductMark.X = FMath::Clamp(ConductMark.X, -LimitX, LimitX);
+    ConductMark.Y = FMath::Clamp(ConductMark.Y, -LimitY, LimitY);
+    ConductMark.Z = FMath::Clamp(ConductMark.Z, 400.0, BBArena::EaveHeight - 406.24);
+    ConductMark = BBArena::ClampSphere(ConductMark, 250.0);
     bConductReviewPending = true;
     ConductReviewStatus = TEXT("PLAYTEST REFEREE - F6 free shot / F7 possession / F8 shot + removal / F9 ejection");
     Rules->pause("BB-0 conduct review after applied hit");

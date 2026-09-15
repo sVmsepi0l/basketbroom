@@ -9,6 +9,12 @@ test_training_pyramid.py for current physical-only roof checks without score,
 custody or clock writes. Neither suite claims actual keyboard pickup coverage.
 Keyboard pickup/capture and visual feel still need an interactive play check.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import json
 import pathlib
 import re
@@ -127,15 +133,15 @@ class PlayableTests:
         for actor in self.opponents:
             actor.set_actor_tick_enabled(False)
         self.cases = [
-            ("quaffle_east_goal_13", lambda: self.launch(0, (6300, 0, 2103.12), (2000, 0, 0)), lambda: self.check_score(13, 0)),
-            ("quark_small_goal_37", lambda: self.launch(1, (6300, 0, 3048), (2000, 0, 0)), lambda: self.check_score(37, 0)),
-            ("quaffle_west_goal_13", lambda: self.launch(0, (-6300, 0, 2103.12), (-2000, 0, 0)), lambda: self.check_score(0, 13)),
-            ("quark_rejected_by_large_hoop", lambda: self.launch(1, (6300, 0, 2103.12), (2000, 0, 0)), lambda: self.check_score(0, 0)),
-            ("quaffle_rejected_by_small_hoop", lambda: self.launch(0, (6300, 0, 3048), (2000, 0, 0)), lambda: self.check_score(0, 0)),
-            ("large_hoop_rim_clearance", lambda: self.launch(0, (6300, 350, 2103.12), (2000, 0, 0)), lambda: self.check_score(0, 0)),
-            ("side_net_rebound", lambda: self.launch(0, (0, 3100, 1600), (0, 1000, 0)), self.check_rebound),
+            ("quaffle_east_goal_13", lambda: self.launch(0, ((dimensions.GOAL_PLANE_X-100.8), 0, 2103.12), (2000, 0, 0)), lambda: self.check_score(13, 0)),
+            ("quark_small_goal_37", lambda: self.launch(1, ((dimensions.GOAL_PLANE_X-100.8), 0, 3048), (2000, 0, 0)), lambda: self.check_score(37, 0)),
+            ("quaffle_west_goal_13", lambda: self.launch(0, (-(dimensions.GOAL_PLANE_X-100.8), 0, 2103.12), (-2000, 0, 0)), lambda: self.check_score(0, 13)),
+            ("quark_rejected_by_large_hoop", lambda: self.launch(1, ((dimensions.GOAL_PLANE_X-100.8), 0, 2103.12), (2000, 0, 0)), lambda: self.check_score(0, 0)),
+            ("quaffle_rejected_by_small_hoop", lambda: self.launch(0, ((dimensions.GOAL_PLANE_X-100.8), 0, 3048), (2000, 0, 0)), lambda: self.check_score(0, 0)),
+            ("large_hoop_rim_clearance", lambda: self.launch(0, ((dimensions.GOAL_PLANE_X-100.8), 350, 2103.12), (2000, 0, 0)), lambda: self.check_score(0, 0)),
+            ("side_net_rebound", lambda: self.launch(0, (0, dimensions.HALF_WIDTH-100.4, 1600), (0, 1000, 0)), self.check_rebound),
             ("trampoline_floor_rebound", lambda: self.launch(0, (0, 0, 75), (0, 0, -500)), self.check_floor),
-            ("hollow_pyramid_free_ball_crosses_old_plane", lambda: self.launch(0, (0, 0, 4190), (0, 0, 1000)), self.check_hollow_pyramid),
+            ("hollow_pyramid_free_ball_crosses_old_plane", lambda: self.launch(0, (0, 0, dimensions.EAVE_HEIGHT-16.24), (0, 0, 1000)), self.check_hollow_pyramid),
             ("closed_pyramid_free_ball_rebounds", self.prepare_roof_bounce, self.check_roof_bounce),
             ("snipe_path_moves", self.prepare_chase, self.check_chase),
             ("snipe_timeout_returns", self.prepare_timeout, self.check_timeout),
@@ -180,17 +186,17 @@ class PlayableTests:
     def roof_contains_ball(self):
         point = self.active_ball.get_actor_location()
         radius = 33 if int(prop(self.active_ball, "Kind")) == 0 else 24
-        sx, sy = (6309.36-4206.24)/6850.8, (6309.36-4206.24)/3200.4
-        return (abs(point.x)+radius <= 6850.8+.2 and abs(point.y)+radius <= 3200.4+.2
+        sx, sy = (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_LENGTH, (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH
+        return (abs(point.x)+radius <= dimensions.HALF_LENGTH+.2 and abs(point.y)+radius <= dimensions.HALF_WIDTH+.2
                 and point.z >= radius-.2
-                and point.z+sx*abs(point.x)+radius*(1+sx*sx)**.5 <= 6309.36+.2
-                and point.z+sy*abs(point.y)+radius*(1+sy*sy)**.5 <= 6309.36+.2)
+                and point.z+sx*abs(point.x)+radius*(1+sx*sx)**.5 <= dimensions.APEX_HEIGHT+.2
+                and point.z+sy*abs(point.y)+radius*(1+sy*sy)**.5 <= dimensions.APEX_HEIGHT+.2)
 
     def check_hollow_pyramid(self):
         message = str(prop(self.manager, "Message"))
         pos = self.active_ball.get_actor_location()
         held = bool(prop(self.active_ball, "Held"))
-        return (pos.z > 4206.24 and self.roof_contains_ball() and not held
+        return (pos.z > dimensions.EAVE_HEIGHT and self.roof_contains_ball() and not held
                 and "CROWN" not in message.upper() and self.check_score(0, 0)[0]), {
                     "message": message, "height": pos.z, "held": held,
                     "scope": "free-ball physical fixture; old horizontal plane has no reset"}
@@ -198,11 +204,11 @@ class PlayableTests:
     def prepare_roof_bounce(self):
         # Start wholly inside and let the compiled graph cross the +Y slope.
         # This replaces the old Held=True fixture; no pickup is claimed here.
-        self.launch(0, (0, 1600, 4900), (0, 2200, 3300))
+        self.launch(0, (0, 1600*dimensions.LINEAR_SCALE, dimensions.APEX_HEIGHT-1409.36), (0, 2200, 3300))
 
     def check_roof_bounce(self):
         velocity = prop(self.active_ball, "Velocity")
-        slope = (6309.36-4206.24)/3200.4
+        slope = (dimensions.APEX_HEIGHT-dimensions.EAVE_HEIGHT)/dimensions.HALF_WIDTH
         outward_speed = (slope*velocity.y+velocity.z)/(1+slope*slope)**.5
         message = str(prop(self.manager, "Message"))
         return (outward_speed < -100 and self.roof_contains_ball()
@@ -219,7 +225,7 @@ class PlayableTests:
     def check_chase(self):
         pos = self.active_ball.get_actor_location()
         moved = (pos - self.chase_start).length()
-        return moved > 100 and abs(pos.x) < 4301 and abs(pos.y) < 2051 and 1249 < pos.z < 3151, {"position": str(pos), "distance": moved}
+        return moved > 100 and abs(pos.x) < 4300*dimensions.LINEAR_SCALE+1 and abs(pos.y) < 2050*dimensions.LINEAR_SCALE+1 and 1250*dimensions.LINEAR_SCALE-1 < pos.z < 3150*dimensions.LINEAR_SCALE+1, {"position": str(pos), "distance": moved}
 
     def prepare_timeout(self):
         self.launch(2, (0, 0, -3000), (0, 0, 0))

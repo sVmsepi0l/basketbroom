@@ -8,6 +8,12 @@ No runtime RPC, protected property, hit confirmation, score or penalty is inject
 Owner HUD rendering must actually acknowledge the successful impediment notice.
 --list prints both plans outside Unreal; it does not claim gameplay execution.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -127,9 +133,9 @@ class NativeSpellTests(base.NativePlayableTests):
 
     def side_wall_evidence(self):
         # Public profile traces ignore both fixture riders. The shorter segment
-        # must stay clear; extending it across the 105ft net must hit real world
+        # must stay clear; extending it across the side net must hit real world
         # collision. This cannot succeed merely because the spell missed.
-        start = vector((-1200, 2800, 1872))
+        start = vector((-1200, dimensions.HALF_WIDTH-400.4, 1872))
 
         def blocked_to(y):
             result = unreal.SystemLibrary.line_trace_single_by_profile(
@@ -139,9 +145,9 @@ class NativeSpellTests(base.NativePlayableTests):
                          "Unexpected public trace return type; no collision result is assumed")
             return result is not None
 
-        evidence = {"profile": "BlockAll", "start": xyz(start), "clear_end_y": 3180,
-                    "blocked_end_y": 3240, "net_y_cm": 3200.4,
-                    "short_clear": not blocked_to(3180), "through_net_blocked": blocked_to(3240)}
+        evidence = {"profile": "BlockAll", "start": xyz(start), "clear_end_y": dimensions.HALF_WIDTH-20.4,
+                    "blocked_end_y": dimensions.HALF_WIDTH+39.6, "net_y_cm": dimensions.HALF_WIDTH,
+                    "short_clear": not blocked_to(dimensions.HALF_WIDTH-20.4), "through_net_blocked": blocked_to(dimensions.HALF_WIDTH+39.6)}
         self.require(evidence["short_clear"] and evidence["through_net_blocked"],
                      "Side-wall fixture must bracket actual world collision")
         return evidence
@@ -153,6 +159,36 @@ class NativeSpellTests(base.NativePlayableTests):
                              and float(prop(self.pawn, "SpellFeedbackRemaining")) <= 0, timeout=35)
         self.require(not str(prop(self.pawn, "SpellFeedback")),
                      "Owner HUD feedback queue did not drain; no confirmation is manufactured")
+
+    def wait_for_displayed_impediment(self):
+        # Critical notices start at 2.25 seconds and remain there until the
+        # owner's actual HUD draws them. Their native countdown reaching 1.90
+        # proves more than the 0.25-second display interval required before
+        # Rider Tick sends the receipt. Merely observing the queued text is
+        # insufficient, including in a renderer-less PIE session.
+        def observation():
+            return {
+                "notice": str(prop(self.pawn, "SpellFeedback")),
+                "feedback_seconds_remaining": float(prop(self.pawn, "SpellFeedbackRemaining")),
+                "impediment_seconds_remaining": float(prop(self.guest, "ImpedimentRemaining")),
+                "ready_to_cast": self.ready_to_cast(),
+            }
+
+        def displayed(data):
+            return ("target impeded" in data["notice"]
+                    and 0 < data["feedback_seconds_remaining"] <= 1.90
+                    and data["impediment_seconds_remaining"] > .15
+                    and data["ready_to_cast"])
+
+        yield self.wait_until(lambda: displayed(observation()), timeout=2)
+        data = observation()
+        self.event("owner_impediment_display_observation", **data,
+                   displayed_countdown_observed=displayed(data),
+                   proof="Native critical-notice countdown after actual owner HUD draw; no ACK injected")
+        self.require(displayed(data),
+                     "Double-tap requires a genuine owner HUD display countdown and active impediment; "
+                     "queued text alone is insufficient. Run this check in rendered PIE.")
+        return data
 
     def measure_guest_flight(self):
         movement = self.component(self.guest, unreal.CharacterMovementComponent)
@@ -202,15 +238,9 @@ class NativeSpellTests(base.NativePlayableTests):
                         and float(prop(self.guest, "ImpedimentRemaining")) > 0,
                         normal=normal, impeded=slowed, effects=self.effects(self.guest))
             yield from self.anchor_pair()
-        # The queued hit message must really have reached the owner HUD. Native
-        # Rider Tick sends its receipt only after HUD drawing plus 0.25 seconds.
-        # We observe that path's final adjudication; we never invoke its ACK.
-        yield self.wait_until(lambda: self.ready_to_cast()
-                             and "target impeded" in str(prop(self.pawn, "SpellFeedback")), timeout=2)
-        notice = str(prop(self.pawn, "SpellFeedback"))
-        remaining = float(prop(self.guest, "ImpedimentRemaining"))
-        self.require(self.ready_to_cast() and remaining > .15 and "target impeded" in notice,
-                     "Arresto receipt fixture expired or the genuine feedback was not shown")
+        confirmation = yield from self.wait_for_displayed_impediment()
+        notice = confirmation["notice"]
+        remaining = confirmation["impediment_seconds_remaining"]
         self.request(6, 2)  # Stupefy is stun=true, impediment=false.
         yield self.wait_until(lambda: bool(prop(self.match, "bConductReviewPending")), timeout=.65)
         state = self.conduct()
@@ -261,7 +291,7 @@ class NativeSpellTests(base.NativePlayableTests):
         # A real movement request must still climb after the final lift impulse.
         # Check the actual upper envelope as well, where Falling previously
         # bypassed the custom PhysFlying bounds. Never restore movement mode.
-        yield from self.anchor_pair(caster=(-1200, 0, 1800), target=(-400, 0, 6100))
+        yield from self.anchor_pair(caster=(-1200, 0, 1800), target=(-400, 0, dimensions.APEX_HEIGHT-209.36))
         start = xyz(self.guest.get_actor_location())
         movement.set_component_tick_enabled(True)
         samples = []
@@ -276,12 +306,12 @@ class NativeSpellTests(base.NativePlayableTests):
         movement.stop_movement_immediately()
         movement.set_component_tick_enabled(False)
         self.guest.consume_movement_input_vector()
-        # Whole capsule must fit below 207ft. Radius/height are read from the
+        # Whole capsule must fit below the pyramid apex. Radius/height are read from the
         # actor's actual collision component, not assumed from its constructor.
         capsule = self.component(self.guest, unreal.CapsuleComponent)
         height = float(capsule.get_scaled_capsule_half_height())
         peak = max([end[2]]+[row["point"][2] for row in samples])
-        self.record(REGULATION_CASES[16], end[2]-start[2] > 25 and peak+height <= 6309.36+2
+        self.record(REGULATION_CASES[16], end[2]-start[2] > 25 and peak+height <= dimensions.APEX_HEIGHT+2
                     and all(row["flying"] for row in samples) and movement.is_flying(),
                     start=start, end=end, capsule_half_height=height, peak_center_z=peak, samples=samples)
         yield from self.anchor_pair()
@@ -356,7 +386,7 @@ class NativeSpellTests(base.NativePlayableTests):
                     cooldown=float(prop(self.pawn, "SpellCooldownRemaining")))
 
         yield self.wait_until(self.ready_to_cast, timeout=1)
-        yield from self.anchor_pair(caster=(-1200, 2800, 1800), target=(-1200, 3400, 1872), yaw=90)
+        yield from self.anchor_pair(caster=(-1200, dimensions.HALF_WIDTH-400.4, 1800), target=(-1200, dimensions.HALF_WIDTH+199.6, 1872), yaw=90)
         wall = self.side_wall_evidence()
         before = self.effects(self.guest)
         self.request(6, 0)
@@ -446,12 +476,12 @@ class NativeSpellTests(base.NativePlayableTests):
         role, slot = int(prop(self.pawn, "Position")), int(prop(self.pawn, "RosterIndex"))
         self.request(11)
         yield self.wait_until(lambda: not prop(self.match, "bConductReviewPending")
-                             and abs(float(self.pawn.get_actor_location().x)) > 7000, timeout=1)
+                             and abs(float(self.pawn.get_actor_location().x)) > dimensions.HALF_LENGTH, timeout=1)
         self.request(2, 1 if role != 1 else 3)
         yield self.wait(.2)
         self.record(REGULATION_CASES[13], not prop(self.match, "bConductReviewPending")
                     and int(prop(self.pawn, "Position")) == role and int(prop(self.pawn, "RosterIndex")) == slot
-                    and abs(float(self.pawn.get_actor_location().x)) > 7000
+                    and abs(float(self.pawn.get_actor_location().x)) > dimensions.HALF_LENGTH
                     and float(prop(self.pawn, "StunRemaining")) > .5,
                     role=int(prop(self.pawn, "Position")), position=xyz(self.pawn.get_actor_location()),
                     review=str(prop(self.match, "ConductReviewStatus")), effects=self.effects(self.pawn))

@@ -7,6 +7,12 @@ run at 20x world dilation; no clock, phase, score, or availability is assigned.
 The standalone host UI net mode must be configured as for test_native_snitch.py.
 """
 
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
+
 import importlib.util
 import json
 from pathlib import Path
@@ -61,6 +67,7 @@ class NativeOpeningTests(base.NativeSnitchTests):
             "tests": tests, "events": self.events, "provenance": self.provenance,
             "reason": self.reason, "settings_restored": self.settings_restored,
             "dilation_restored": self.dilation_restored,
+            "external_restore_required": base.net_mode_restore_actions(self.provenance),
             "not_covered": ["remote replication", "false-start adjudication", "CPU tactics",
                             "44-minute regulation clock duration", "FINAL rematch"],
         }
@@ -74,7 +81,7 @@ class NativeOpeningTests(base.NativeSnitchTests):
         }
 
     def rider_layout(self, donnybrook=False):
-        boundary = 6400.8 if donnybrook else 3200.4
+        boundary = dimensions.GOAL_PLANE_X if donnybrook else dimensions.GOAL_PLANE_X / 2
         rows = []
         for rider in self.riders:
             pos = rider.get_actor_location()
@@ -94,9 +101,9 @@ class NativeOpeningTests(base.NativeSnitchTests):
             pos = coordinates(ball.get_actor_location())
             expected = marks[index]
             # The bible does not specify scoring/hazard launch altitude. Assert
-            # only that it is above the floor and below the open crown.
+            # only that it is above the floor and below the roof eaves.
             geometry = all(target is None or abs(value - target) < .1 for value, target in zip(pos, expected))
-            geometry = geometry and 65 < pos[2] < 4206.24
+            geometry = geometry and 65 < pos[2] < dimensions.EAVE_HEIGHT
             velocity = coordinates(ball.get_flight_velocity())
             rows.append({"ball": index, "position": pos, "velocity": velocity,
                          "geometry_correct": geometry, "active": bool(prop(ball, "bActive")),
@@ -139,7 +146,7 @@ class NativeOpeningTests(base.NativeSnitchTests):
         # Establish a nonzero tie through real goal physics before testing score
         # carry. This catches an opening reset that accidentally zeroes scores.
         for index, sign, expected in ((1, 1, [37, 0]), (2, -1, [37, 37])):
-            ball = self.seed_ball(index, (sign * 6200, 0, 3048), (sign * 2000, 0, 0))
+            ball = self.seed_ball(index, (sign * (dimensions.GOAL_PLANE_X-200.8), 0, 3048), (sign * 2000, 0, 0))
             yield self.wait_until(lambda: self.scores() == expected, timeout=3)
             ball.set_actor_tick_enabled(False)
             self.require(self.scores() == expected, "Actual Quark fixture did not produce the required observed score")

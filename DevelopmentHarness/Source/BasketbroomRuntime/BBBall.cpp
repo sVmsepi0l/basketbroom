@@ -23,13 +23,13 @@ bool SweepRims(const FVector& Start, const FVector& End, float BallRadius,
     const FVector Delta = End - Start;
     for (int32 Side : {-1, 1})
     {
-        const double PlaneX = Side * 6400.8;
+        const double PlaneX = Side * BBArena::GoalPlaneX;
         for (int32 Hoop = 0; Hoop < 4; ++Hoop)
         {
             const bool bSmall = Hoop == 3;
             const double Tube = bSmall ? 16.0 : 20.0;
-            const double Major = (bSmall ? 198.12 : 335.28) + Tube;
-            const FVector Center(PlaneX, bSmall ? 0.0 : (Hoop - 1) * 1066.8, bSmall ? 3048.0 : 2103.12);
+            const double Major = (bSmall ? BBArena::SmallHoopRadius : BBArena::LargeHoopRadius) + Tube;
+            const FVector Center(PlaneX, bSmall ? 0.0 : (Hoop - 1) * BBArena::HoopSpacing, bSmall ? BBArena::SmallHoopHeight : BBArena::LargeHoopHeight);
             const double Expanded = BallRadius + Tube;
             if (FMath::Min(Start.X, End.X) > PlaneX + Expanded || FMath::Max(Start.X, End.X) < PlaneX - Expanded) continue;
             auto ClosestRingPoint = [&Center, Major](const FVector& Point)
@@ -262,9 +262,12 @@ void ABBBall::Tick(float DeltaSeconds)
     {
         // Constant bounded speed; copper Snipe is exactly 60% of Snitch speed.
         const float Speed = BallIndex == 3 ? 1020.f : 1700.f;
-        ChaseTime += DeltaSeconds * (BallIndex == 3 ? .18f : .30f);
-        FVector Target(FMath::Sin(ChaseTime) * 4200.f, FMath::Cos(ChaseTime * 1.31f) * 2300.f,
-                       2450.f + FMath::Sin(ChaseTime * .73f) * 1100.f);
+        // Widen the route without speeding up either chase ball or its moving
+        // target: one larger circuit takes proportionally longer.
+        ChaseTime += DeltaSeconds * (BallIndex == 3 ? .18f : .30f) / BBArena::LinearScale;
+        const FVector Target = BBArena::ScaleLayout(FVector(
+            FMath::Sin(ChaseTime) * 4200.f, FMath::Cos(ChaseTime * 1.31f) * 2300.f,
+            2450.f + FMath::Sin(ChaseTime * .73f) * 1100.f));
         SetActorLocation(BBArena::ClampSphere(
             FMath::VInterpConstantTo(GetActorLocation(), Target, DeltaSeconds, Speed), Radius()));
         StepCapture(DeltaSeconds);
@@ -412,15 +415,15 @@ void ABBBall::StepFlight(double Dt)
         {
             for (int32 Side : {-1, 1})
             {
-                const float Plane = Side * (6400.8f + R);
+                const double Plane = Side * (BBArena::GoalPlaneX + R);
                 if (Old.X * Side < Plane * Side && TravelEnd.X * Side >= Plane * Side)
                 {
                     const double T = (Plane - Old.X) / (TravelEnd.X - Old.X);
                     const FVector Cross = FMath::Lerp(Old, TravelEnd, T);
                     bool bGoal = false;
                     if (BallIndex == 0)
-                        for (float Y : {-1066.8f, 0.f, 1066.8f}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - 2103.12f).SizeSquared() < FMath::Square(335.28f - R);
-                    else bGoal = FVector2D(Cross.Y, Cross.Z - 3048.f).SizeSquared() < FMath::Square(198.12f - R);
+                        for (double Y : {-BBArena::HoopSpacing, 0.0, BBArena::HoopSpacing}) bGoal |= FVector2D(Cross.Y - Y, Cross.Z - BBArena::LargeHoopHeight).SizeSquared() < FMath::Square(BBArena::LargeHoopRadius - R);
+                    else bGoal = FVector2D(Cross.Y, Cross.Z - BBArena::SmallHoopHeight).SizeSquared() < FMath::Square(BBArena::SmallHoopRadius - R);
                     if (bGoal)
                     {
                         DistanceSinceReleaseCm += FVector::Distance(Old, Cross);
@@ -486,7 +489,7 @@ void ABBBall::StepFlight(double Dt)
         DistanceSinceReleaseCm += FVector::Distance(Old, P);
         SetActorLocation(P);
         if (bPenaltyFlight && (Contact == BB::Contact::Floor || Contact == BB::Contact::Net
-            || FMath::Abs(P.X) > 6400.8f + R))
+            || FMath::Abs(P.X) > BBArena::GoalPlaneX + R))
         {
             Match->PenaltyBallStopped(this, bRoofHit ? TEXT("PENALTY SHOT MISSED - ROOF NET")
                 : TEXT("PENALTY SHOT MISSED"), ContactFraction);

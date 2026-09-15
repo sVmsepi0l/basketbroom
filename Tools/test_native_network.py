@@ -14,6 +14,12 @@ This suite owns and
 ends its PIE session. No editor map or gameplay defaults are saved or changed.
 Outside Unreal, --list describes the plan without claiming it ran.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 from pathlib import Path
@@ -438,13 +444,13 @@ class NativeNetworkTests:
                     client_speed_cm_s=client_quark.get_flight_velocity().length())
         self.require(thrown(), "Client throw did not reach authority and replicate")
         before = self.scores(self.host)
-        client_attempt = self.client["balls"][0].development_set_flight_fixture(vec(6200, 0, 2103.12), vec(2000, 0, 0))
+        client_attempt = self.client["balls"][0].development_set_flight_fixture(vec((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), vec(2000, 0, 0))
         yield self.wait(.5)
         self.record(TESTS[8], not client_attempt and self.scores(self.host) == self.scores(self.client) == before,
                     fixture_return=client_attempt, server_scores=self.scores(self.host), client_scores=self.scores(self.client))
         ball = self.host["balls"][0]
         self.require(prop(ball, "Holder") is None and prop(ball, "bActive"), "Goal fixture needs an active, free Quaffle")
-        self.require(ball.development_set_flight_fixture(vec(6200, 0, 2103.12), vec(2000, 0, 0)), "Server flight fixture rejected")
+        self.require(ball.development_set_flight_fixture(vec((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), vec(2000, 0, 0)), "Server flight fixture rejected")
         ball.set_actor_tick_enabled(True)
         self.events.append({"fixture": "server Quaffle 2000 cm/s through positive-X large hoop", "scores_before": before})
         expected_scores = [before[0] + 13, before[1]]

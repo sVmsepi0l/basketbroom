@@ -1,11 +1,11 @@
 {
   "units": "centimeters",
   "origin": "midfield, trampoline top",
-  "pitch_goal_to_goal_cm": 12801.6,
-  "pitch_width_cm": 6400.8,
+  "pitch_goal_to_goal_cm": 14489.50627023931,
+  "pitch_width_cm": 7244.753135119655,
   "goal_planes_x_cm": [
-    -6400.8,
-    6400.8
+    -7244.753135119655,
+    7244.753135119655
   ],
   "large_goal_centers_y_cm": [
     -1066.8,
@@ -13,22 +13,22 @@
     1066.8
   ],
   "large_goal_z_cm": 2103.12,
-  "large_goal_inner_radius_cm": 335.28000000000003,
+  "large_goal_inner_radius_cm": 335.28,
   "small_goal_z_cm": 3048.0,
   "small_goal_inner_radius_cm": 198.12,
-  "roofline_z_cm": 4206.24,
-  "chase_ceiling_z_cm": 6309.36,
+  "roofline_z_cm": 4760.837774507201,
+  "chase_ceiling_z_cm": 7141.256661760803,
   "roof": {
     "type": "closed_hollow_pyramidion_net",
-    "eave_z_cm": 4206.24,
+    "eave_z_cm": 4760.837774507201,
     "apex_cm": [
       0.0,
       0.0,
-      6309.36
+      7141.256661760803
     ],
-    "rise_cm": 2103.12,
-    "eave_half_x_cm": 6850.8,
-    "eave_half_y_cm": 3200.4,
+    "rise_cm": 2380.4188872536015,
+    "eave_half_x_cm": 7754.086173302982,
+    "eave_half_y_cm": 3622.3765675598274,
     "faces": 4,
     "horizontal_base": false,
     "collision": "double-sided four-triangle complex-as-simple static shell",
@@ -37,21 +37,26 @@
     "scope": "all balls and riders; no roof exit or respawn"
   },
   "end_net_x_cm": [
-    -6850.8,
-    6850.8
+    -7754.086173302982,
+    7754.086173302982
   ],
   "side_net_y_cm": [
-    -3200.4,
-    3200.4
+    -3622.3765675598274,
+    3622.3765675598274
   ],
-  "backstop_note": "450cm catch bay behind each goal plane; 420ft remains goal-to-goal.",
+  "backstop_note": "Goal plane and behind-goal bay expand together; hoop apertures and sporting distances stay fixed.",
+  "geometry_version": "arena-volume-1.45",
+  "enclosed_volume_scale": 1.45,
+  "linear_scale": 1.1318511959629507,
+  "enclosed_volume_cm3": 624042808975.1116,
+  "behind_goal_bay_cm": 509.3330381833275,
   "restitution": 0.75,
   "level": "/Basketbroom/Maps/BB_Arena",
   "screenshot_camera": {
     "location": [
-      -12400.0,
-      -11400.0,
-      9400.0
+      -14034.954829940589,
+      -12903.103633977638,
+      10639.401242051737
     ],
     "rotation_pitch_yaw_roll": [
       -25.0,
@@ -77,8 +82,8 @@
     },
     {
       "file": "SM_BB_ReboundNet.obj",
-      "vertices": 2760,
-      "polygons": 1840
+      "vertices": 3168,
+      "polygons": 2112
     },
     {
       "file": "SM_BB_Stars.obj",
@@ -132,8 +137,8 @@
     },
     {
       "file": "SM_BB_PyramidNet.obj",
-      "vertices": 3192,
-      "polygons": 2128
+      "vertices": 3624,
+      "polygons": 2416
     },
     {
       "file": "SM_BB_PyramidRibs.obj",

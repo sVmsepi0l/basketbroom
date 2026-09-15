@@ -11,6 +11,12 @@ the owning human and sent from normal native Tick through ServerAction. Never
 write vitality, effects, ownership, conduct state, or fabricate HUD receipts.
 Outside Unreal, --list reports planned cases only.
 """
+
+import importlib.util as _arena_importlib
+from pathlib import Path as _ArenaPath
+_arena_spec = _arena_importlib.spec_from_file_location("_bb_active_dimensions", _ArenaPath(__file__).resolve().parent / "arena_dimensions.py")
+dimensions = _arena_importlib.module_from_spec(_arena_spec)
+_arena_spec.loader.exec_module(dimensions)
 import importlib.util
 import json
 import math
@@ -288,7 +294,7 @@ class SpellNetworkTests(base.NativeNetworkTests):
         for ball in (quaffle, occupied):
             self.require(prop(ball, "Holder") is None and prop(ball, "bActive"),
                          "Fallback fixture needs two untouched active scoring balls")
-        self.require(occupied.development_set_flight_fixture(vec(6200, 0, 3048), vec(2000, 0, 0)),
+        self.require(occupied.development_set_flight_fixture(vec((dimensions.GOAL_PLANE_X-200.8), 0, 3048), vec(2000, 0, 0)),
                      "Physical Quark goal fixture rejected")
         occupied.set_actor_tick_enabled(True)
         keeper_holds = lambda: prop(occupied, "Holder") is not None
@@ -297,7 +303,7 @@ class SpellNetworkTests(base.NativeNetworkTests):
         keeper_slot = int(prop(prop(occupied, "Holder"), "RosterIndex"))
         self.require(self.scores(self.host) == [scores_before[0]+37, scores_before[1]],
                      "Quark fixture must produce exactly one genuine 37-point goal")
-        self.require(quaffle.development_set_flight_fixture(vec(6200, 0, 2103.12), vec(2000, 0, 0)),
+        self.require(quaffle.development_set_flight_fixture(vec((dimensions.GOAL_PLANE_X-200.8), 0, 2103.12), vec(2000, 0, 0)),
                      "Physical Quaffle goal fixture rejected")
         quaffle.set_actor_tick_enabled(True)
         score_reserved = lambda: all(str(prop(side["balls"][0], "BallStatus")) == "score"
