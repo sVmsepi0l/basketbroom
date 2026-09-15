@@ -12,159 +12,159 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 
-bool ABBRiderCharacter::IsConcealedFrom(const ABBRiderCharacter* Observer) const
+bool ABBRiderCharacter::IsConcealedFrom(const abbridercharacter* observer) const
 {
-    if (ConcealRemaining <= 0.f || Observer == this || !IsValid(Observer)
-        || Observer->TeamIndex == TeamIndex) return false;
-    const FBBSpellSpec* Reveal = BBSpellCatalog::Get(3);
-    if (Observer->RevealRemaining <= 0.f || !Reveal
-        || FVector::DistSquared(Observer->GetActorLocation(), GetActorLocation()) > FMath::Square(Reveal->Range))
+    if (concealremaining <= 0.f || observer == this || !isvalid(observer)
+        || observer->teamindex == teamindex) return false;
+    const fbbspellspec* reveal = BBSpellCatalog::Get(3);
+    if (observer->revealremaining <= 0.f || !reveal
+        || FVector::DistSquared(Observer->GetActorLocation(), getactorlocation()) > FMath::Square(Reveal->Range))
         return true;
-    // Revelio counters concealment within reach; opaque arena geometry still
-    // obstructs detection. Physical collision and blind aimed hits stay intact.
-    FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomRevelio), false, Observer);
+    // revelio counters concealment within reach; opaque arena geometry still
+    // obstructs detection. physical collision and blind aimed hits stay intact.
+    fcollisionqueryparams query(scene_query_stat(basketbroomrevelio), false, observer);
     Query.AddIgnoredActor(this);
-    FHitResult Hit;
-    return GetWorld() && GetWorld()->LineTraceSingleByChannel(Hit,
-        Observer->GetActorLocation()+FVector(0,0,72), GetActorLocation()+FVector(0,0,40), ECC_Visibility, Query);
+    fhitresult hit;
+    return getworld() && getworld()->linetracesinglebychannel(hit,
+        observer->getactorlocation()+fvector(0,0,72), getactorlocation()+fvector(0,0,40), ecc_visibility, query);
 }
 
 void ABBRiderCharacter::ResetSportSpellState()
 {
-    if (!HasAuthority()) return;
-    StunRemaining = SpellCooldownRemaining = ShieldRemaining = 0.f;
-    ImpedimentRemaining = DisarmRemaining = LumosRemaining = 0.f;
-    RevealRemaining = ConcealRemaining = PetrificusRemaining = 0.f;
-    TransformationRemaining = ImperioRemaining = 0.f;
-    Vitality = 100.f;
-    bInteractHeld = false;
-    ClearConcealmentViews();
-    ForceNetUpdate();
+    if (!hasauthority()) return;
+    stunremaining = spellcooldownremaining = shieldremaining = 0.f;
+    impedimentremaining = disarmremaining = lumosremaining = 0.f;
+    revealremaining = concealremaining = petrificusremaining = 0.f;
+    transformationremaining = imperioremaining = 0.f;
+    vitality = 100.f;
+    binteractheld = false;
+    clearconcealmentviews();
+    forcenetupdate();
 }
 
 void ABBRiderCharacter::ClearConcealmentViews()
 {
-    for (const TWeakObjectPtr<APlayerController>& Entry : ConcealmentViewers)
-        if (APlayerController* Player = Entry.Get()) Player->HiddenActors.Remove(this);
+    for (const tweakobjectptr<aplayercontroller>& entry : concealmentviewers)
+        if (aplayercontroller* player = Entry.Get()) Player->HiddenActors.Remove(this);
     ConcealmentViewers.Reset();
 }
 
 void ABBRiderCharacter::InitializeSportSpellVisuals()
 {
-    // Original, non-colliding sporting proxy. This deliberately does not claim
-    // Hogwarts Legacy transformation assets or possession of another character.
-    UStaticMesh* Sphere = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-    UStaticMesh* Cylinder = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-    UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr,
+    // original, non-colliding sporting proxy. this deliberately does not claim
+    // hogwarts legacy transformation assets or possession of another character.
+    ustaticmesh* sphere = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    ustaticmesh* cylinder = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    umaterialinterface* base = loadobject<umaterialinterface>(nullptr,
         TEXT("/Basketbroom/Art/Materials/M_BB_RiderIvory.M_BB_RiderIvory"));
-    TransformationVisual = NewObject<UStaticMeshComponent>(this,TEXT("SportTransformationOrb"),RF_Transient);
-    SportStatusRings = NewObject<UInstancedStaticMeshComponent>(this,TEXT("SportSpellStatusRings"),RF_Transient);
-    TransformationVisual->SetStaticMesh(Sphere);
-    SportStatusRings->SetStaticMesh(Cylinder);
-    for (UStaticMeshComponent* Part : {TransformationVisual.Get(), static_cast<UStaticMeshComponent*>(SportStatusRings.Get())})
+    transformationvisual = newobject<ustaticmeshcomponent>(this,text("sporttransformationorb"),rf_transient);
+    sportstatusrings = newobject<uinstancedstaticmeshcomponent>(this,text("sportspellstatusrings"),rf_transient);
+    transformationvisual->setstaticmesh(sphere);
+    sportstatusrings->setstaticmesh(cylinder);
+    for (ustaticmeshcomponent* part : {TransformationVisual.Get(), static_cast<UStaticMeshComponent*>(SportStatusRings.Get())})
     {
-        AddInstanceComponent(Part);
-        Part->SetupAttachment(GetMesh());
+        addinstancecomponent(part);
+        part->setupattachment(getmesh());
         Part->SetMobility(EComponentMobility::Movable);
-        Part->SetMaterial(0,Base);
-        Part->SetCollisionProfileName(TEXT("NoCollision"));
+        part->setmaterial(0,base);
+        part->setcollisionprofilename(text("nocollision"));
         Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        Part->SetGenerateOverlapEvents(false);
-        Part->SetCanEverAffectNavigation(false);
-        Part->SetCastShadow(false);
-        Part->SetVisibility(false);
+        part->setgenerateoverlapevents(false);
+        part->setcaneveraffectnavigation(false);
+        part->setcastshadow(false);
+        part->setvisibility(false);
         Part->ComponentTags.Add(TEXT("BB.Spell.Status"));
-        Part->RegisterComponent();
+        part->registercomponent();
     }
     TransformationVisual->SetRelativeScale3D(FVector(.74));
-    if (UMaterialInstanceDynamic* Orb = TransformationVisual->CreateDynamicMaterialInstance(0))
+    if (umaterialinstancedynamic* orb = transformationvisual->createdynamicmaterialinstance(0))
     {
         Orb->SetVectorParameterValue(TEXT("Tint"),FLinearColor(.28f,.08f,.52f));
         Orb->SetScalarParameterValue(TEXT("Glow"),.7f);
     }
-    for (int32 Ring=0; Ring<3; ++Ring)
-        for (int32 Segment=0; Segment<28; ++Segment)
+    for (int32 ring=0; ring<3; ++ring)
+        for (int32 segment=0; segment<28; ++segment)
         {
             const double A=Segment*UE_TWO_PI/28.0, B=(Segment+1)*UE_TWO_PI/28.0;
-            const double Radius=Ring==1 ? 49.0 : 38.0;
-            const FVector Start(Radius*FMath::Cos(A),Radius*FMath::Sin(A),(Ring-1)*32.0);
-            const FVector End(Radius*FMath::Cos(B),Radius*FMath::Sin(B),(Ring-1)*32.0);
-            const FVector Along=End-Start;
+            const double radius=ring==1 ? 49.0 : 38.0;
+            const fvector Start(Radius*FMath::Cos(A),Radius*FMath::Sin(A),(Ring-1)*32.0);
+            const fvector End(Radius*FMath::Cos(B),Radius*FMath::Sin(B),(Ring-1)*32.0);
+            const fvector along=end-start;
             SportStatusRings->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Along).ToQuat(),
                 (Start+End)*.5,FVector(.018,.018,Along.Size()/100.0)));
         }
-    SportStatusMaterial = SportStatusRings->CreateDynamicMaterialInstance(0);
+    sportstatusmaterial = sportstatusrings->createdynamicmaterialinstance(0);
 }
 
 void ABBRiderCharacter::RefreshSportSpellVisuals()
 {
-    if (!GetWorld()) return;
-    // HiddenActors is camera-specific, so two local players can independently
-    // detect the same opponent. Track only entries this spell added ourselves.
-    for (FConstPlayerControllerIterator It=GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    if (!getworld()) return;
+    // hiddenactors is camera-specific, so two local players can independently
+    // detect the same opponent. track only entries this spell added ourselves.
+    for (fconstplayercontrolleriterator it=getworld()->getplayercontrolleriterator(); it; ++it)
     {
-        APlayerController* Player=It->Get();
-        if (!IsValid(Player) || !Player->IsLocalController()) continue;
-        const bool bHide=IsConcealedFrom(Cast<ABBRiderCharacter>(Player->GetPawn()));
-        if (bHide && !Player->HiddenActors.Contains(this))
+        aplayercontroller* player=it->get();
+        if (!isvalid(player) || !player->islocalcontroller()) continue;
+        const bool bhide=isconcealedfrom(cast<abbridercharacter>(player->getpawn()));
+        if (bhide && !Player->HiddenActors.Contains(this))
         {
             Player->HiddenActors.Add(this);
             ConcealmentViewers.Add(Player);
         }
-        else if (!bHide && ConcealmentViewers.Contains(Player))
+        else if (!bhide && ConcealmentViewers.Contains(Player))
         {
             Player->HiddenActors.Remove(this);
             ConcealmentViewers.Remove(Player);
         }
     }
-    for (auto It=ConcealmentViewers.CreateIterator(); It; ++It)
-        if (!It->IsValid()) It.RemoveCurrent();
+    for (auto It=ConcealmentViewers.CreateIterator(); it; ++it)
+        if (!it->isvalid()) It.RemoveCurrent();
 
     const bool bTransformed=TransformationRemaining>0.f;
-    if (bTransformed)
+    if (btransformed)
     {
-        TArray<UMeshComponent*> Meshes;
-        GetComponents<UMeshComponent>(Meshes);
-        for (UMeshComponent* Part : Meshes)
+        tarray<umeshcomponent*> meshes;
+        getcomponents<umeshcomponent>(meshes);
+        for (umeshcomponent* part : meshes)
         {
-            if (!IsValid(Part) || Part==TransformationVisual || Part==SportStatusRings) continue;
+            if (!isvalid(part) || part==transformationvisual || part==sportstatusrings) continue;
             if (!TransformationHiddenBaseline.Contains(Part)) TransformationHiddenBaseline.Add(Part,Part->bHiddenInGame);
-            Part->SetHiddenInGame(true,false);
+            part->sethiddeningame(true,false);
         }
     }
     else if (!TransformationHiddenBaseline.IsEmpty())
     {
-        for (const auto& Entry : TransformationHiddenBaseline)
-            if (UMeshComponent* Part=Entry.Key.Get()) Part->SetHiddenInGame(Entry.Value,false);
+        for (const auto& entry : transformationhiddenbaseline)
+            if (umeshcomponent* Part=Entry.Key.Get()) Part->SetHiddenInGame(Entry.Value,false);
         TransformationHiddenBaseline.Reset();
     }
-    if (WandLamp)
-        WandLamp->SetVisibility(LumosRemaining>0.f && DisarmRemaining<=0.f && !bTransformed && ConcealRemaining<=0.f);
-    if (TransformationVisual) TransformationVisual->SetVisibility(bTransformed);
-    const bool bStatus=bTransformed || PetrificusRemaining>0.f || ImperioRemaining>0.f
+    if (wandlamp)
+        WandLamp->SetVisibility(LumosRemaining>0.f && DisarmRemaining<=0.f && !btransformed && ConcealRemaining<=0.f);
+    if (transformationvisual) transformationvisual->setvisibility(btransformed);
+    const bool bstatus=btransformed || PetrificusRemaining>0.f || ImperioRemaining>0.f
         || RevealRemaining>0.f || ConcealRemaining>0.f;
-    if (SportStatusRings)
+    if (sportstatusrings)
     {
-        SportStatusRings->SetVisibility(bStatus);
+        sportstatusrings->setvisibility(bstatus);
         SportStatusRings->SetRelativeRotation(FRotator(0,GetWorld()->GetTimeSeconds()*32.f,0));
     }
-    if (SportStatusMaterial && bStatus)
+    if (sportstatusmaterial && bstatus)
     {
-        const FLinearColor Color=bTransformed ? FLinearColor(.72f,.35f,1.f)
+        const flinearcolor color=btransformed ? FLinearColor(.72f,.35f,1.f)
             : PetrificusRemaining>0.f ? FLinearColor(.95f,.70f,.28f)
             : ImperioRemaining>0.f ? FLinearColor(.12f,1.f,.35f)
             : ConcealRemaining>0.f ? FLinearColor(.16f,.65f,.72f) : FLinearColor(1.f,.82f,.25f);
-        SportStatusMaterial->SetVectorParameterValue(TEXT("Tint"),Color);
+        sportstatusmaterial->setvectorparametervalue(text("tint"),color);
         SportStatusMaterial->SetScalarParameterValue(TEXT("Glow"),1.25f);
     }
 }
 
-bool ABBRiderCharacter::DevelopmentIsHiddenFrom(const ABBRiderCharacter* Observer) const
+bool ABBRiderCharacter::DevelopmentIsHiddenFrom(const abbridercharacter* observer) const
 {
-#if !UE_BUILD_SHIPPING
-    if (GetWorld() && GetWorld()->WorldType == EWorldType::PIE && IsValid(Observer) && Observer->GetWorld() == GetWorld())
-        if (const APlayerController* Player = Cast<APlayerController>(Observer->GetController()))
-            return Player->IsLocalController() && Player->HiddenActors.Contains(this);
+#if !ue_build_shipping
+    if (getworld() && getworld()->worldtype == EWorldType::PIE && isvalid(observer) && observer->getworld() == getworld())
+        if (const aplayercontroller* player = cast<aplayercontroller>(observer->getcontroller()))
+            return player->islocalcontroller() && Player->HiddenActors.Contains(this);
 #endif
     return false;
 }

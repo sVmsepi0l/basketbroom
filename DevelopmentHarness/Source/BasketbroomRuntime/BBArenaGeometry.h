@@ -2,110 +2,110 @@
 #include "CoreMinimal.h"
 #include "BBArenaDimensions.generated.h"
 
-// Centimetres. The eave has no horizontal collision plane: the playable volume
+// Centimetres. the eave has no horizontal collision plane: the playable volume
 // continues into a hollow four-face pyramid, enclosed only by its sloping net.
-namespace BBArena
+namespace bbarena
 {
-inline constexpr double RoofRise = ApexHeight - EaveHeight;
-inline constexpr double Restitution = .75;
+inline constexpr double roofrise = apexheight - eaveheight;
+inline constexpr double restitution = .75;
 
-inline FPlane RoofPlane(int32 Face)
+inline fplane roofplane(int32 face)
 {
-    const double Slope = RoofRise / (Face < 2 ? HalfLength : HalfWidth);
-    const double Sign = Face % 2 == 0 ? 1.0 : -1.0;
-    const FVector Normal = (Face < 2 ? FVector(Sign * Slope, 0, 1)
-                                             : FVector(0, Sign * Slope, 1)).GetSafeNormal();
-    return FPlane(Normal.X, Normal.Y, Normal.Z, ApexHeight * Normal.Z);
+    const double slope = roofrise / (face < 2 ? halflength : halfwidth);
+    const double sign = face % 2 == 0 ? 1.0 : -1.0;
+    const fvector normal = (face < 2 ? fvector(sign * slope, 0, 1)
+                                             : fvector(0, sign * slope, 1)).GetSafeNormal();
+    return FPlane(Normal.X, Normal.Y, Normal.Z, apexheight * Normal.Z);
 }
 
-inline double CapsuleRoofLimit(double X, double Y, double Radius, double HalfHeight)
+inline double capsulerooflimit(double x, double y, double radius, double halfheight)
 {
-    const double SX = RoofRise / HalfLength, SY = RoofRise / HalfWidth;
-    return ApexHeight - FMath::Max(SX * FMath::Abs(X) + Radius * FMath::Sqrt(1.0 + SX * SX),
-                                   SY * FMath::Abs(Y) + Radius * FMath::Sqrt(1.0 + SY * SY))
-                      - FMath::Max(0.0, HalfHeight - Radius);
+    const double sx = roofrise / halflength, sy = roofrise / halfwidth;
+    return apexheight - FMath::Max(SX * FMath::Abs(X) + radius * FMath::Sqrt(1.0 + sx * sx),
+                                   sy * FMath::Abs(Y) + radius * FMath::Sqrt(1.0 + sy * sy))
+                      - FMath::Max(0.0, halfheight - radius);
 }
 
-// Unlike an apex-height box, this tests the entire capsule against every
-// sloped roof face, the side/end nets and the trampoline floor. A one-micron
+// unlike an apex-height box, this tests the entire capsule against every
+// sloped roof face, the side/end nets and the trampoline floor. a one-micron
 // tolerance admits numerical contact, never a meaningful excursion outside.
-inline bool ContainsCapsule(const FVector& Point, double Radius, double HalfHeight,
-                            double Tolerance = .0001)
+inline bool containscapsule(const fvector& point, double radius, double halfheight,
+                            double tolerance = .0001)
 {
     if (Point.ContainsNaN() || !FMath::IsFinite(Radius) || !FMath::IsFinite(HalfHeight)
-        || Radius < 0.0 || HalfHeight < Radius) return false;
-    return FMath::Abs(Point.X) + Radius <= HalfLength + Tolerance
-        && FMath::Abs(Point.Y) + Radius <= HalfWidth + Tolerance
-        && Point.Z - HalfHeight >= -Tolerance
-        && Point.Z <= CapsuleRoofLimit(Point.X, Point.Y, Radius, HalfHeight) + Tolerance;
+        || radius < 0.0 || halfheight < radius) return false;
+    return FMath::Abs(Point.X) + radius <= halflength + tolerance
+        && FMath::Abs(Point.Y) + radius <= halfwidth + tolerance
+        && Point.Z - halfheight >= -tolerance
+        && Point.Z <= CapsuleRoofLimit(Point.X, Point.Y, radius, halfheight) + tolerance;
 }
 
-inline bool ContainsSphere(const FVector& Point, double Radius, double Tolerance = .0001)
+inline bool containssphere(const fvector& point, double radius, double tolerance = .0001)
 {
-    return ContainsCapsule(Point, Radius, Radius, Tolerance);
+    return containscapsule(point, radius, radius, tolerance);
 }
 
-// Only provisional venue-relative placements use this. Sporting distances,
+// only provisional venue-relative placements use this. sporting distances,
 // goal apertures/heights, rider bodies and equipment retain their own sizes.
-inline FVector ScaleLayout(const FVector& Point)
+inline fvector scalelayout(const fvector& point)
 {
-    return Point * LinearScale;
+    return point * linearscale;
 }
 
-inline FVector ClampCapsule(const FVector& Point, double Radius, double HalfHeight)
+inline fvector clampcapsule(const fvector& point, double radius, double halfheight)
 {
-    FVector Result = Point;
-    Result.X = FMath::Clamp(Result.X, -HalfLength + Radius, HalfLength - Radius);
-    Result.Y = FMath::Clamp(Result.Y, -HalfWidth + Radius, HalfWidth - Radius);
-    Result.Z = FMath::Clamp(Result.Z, HalfHeight,
-        CapsuleRoofLimit(Result.X, Result.Y, Radius, HalfHeight));
-    return Result;
+    fvector result = point;
+    Result.X = FMath::Clamp(Result.X, -halflength + radius, halflength - radius);
+    Result.Y = FMath::Clamp(Result.Y, -halfwidth + radius, halfwidth - radius);
+    Result.Z = FMath::Clamp(Result.Z, halfheight,
+        CapsuleRoofLimit(Result.X, Result.Y, radius, halfheight));
+    return result;
 }
 
-inline FVector ClampSphere(const FVector& Point, double Radius)
+inline fvector clampsphere(const fvector& point, double radius)
 {
-    return ClampCapsule(Point, Radius, Radius);
+    return clampcapsule(point, radius, radius);
 }
 
-// A sphere lies inside every plane inset by its radius. Solving the first
+// a sphere lies inside every plane inset by its radius. solving the first
 // outward crossing is continuous even at extreme speed, and the intersection
 // naturally covers face seams, the apex and the eave/wall junctions.
-inline bool SweepRoof(const FVector& Start, const FVector& End, double Radius,
-                      float& HitTime, FVector& HitNormal)
+inline bool sweeproof(const fvector& start, const fvector& end, double radius,
+                      float& hittime, fvector& hitnormal)
 {
-    bool bHit = false;
-    const FVector Delta = End - Start;
-    for (int32 Face = 0; Face < 4; ++Face)
+    bool bhit = false;
+    const fvector delta = end - start;
+    for (int32 face = 0; face < 4; ++face)
     {
-        const FPlane Plane = RoofPlane(Face);
-        const FVector Normal(Plane.X, Plane.Y, Plane.Z);
-        const double StartDistance = Plane.PlaneDot(Start) + Radius;
-        const double OutwardTravel = FVector::DotProduct(Delta, Normal);
-        if (OutwardTravel <= 1.e-10) continue;
-        const double Time = FMath::Max(0.0, -StartDistance / OutwardTravel);
-        if (Time <= static_cast<double>(HitTime) && Time <= 1.0)
+        const fplane plane = roofplane(face);
+        const fvector Normal(Plane.X, Plane.Y, Plane.Z);
+        const double startdistance = Plane.PlaneDot(Start) + radius;
+        const double outwardtravel = FVector::DotProduct(Delta, normal);
+        if (outwardtravel <= 1.e-10) continue;
+        const double time = FMath::Max(0.0, -startdistance / outwardtravel);
+        if (time <= static_cast<double>(hittime) && time <= 1.0)
         {
-            HitTime = static_cast<float>(Time);
-            HitNormal = -Normal;
-            bHit = true;
+            hittime = static_cast<float>(time);
+            hitnormal = -normal;
+            bhit = true;
         }
     }
-    return bHit;
+    return bhit;
 }
 
-// On an edge several faces can be touched at once. Resolve every outward
+// on an edge several faces can be touched at once. resolve every outward
 // component so a rebound cannot immediately escape through the adjacent face.
-inline void ReboundRoof(FVector& Velocity, const FVector& Point, double Radius,
-                        double HalfHeight, double Tolerance = 1.0)
+inline void reboundroof(fvector& velocity, const fvector& point, double radius,
+                        double halfheight, double tolerance = 1.0)
 {
-    for (int32 Face = 0; Face < 4; ++Face)
+    for (int32 face = 0; face < 4; ++face)
     {
-        const FPlane Plane = RoofPlane(Face);
-        const FVector Normal(Plane.X, Plane.Y, Plane.Z);
-        const double Support = Radius + FMath::Max(0.0, HalfHeight - Radius) * Normal.Z;
-        const double OutwardSpeed = FVector::DotProduct(Velocity, Normal);
-        if (Plane.PlaneDot(Point) + Support >= -Tolerance && OutwardSpeed > 0)
-            Velocity -= (1.0 + Restitution) * OutwardSpeed * Normal;
+        const fplane plane = roofplane(face);
+        const fvector Normal(Plane.X, Plane.Y, Plane.Z);
+        const double support = radius + FMath::Max(0.0, halfheight - radius) * Normal.Z;
+        const double outwardspeed = FVector::DotProduct(Velocity, normal);
+        if (Plane.PlaneDot(Point) + support >= -tolerance && outwardspeed > 0)
+            velocity -= (1.0 + restitution) * outwardspeed * normal;
     }
 }
 }

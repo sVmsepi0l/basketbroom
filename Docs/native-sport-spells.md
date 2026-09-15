@@ -1,104 +1,104 @@
-# Sprint 3 sporting spell adapters
+# sprint 3 sporting spell adapters
 
-This sprint initially implemented 23 of the 31 spell-menu actions. These five
+this sprint initially implemented 23 of the 31 spell-menu actions. these five
 adapters extend [native wandplay](native-wandplay.md) without changing stable
-catalog indices or claiming Hogwarts Legacy's combat implementation. Their
-numbers and restrictions are provisional sporting tuning, not new BB-0 laws.
+catalog indices or claiming hogwarts legacy's combat implementation. their
+numbers and restrictions are provisional sporting tuning, not new bb-0 laws.
 
-## New player actions
+## new player actions
 
-- **Revelio (3):** six live seconds of detecting concealed opponents within
-  22 metres, with a two-second shared wand cooldown. World geometry obstructs
-  detection. It does not reveal locked objects, collectibles or quest data.
-- **Disillusionment (20):** six live seconds of concealment from opposing
-  players, with a two-second shared cooldown. Self and teammates still see the
-  rider. Casting at another rider, including a miss or rejected stealth attempt,
-  breaks concealment. An applied wand hit also breaks the target's concealment;
-  a blocked hit does not. Activating concealment extinguishes Lumos. Carried
+- **revelio (3):** six live seconds of detecting concealed opponents within
+  22 metres, with a two-second shared wand cooldown. world geometry obstructs
+  detection. it does not reveal locked objects, collectibles or quest data.
+- **disillusionment (20):** six live seconds of concealment from opposing
+  players, with a two-second shared cooldown. self and teammates still see the
+  rider. casting at another rider, including a miss or rejected stealth attempt,
+  breaks concealment. an applied wand hit also breaks the target's concealment;
+  a blocked hit does not. activating concealment extinguishes Lumos. carried
   equipment balls remain separate visible actors; physical collisions and blind
-  aimed hits continue to work. This is visual camouflage, not invulnerability.
-- **Petrificus Totalus (5):** a concealed caster within 3.5 metres must approach
-  from behind the target's aim direction. The target's forward direction dotted
+  aimed hits continue to work. this is visual camouflage, not invulnerability.
+- **petrificus totalus (5):** a concealed caster within 3.5 metres must approach
+  from behind the target's aim direction. the target's forward direction dotted
   with target-to-caster horizontal direction must be below -0.5; the target's
-  active, in-range Revelio defeats that condition. An accepted hit binds for
-  2.5 live seconds, halts flight and drops held equipment. Protego blocks it.
-  The shared cooldown is three seconds. It counts as a stun for the existing
-  post-confirmed-impediment prohibition. This does not reproduce the base
+  active, in-range revelio defeats that condition. an accepted hit binds for
+  2.5 live seconds, halts flight and drops held equipment. protego blocks it.
+  the shared cooldown is three seconds. it counts as a stun for the existing
+  post-confirmed-impediment prohibition. this does not reproduce the base
   game's stealth takedown animation or lethal enemy outcomes.
-- **Transformation (13):** a hit within 24 metres places a rider in a purple
-  sporting orb form for three live seconds. Flight, wandwork and ball interaction
-  are locked, held equipment is dropped, and shield/light are cleared. The
-  collision capsule and owned pawn stay intact. Protego blocks the effect.
-  The shared cooldown is four seconds. It provisionally counts as an impediment,
-  so the existing genuine HUD confirmation flow protects against a follow-up stun.
-- **Imperio (28):** a hit within 28 metres reverses horizontal flight acceleration
-  for three live seconds, with a four-second shared cooldown. Looking, ascending,
+- **transformation (13):** a hit within 24 metres places a rider in a purple
+  sporting orb form for three live seconds. flight, wandwork and ball interaction
+  are locked, held equipment is dropped, and shield/light are cleared. the
+  collision capsule and owned pawn stay intact. protego blocks the effect.
+  the shared cooldown is four seconds. it provisionally counts as an impediment,
+  so the existing genuine hud confirmation flow protects against a follow-up stun.
+- **imperio (28):** a hit within 28 metres reverses horizontal flight acceleration
+  for three live seconds, with a four-second shared cooldown. looking, ascending,
   descending, ball actions and wand choices remain controlled by the player.
-  Keyboard and controller flight share the same native movement simulation.
-  Releasing horizontal input brakes normally; the effect expires automatically.
-  No pawn possession, controller transfer, team reassignment or network ownership
-  transfer occurs. This is explicitly an input-confusion sport adaptation, not
-  full mind control. As an Unforgivable, it bypasses Protego and applies before
-  regulation review. Bloodbroom permits the curse while retaining every other
+  keyboard and controller flight share the same native movement simulation.
+  releasing horizontal input brakes normally; the effect expires automatically.
+  no pawn possession, controller transfer, team reassignment or network ownership
+  transfer occurs. this is explicitly an input-confusion sport adaptation, not
+  full mind control. as an unforgivable, it bypasses protego and applies before
+  regulation review. bloodbroom permits the curse while retaining every other
   shared conduct restriction.
 
-## Status, presentation and lifecycle
+## status, presentation and lifecycle
 
-All five status timers replicate from authority and advance with consumed live
-match time. Stoppages and active free/penalty shots freeze them. Opening a new
-match clears them; ordinary stoppages and quarter breaks retain them. Existing protected
-shot/restart movement overrides remain in place. Position swaps carry the rider's
+all five status timers replicate from authority and advance with consumed live
+match time. stoppages and active free/penalty shots freeze them. opening a new
+match clears them; ordinary stoppages and quarter breaks retain them. existing protected
+shot/restart movement overrides remain in place. position swaps carry the rider's
 statuses instead of giving an escape from an effect.
 
-Concealment uses each local player's hidden-actor list, so independent local
-viewers can see different results. The spell owns only the entries it adds and
-cleans them up on expiry, reset or EndPlay. Rider status rings show reveal,
+concealment uses each local player's hidden-actor list, so independent local
+viewers can see different results. the spell owns only the entries it adds and
+cleans them up on expiry, reset or EndPlay. rider status rings show reveal,
 concealment, binding and confusion when the rider is visible to that viewer.
-Transformation hides the original meshes without changing their visibility or
+transformation hides the original meshes without changing their visibility or
 collision configuration, shows a noncolliding original orb and rings, and restores
-the saved hidden flags on recovery. These are readable prototype effects;
+the saved hidden flags on recovery. these are readable prototype effects;
 final character art and cinematic spell animation remain in development.
 
-## Validation procedure and limits
+## validation procedure and limits
 
-After compiling and loading the new native module, run
+after compiling and loading the new native module, run
 `Tools/test_native_sport_spells.py` through the existing editor bridge once with
-`{"variant":"regulation","max_wall_seconds":420}` and once in a fresh PIE world
-with `{"variant":"bloodbroom","max_wall_seconds":420}`. The suite owns and ends
+`{"variant":"regulation","max_wall_seconds":420}` and once in a fresh pie world
+with `{"variant":"bloodbroom","max_wall_seconds":420}`. the suite owns and ends
 its world and publishes atomic receipts under
 `.local/native-sport-spells-{variant}-results.json`.
 
-Each run plans 21 checks: real per-view concealment, detection range/occlusion,
+each run plans 21 checks: real per-view concealment, detection range/occlusion,
 cast/hit reveal, rejected and successful stealth conditions, actual possession
 drops, shield counterplay, transformed collision/presentation and action locks,
-frozen timers, recovery, Imperio movement/ownership and mode-dependent review,
+frozen timers, recovery, imperio movement/ownership and mode-dependent review,
 stopped action denial, genuine quarter-boundary preservation/recovery, and remaining contextual
-spells. Fixture transforms, component ticks, real AddMovementInput and accelerated
-world ticks arrange the test. No effect timer, hit receipt, possession, score,
+spells. fixture transforms, component ticks, real addmovementinput and accelerated
+world ticks arrange the test. no effect timer, hit receipt, possession, score,
 conduct decision or rule clock is injected. `--list` and syntax checks do not
-claim runtime success; the final receipts establish that separately. Network
+claim runtime success; the final receipts establish that separately. network
 replication, packaged rendering, physical input devices and genuine rematch cleanup
 need their own checks.
 
-The remaining eight contextual actions now have separate [bounded workshop and
-resource adapters](native-contextual-spells.md): Alohomora, Wingardium Leviosa,
-Reparo, Conjuring, Altering, Evanesco, Ancient Magic and Ancient Magic Throw.
-Their dedicated tests establish their own validation, separate from the five
-status adapters documented here. CPU wand tactics, advanced elemental effects
-and the full Creator Kit integration remain outstanding.
+the remaining eight contextual actions now have separate [bounded workshop and
+resource adapters](native-contextual-spells.md): alohomora, wingardium leviosa,
+reparo, conjuring, altering, evanesco, ancient magic and ancient magic Throw.
+their dedicated tests establish their own validation, separate from the five
+status adapters documented here. cpu wand tactics, advanced elemental effects
+and the full creator kit integration remain outstanding.
 
-## Separate network coverage
+## separate network coverage
 
 `Tools/test_native_sport_spell_network.py` passed 12 checks in two separate local
-PIE worlds. Its four spell adapters are Disillusionment, Revelio, Transformation
+pie worlds. its four spell adapters are disillusionment, revelio, transformation
 and Imperio: real owning-client requests, replicated timers and concealment,
-transformation drop/action locks, stopped-time preservation, Imperio movement
-and ownership, and rejection of remote free-shot adjudication. The final case
-checks fixture settings and PIE cleanup. The receipt is
+transformation drop/action locks, stopped-time preservation, imperio movement
+and ownership, and rejection of remote free-shot adjudication. the final case
+checks fixture settings and pie cleanup. the receipt is
 `.local/native-sport-spell-network-results.json`.
 
-This suite never casts Petrificus Totalus. Its network cast, binding status and
+this suite never casts petrificus Totalus. its network cast, binding status and
 double-tap behavior remain untested by this receipt, although the separate
-single-world suite exercises its stealth conditions and actual binding. Two
-PIE worlds in one editor process also do not certify separate machines, adverse
-latency, packet loss, physical controller transport or Hogwarts Legacy multiplayer.
+single-world suite exercises its stealth conditions and actual binding. two
+pie worlds in one editor process also do not certify separate machines, adverse
+latency, packet loss, physical controller transport or hogwarts legacy multiplayer.

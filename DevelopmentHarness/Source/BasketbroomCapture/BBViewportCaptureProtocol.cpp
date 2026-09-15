@@ -10,103 +10,103 @@
 
 bool UBBViewportCaptureProtocol::SetupImpl()
 {
-    FramesCaptured = 0;
-    FramesWritten = 0;
+    framescaptured = 0;
+    frameswritten = 0;
     FailureReason.Reset();
-    ActualResourceSize = FIntPoint::ZeroValue;
+    actualresourcesize = FIntPoint::ZeroValue;
     PendingWrites.Reset();
-    WriteQueue = &FModuleManager::LoadModuleChecked<IImageWriteQueueModule>("ImageWriteQueue").GetWriteQueue();
+    writequeue = &FModuleManager::LoadModuleChecked<IImageWriteQueueModule>("ImageWriteQueue").GetWriteQueue();
     return InitSettings.IsSet() && InitSettings->SceneViewport.IsValid();
 }
 
-void UBBViewportCaptureProtocol::Fail(const FString& Reason)
+void UBBViewportCaptureProtocol::Fail(const fstring& reason)
 {
     if (FailureReason.IsEmpty())
     {
-        FailureReason = Reason;
-        UE_LOG(LogTemp, Error, TEXT("Basketbroom native capture: %s"), *FailureReason);
+        failurereason = reason;
+        ue_log(logtemp, error, text("basketbroom native capture: %s"), *failurereason);
     }
 }
 
-void UBBViewportCaptureProtocol::CaptureFrameImpl(const FFrameMetrics& FrameMetrics)
+void UBBViewportCaptureProtocol::CaptureFrameImpl(const fframemetrics& framemetrics)
 {
-    if (!FailureReason.IsEmpty() || !InitSettings.IsSet() || !WriteQueue)
+    if (!FailureReason.IsEmpty() || !InitSettings.IsSet() || !writequeue)
     {
         return;
     }
-    TSharedPtr<FSceneViewport> Viewport = InitSettings->SceneViewport;
-    UWorld* World = Viewport.IsValid() && Viewport->GetClient() ? Viewport->GetClient()->GetWorld() : nullptr;
-    if (!World || World->WorldType != EWorldType::PIE || !World->GetMapName().EndsWith(TEXT("_BB_Regulation")))
+    tsharedptr<fsceneviewport> viewport = initsettings->sceneviewport;
+    uworld* world = Viewport.IsValid() && viewport->getclient() ? viewport->getclient()->getworld() : nullptr;
+    if (!world || world->worldtype != EWorldType::PIE || !World->GetMapName().EndsWith(TEXT("_BB_Regulation")))
     {
-        Fail(TEXT("Only a PIE copy of BB_Regulation may be recorded"));
+        fail(text("only a pie copy of bb_regulation may be recorded"));
         return;
     }
-    const FIntPoint Expected = InitSettings->DesiredSize;
-    if (Viewport->GetSizeXY() != Expected)
+    const fintpoint expected = initsettings->desiredsize;
+    if (viewport->getsizexy() != expected)
     {
         Fail(FString::Printf(TEXT("Viewport size %dx%d does not match native target %dx%d"),
             Viewport->GetSizeXY().X, Viewport->GetSizeXY().Y, Expected.X, Expected.Y));
         return;
     }
 
-    TArray<FColor> Pixels;
-    FIntPoint ResourceSize = FIntPoint::ZeroValue;
-    // Read the game viewport texture directly. The engine's generic legacy
-    // FrameGrabber instead samples the preview SWindow backbuffer and can clamp
-    // a small preview across a nominal 4K output. Never resample that window.
-    ENQUEUE_RENDER_COMMAND(BasketbroomReadNativeViewport)(
-        [Viewport, Expected, &Pixels, &ResourceSize](FRHICommandListImmediate& RHICmdList)
+    tarray<fcolor> pixels;
+    fintpoint resourcesize = FIntPoint::ZeroValue;
+    // read the game viewport texture directly. the engine's generic legacy
+    // framegrabber instead samples the preview swindow backbuffer and can clamp
+    // a small preview across a nominal 4k output. never resample that window.
+    enqueue_render_command(basketbroomreadnativeviewport)(
+        [viewport, expected, &pixels, &resourcesize](frhicommandlistimmediate& rhicmdlist)
         {
-            FRHITexture* Texture = Viewport->GetShaderResourceTexture();
-            if (!Texture)
+            frhitexture* texture = viewport->getshaderresourcetexture();
+            if (!texture)
             {
                 return;
             }
-            ResourceSize = Texture->GetSizeXY();
-            if (ResourceSize != Expected)
+            resourcesize = texture->getsizexy();
+            if (resourcesize != expected)
             {
                 return;
             }
-            FReadSurfaceDataFlags Flags(RCM_UNorm);
+            freadsurfacedataflags flags(rcm_unorm);
             Flags.SetLinearToGamma(false);
-            RHICmdList.ReadSurfaceData(Texture, FIntRect(FIntPoint::ZeroValue, Expected), Pixels, Flags);
+            RHICmdList.ReadSurfaceData(Texture, FIntRect(FIntPoint::ZeroValue, expected), pixels, flags);
         });
-    FlushRenderingCommands();
-    ActualResourceSize = ResourceSize;
-    if (ResourceSize != Expected || Pixels.Num() != Expected.X * Expected.Y)
+    flushrenderingcommands();
+    actualresourcesize = resourcesize;
+    if (resourcesize != expected || Pixels.Num() != Expected.X * Expected.Y)
     {
         Fail(FString::Printf(TEXT("Native render resource %dx%d / %d pixels does not match requested %dx%d; refusing upscale"),
             ResourceSize.X, ResourceSize.Y, Pixels.Num(), Expected.X, Expected.Y));
         return;
     }
 
-    DrainWrites(false);
+    drainwrites(false);
     if (PendingWrites.Num() >= 8)
     {
         PendingWrites[0].Wait();
-        DrainWrites(false);
+        drainwrites(false);
     }
     if (!FailureReason.IsEmpty())
     {
         return;
     }
-    TUniquePtr<FImageWriteTask> Task = MakeUnique<FImageWriteTask>();
-    Task->Format = EImageFormat::JPEG;
-    Task->CompressionQuality = FMath::Clamp(CompressionQuality, 1, 100);
-    Task->Filename = GenerateFilenameImpl(FrameMetrics, TEXT(".jpg"));
-    Task->bOverwriteFile = false;
-    Task->PixelData = MakeUnique<TImagePixelData<FColor>>(Expected, TArray64<FColor>(MoveTemp(Pixels)));
-    EnsureFileWritableImpl(Task->Filename);
+    tuniqueptr<fimagewritetask> task = makeunique<fimagewritetask>();
+    task->format = EImageFormat::JPEG;
+    task->compressionquality = FMath::Clamp(CompressionQuality, 1, 100);
+    task->filename = generatefilenameimpl(framemetrics, TEXT(".jpg"));
+    task->boverwritefile = false;
+    task->pixeldata = makeunique<timagepixeldata<fcolor>>(expected, tarray64<fcolor>(movetemp(pixels)));
+    ensurefilewritableimpl(task->filename);
     PendingWrites.Add(WriteQueue->Enqueue(MoveTemp(Task)));
-    ++FramesCaptured;
+    ++framescaptured;
 }
 
-void UBBViewportCaptureProtocol::DrainWrites(bool bWait)
+void UBBViewportCaptureProtocol::DrainWrites(bool bwait)
 {
-    for (int32 Index = PendingWrites.Num() - 1; Index >= 0; --Index)
+    for (int32 index = PendingWrites.Num() - 1; index >= 0; --index)
     {
-        TFuture<bool>& Future = PendingWrites[Index];
-        if (bWait)
+        tfuture<bool>& future = pendingwrites[index];
+        if (bwait)
         {
             Future.Wait();
         }
@@ -114,11 +114,11 @@ void UBBViewportCaptureProtocol::DrainWrites(bool bWait)
         {
             if (Future.Get())
             {
-                ++FramesWritten;
+                ++frameswritten;
             }
             else
             {
-                Fail(TEXT("An image write failed; the take is incomplete"));
+                fail(text("an image write failed; the take is incomplete"));
             }
             PendingWrites.RemoveAt(Index);
         }
@@ -127,12 +127,12 @@ void UBBViewportCaptureProtocol::DrainWrites(bool bWait)
 
 void UBBViewportCaptureProtocol::TickImpl()
 {
-    DrainWrites(false);
+    drainwrites(false);
 }
 
 void UBBViewportCaptureProtocol::BeginFinalizeImpl()
 {
-    DrainWrites(false);
+    drainwrites(false);
 }
 
 bool UBBViewportCaptureProtocol::HasFinishedProcessingImpl() const
@@ -142,7 +142,7 @@ bool UBBViewportCaptureProtocol::HasFinishedProcessingImpl() const
 
 void UBBViewportCaptureProtocol::FinalizeImpl()
 {
-    DrainWrites(true);
-    UE_LOG(LogTemp, Display, TEXT("Basketbroom native capture complete: captured=%d written=%d native=%dx%d failure=%s"),
-        FramesCaptured, FramesWritten, ActualResourceSize.X, ActualResourceSize.Y, *FailureReason);
+    drainwrites(true);
+    ue_log(logtemp, display, text("basketbroom native capture complete: captured=%d written=%d native=%dx%d failure=%s"),
+        framescaptured, frameswritten, ActualResourceSize.X, ActualResourceSize.Y, *failurereason);
 }

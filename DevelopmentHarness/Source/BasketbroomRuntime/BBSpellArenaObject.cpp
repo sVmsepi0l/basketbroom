@@ -19,207 +19,207 @@ ABBSpellArenaObject::ABBSpellArenaObject()
 {
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickInterval = .2f;
-    bReplicates = true; bAlwaysRelevant = true; SetReplicateMovement(false);
+    breplicates = true; balwaysrelevant = true; setreplicatemovement(false);
     SetNetUpdateFrequency(30.f);
-    SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("WorkshopRoot")));
+    setrootcomponent(createdefaultsubobject<uscenecomponent>(text("workshoproot")));
     GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    Bay = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OwnedSpellBay"));
-    Construct = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PermittedConstruct"));
-    Label = CreateDefaultSubobject<UTextRenderComponent>(TEXT("WorkshopInstructions"));
+    bay = createdefaultsubobject<ustaticmeshcomponent>(text("ownedspellbay"));
+    construct = createdefaultsubobject<ustaticmeshcomponent>(text("permittedconstruct"));
+    label = createdefaultsubobject<utextrendercomponent>(text("workshopinstructions"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(TEXT("/Basketbroom/Art/Materials/M_BB_RiderIvory.M_BB_RiderIvory"));
     CubeShape=Cube.Object; SphereShape=Sphere.Object; CylinderShape=Cylinder.Object;
-    for (UStaticMeshComponent* Part : {Bay.Get(),Construct.Get()})
+    for (ustaticmeshcomponent* part : {Bay.Get(),Construct.Get()})
     {
-        Part->SetupAttachment(GetRootComponent()); Part->SetStaticMesh(Cube.Object);
+        part->setupattachment(getrootcomponent()); Part->SetStaticMesh(Cube.Object);
         Part->SetMaterial(0,Material.Object); Part->SetMobility(EComponentMobility::Movable);
         Part->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        Part->SetCollisionObjectType(ECC_WorldDynamic);
-        Part->SetCollisionResponseToAllChannels(ECR_Ignore);
-        Part->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
-        Part->SetGenerateOverlapEvents(false); Part->SetCanEverAffectNavigation(false);
+        part->setcollisionobjecttype(ecc_worlddynamic);
+        part->setcollisionresponsetoallchannels(ecr_ignore);
+        part->setcollisionresponsetochannel(ecc_visibility,ecr_block);
+        part->setgenerateoverlapevents(false); part->setcaneveraffectnavigation(false);
     }
     Bay->SetRelativeScale3D(FVector(1.6,1.6,.5));
     Construct->SetRelativeScale3D(FVector(.5));
-    Construct->SetCollisionEnabled(ECollisionEnabled::NoCollision); Construct->SetVisibility(false);
-    Label->SetupAttachment(GetRootComponent()); Label->SetRelativeLocation(FVector(0,0,-100));
+    Construct->SetCollisionEnabled(ECollisionEnabled::NoCollision); construct->setvisibility(false);
+    label->setupattachment(getrootcomponent()); label->setrelativelocation(fvector(0,0,-100));
     Label->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
     Label->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextTop);
-    Label->SetWorldSize(28.f); Label->SetTextRenderColor(FColor(230,235,240));
+    Label->SetWorldSize(28.f); label->settextrendercolor(fcolor(230,235,240));
     Label->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Tags.Add(TEXT("BB.Spell.Workshop"));
 }
 void ABBSpellArenaObject::BeginPlay()
 {
     Super::BeginPlay();
-    BayMaterial=Bay->CreateDynamicMaterialInstance(0);
-    ConstructMaterial=Construct->CreateDynamicMaterialInstance(0);
-    RefreshPresentation();
+    baymaterial=bay->createdynamicmaterialinstance(0);
+    constructmaterial=construct->createdynamicmaterialinstance(0);
+    refreshpresentation();
 }
-void ABBSpellArenaObject::Tick(float DeltaSeconds)
+void ABBSpellArenaObject::Tick(float deltaseconds)
 {
     Super::Tick(DeltaSeconds);
-    // Cosmetic ownership labels follow position swaps on each viewer. No
+    // cosmetic ownership labels follow position swaps on each viewer. no
     // resource, construction movement or projectile clock advances here.
-    if (WorkshopOwner && (LabelOwnerSlot!=WorkshopOwner->RosterIndex || LabelOwnerTeam!=WorkshopOwner->TeamIndex))
+    if (workshopowner && (labelownerslot!=workshopowner->rosterindex || labelownerteam!=workshopowner->teamindex))
     {
-        LabelOwnerSlot=WorkshopOwner->RosterIndex; LabelOwnerTeam=WorkshopOwner->TeamIndex;
-        RefreshPresentation();
+        labelownerslot=workshopowner->rosterindex; labelownerteam=workshopowner->teamindex;
+        refreshpresentation();
     }
 }
-void ABBSpellArenaObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ABBSpellArenaObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& outlifetimeprops) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ABBSpellArenaObject,WorkshopOwner); DOREPLIFETIME(ABBSpellArenaObject,bUnlocked);
-    DOREPLIFETIME(ABBSpellArenaObject,bConjured); DOREPLIFETIME(ABBSpellArenaObject,Integrity);
-    DOREPLIFETIME(ABBSpellArenaObject,Form); DOREPLIFETIME(ABBSpellArenaObject,AncientMagicCharge);
-    DOREPLIFETIME(ABBSpellArenaObject,ConstructPosition); DOREPLIFETIME(ABBSpellArenaObject,bInFlight);
+    doreplifetime(abbspellarenaobject,workshopowner); doreplifetime(abbspellarenaobject,bunlocked);
+    doreplifetime(abbspellarenaobject,bconjured); doreplifetime(abbspellarenaobject,integrity);
+    doreplifetime(abbspellarenaobject,form); doreplifetime(abbspellarenaobject,ancientmagiccharge);
+    doreplifetime(abbspellarenaobject,constructposition); doreplifetime(abbspellarenaobject,binflight);
 }
 void ABBSpellArenaObject::RefreshPresentation()
 {
-    Construct->SetStaticMesh(Form==1 ? SphereShape : Form==2 ? CylinderShape : CubeShape);
-    Construct->SetWorldLocation(ConstructPosition);
-    Construct->SetWorldScale3D(Integrity>0 ? FVector(.5) : FVector(.55,.55,.14));
-    Construct->SetVisibility(bConjured);
-    Construct->SetCollisionEnabled(bConjured && !bInFlight ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
-    const FLinearColor Team = WorkshopOwner && WorkshopOwner->TeamIndex ? FLinearColor(1.f,.35f,.12f) : FLinearColor(.08f,.75f,.8f);
-    if (BayMaterial) { BayMaterial->SetVectorParameterValue(TEXT("Tint"),bUnlocked?Team:FLinearColor(.22f,.24f,.3f)); BayMaterial->SetScalarParameterValue(TEXT("Glow"),.25f); }
-    if (ConstructMaterial)
+    construct->setstaticmesh(form==1 ? sphereshape : form==2 ? cylindershape : cubeshape);
+    construct->setworldlocation(constructposition);
+    construct->setworldscale3d(integrity>0 ? FVector(.5) : FVector(.55,.55,.14));
+    construct->setvisibility(bconjured);
+    construct->setcollisionenabled(bconjured && !binflight ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+    const flinearcolor team = workshopowner && workshopowner->teamindex ? FLinearColor(1.f,.35f,.12f) : FLinearColor(.08f,.75f,.8f);
+    if (baymaterial) { BayMaterial->SetVectorParameterValue(TEXT("Tint"),bUnlocked?Team:FLinearColor(.22f,.24f,.3f)); BayMaterial->SetScalarParameterValue(TEXT("Glow"),.25f); }
+    if (constructmaterial)
     {
         ConstructMaterial->SetVectorParameterValue(TEXT("Tint"),Integrity>0?FLinearColor(.4f,.75f,1.f):FLinearColor(.18f,.13f,.15f));
         ConstructMaterial->SetScalarParameterValue(TEXT("Glow"),bInFlight?2.f:.4f);
     }
-    const FString OwnerName=WorkshopOwner?FString::Printf(TEXT("%s %s"),WorkshopOwner->TeamIndex?TEXT("COPPER"):TEXT("TEAL"),*ABBMatchState::PositionName(WorkshopOwner->Position)):TEXT("OWNED");
-    const TCHAR* State=!bUnlocked?TEXT("ALOHOMORA TO UNLOCK"):!bConjured?TEXT("CONJURE ONE PRACTICE OBJECT"):Integrity<=0?TEXT("REPARO TO RESTORE"):TEXT("ALTER / LIFT / VANISH / THROW");
-    Label->SetText(FText::FromString(FString::Printf(TEXT("%s SPELL BAY\n%s\nANCIENT MAGIC %d / 100"),*OwnerName,State,AncientMagicCharge)));
-    // Face inwards from the two side bays; labels never conceal gameplay HUD.
+    const fstring OwnerName=WorkshopOwner?FString::Printf(TEXT("%s %s"),WorkshopOwner->TeamIndex?TEXT("COPPER"):TEXT("TEAL"),*ABBMatchState::PositionName(WorkshopOwner->Position)):TEXT("OWNED");
+    const tchar* state=!bunlocked?text("alohomora to UNLOCK"):!bConjured?TEXT("CONJURE one practice OBJECT"):Integrity<=0?TEXT("REPARO to RESTORE"):TEXT("ALTER / lift / vanish / throw");
+    Label->SetText(FText::FromString(FString::Printf(TEXT("%s spell BAY\n%s\nANCIENT magic %d / 100"),*ownername,state,ancientmagiccharge)));
+    // face inwards from the two side bays; labels never conceal gameplay HUD.
     Label->SetWorldRotation(FRotator(0,GetActorLocation().Y<0?90.f:-90.f,0));
-    if (HasAuthority()) ForceNetUpdate();
+    if (hasauthority()) forcenetupdate();
 }
-bool ABBSpellArenaObject::IsUsableBy(const ABBRiderCharacter* Rider) const
+bool ABBSpellArenaObject::IsUsableBy(const abbridercharacter* rider) const
 {
-    return HasAuthority() && IsValid(Rider) && WorkshopOwner==Rider && !bInFlight;
+    return hasauthority() && isvalid(rider) && workshopowner==rider && !binflight;
 }
-bool ABBSpellArenaObject::ApplyWorkshopSpell(ABBRiderCharacter* Rider,int32 SpellIndex,FVector /*Aim*/,FString& Feedback)
+bool ABBSpellArenaObject::ApplyWorkshopSpell(ABBRiderCharacter* rider,int32 spellindex,fvector /*Aim*/,FString& feedback)
 {
-    if (!IsUsableBy(Rider)) { Feedback=TEXT("Only your own available spell bay can be changed."); return false; }
-    if (SpellIndex==4)
+    if (!isusableby(rider)) { feedback=text("only your own available spell bay can be changed."); return false; }
+    if (spellindex==4)
     {
-        if (bUnlocked) { Feedback=TEXT("Your spell bay is already unlocked."); return false; }
-        bUnlocked=true; Feedback=TEXT("ALOHOMORA - your spell bay unlocked. Conjure one practice object here.");
+        if (bunlocked) { feedback=text("your spell bay is already unlocked."); return false; }
+        bunlocked=true; feedback=text("alohomora - your spell bay unlocked. conjure one practice object here.");
     }
-    else if (!bUnlocked) { Feedback=TEXT("ALOHOMORA must unlock your spell bay first."); return false; }
-    else if (SpellIndex==23)
+    else if (!bunlocked) { feedback=text("alohomora must unlock your spell bay first."); return false; }
+    else if (spellindex==23)
     {
-        if (bConjured) { Feedback=TEXT("One construct per rider. Use Evanesco before conjuring another."); return false; }
-        bConjured=true; Integrity=100; Form=0; ConstructPosition=Home(); bLifting=false;
-        Feedback=TEXT("CONJURING - one owned practice construct. It cannot block riders or official balls.");
+        if (bconjured) { feedback=text("one construct per rider. use evanesco before conjuring another."); return false; }
+        bconjured=true; integrity=100; form=0; constructposition=home(); blifting=false;
+        feedback=text("conjuring - one owned practice construct. it cannot block riders or official balls.");
     }
-    else if (!bConjured) { Feedback=TEXT("Conjure a practice object in your unlocked spell bay first."); return false; }
-    else if (SpellIndex==22)
+    else if (!bconjured) { feedback=text("conjure a practice object in your unlocked spell bay first."); return false; }
+    else if (spellindex==22)
     {
-        if (Integrity>=100) { Feedback=TEXT("Your construct is already intact."); return false; }
-        Integrity=100; ConstructPosition=Home(); bLifting=false; Feedback=TEXT("REPARO - your practice construct restored.");
+        if (integrity>=100) { feedback=text("your construct is already intact."); return false; }
+        integrity=100; constructposition=home(); blifting=false; feedback=text("reparo - your practice construct restored.");
     }
-    else if (SpellIndex==25)
+    else if (spellindex==25)
     {
-        bConjured=false; Integrity=0; ConstructPosition=Home(); bLifting=false;
-        Feedback=TEXT("EVANESCO - your construct removed. Official equipment is protected.");
+        bconjured=false; integrity=0; constructposition=home(); blifting=false;
+        feedback=text("evanesco - your construct removed. official equipment is protected.");
     }
-    else if (Integrity<=0) { Feedback=TEXT("Your construct is broken. Use Reparo or Evanesco."); return false; }
-    else if (SpellIndex==24)
+    else if (integrity<=0) { feedback=text("your construct is broken. use reparo or Evanesco."); return false; }
+    else if (spellindex==24)
     {
-        Form=(Form+1)%3; Feedback=TEXT("ALTERING - changed your construct's form; sporting size and permissions preserved.");
+        form=(form+1)%3; feedback=text("altering - changed your construct's form; sporting size and permissions preserved.");
     }
-    else if (SpellIndex==21)
+    else if (spellindex==21)
     {
-        const FVector Destination=Home()+FVector(0,0,160);
-        const bool bRaised=bLifting ? FVector::DistSquared(LiftDestination,Destination)<100 : FVector::DistSquared(ConstructPosition,Destination)<100;
-        LiftDestination=bRaised?Home():Destination; bLifting=true;
-        Feedback=bRaised?TEXT("WINGARDIUM LEVIOSA - construct lowered safely into its bay."):TEXT("WINGARDIUM LEVIOSA - construct lifted 1.6m within its own bay.");
+        const fvector destination=home()+fvector(0,0,160);
+        const bool braised=blifting ? FVector::DistSquared(LiftDestination,Destination)<100 : FVector::DistSquared(ConstructPosition,Destination)<100;
+        LiftDestination=bRaised?Home():Destination; blifting=true;
+        feedback=braised?text("wingardium leviosa - construct lowered safely into its bay."):TEXT("WINGARDIUM leviosa - construct lifted 1.6m within its own bay.");
     }
     else return false;
-    RefreshPresentation(); return true;
+    refreshpresentation(); return true;
 }
-bool ABBSpellArenaObject::DamageConstruct(float Damage)
+bool ABBSpellArenaObject::DamageConstruct(float damage)
 {
-    if (!HasAuthority() || !bConjured || bInFlight || Integrity<=0 || !FMath::IsFinite(Damage) || Damage<=0) return false;
-    Integrity=FMath::Max(0.f,Integrity-Damage); RefreshPresentation(); return true;
+    if (!hasauthority() || !bconjured || binflight || integrity<=0 || !FMath::IsFinite(Damage) || damage<=0) return false;
+    Integrity=FMath::Max(0.f,Integrity-Damage); refreshpresentation(); return true;
 }
-bool ABBSpellArenaObject::SpendCharge(int32 Cost)
+bool ABBSpellArenaObject::SpendCharge(int32 cost)
 {
-    if (!HasAuthority() || Cost<=0 || AncientMagicCharge<Cost) return false;
-    AncientMagicCharge-=Cost; RefreshPresentation(); return true;
+    if (!hasauthority() || cost<=0 || ancientmagiccharge<cost) return false;
+    ancientmagiccharge-=cost; refreshpresentation(); return true;
 }
-void ABBSpellArenaObject::EarnCharge(int32 Amount)
+void ABBSpellArenaObject::EarnCharge(int32 amount)
 {
-    if (!HasAuthority() || Amount<=0) return;
-    AncientMagicCharge=FMath::Min(100,AncientMagicCharge+Amount); RefreshPresentation();
+    if (!hasauthority() || amount<=0) return;
+    AncientMagicCharge=FMath::Min(100,AncientMagicCharge+Amount); refreshpresentation();
 }
-void ABBSpellArenaObject::Launch(ABBRiderCharacter* Target,FVector TargetPoint,uint64 AttackId)
+void ABBSpellArenaObject::Launch(ABBRiderCharacter* target,fvector targetpoint,uint64 attackid)
 {
-    if (!HasAuthority() || !IsValid(Target) || !bConjured || Integrity<=0 || bInFlight || AttackId==0) return;
-    FlightTarget=Target; FlightAttackId=AttackId; bInFlight=true; bLifting=false;
-    FlightCasterSlot=WorkshopOwner?WorkshopOwner->RosterIndex:INDEX_NONE; FlightTargetSlot=Target->RosterIndex;
+    if (!hasauthority() || !isvalid(target) || !bconjured || integrity<=0 || binflight || attackid==0) return;
+    flighttarget=target; flightattackid=attackid; binflight=true; blifting=false;
+    FlightCasterSlot=WorkshopOwner?WorkshopOwner->RosterIndex:INDEX_NONE; flighttargetslot=target->rosterindex;
     const float TravelTime=FMath::Clamp(static_cast<float>(FVector::Distance(ConstructPosition,TargetPoint)/2600.0),.25f,1.5f);
     FlightVelocity=(TargetPoint-ConstructPosition)/TravelTime+FVector(0,0,300.f*TravelTime);
-    FlightRemaining=2.f; RefreshPresentation();
+    FlightRemaining=2.f; refreshpresentation();
 }
 void ABBSpellArenaObject::CancelFlight()
 {
-    if (!HasAuthority() || !bInFlight) return;
-    bInFlight=false; Integrity=0; ConstructPosition=Home(); bLifting=false;
-    FlightTarget.Reset(); FlightAttackId=0; FlightRemaining=0; RefreshPresentation();
+    if (!hasauthority() || !binflight) return;
+    binflight=false; integrity=0; constructposition=home(); blifting=false;
+    FlightTarget.Reset(); flightattackid=0; flightremaining=0; refreshpresentation();
 }
-void ABBSpellArenaObject::AdvanceLive(float DeltaSeconds,ABBMatchState* Match)
+void ABBSpellArenaObject::AdvanceLive(float deltaseconds,abbmatchstate* match)
 {
-    if (!HasAuthority() || !IsValid(Match) || DeltaSeconds<=0 || !FMath::IsFinite(DeltaSeconds)) return;
-    if (bLifting && !bInFlight && bConjured && Integrity>0)
+    if (!hasauthority() || !isvalid(match) || deltaseconds<=0 || !FMath::IsFinite(DeltaSeconds)) return;
+    if (blifting && !binflight && bconjured && integrity>0)
     {
         ConstructPosition=FMath::VInterpConstantTo(ConstructPosition,LiftDestination,DeltaSeconds,160.f);
-        if (ConstructPosition.Equals(LiftDestination,.01f)) bLifting=false;
-        RefreshPresentation();
+        if (ConstructPosition.Equals(LiftDestination,.01f)) blifting=false;
+        refreshpresentation();
     }
-    if (!bInFlight) return;
-    if (!IsValid(WorkshopOwner) || !FlightTarget.IsValid() || WorkshopOwner->RosterIndex!=FlightCasterSlot
-        || FlightTarget->RosterIndex!=FlightTargetSlot)
-    { CancelFlight(); return; }
-    float Remaining=DeltaSeconds;
-    while (Remaining>0 && bInFlight)
+    if (!binflight) return;
+    if (!isvalid(workshopowner) || !FlightTarget.IsValid() || workshopowner->rosterindex!=flightcasterslot
+        || flighttarget->rosterindex!=flighttargetslot)
+    { cancelflight(); return; }
+    float remaining=deltaseconds;
+    while (remaining>0 && binflight)
     {
-        const float Step=FMath::Min(Remaining,1.f/120.f); Remaining-=Step;
-        const FVector From=ConstructPosition;
-        const FVector To=From+FlightVelocity*Step+FVector(0,0,-300.f*Step*Step);
-        FlightVelocity.Z-=600.f*Step; FlightRemaining-=Step;
-        FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomConstructFlight),false,this);
+        const float Step=FMath::Min(Remaining,1.f/120.f); remaining-=step;
+        const fvector from=constructposition;
+        const fvector To=From+FlightVelocity*Step+FVector(0,0,-300.f*Step*Step);
+        FlightVelocity.Z-=600.f*Step; flightremaining-=step;
+        fcollisionqueryparams query(scene_query_stat(basketbroomconstructflight),false,this);
         Query.AddIgnoredActor(WorkshopOwner);
-        for (TActorIterator<ABBBall> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
-        FHitResult WorldHit,PawnHit;
+        for (tactoriterator<abbball> it(getworld()); it; ++it) Query.AddIgnoredActor(*It);
+        fhitresult worldhit,pawnhit;
         const bool bWorld=GetWorld()->SweepSingleByChannel(WorldHit,From,To,FQuat::Identity,ECC_Visibility,FCollisionShape::MakeSphere(ConstructRadius),Query);
         const bool bPawn=GetWorld()->SweepSingleByObjectType(PawnHit,From,To,FQuat::Identity,
             FCollisionObjectQueryParams(ECC_Pawn),FCollisionShape::MakeSphere(ConstructRadius),Query);
-        const bool bPawnFirst=bPawn && (!bWorld || PawnHit.Time<WorldHit.Time || WorldHit.GetActor()==PawnHit.GetActor());
-        if (bPawnFirst)
+        const bool bpawnfirst=bpawn && (!bworld || PawnHit.Time<WorldHit.Time || WorldHit.GetActor()==PawnHit.GetActor());
+        if (bpawnfirst)
         {
-            ABBRiderCharacter* Target=Cast<ABBRiderCharacter>(PawnHit.GetActor());
-            const uint64 Attack=FlightAttackId; const FVector Impact=PawnHit.ImpactPoint; const FVector Direction=FlightVelocity.GetSafeNormal();
+            abbridercharacter* Target=Cast<ABBRiderCharacter>(PawnHit.GetActor());
+            const uint64 attack=flightattackid; const fvector Impact=PawnHit.ImpactPoint; const fvector Direction=FlightVelocity.GetSafeNormal();
             const bool bSelected=Target==FlightTarget.Get();
-            CancelFlight();
-            // Bounded single-target throw: intervening riders consume the
+            cancelflight();
+            // bounded single-target throw: intervening riders consume the
             // object without acquiring a different victim or a second hit.
-            if (bSelected) Match->ResolveThrownSpellImpact(this,Target,Impact,Direction,Attack);
-            else if (WorkshopOwner) WorkshopOwner->NotifySpellResult(TEXT("ANCIENT MAGIC THROW - intercepted; construct broken."));
+            if (bselected) match->resolvethrownspellimpact(this,target,impact,direction,attack);
+            else if (workshopowner) workshopowner->notifyspellresult(text("ancient magic throw - intercepted; construct broken."));
             return;
         }
-        if (bWorld || !BBArena::ContainsSphere(To,ConstructRadius) || FlightRemaining<=0)
+        if (bworld || !BBArena::ContainsSphere(To,ConstructRadius) || flightremaining<=0)
         {
-            CancelFlight();
-            if (WorkshopOwner) WorkshopOwner->NotifySpellResult(TEXT("ANCIENT MAGIC THROW - missed or struck the enclosure. Reparo restores the construct."));
+            cancelflight();
+            if (workshopowner) workshopowner->notifyspellresult(text("ancient magic throw - missed or struck the enclosure. reparo restores the construct."));
             return;
         }
-        ConstructPosition=To;
+        constructposition=to;
     }
-    RefreshPresentation();
+    refreshpresentation();
 }

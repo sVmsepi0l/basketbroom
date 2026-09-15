@@ -1,12 +1,12 @@
-using UnrealBuildTool;
+using unrealbuildtool;
 using System.Collections.Generic;
-public class BasketbroomDevEditorTarget : TargetRules
+public class basketbroomdeveditortarget : targetrules
 {
-    public BasketbroomDevEditorTarget(TargetInfo Target) : base(Target)
+    public basketbroomdeveditortarget(targetinfo target) : base(target)
     {
-        Type = TargetType.Editor;
-        DefaultBuildSettings = BuildSettingsVersion.Latest;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+        type = TargetType.Editor;
+        defaultbuildsettings = BuildSettingsVersion.Latest;
+        includeorderversion = EngineIncludeOrderVersion.Latest;
         ExtraModuleNames.Add("BasketbroomRuntime");
         ExtraModuleNames.Add("BasketbroomCapture");
     }

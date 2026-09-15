@@ -1,4 +1,4 @@
-Name,Value,Unit,RulePath
+name,value,unit,rulepath
 score_quaffle,13,points,score.quaffle
 score_quark,37,points,score.quark
 score_snipe,69,points,score.snipe

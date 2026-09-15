@@ -1,10 +1,10 @@
-using UnrealBuildTool;
-public class BasketbroomRuntime : ModuleRules
+using unrealbuildtool;
+public class basketbroomruntime : modulerules
 {
-    public BasketbroomRuntime(ReadOnlyTargetRules Target) : base(Target)
+    public basketbroomruntime(readonlytargetrules target) : base(target)
     {
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "InputCore", "NetCore" });
+        pchusage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        PublicDependencyModuleNames.AddRange(new[] { "core", "coreuobject", "engine", "inputcore", "netcore" });
         PrivateDependencyModuleNames.Add("ApplicationCore");
     }
 }

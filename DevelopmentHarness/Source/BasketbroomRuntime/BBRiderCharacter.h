@@ -6,301 +6,301 @@
 #include "InputCoreTypes.h"
 #include "BBRiderCharacter.generated.h"
 
-class UCameraComponent;
-class UMaterialInterface;
-class UStaticMeshComponent;
-class UMeshComponent;
-class UInstancedStaticMeshComponent;
-class UMaterialInstanceDynamic;
-class UPointLightComponent;
-class APlayerController;
+class ucameracomponent;
+class umaterialinterface;
+class ustaticmeshcomponent;
+class umeshcomponent;
+class uinstancedstaticmeshcomponent;
+class umaterialinstancedynamic;
+class upointlightcomponent;
+class aplayercontroller;
 
-/** Native movement prediction with the authoritative stun speed constraint. */
-UCLASS()
-class BASKETBROOMRUNTIME_API UBBFlyingMovementComponent : public UCharacterMovementComponent
+/** native movement prediction with the authoritative stun speed constraint. */
+uclass()
+class basketbroomruntime_api ubbflyingmovementcomponent : public ucharactermovementcomponent
 {
-    GENERATED_BODY()
+    generated_body()
 
 public:
-    virtual float GetMaxSpeed() const override;
-    virtual float GetMaxAcceleration() const override;
+    virtual float getmaxspeed() const override;
+    virtual float getmaxacceleration() const override;
 
 protected:
-    virtual void PhysFlying(float DeltaTime, int32 Iterations) override;
+    virtual void physflying(float deltatime, int32 iterations) override;
 };
 
-/** An owned, predicted broom rider. MatchState resolves all gameplay requests. */
-UCLASS()
-class BASKETBROOMRUNTIME_API ABBRiderCharacter : public ACharacter
+/** an owned, predicted broom rider. matchstate resolves all gameplay requests. */
+uclass()
+class basketbroomruntime_api abbridercharacter : public acharacter
 {
-    GENERATED_BODY()
+    generated_body()
 
 public:
-    explicit ABBRiderCharacter(const FObjectInitializer& ObjectInitializer);
+    explicit abbridercharacter(const fobjectinitializer& objectinitializer);
 
-    virtual void Tick(float DeltaSeconds) override;
-    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    virtual void UnPossessed() override;
-    virtual void PawnClientRestart() override;
+    virtual void tick(float deltaseconds) override;
+    virtual void setupplayerinputcomponent(uinputcomponent* playerinputcomponent) override;
+    virtual void getlifetimereplicatedprops(tarray<flifetimeproperty>& outlifetimeprops) const override;
+    virtual void unpossessed() override;
+    virtual void pawnclientrestart() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Basketbroom|Camera")
-    TObjectPtr<UCameraComponent> Camera;
+    uproperty(visibleanywhere, blueprintreadonly, category="basketbroom|camera")
+    tobjectptr<ucameracomponent> camera;
 
-    UPROPERTY(ReplicatedUsing=OnRep_TeamIndex, BlueprintReadOnly, Category="Basketbroom|Roster")
-    int32 TeamIndex = 0;
+    uproperty(replicatedusing=onrep_teamindex, blueprintreadonly, category="basketbroom|roster")
+    int32 teamindex = 0;
 
-    /** 0 Netminder, 1 Chaser, 2 Trapper, 3 Ranger, 4 Hurleyback, 5 Scout. */
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Roster")
-    int32 Position = 3;
+    /** 0 netminder, 1 chaser, 2 trapper, 3 ranger, 4 hurleyback, 5 Scout. */
+    uproperty(replicated, blueprintreadonly, category="basketbroom|roster")
+    int32 position = 3;
 
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Roster")
-    int32 RosterIndex = INDEX_NONE;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|roster")
+    int32 rosterindex = index_none;
 
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Interaction")
-    bool bInteractHeld = false;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|interaction")
+    bool binteractheld = false;
 
-    /** Written/extended by server rules; this Character owns the countdown. */
-    UPROPERTY(ReplicatedUsing=OnRep_StunRemaining, BlueprintReadOnly, Category="Basketbroom|Movement")
-    float StunRemaining = 0.0f;
+    /** Written/extended by server rules; this character owns the countdown. */
+    uproperty(replicatedusing=onrep_stunremaining, blueprintreadonly, category="basketbroom|movement")
+    float stunremaining = 0.0f;
 
-    /** Server MatchState advances spell effects with live match time. */
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float SpellCooldownRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float ShieldRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float ImpedimentRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float DisarmRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float Vitality = 100.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float LumosRemaining = 0.f;
+    /** server matchstate advances spell effects with live match time. */
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float spellcooldownremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float shieldremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float impedimentremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float disarmremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float vitality = 100.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float lumosremaining = 0.f;
 
-    /** Sporting statuses: authority advances these with live match time only. */
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float RevealRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float ConcealRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float PetrificusRemaining = 0.f;
-    UPROPERTY(ReplicatedUsing=OnRep_StunRemaining, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float TransformationRemaining = 0.f;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Spells")
-    float ImperioRemaining = 0.f;
+    /** sporting statuses: authority advances these with live match time only. */
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float revealremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float concealremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float petrificusremaining = 0.f;
+    uproperty(replicatedusing=onrep_stunremaining, blueprintreadonly, category="basketbroom|spells")
+    float transformationremaining = 0.f;
+    uproperty(replicated, blueprintreadonly, category="basketbroom|spells")
+    float imperioremaining = 0.f;
 
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
-    bool HasSpellMovementLock() const { return StunRemaining > 0.f || PetrificusRemaining > 0.f || TransformationRemaining > 0.f; }
+    ufunction(blueprintpure, category="basketbroom|spells")
+    bool hasspellmovementlock() const { return stunremaining > 0.f || petrificusremaining > 0.f || transformationremaining > 0.f; }
 
-    /** Concealment changes presentation and AI detection, never physical collision. */
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Spells")
-    bool IsConcealedFrom(const ABBRiderCharacter* Observer) const;
+    /** concealment changes presentation and ai detection, never physical collision. */
+    ufunction(blueprintpure, category="basketbroom|spells")
+    bool isconcealedfrom(const abbridercharacter* observer) const;
 
-    /** Genuine match reset only; ordinary stoppages preserve ongoing effects. */
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    bool DevelopmentIsHiddenFrom(const ABBRiderCharacter* Observer) const;
-    void ResetSportSpellState();
-    void ClearConcealmentViews();
+    /** genuine match reset only; ordinary stoppages preserve ongoing effects. */
+    ufunction(blueprintpure, category="basketbroom|development", meta=(developmentonly))
+    bool developmentishiddenfrom(const abbridercharacter* observer) const;
+    void resetsportspellstate();
+    void clearconcealmentviews();
 
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
-    int32 SelectedSpell = 0;
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
-    FString SpellFeedback;
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Spells")
-    float SpellFeedbackRemaining = 0.f;
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|HUD")
-    bool bShowSpellbook = false;
+    uproperty(blueprintreadonly, transient, category="basketbroom|spells")
+    int32 selectedspell = 0;
+    uproperty(blueprintreadonly, transient, category="basketbroom|spells")
+    fstring spellfeedback;
+    uproperty(blueprintreadonly, transient, category="basketbroom|spells")
+    float spellfeedbackremaining = 0.f;
+    uproperty(blueprintreadonly, transient, category="basketbroom|hud")
+    bool bshowspellbook = false;
 
-    /** Authority sends an outcome to this rider's owning player only. */
-    void NotifySpellResult(const FString& Message, uint64 ImpedimentAttackId = 0);
-    /** Called only after the owning HUD actually draws the current feedback. */
-    void MarkSpellFeedbackDisplayed();
+    /** authority sends an outcome to this rider's owning player only. */
+    void notifyspellresult(const fstring& message, uint64 impedimentattackid = 0);
+    /** called only after the owning hud actually draws the current feedback. */
+    void markspellfeedbackdisplayed();
 
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|HUD")
-    bool bShowRoster = false;
+    uproperty(blueprintreadonly, transient, category="basketbroom|hud")
+    bool bshowroster = false;
 
-    /** Last meaningful local input; labels do not claim a physical transport. */
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
-    bool bUsingGamepad = false;
+    /** last meaningful local input; labels do not claim a physical transport. */
+    uproperty(blueprintreadonly, transient, category="basketbroom|input")
+    bool businggamepad = false;
 
-    /** 0 none, 1 Moderate possession, 2 Severe ejection, 3 Serious shot, 4 Moderate free shot; Menu confirms. */
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Input")
-    int32 GamepadRefereeChoice = 0;
+    /** 0 none, 1 moderate possession, 2 severe ejection, 3 serious shot, 4 moderate free shot; menu confirms. */
+    uproperty(blueprintreadonly, transient, category="basketbroom|input")
+    int32 gamepadrefereechoice = 0;
 
-    UPROPERTY(EditDefaultsOnly, Category="Basketbroom|Input", meta=(ClampMin="1", ClampMax="360"))
-    float GamepadYawDegreesPerSecond = 100.f;
+    uproperty(editdefaultsonly, category="basketbroom|input", meta=(clampmin="1", clampmax="360"))
+    float gamepadyawdegreespersecond = 100.f;
 
-    UPROPERTY(EditDefaultsOnly, Category="Basketbroom|Input", meta=(ClampMin="1", ClampMax="180"))
-    float GamepadPitchDegreesPerSecond = 75.f;
+    uproperty(editdefaultsonly, category="basketbroom|input", meta=(clampmin="1", clampmax="180"))
+    float gamepadpitchdegreespersecond = 75.f;
 
-    /** Cosmetic equipment only; role 4 outside Donnybrook, with owner-view filtering. */
-    UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Equipment")
-    bool bHurleyVisible = false;
+    /** cosmetic equipment only; role 4 outside donnybrook, with owner-view filtering. */
+    uproperty(blueprintreadonly, transient, category="basketbroom|equipment")
+    bool bhurleyvisible = false;
 
-    /** Cosmetic stock skeletal body with an authored Basketbroom seated loop. */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Basketbroom|Art")
-    bool bSkeletalRiderEnabled = false;
+    /** cosmetic stock skeletal body with an authored basketbroom seated loop. */
+    uproperty(visibleanywhere, blueprintreadonly, category="basketbroom|art")
+    bool bskeletalriderenabled = false;
 
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
-    FVector GetAimDirection() const;
+    ufunction(blueprintpure, category="basketbroom|interaction")
+    fvector getaimdirection() const;
 
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
-    FVector GetCarryLocation() const;
+    ufunction(blueprintpure, category="basketbroom|interaction")
+    fvector getcarrylocation() const;
 
-    /** PIE input bridge; true means queued for native Tick, not accepted play. */
-    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    bool DevelopmentRequestAction(int32 Action, int32 Value = 0);
+    /** pie input bridge; true means queued for native tick, not accepted play. */
+    ufunction(blueprintcallable, category="basketbroom|development", meta=(developmentonly))
+    bool developmentrequestaction(int32 action, int32 value = 0);
 
-    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    bool DevelopmentSetInteraction(bool bHeld);
+    ufunction(blueprintcallable, category="basketbroom|development", meta=(developmentonly))
+    bool developmentsetinteraction(bool bheld);
 
-    /** Tests the actual PlayerInput/binding boundary, never a gameplay action. */
-    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    bool DevelopmentInjectGamepadInput(FName KeyName, float Value);
+    /** tests the actual PlayerInput/binding boundary, never a gameplay action. */
+    ufunction(blueprintcallable, category="basketbroom|development", meta=(developmentonly))
+    bool developmentinjectgamepadinput(fname keyname, float value);
 
-    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    bool DevelopmentFlushControllerInput();
+    ufunction(blueprintcallable, category="basketbroom|development", meta=(developmentonly))
+    bool developmentflushcontrollerinput();
 
-    /** Processed LS/RS axes, catch/rise/descend keys, local catch, flush count. */
-    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
-    TArray<float> DevelopmentGetControllerInputState() const;
+    /** processed LS/RS axes, catch/rise/descend keys, local catch, flush count. */
+    ufunction(blueprintpure, category="basketbroom|development", meta=(developmentonly))
+    tarray<float> developmentgetcontrollerinputstate() const;
 
 protected:
-    virtual void BeginPlay() override;
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void beginplay() override;
+    virtual void endplay(const EEndPlayReason::Type endplayreason) override;
 
 private:
-    UPROPERTY()
-    TArray<TObjectPtr<UStaticMeshComponent>> UniformParts;
+    uproperty()
+    tarray<tobjectptr<ustaticmeshcomponent>> uniformparts;
 
-    UPROPERTY()
-    TArray<TObjectPtr<UStaticMeshComponent>> HurleyParts;
+    uproperty()
+    tarray<tobjectptr<ustaticmeshcomponent>> hurleyparts;
 
-    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> WandParts;
-    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> ShieldVisual;
-    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> CockpitShieldVisual;
-    UPROPERTY() TObjectPtr<UStaticMeshComponent> WandLight;
-    UPROPERTY() TObjectPtr<UPointLightComponent> WandLamp;
-    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> ShieldMaterial;
-    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> CockpitShieldMaterial;
-    UPROPERTY() TObjectPtr<UStaticMeshComponent> TransformationVisual;
-    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> SportStatusRings;
-    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> SportStatusMaterial;
-    TSet<TWeakObjectPtr<APlayerController>> ConcealmentViewers;
-    TMap<TWeakObjectPtr<UMeshComponent>, bool> TransformationHiddenBaseline;
-    void InitializeSportSpellVisuals();
-    void RefreshSportSpellVisuals();
+    uproperty() tarray<tobjectptr<ustaticmeshcomponent>> wandparts;
+    uproperty() tobjectptr<uinstancedstaticmeshcomponent> shieldvisual;
+    uproperty() tobjectptr<uinstancedstaticmeshcomponent> cockpitshieldvisual;
+    uproperty() tobjectptr<ustaticmeshcomponent> wandlight;
+    uproperty() tobjectptr<upointlightcomponent> wandlamp;
+    uproperty() tobjectptr<umaterialinstancedynamic> shieldmaterial;
+    uproperty() tobjectptr<umaterialinstancedynamic> cockpitshieldmaterial;
+    uproperty() tobjectptr<ustaticmeshcomponent> transformationvisual;
+    uproperty() tobjectptr<uinstancedstaticmeshcomponent> sportstatusrings;
+    uproperty() tobjectptr<umaterialinstancedynamic> sportstatusmaterial;
+    tset<tweakobjectptr<aplayercontroller>> concealmentviewers;
+    tmap<tweakobjectptr<umeshcomponent>, bool> transformationhiddenbaseline;
+    void initializesportspellvisuals();
+    void refreshsportspellvisuals();
 
 
-    struct FSpellNotice { FString Message; uint64 AttackId = 0; double QueuedAt = 0.0; };
-    TArray<FSpellNotice> PendingSpellNotices;
-    TSet<uint64> AcknowledgedImpediments;
-    uint64 ActiveImpedimentAttackId = 0;
-    double SpellFeedbackDisplayedAt = -1.0;
-    double ActiveSpellNoticeQueuedAt = 0.0;
-    static constexpr int32 MaxOrdinarySpellNotices = 6;
-    static constexpr int32 MaxCriticalSpellNotices = 8;
-    static constexpr double SpellNoticeDeadline = 3.0;
+    struct fspellnotice { fstring message; uint64 attackid = 0; double queuedat = 0.0; };
+    tarray<fspellnotice> pendingspellnotices;
+    tset<uint64> acknowledgedimpediments;
+    uint64 activeimpedimentattackid = 0;
+    double spellfeedbackdisplayedat = -1.0;
+    double activespellnoticequeuedat = 0.0;
+    static constexpr int32 maxordinaryspellnotices = 6;
+    static constexpr int32 maxcriticalspellnotices = 8;
+    static constexpr double spellnoticedeadline = 3.0;
 
-    UPROPERTY()
-    TObjectPtr<UMaterialInterface> TealMaterial;
+    uproperty()
+    tobjectptr<umaterialinterface> tealmaterial;
 
-    UPROPERTY()
-    TObjectPtr<UMaterialInterface> CopperMaterial;
+    uproperty()
+    tobjectptr<umaterialinterface> coppermaterial;
 
-    UPROPERTY()
-    TArray<TObjectPtr<UMaterialInterface>> SkeletalTealMaterials;
+    uproperty()
+    tarray<tobjectptr<umaterialinterface>> skeletaltealmaterials;
 
-    UPROPERTY()
-    TArray<TObjectPtr<UMaterialInterface>> SkeletalCopperMaterials;
+    uproperty()
+    tarray<tobjectptr<umaterialinterface>> skeletalcoppermaterials;
 
-    TSet<FKey> MovementKeys;
-    int32 LastVisualTeam = INDEX_NONE;
-    bool bLocalInteractHeld = false;
-    bool bDevelopmentInteractHeld = false;
-    // FIFO entries: ordinary action/value, or action -1 for held interaction.
-    // Never replicated or populated by packaged-game input.
-    TArray<TPair<int32, int32>> PendingDevelopmentInputs;
-    static constexpr int32 MaxDevelopmentInputs = 32;
-    double LastServerActionTime = -1.0;
-    double LastServerInteractTime = -1.0;
+    tset<fkey> movementkeys;
+    int32 lastvisualteam = index_none;
+    bool blocalinteractheld = false;
+    bool bdevelopmentinteractheld = false;
+    // fifo entries: ordinary action/value, or action -1 for held interaction.
+    // never replicated or populated by packaged-game input.
+    tarray<tpair<int32, int32>> pendingdevelopmentinputs;
+    static constexpr int32 maxdevelopmentinputs = 32;
+    double lastserveractiontime = -1.0;
+    double lastserverinteracttime = -1.0;
 
-    struct FDevelopmentControllerInput { FKey Key; float Value = 0.f; bool bFlush = false; };
-    TArray<FDevelopmentControllerInput> PendingControllerInputs;
-    bool bObservedViewportFocus = false;
-    bool bLastViewportFocused = false;
-    bool bGamepadRequiresNeutral = false;
-    bool bLastConductReviewPending = false;
-    int32 LastGamepadConductFoulCount = -1;
-    int32 ControllerInputFlushCount = 0;
+    struct fdevelopmentcontrollerinput { fkey key; float value = 0.f; bool bflush = false; };
+    tarray<fdevelopmentcontrollerinput> pendingcontrollerinputs;
+    bool bobservedviewportfocus = false;
+    bool blastviewportfocused = false;
+    bool bgamepadrequiresneutral = false;
+    bool blastconductreviewpending = false;
+    int32 lastgamepadconductfoulcount = -1;
+    int32 controllerinputflushcount = 0;
 
-    void BindControllerInput(UInputComponent* Input);
-    void RegisterControllerInputLifecycle();
-    void TickControllerInput(APlayerController* Player);
-    void ObserveInputDevice(FKey Key);
-    void GamepadPressed(FKey Key);
-    void GamepadReleased(FKey Key);
-    void GamepadMoveAxis(float Value);
-    void GamepadLookYaw(float Value);
-    void GamepadLookPitch(float Value);
-    void ReleaseInteractInput();
-    void SyncGamepadRefereeChoice();
-    float ControllerAxis(const FKey Key) const;
-    bool IsGamepadNeutral(APlayerController* Player) const;
-    bool HasControllerViewportFocus(APlayerController* Player) const;
-    void FlushOwnedControllerInput();
-    void HandleInputDeviceConnection(EInputDeviceConnectionState State, FPlatformUserId User, FInputDeviceId Device);
-    void HandleInputDevicePairing(FInputDeviceId Device, FPlatformUserId NewUser, FPlatformUserId OldUser);
+    void bindcontrollerinput(uinputcomponent* input);
+    void registercontrollerinputlifecycle();
+    void tickcontrollerinput(aplayercontroller* player);
+    void observeinputdevice(fkey key);
+    void gamepadpressed(fkey key);
+    void gamepadreleased(fkey key);
+    void gamepadmoveaxis(float value);
+    void gamepadlookyaw(float value);
+    void gamepadlookpitch(float value);
+    void releaseinteractinput();
+    void syncgamepadrefereechoice();
+    float controlleraxis(const fkey key) const;
+    bool isgamepadneutral(aplayercontroller* player) const;
+    bool hascontrollerviewportfocus(aplayercontroller* player) const;
+    void flushownedcontrollerinput();
+    void handleinputdeviceconnection(einputdeviceconnectionstate state, fplatformuserid user, finputdeviceid device);
+    void handleinputdevicepairing(finputdeviceid device, fplatformuserid newuser, fplatformuserid olduser);
 
-    void MovementPressed(FKey Key);
-    void MovementReleased(FKey Key);
-    void LookYaw(float Value);
-    void LookPitch(float Value);
-    void StartInteract();
-    void StopInteract();
-    void ReleaseBall();
-    void RequestPosition(FKey Key);
-    void RequestTeam();
-    void RequestReady();
-    void RequestStoppage();
-    void ToggleRoster();
-    void ToggleSpellbook();
-    void PreviousSpell();
-    void NextSpell();
-    void CastSelectedSpell();
-    void RequestShield();
-    void RequestBloodbroom();
-    void RequestFreeShot();
-    void RequestPossessionAward();
-    void RequestPenaltyShot();
-    void RequestEjection();
-    void RequestModerateAdvantage();
-    void ShowNextSpellNotice();
-    void RefreshSpellVisuals();
-    void SubmitAction(int32 Action, int32 Value = 0);
-    void RefreshUniform();
-    void RefreshHurley();
-    void ResetLocalInput();
+    void movementpressed(fkey key);
+    void movementreleased(fkey key);
+    void lookyaw(float value);
+    void lookpitch(float value);
+    void startinteract();
+    void stopinteract();
+    void releaseball();
+    void requestposition(fkey key);
+    void requestteam();
+    void requestready();
+    void requeststoppage();
+    void toggleroster();
+    void togglespellbook();
+    void previousspell();
+    void nextspell();
+    void castselectedspell();
+    void requestshield();
+    void requestbloodbroom();
+    void requestfreeshot();
+    void requestpossessionaward();
+    void requestpenaltyshot();
+    void requestejection();
+    void requestmoderateadvantage();
+    void shownextspellnotice();
+    void refreshspellvisuals();
+    void submitaction(int32 action, int32 value = 0);
+    void refreshuniform();
+    void refreshhurley();
+    void resetlocalinput();
 
-    UFUNCTION()
-    void OnRep_TeamIndex();
+    ufunction()
+    void onrep_teamindex();
 
-    UFUNCTION()
-    void OnRep_StunRemaining();
+    ufunction()
+    void onrep_stunremaining();
 
-    UFUNCTION(Server, Reliable)
-    void ServerStartInteract();
+    ufunction(server, reliable)
+    void serverstartinteract();
 
-    UFUNCTION(Server, Reliable)
-    void ServerStopInteract();
+    ufunction(server, reliable)
+    void serverstopinteract();
 
-    UFUNCTION(Server, Reliable)
-    void ServerAction(int32 Action, int32 Value, FVector Aim);
+    ufunction(server, reliable)
+    void serveraction(int32 action, int32 value, fvector aim);
 
-    UFUNCTION(Client, Reliable)
-    void ClientSpellResult(const FString& Message, uint64 ImpedimentAttackId);
+    ufunction(client, reliable)
+    void clientspellresult(const fstring& message, uint64 impedimentattackid);
 
-    UFUNCTION(Server, Reliable)
-    void ServerAcknowledgeImpediment(uint64 ImpedimentAttackId);
+    ufunction(server, reliable)
+    void serveracknowledgeimpediment(uint64 impedimentattackid);
 };
