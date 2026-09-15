@@ -133,6 +133,7 @@ void ABBRiderCharacter::GamepadPressed(FKey Key)
             else if (Choice == 4) RequestFreeShot();
             // A fresh review and a lone Menu press never choose a sanction.
         }
+        else if (bShowRoster) RequestModerateAdvantage();
         else if (Match && Match->bLive) RequestStoppage();
         else RequestReady();
     }

@@ -66,6 +66,7 @@ struct PointEvent {
 struct Award { int team = -1; std::int64_t points = 0; int ball = -1, player = -1; };
 struct PenaltyShot {
     bool free_shot = false; // Moderate: restorative shot, no temporary removal.
+    bool post_termination = false; // Keep the provisional ending until certification.
     PenaltyShotStage stage = PenaltyShotStage::None;
     PenaltyShotOutcome outcome = PenaltyShotOutcome::None;
     int penalty_id = -1, ball = -1, shooter = -1, netminder = -1, attacking_team = -1;
@@ -137,14 +138,17 @@ public:
     // Serious shot administration uses a separate stopped-time attempt clock.
     // Native callers supply physical goal/save/miss evidence; these methods
     // never infer points from a disposition string. Five seconds includes flight.
-    // Existing terminal Review or an unavailable defending Netminder needs
-    // explicit external adjudication and is rejected without changing state.
+    // Pre-termination remedies can run during Snitch/horn/OT-margin Review;
+    // the original ending and live timestamp stay frozen until certification.
+    // Donnybrook terminal conflicts or an unavailable defending Netminder
+    // need external adjudication and are rejected without changing state.
     bool start_penalty_shot(int penalty_id, int ball, int shooter, int netminder, bool free_shot = false);
     bool release_penalty_shot(int shooter);
     Millis advance_penalty_shot(Millis delta_ms);
     bool complete_penalty_shot(PenaltyShotOutcome outcome, const PointEvent& goal = PointEvent{});
     // Actual protected defending custody resolves the pending penalty. A made
-    // Donnybrook/OT-ending shot enters Review only after this restart.
+    // Donnybrook/OT-ending shot enters Review only after this restart. Existing
+    // terminal Review keeps its original ending for the later certify() retest.
     bool restart_penalty_shot(int netminder);
     bool penalty_shot_active() const;
     bool recall_chase(int ball);
@@ -183,6 +187,7 @@ private:
     bool available(int player) const;
     bool live_ball(int ball);
     bool carries_scoring_ball(int player) const;
+    bool valid_shot_stoppage() const;
     bool valid_penalty_shot() const;
     bool valid_conduct_award(const Penalty& penalty, int* award_ball = nullptr) const;
     bool process_batch_impl(Millis at_ms, const std::vector<PointEvent>& events);

@@ -30,7 +30,7 @@ REGULATION_CASES = (
     "miss_spends_cooldown_without_damage_or_foul",
     "physical_side_wall_blocks_targeted_spell",
     "protego_blocks_actual_basic_hit",
-    "contextual_spell_reports_pending_without_combat_effect",
+    "contextual_spell_requires_owned_workshop_without_combat_effect",
     "arresto_reduces_actual_native_flight",
     "confirmed_impediment_then_stupefy_applies_stun_before_double_tap_review",
     "conduct_stoppage_freezes_live_effect_timers",
@@ -72,7 +72,7 @@ class NativeSpellTests(base.NativePlayableTests):
         data.update(scope="native same-world local-player spell and conduct integration", variant=VARIANT,
                     not_covered=["remote ownership, networking and internet play",
                                  "physical keyboard bindings, visual quality or frame rate",
-                                 "all 31 spell-menu actions: 8 contextual catalog entries remain pending",
+                                 "the separate eight contextual workshop/resource adapters",
                                  "canonical automatic penalty tiers, penalty shots and catastrophic review",
                                  "mob attacker identities and window expiry (portable conduct suite)"],
                     fixture_policy="Only disposable actor transforms/component ticks, ordinary local-player lifecycle, "
@@ -416,13 +416,13 @@ class NativeSpellTests(base.NativePlayableTests):
         yield self.wait_until(self.ready_to_cast, timeout=1)
         yield from self.drain_feedback()
         before = self.effects(self.guest)
-        self.request(6, 4)  # Alohomora remains a contextual integration entry.
+        self.request(6, 4)  # A rider is not the owned Alohomora workshop target.
         yield self.wait_until(lambda: bool(str(prop(self.pawn, "SpellFeedback"))), timeout=.5)
         self.record(REGULATION_CASES[5], bool(str(prop(self.pawn, "SpellFeedback")))
                     and float(prop(self.pawn, "SpellCooldownRemaining")) == 0
                     and float(prop(self.guest, "Vitality")) >= before["Vitality"] and self.conduct()[0] == 0,
                     feedback=str(prop(self.pawn, "SpellFeedback")), target=self.effects(self.guest),
-                    context_status="pending; no unlock/door implementation claimed")
+                    context_status="requires the owned workshop locker; ordinary rider target is rejected")
 
         yield from self.force_spells()
         yield from self.double_tap(measure=True)

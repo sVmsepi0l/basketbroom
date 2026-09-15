@@ -4,6 +4,10 @@
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
 #include "BBSpellVisual.h"
+#include "BBSpellArenaObject.h"
+#include "EngineUtils.h"
+#include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -24,7 +28,11 @@ void ABBMatchState::SyncCombatRoster()
 {
     if (!Combat || !Rules) return;
     const int32 CurrentPhase = static_cast<int32>(Rules->phase);
-    if (CombatPhase != CurrentPhase) { Combat->reset_phase(); CombatPhase = CurrentPhase; }
+    if (CombatPhase != CurrentPhase)
+    {
+        Combat->reset_phase(); CombatPhase = CurrentPhase;
+        for (ABBSpellArenaObject* Object : SpellWorkshops) if (IsValid(Object)) Object->CancelFlight();
+    }
     Combat->set_live(Rules->status == BB::Status::Live);
     // Combat identity belongs to the rider across a position swap. Roster slots
     // remain the rules engine's discipline/position keys, not confirmation IDs.
@@ -63,6 +71,8 @@ int32 ABBMatchState::CombatIndex(const ABBRiderCharacter* Rider) const
 void ABBMatchState::TickSpells(float LiveDelta)
 {
     if (!HasAuthority() || !Combat || LiveDelta <= 0) return;
+    TickContextualSpells(LiveDelta);
+    if (!bLive || (bConductReviewPending && !bConductAdvantageLive)) return;
     for (ABBRiderCharacter* R : Riders)
     {
         if (!IsValid(R)) continue;
@@ -94,13 +104,13 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
 {
     const FBBSpellSpec* Spell = BBSpellCatalog::Get(SpellIndex);
     if (!HasAuthority() || !Rules || !Combat || !IsValid(R) || !Riders.Contains(R)
-        || !Spell || !bLive || Rules->status != BB::Status::Live || bConductReviewPending
+        || !Spell || !bLive || Rules->status != BB::Status::Live || (bConductReviewPending && !bConductAdvantageLive)
         || R->RosterIndex < 0 || R->RosterIndex >= 16 || Aim.ContainsNaN() || !Aim.IsNormalized()) return;
     if (!PendingPoints.empty())
     {
         // A spell request must not erase a legal ball event already observed.
         Rules->process_batch(Rules->now_ms, PendingPoints);
-        PendingPoints.clear(); SyncRules();
+        PendingPoints.clear(); TickConductAdvantage(); SyncRules();
         if (Rules->status != BB::Status::Live) return;
     }
     SyncCombatRoster();
@@ -109,6 +119,17 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     if (!BBSpellCatalog::IsImplemented(SpellIndex)) { R->NotifySpellResult(Spell->Description); return; }
     if (R->DisarmRemaining > 0) { R->NotifySpellResult(TEXT("Wand disarmed - recovering.")); return; }
     if (R->SpellCooldownRemaining > 0) { R->NotifySpellResult(TEXT("Wand recovering.")); return; }
+    if (Spell->Effect == EBBSpellEffect::Workshop || Spell->Effect == EBBSpellEffect::Throw)
+    {
+        if (TryCastContextualSpell(R,SpellIndex,Aim)) R->SpellCooldownRemaining=Spell->Cooldown;
+        R->ForceNetUpdate(); return;
+    }
+    if (Spell->Effect == EBBSpellEffect::Ancient)
+    {
+        ABBSpellArenaObject* Workshop=EnsureSpellWorkshop(R);
+        if (!Workshop || !Workshop->SpendCharge(100))
+        { R->NotifySpellResult(TEXT("ANCIENT MAGIC needs 100 charge. Legal applied enemy hits earn 20; objects and Ancient Magic cannot farm charge.")); return; }
+    }
     R->SpellCooldownRemaining = Spell->Cooldown;
     if (Spell->Effect == EBBSpellEffect::Shield)
     {
@@ -138,12 +159,27 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     const FVector Start = R->GetActorLocation()+FVector(0,0,72);
     FVector End = Start+Aim*Spell->Range;
     FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomWand), false, R);
+    // Other riders' workshop ornaments cannot be used as wand shields.
+    for (ABBSpellArenaObject* Object : SpellWorkshops)
+        if (IsValid(Object) && Object->WorkshopOwner!=R) Query.AddIgnoredActor(Object);
     // First clip the ray against visible world geometry. Pawn collision is queried
     // separately because Unreal's Pawn profile can ignore the Visibility channel.
     FHitResult Obstruction;
     const bool bObstructed = GetWorld()->LineTraceSingleByChannel(Obstruction, Start, End, ECC_Visibility, Query);
     if (bObstructed)
+    {
         End = Obstruction.ImpactPoint;
+        if (ABBSpellArenaObject* Object=Cast<ABBSpellArenaObject>(Obstruction.GetActor()))
+        {
+            R->ConcealRemaining=0.f;
+            const bool bDamaged=Object->WorkshopOwner==R && Obstruction.GetComponent()==Object->Construct
+                && Object->DamageConstruct(Spell->Damage);
+            ABBSpellVisual::Spawn(GetWorld(),Start,End,SpellIndex,false);
+            R->NotifySpellResult(bDamaged ? TEXT("Practice construct damaged. Reparo restores it; no Ancient Magic charge from objects.")
+                : TEXT("This spell cannot change that workshop part. Official sporting equipment remains protected."));
+            R->ForceNetUpdate(); return;
+        }
+    }
     FHitResult Hit;
     const bool bHit = GetWorld()->SweepSingleByObjectType(Hit, Start, End, FQuat::Identity,
         FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(8.f), Query);
@@ -175,14 +211,34 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
         R->NotifySpellResult(TEXT("PETRIFICUS - requires concealment, a target within 3.5m, and approach from behind."));
         R->ForceNetUpdate(); return;
     }
-    End = Hit.ImpactPoint;
+    ResolveSpellHit(R,Target,SpellIndex,Aim,Hit.ImpactPoint,Start);
+}
+
+void ABBMatchState::ResolveSpellHit(ABBRiderCharacter* R,ABBRiderCharacter* Target,int32 SpellIndex,
+    FVector Aim,FVector ImpactPoint,FVector Start,uint64 ExistingAttackId)
+{
+    const FBBSpellSpec* Spell=BBSpellCatalog::Get(SpellIndex);
+    if (!HasAuthority() || !Rules || !Combat || !Spell || !bLive || Rules->status!=BB::Status::Live
+        || (bConductReviewPending && !bConductAdvantageLive) || !IsValid(R) || !IsValid(Target) || R==Target
+        || !Riders.Contains(R) || !Riders.Contains(Target) || Aim.ContainsNaN() || !Aim.IsNormalized()
+        || ImpactPoint.ContainsNaN()) return;
+    SyncCombatRoster();
+    for (const ABBRiderCharacter* Rider : {R,Target})
+    {
+        if (Rider->RosterIndex<0 || Rider->RosterIndex>=16) return;
+        const auto& Player=Rules->players[Rider->RosterIndex];
+        if (Player.ejected || Player.donnybrook_excluded || Player.removed_until>=0) return;
+    }
+    const FVector End=ImpactPoint;
     // Capsule upper region is a provisional server hit zone, not a head-bone
     // accuracy claim. Skeletal animation remains cosmetic and non-colliding.
     const bool bHead = End.Z-Target->GetActorLocation().Z > 65.f;
     BB::AttackSpec Spec;
     Spec.stun = Spell->bStun; Spec.impediment = Spell->bImpediment;
     Spec.unforgivable = Spell->bUnforgivable; Spec.aimed_at_head = bHead;
-    const auto Cast = Combat->begin_attack(CombatIndex(R),CombatIndex(Target),Spec);
+    BB::CombatDecision Cast;
+    if (ExistingAttackId) Cast=Combat->validate_pending_hit(ExistingAttackId,CombatIndex(R),CombatIndex(Target));
+    else Cast=Combat->begin_attack(CombatIndex(R),CombatIndex(Target),Spec);
     if (!Cast.accepted)
     {
         R->NotifySpellResult(TEXT("Target is not in live play.")); R->ForceNetUpdate(); return;
@@ -225,6 +281,8 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
         Target->GetCharacterMovement()->AddImpulse(FVector(0,0,650),true); break;
     case EBBSpellEffect::Pull:
         Target->GetCharacterMovement()->AddImpulse((R->GetActorLocation()-Target->GetActorLocation()).GetSafeNormal()*1000.f,true); break;
+    case EBBSpellEffect::Ancient:
+    case EBBSpellEffect::Throw:
     case EBBSpellEffect::Push: Target->GetCharacterMovement()->AddImpulse(Aim*1200.f,true); break;
     case EBBSpellEffect::Down: Target->GetCharacterMovement()->AddImpulse(FVector(0,0,-1000),true); break;
     case EBBSpellEffect::Flip: Target->GetCharacterMovement()->AddImpulse(FVector(0,0,1000),true); break;
@@ -242,65 +300,173 @@ void ABBMatchState::CastSpell(ABBRiderCharacter* R, int32 SpellIndex, FVector Ai
     {
         Target->GetCharacterMovement()->StopMovementImmediately();
         Target->bInteractHeld = false;
-        Release(Target,FVector::ZeroVector);
+        // Resolve this actual hit receipt before a lost-possession whistle
+        // freezes Combat; otherwise the applied illegal hit would lose its call.
+        Release(Target,FVector::ZeroVector,true);
     }
     const auto Decision = Combat->resolve_hit(Cast.attack_id, Spell->bImpediment ? BB::HitOutcome::Impeded : BB::HitOutcome::Contact,
         bHead, Spell->bImpediment ? FMath::CeilToInt(Target->ImpedimentRemaining*1000.f) : -1);
+    // Only accepted, legal hostile rider contact earns a resource. No friendly
+    // farming, blocked/missed casts, practice objects or Ancient Magic loops.
+    if (Decision.legal() && Target->TeamIndex!=R->TeamIndex && SpellIndex!=29 && SpellIndex!=30)
+        if (ABBSpellArenaObject* Workshop=EnsureSpellWorkshop(R)) Workshop->EarnCharge(20);
     Target->ForceNetUpdate(); R->ForceNetUpdate();
     R->NotifySpellResult(BBSpellCatalog::Name(SpellIndex)+(Spell->bImpediment ? TEXT(" HIT - target impeded. No follow-up stun.") : TEXT(" HIT")),
         Spell->bImpediment && Decision.accepted ? Cast.attack_id : 0);
     Target->NotifySpellResult(TEXT("Hit by ")+BBSpellCatalog::Name(SpellIndex));
-    if (!Decision.requires_adjudication()) return;
+    if (!Decision.requires_adjudication()) { TickConductAdvantage(); return; }
 
-    TArray<FString> Reasons;
-    if (Decision.has(BB::ConductViolation::Unforgivable)) Reasons.Add(TEXT("UNFORGIVABLE"));
-    if (Decision.has(BB::ConductViolation::Headshot)) Reasons.Add(TEXT("HEADSHOT"));
-    if (Decision.has(BB::ConductViolation::Mobbing)) Reasons.Add(TEXT("MOB ATTACK > 3"));
-    if (Decision.has(BB::ConductViolation::DoubleTap)) Reasons.Add(TEXT("DOUBLE-TAP"));
-    if (Decision.has(BB::ConductViolation::PhysicalHolding)) Reasons.Add(TEXT("PHYSICAL HOLDING"));
-    ++ConductFoulCount; LastConductAttack = Cast.attack_id;
-    LastConductViolations = static_cast<int32>(Decision.violations);
-    LastConductCall = FString::Join(Reasons,TEXT(" + "));
-    ConductOffender = R->RosterIndex; ConductVictimTeam = 1-R->TeamIndex;
-    ConductVictimSlot = Target->RosterIndex; ConductBall = AffectedScoringBall;
-    ConductFoulPoint = Target->GetActorLocation();
-    ConductMark = ConductFoulPoint;
-    // Preserve the existing restart margins, measured from the expanded
-    // goal, side net and eave. The final capsule bound covers the sloped cap.
-    const double LimitX = BBArena::GoalPlaneX - 500.8;
-    const double LimitY = BBArena::HalfWidth - 500.4;
-    ConductMark.X = FMath::Clamp(ConductMark.X, -LimitX, LimitX);
-    ConductMark.Y = FMath::Clamp(ConductMark.Y, -LimitY, LimitY);
-    ConductMark.Z = FMath::Clamp(ConductMark.Z, 400.0, BBArena::EaveHeight - 406.24);
-    ConductMark = BBArena::ClampSphere(ConductMark, 250.0);
-    bConductReviewPending = true;
-    ConductReviewStatus = TEXT("PLAYTEST REFEREE - F6 free shot / F7 possession / F8 shot + removal / F9 ejection");
-    Rules->pause("BB-0 conduct review after applied hit");
-    SyncRules();
-    Say(TEXT("BB-0 FOUL: ")+LastConductCall+TEXT(" - hit applied; referee decision due."));
-    UE_LOG(LogTemp,Display,TEXT("BB0 applied hit then review: id=%llu caster=%d target=%d spell=%d flags=%d"),
-        static_cast<unsigned long long>(Cast.attack_id),R->RosterIndex,Target->RosterIndex,SpellIndex,LastConductViolations);
+    RegisterConductHit(R,Target,SpellIndex,AffectedScoringBall,Decision.violations,Cast.attack_id,bHead);
+}
+
+ABBSpellArenaObject* ABBMatchState::GetSpellWorkshop(const ABBRiderCharacter* Rider) const
+{
+    if (!IsValid(Rider) || !GetWorld()) return nullptr;
+    // Clients discover independently replicated actors; they do not rely on an
+    // authority-only array or on a client-provided object reference.
+    for (TActorIterator<ABBSpellArenaObject> It(GetWorld()); It; ++It)
+        if (It->WorkshopOwner==Rider) return *It;
+    return nullptr;
+}
+int32 ABBMatchState::GetAncientMagicCharge(const ABBRiderCharacter* Rider) const
+{
+    const ABBSpellArenaObject* Object=GetSpellWorkshop(Rider);
+    return Object ? Object->AncientMagicCharge : 0;
+}
+ABBSpellArenaObject* ABBMatchState::EnsureSpellWorkshop(ABBRiderCharacter* Rider)
+{
+    if (!HasAuthority() || !IsValid(Rider) || !Riders.Contains(Rider) || !Rider->IsPlayerControlled()) return nullptr;
+    if (ABBSpellArenaObject* Existing=GetSpellWorkshop(Rider)) return Existing;
+    if (Rider->RosterIndex<0 || Rider->RosterIndex>=16 || SpellWorkshops.Num()>=16) return nullptr;
+    // Original, named side bays occupy provisional tactical space. They never
+    // change the arena, hoop geometry or ball/rider collision responses.
+    const FVector Location((Rider->RosterIndex%8-3.5)*1100.0,
+        (Rider->TeamIndex?1.0:-1.0)*(BBArena::HalfWidth-400.0),1450.0);
+    const FTransform Transform(FRotator::ZeroRotator,Location);
+    ABBSpellArenaObject* Object=GetWorld()->SpawnActorDeferred<ABBSpellArenaObject>(ABBSpellArenaObject::StaticClass(),
+        Transform,this,nullptr,ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!Object) return nullptr;
+    Object->WorkshopOwner=Rider; Object->ConstructPosition=Location+FVector(0,0,180);
+    Object->SetFlags(RF_Transient); Object->FinishSpawning(Transform);
+    SpellWorkshops.Add(Object); Object->ForceNetUpdate(); return Object;
+}
+void ABBMatchState::ResetContextualSpells()
+{
+    if (!HasAuthority()) return;
+    for (ABBSpellArenaObject* Object : SpellWorkshops) if (IsValid(Object)) Object->Destroy();
+    SpellWorkshops.Empty();
+}
+void ABBMatchState::TickContextualSpells(float LiveDelta)
+{
+    if (!HasAuthority() || !bLive || LiveDelta<=0) return;
+    for (int32 I=SpellWorkshops.Num()-1; I>=0; --I)
+    {
+        ABBSpellArenaObject* Object=SpellWorkshops[I];
+        if (!IsValid(Object) || !IsValid(Object->WorkshopOwner) || !Riders.Contains(Object->WorkshopOwner)
+            || !Object->WorkshopOwner->IsPlayerControlled())
+        {
+            if (IsValid(Object)) Object->Destroy();
+            SpellWorkshops.RemoveAt(I); continue;
+        }
+        Object->AdvanceLive(LiveDelta,this);
+        // A physical throw can itself create a conduct stoppage. Never advance
+        // a second projectile beyond that adjudication boundary in this tick.
+        if (!bLive || (bConductReviewPending && !bConductAdvantageLive)) return;
+    }
+    for (ABBRiderCharacter* Rider : Riders)
+        if (IsValid(Rider) && Rider->IsPlayerControlled()) EnsureSpellWorkshop(Rider);
+}
+bool ABBMatchState::TryCastContextualSpell(ABBRiderCharacter* R,int32 SpellIndex,FVector Aim)
+{
+    const FBBSpellSpec* Spell=BBSpellCatalog::Get(SpellIndex);
+    ABBSpellArenaObject* Owned=EnsureSpellWorkshop(R);
+    if (!Spell || !Owned) { R->NotifySpellResult(TEXT("No available owned spell bay.")); return false; }
+    const FVector Start=R->GetActorLocation()+FVector(0,0,72);
+    if (SpellIndex!=30)
+    {
+        FHitResult Hit;
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomWorkshop),false,R);
+        GetWorld()->LineTraceSingleByChannel(Hit,Start,Start+Aim*Spell->Range,ECC_Visibility,Query);
+        ABBSpellArenaObject* Object=Cast<ABBSpellArenaObject>(Hit.GetActor());
+        const bool bBaySpell=SpellIndex==4 || SpellIndex==23;
+        if (Object!=Owned || Hit.GetComponent()!=(bBaySpell?Owned->Bay.Get():Owned->Construct.Get()))
+        {
+            R->NotifySpellResult(bBaySpell?TEXT("Aim at your own side-bay locker within 9m. Official equipment is protected.")
+                :TEXT("Aim at your own practice construct within 9m. Other riders and official equipment are protected."));
+            return false;
+        }
+        FString Feedback;
+        const bool bApplied=Owned->ApplyWorkshopSpell(R,SpellIndex,Aim,Feedback);
+        if (bApplied) ABBSpellVisual::Spawn(GetWorld(),Start,Hit.ImpactPoint,SpellIndex,false);
+        R->NotifySpellResult(Feedback); return bApplied;
+    }
+    if (!Owned->IsUsableBy(R) || !Owned->bConjured || Owned->Integrity<=0
+        || FVector::DistSquared(Start,Owned->ConstructPosition)>FMath::Square(600.f))
+    { R->NotifySpellResult(TEXT("ANCIENT MAGIC THROW needs your intact, available construct within 6m.")); return false; }
+    if (Owned->AncientMagicCharge<25)
+    { R->NotifySpellResult(TEXT("ANCIENT MAGIC THROW needs 25 charge. Legal enemy rider hits earn 20; practice objects earn none.")); return false; }
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomConstructLaunch),false,R);
+    for (ABBSpellArenaObject* Object : SpellWorkshops) if (IsValid(Object)) Query.AddIgnoredActor(Object);
+    FHitResult Access;
+    if (GetWorld()->LineTraceSingleByChannel(Access,Start,Owned->ConstructPosition,ECC_Visibility,Query))
+    { R->NotifySpellResult(TEXT("Your construct is obstructed.")); return false; }
+    FVector End=Start+Aim*Spell->Range;
+    FHitResult Wall,Hit;
+    const bool bWall=GetWorld()->LineTraceSingleByChannel(Wall,Start,End,ECC_Visibility,Query);
+    if (bWall) End=Wall.ImpactPoint;
+    const bool bHit=GetWorld()->SweepSingleByObjectType(Hit,Start,End,FQuat::Identity,
+        FCollisionObjectQueryParams(ECC_Pawn),FCollisionShape::MakeSphere(8.f),Query);
+    ABBRiderCharacter* Target=bHit?Cast<ABBRiderCharacter>(Hit.GetActor()):nullptr;
+    if (!IsValid(Target) || Target==R || !Riders.Contains(Target)
+        || (bWall && Wall.GetActor()!=Target && Hit.Distance+8.f>=Wall.Distance))
+    { R->NotifySpellResult(TEXT("ANCIENT MAGIC THROW - aim at one live rider within 30m. No charge spent.")); return false; }
+    BB::AttackSpec Spec; Spec.aimed_at_head=Hit.ImpactPoint.Z-Target->GetActorLocation().Z>65.f;
+    const auto Attack=Combat->begin_attack(CombatIndex(R),CombatIndex(Target),Spec);
+    if (!Attack.accepted)
+    { R->NotifySpellResult(TEXT("Target is not in live play.")); return false; }
+    if (!Owned->SpendCharge(25)) return false;
+    R->ConcealRemaining=0.f;
+    Owned->Launch(Target,Hit.ImpactPoint,Attack.attack_id);
+    R->NotifySpellResult(TEXT("ANCIENT MAGIC THROW - construct launched; world and riders can intercept. Reparo after impact."));
+    return true;
+}
+void ABBMatchState::ResolveThrownSpellImpact(ABBSpellArenaObject* Object,ABBRiderCharacter* Target,
+    FVector ImpactPoint,FVector Direction,uint64 AttackId)
+{
+    if (!HasAuthority() || !IsValid(Object) || !SpellWorkshops.Contains(Object) || !IsValid(Object->WorkshopOwner)
+        || GetSpellWorkshop(Object->WorkshopOwner)!=Object || AttackId==0) return;
+    ResolveSpellHit(Object->WorkshopOwner,Target,30,Direction,ImpactPoint,Object->Home(),AttackId);
 }
 
 void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition)
 {
     if (!CanOfficiate(Referee) || !Rules || !bConductReviewPending || Rules->status == BB::Status::Live
-        || ConductOffender < 0 || ConductOffender >= 16) return;
+        || ConductOffender < 0 || ConductOffender >= 16 || ConductEvidence.IsEmpty()) return;
     if (Disposition < 9 || Disposition > 12 || bPenaltyShotActive) return;
     const bool bEject = Disposition == 11, bFree = Disposition == 12, bShot = Disposition == 10 || bFree;
-    // Host-selected playtest severity; no automatic foul-to-tier mapping.
-    // A Serious removal must accompany an actual reserved shot and restart.
+    const FConductEvidence Evidence = ConductEvidence[0];
+    if (Evidence.PenaltyId > 0 && (bEject || (bShot && !bFree)))
+    {
+        Referee->NotifySpellResult(TEXT("This host-selected Moderate advantage owes F6 free shot or F7 possession; a later separate foul keeps its own ruling."));
+        return;
+    }
+    if (!bShot && !bEject && Rules->status == BB::Status::Review)
+    {
+        Referee->NotifySpellResult(TEXT("Post-termination possession cannot resume live play; serve the owed F6 free shot before certification."));
+        return;
+    }
+    // Keep original observed identity, ball and time. The host selects a tier
+    // for an unclassified foul, or serves the previously selected Moderate.
     const BB::Match Previous = *Rules;
-    const int Id = Rules->record_penalty(ConductOffender,TCHAR_TO_UTF8(*LastConductCall),
-        bEject ? BB::Severity::Severe : bShot && !bFree ? BB::Severity::Serious : BB::Severity::Moderate, ConductBall);
+    const int Id = Evidence.PenaltyId > 0 ? Evidence.PenaltyId
+        : Rules->record_penalty(Evidence.Offender,TCHAR_TO_UTF8(*Evidence.Reason),
+            bEject ? BB::Severity::Severe : bShot && !bFree ? BB::Severity::Serious : BB::Severity::Moderate,
+            Evidence.Ball,Evidence.CommittedMs);
     bool bApplied = false;
     if (bEject) bApplied = Id > 0 && Rules->resolve_penalty(Id,"host BB-0 playtest referee: ejection",true);
     else if (bShot) bApplied = Id > 0 && BeginConductPenaltyShot(Id,bFree);
     else
     {
-        // Preserve an existing goal/Crown remedy. Prefer the Quaffle, then an
-        // available Quark; a foul must not force ejection just because ball 0
-        // was already awaiting its own legitimate restart.
         for (int32 BallIndex : {0,1,2})
             if (Id > 0 && Rules->queue_conduct_possession_award(Id,BallIndex,ConductVictimTeam))
             { bApplied = true; ConductRestartBall = BallIndex; break; }
@@ -311,10 +477,12 @@ void ABBMatchState::ReviewConduct(ABBRiderCharacter* Referee, int32 Disposition)
         Referee->NotifySpellResult(TEXT("That disposition cannot be served now; conduct review remains pending."));
         return;
     }
-    bConductReviewPending = false;
+    ConductEvidence[0].PenaltyId = Id;
+    CompleteConductEvidence();
     if (bShot) { SyncRules(); Say(PenaltyShotStatus); return; }
-    ConductReviewStatus = bEject ? TEXT("EJECTION SERVED - Host: ENTER to resume")
-                                : TEXT("POSSESSION AWARD QUEUED - Host: ENTER to serve restart");
+    if (!bConductReviewPending)
+        ConductReviewStatus = bEject ? TEXT("EJECTION SERVED - Host: ENTER to resume")
+                                    : TEXT("POSSESSION AWARD QUEUED - Host: ENTER to serve restart");
     SyncRules(); Say(ConductReviewStatus);
 }
 

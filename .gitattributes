@@ -25,3 +25,8 @@ Mod/SourceData/port-manifest.json -text whitespace=blank-at-eol,blank-at-eof,spa
 # These source-contract inputs are authored and hashed as LF.
 Rules/alpha_rules.json text eol=lf
 Tools/build_arena.py text eol=lf
+
+# Preserve exact environment source/import provenance bytes.
+SourceArt/Environments/Meshes/*.obj -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+SourceArt/Environments/environments_manifest.json -text
+SourceArt/Environments/Textures/provenance.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

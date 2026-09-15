@@ -138,6 +138,9 @@ bool ABBMatchState::BeginConductPenaltyShot(int32 PenaltyId, bool bModerate)
         PenaltyShotStatus = FString::Printf(TEXT("%s - %s shooter vs keeper | one attempt in 5 seconds"),
             bFreeShot ? TEXT("FREE SHOT / NO REMOVAL") : TEXT("PENALTY SHOT"),
             ConductVictimTeam == 0 ? TEXT("TEAL") : TEXT("COPPER"));
+        if (Rules->penalty_shot.post_termination)
+            PenaltyShotStatus += TEXT(" | post-termination remedy - result provisional");
+        ReviewDelay = 0;
         SyncRules(); Say(PenaltyShotStatus); ForceNetUpdate();
         return true;
     }
@@ -330,6 +333,7 @@ void ABBMatchState::TickPenaltyShot(float DeltaSeconds)
             bPenaltyShotActive = false; PenaltyShotSecondsLeft = 0;
             PenaltyShooterActor.Reset(); PenaltyKeeperActor.Reset();
             PenaltySavedRiders.Empty(); PenaltySavedViews.Empty();
+            ReviewDelay = 0;
             SyncRules();
             PenaltyShotStatus += Rules->status == BB::Status::Review
                 ? TEXT(" | restart served; result under review - awaiting certification")

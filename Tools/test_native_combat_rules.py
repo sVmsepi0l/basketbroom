@@ -33,6 +33,24 @@ std::uint64_t success(CombatPolicy& p,int a=0,int t=8,std::int64_t duration=-1){
 '''
 
 CASES = [
+    ("delayed_hit_preflight_binds_identity_and_is_read_only", r'''
+CombatPolicy p; auto cast=p.begin_attack(0,8,AttackSpec{}); CHECK(cast.accepted);
+for(int i=0;i<3;++i) CHECK(p.validate_pending_hit(cast.attack_id,0,8).accepted);
+CHECK(p.validate_pending_hit(cast.attack_id,1,8).denial==CombatDenial::InvalidActor);
+CHECK(p.validate_pending_hit(cast.attack_id,0,9).denial==CombatDenial::InvalidTarget);
+CHECK(p.resolve_hit(cast.attack_id,HitOutcome::Contact).accepted);
+CHECK(p.validate_pending_hit(cast.attack_id,0,8).denial==CombatDenial::AlreadyResolved);
+'''),
+    ("delayed_hit_preflight_denies_stopped_expired_or_replaced_cast", r'''
+CombatPolicy p; auto cast=p.begin_attack(0,8,AttackSpec{}); p.set_live(false);
+CHECK(p.validate_pending_hit(cast.attack_id,0,8).denial==CombatDenial::NotLive);
+p.set_live(true); CHECK(p.validate_pending_hit(cast.attack_id,0,8).accepted);
+CHECK(p.set_actor(8,1,false)); CHECK(p.validate_pending_hit(cast.attack_id,0,8).denial==CombatDenial::Unavailable);
+CHECK(p.set_actor(8,1,true,true)); CHECK(!p.validate_pending_hit(cast.attack_id,0,8).accepted);
+cast=p.begin_attack(0,8,AttackSpec{}); CHECK(p.advance(p.config().pending_attack_ms));
+CHECK(!p.validate_pending_hit(cast.attack_id,0,8).accepted);
+cast=p.begin_attack(0,8,AttackSpec{}); p.reset_phase(); CHECK(!p.validate_pending_hit(cast.attack_id,0,8).accepted);
+'''),
     ("regulation_applies_unforgivable_headshot_then_reports_once", r'''
 CombatPolicy p; AttackSpec s=stun(); s.unforgivable=s.aimed_at_head=true;
 auto cast=p.begin_attack(0,8,s); CHECK(cast.accepted&&cast.attack_id&&!cast.legal()&&!cast.requires_adjudication());

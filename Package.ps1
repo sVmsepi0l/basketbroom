@@ -60,6 +60,11 @@ if ($native) {
     $nativeMap = Join-Path $repoRoot 'DevelopmentHarness\Plugins\Basketbroom\Content\Maps\BB_Regulation.umap'
     if (-not (Test-Path -LiteralPath $nativeMap)) { throw 'Compile the native editor and run Tools/stage_regulation.py before packaging the native game.' }
     $cookMaps += '+/Basketbroom/Maps/BB_Regulation'
+    foreach ($venue in @('BB_Redrock','BB_Redwoods')) {
+        $venueFile = Join-Path $repoRoot ('DevelopmentHarness/Plugins/Basketbroom/Content/Maps/' + $venue + '.umap')
+        if (-not (Test-Path -LiteralPath $venueFile -PathType Leaf)) { throw "Stage both environment arenas before packaging: $venueFile" }
+        $cookMaps += '+/Basketbroom/Maps/' + $venue
+    }
 }
 $pythonPlugin = @($projectDescriptor.Plugins | Where-Object { $_.Name -eq 'PythonScriptPlugin' -and $_.Enabled })
 foreach ($pluginReference in $pythonPlugin) {
@@ -162,6 +167,7 @@ $result = [ordered]@{
     Executable = $gamePath
     Log = $logPath
     NativeRuntime = $native
+    ArenaMaps = @($cookMaps.Split('+') | Where-Object { $_ -ne '/Basketbroom/Maps/BB_Arena' })
 }
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $workPath 'package-result.json') -Encoding UTF8
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $repoRoot '.local\latest-package.json') -Encoding UTF8

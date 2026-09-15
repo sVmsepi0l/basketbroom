@@ -505,13 +505,25 @@ bool Match::queue_conduct_possession_award(int penalty_id, int ball, int team) {
 bool Match::penalty_shot_active() const {
     return penalty_shot.stage != PenaltyShotStage::None && penalty_shot.stage != PenaltyShotStage::Complete;
 }
+bool Match::valid_shot_stoppage() const {
+    if (status == Status::Paused || status == Status::QuarterBreak || status == Status::PhaseBreak)
+        return !ending.active;
+    if (status != Status::Review || !ending.active || ending.at_ms != now_ms || now_ms < 0)
+        return false;
+    // Bible 5.7 specifies retesting these four ending rules after restitution.
+    // It does not settle conflicting Donnybrook winners after a terminal foul.
+    if (ending.reason == "snitch") return phase == Phase::Regulation || phase == Phase::Overtime;
+    if (ending.reason == "regulation_horn") return phase == Phase::Regulation;
+    return phase == Phase::Overtime &&
+        (ending.reason == "overtime_margin" || ending.reason == "overtime_horn");
+}
 bool Match::valid_penalty_shot() const {
     const auto& shot = penalty_shot;
     if (!valid_ || !penalty_shot_active() ||
         (shot.stage != PenaltyShotStage::Ready && shot.stage != PenaltyShotStage::InFlight &&
          shot.stage != PenaltyShotStage::AwaitingRestart) ||
-        (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak) ||
-        ending.active || shot.penalty_id <= 0 || shot.penalty_id > static_cast<int>(penalties.size()) ||
+        !valid_shot_stoppage() || shot.post_termination != (status == Status::Review) ||
+        shot.penalty_id <= 0 || shot.penalty_id > static_cast<int>(penalties.size()) ||
         !ball_index(shot.ball) || !team_index(shot.attacking_team) ||
         !eligible(shot.shooter, shot.ball) || !eligible(shot.netminder, shot.ball) ||
         players[shot.shooter].team != shot.attacking_team ||
@@ -522,7 +534,8 @@ bool Match::valid_penalty_shot() const {
     const auto& penalty = penalties[shot.penalty_id - 1];
     if (penalty.id != shot.penalty_id || !penalty.pending || !penalty.penalty_shot_reserved ||
         penalty.severity != (shot.free_shot ? Severity::Moderate : Severity::Serious) || !player_index(penalty.player) ||
-        players[penalty.player].team != 1 - shot.attacking_team || penalty.crown_restoration_pending)
+        players[penalty.player].team != 1 - shot.attacking_team || penalty.crown_restoration_pending ||
+        (shot.post_termination && (penalty.committed_ms < 0 || penalty.committed_ms > ending.at_ms)))
         return false;
     const auto& offender = players[penalty.player];
     if (!shot.free_shot && (phase == Phase::Donnybrook ? !offender.donnybrook_excluded : offender.removed_until <= now_ms))
@@ -557,11 +570,12 @@ bool Match::valid_penalty_shot() const {
          (shot.outcome == PenaltyShotOutcome::Timeout && shot.elapsed_ms == config.penalty_shot_ms));
 }
 bool Match::start_penalty_shot(int penalty_id, int ball, int shooter, int netminder, bool free_shot) {
-    if (!valid_ || penalty_shot_active() || ending.active ||
-        (status != Status::Paused && status != Status::QuarterBreak && status != Status::PhaseBreak) ||
+    if (!valid_ || penalty_shot_active() || !valid_shot_stoppage() ||
         penalty_id <= 0 || penalty_id > static_cast<int>(penalties.size()) || !ball_index(ball))
-        return reject("penalty shot requires an unreserved nonterminal stoppage and pending matching penalty");
+        return reject("penalty shot requires an unreserved stoppage or supported provisional ending");
     const auto& penalty = penalties[penalty_id - 1];
+    if (status == Status::Review && (penalty.committed_ms < 0 || penalty.committed_ms > ending.at_ms))
+        return reject("only pre-termination conduct may receive a shot before certification");
     if (penalty.id != penalty_id || !penalty.pending || penalty.severity != (free_shot ? Severity::Moderate : Severity::Serious) ||
         penalty.penalty_shot_reserved || penalty.crown_restoration_pending || !player_index(penalty.player) ||
         !team_index(players[penalty.player].team)) return reject("penalty severity does not match the requested shot");
@@ -624,6 +638,7 @@ bool Match::start_penalty_shot(int penalty_id, int ball, int shooter, int netmin
         ? "Moderate free shot reserved; no removal" : "Serious penalty shot reserved; removal active";
     penalty_shot = {};
     penalty_shot.free_shot = free_shot;
+    penalty_shot.post_termination = status == Status::Review;
     penalty_shot.stage = PenaltyShotStage::Ready;
     penalty_shot.penalty_id = penalty_id; penalty_shot.ball = ball;
     penalty_shot.shooter = shooter; penalty_shot.netminder = netminder;
@@ -632,6 +647,8 @@ bool Match::start_penalty_shot(int penalty_id, int ball, int shooter, int netmin
     balls[ball].controller = shooter; balls[ball].restart_team = 1 - attacking_team;
     last_awards.clear();
     emit("penalty_shot_started", shooter, ball, attacking_team, config.penalty_shot_ms, "", penalty_id);
+    if (penalty_shot.post_termination)
+        emit("post_termination_shot_started", shooter, ball, attacking_team, ending.at_ms, ending.reason, penalty_id);
     if (!free_shot) emit("temporary_removal", penalty.player, ball, players[penalty.player].team,
          phase == Phase::Donnybrook ? -1 : offender.removed_until, "Serious penalty shot", penalty_id);
     last_error.clear(); return true;
@@ -718,9 +735,13 @@ bool Match::restart_penalty_shot(int netminder) {
     emit("penalty_shot_restart", netminder, shot.ball, players[netminder].team, 0, "", shot.penalty_id);
     emit("penalty_resolved", penalty.player, penalty.ball, players[netminder].team,
          0, penalty.disposition, shot.penalty_id);
-    // The defending restart is audited even when the successful shot itself
-    // terminates the phase. Review then secures it along with every other ball.
-    if (shot.outcome == PenaltyShotOutcome::Goal && phase == Phase::Donnybrook)
+    // Audit the defending restart before evaluating a shot-created ending. A
+    // pre-existing ending keeps its event and timestamp; certify() retests it
+    // after all owed remedies. Its stopped-play custody survives an OT resume.
+    if (shot.post_termination)
+        emit("post_termination_shot_served", netminder, shot.ball, players[netminder].team,
+             ending.at_ms, ending.reason, shot.penalty_id);
+    else if (shot.outcome == PenaltyShotOutcome::Goal && phase == Phase::Donnybrook)
         end("donnybrook", -1, -1, 0, shot.attacking_team);
     else if (shot.outcome == PenaltyShotOutcome::Goal && phase == Phase::Overtime && margin() >= config.overtime_margin)
         end("overtime_margin");
@@ -801,6 +822,7 @@ bool Match::certify(const std::vector<Adjustment>& adjustments) {
     last_error.clear(); return true;
 }
 bool Match::overturn_snitch(const std::string& reason) {
+    if (penalty_shot_active()) return reject("complete the reserved shot and defending restart before overturning a catch");
     if (!valid_ || status != Status::Review || !ending.active || ending.reason != "snitch" || reason.empty())
         return reject("no provisional Snitch catch to overturn");
     scores[ending.catching_team] -= ending.catch_points;

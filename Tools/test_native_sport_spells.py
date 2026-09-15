@@ -41,7 +41,7 @@ CASES = (
     "imperio_recovers_without_ownership_change",
     "stoppage_rejects_new_spell_effects",
     "real_quarter_break_preserves_then_resumes_concealment",
-    "contextual_actions_remain_unimplemented",
+    "contextual_actions_require_owned_workshop_target",
 )
 REPORT = ROOT / ".local" / ("native-sport-spells-" + VARIANT + "-results.json")
 
@@ -62,7 +62,7 @@ class SportingSpellTests(spells.NativeSpellTests):
                     unreal.SystemLibrary.get_engine_version() if unreal else None)
         data.update(scope="native five-spell same-world player integration", variant=VARIANT,
             not_covered=["remote replication or internet multiplayer", "physical input devices",
-                         "final art quality or frame rate", "remaining eight contextual adapters",
+                         "final art quality or frame rate", "separate eight contextual workshop/resource adapter suite",
                          "genuine rematch reset (implemented but not exercised by this suite)"],
             fixture_policy="Disposable transforms, component ticks, native movement input, public local-player "
                            "lifecycle and world time dilation only. No spell status, receipt, possession, score, "
@@ -335,7 +335,7 @@ class SportingSpellTests(spells.NativeSpellTests):
         self.request(6,4)
         yield self.wait_until(lambda: bool(str(prop(self.pawn,"SpellFeedback"))),timeout=.5)
         self.record(CASES[20], float(prop(self.pawn,"SpellCooldownRemaining"))==0
-            and "pending" in str(prop(self.pawn,"SpellFeedback")).lower(), feedback=str(prop(self.pawn,"SpellFeedback")))
+            and "own" in str(prop(self.pawn,"SpellFeedback")).lower(), feedback=str(prop(self.pawn,"SpellFeedback")))
 
 
 def main():

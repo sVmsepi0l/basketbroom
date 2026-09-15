@@ -6,6 +6,7 @@
 #include "BBRiderCharacter.h"
 #include "BBSpellCatalog.h"
 #include "BBSpellVisual.h"
+#include "BBSpellArenaObject.h"
 #include "CollisionQueryParams.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
@@ -142,6 +143,7 @@ void ABBMatchState::ResetMatchRules()
     CombatOccupants.Empty(); CombatPhase = -1;
     ConductFoulCount = 0; LastConductCall.Empty();
     bConductReviewPending = false; ConductReviewStatus.Empty();
+    bModerateAdvantageArmed = bConductAdvantageLive = false; ConductEvidence.Empty(); LastServedConductEvidence = {};
     ConductOffender = ConductVictimTeam = ConductRestartBall = -1;
     LastConductAttack = 0; LastConductViolations = 0;
     ConductBall = ConductVictimSlot = -1;
@@ -153,6 +155,7 @@ void ABBMatchState::ResetMatchRules()
     PendingPoints.clear();
     bInitialized = false;
     bLive = false;
+    ResetContextualSpells();
     for (ABBRiderCharacter* R : Riders)
         if (IsValid(R))
         {
@@ -197,6 +200,7 @@ void ABBMatchState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(ABBMatchState, bBloodbroom); DOREPLIFETIME(ABBMatchState, ConductFoulCount);
     DOREPLIFETIME(ABBMatchState, LastConductCall); DOREPLIFETIME(ABBMatchState, bConductReviewPending);
     DOREPLIFETIME(ABBMatchState, ConductReviewStatus);
+    DOREPLIFETIME(ABBMatchState, bModerateAdvantageArmed); DOREPLIFETIME(ABBMatchState, bConductAdvantageLive);
     DOREPLIFETIME(ABBMatchState, bPenaltyShotActive);
     DOREPLIFETIME(ABBMatchState, bFreeShot); DOREPLIFETIME(ABBMatchState, bPenaltyShotReleased);
     DOREPLIFETIME(ABBMatchState, PenaltyShotSecondsLeft); DOREPLIFETIME(ABBMatchState, PenaltyShotBall);
@@ -223,8 +227,8 @@ void ABBMatchState::AssignHuman(ABBRiderCharacter* Rider)
         if (bHuman) ++Counts[FMath::Clamp(R->TeamIndex,0,1)];
         Occupied[R->RosterIndex] = Occupied[R->RosterIndex] || bHuman || R->HasSpellMovementLock();
     }
-    if (bConductReviewPending && ConductOffender >= 0 && ConductOffender < 16)
-        Occupied[ConductOffender] = true;
+    for (const FConductEvidence& Evidence : ConductEvidence)
+        if (Evidence.Offender >= 0 && Evidence.Offender < 16) Occupied[Evidence.Offender] = true;
     if (bPenaltyShotActive)
     {
         if (PenaltyShooterSlot >= 0 && PenaltyShooterSlot < 16) Occupied[PenaltyShooterSlot] = true;
@@ -292,6 +296,7 @@ bool ABBMatchState::CanInteract(const ABBRiderCharacter* R, const ABBBall* B) co
     for (const ABBBall* Other : Balls) if (IsValid(Other) && Other->Holder == R && Other != B) return false;
     FCollisionQueryParams Query(SCENE_QUERY_STAT(BasketbroomInteraction), false, R);
     Query.AddIgnoredActor(B);
+    for (ABBSpellArenaObject* Object : SpellWorkshops) if (IsValid(Object)) Query.AddIgnoredActor(Object);
     FHitResult Hit;
     if (GetWorld()->LineTraceSingleByChannel(Hit, R->GetActorLocation(), B->GetActorLocation(), ECC_Visibility, Query)) return false;
     return true;
@@ -344,7 +349,7 @@ void ABBMatchState::Goal(ABBBall* B, int32 Team, double FlightStepFraction)
     PendingPoints.push_back(Event);
     B->FlightVelocity = FVector::ZeroVector; B->Cooldown = .25f;
 }
-void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
+void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim, bool bDeferConductBoundary)
 {
     if (bPenaltyShotActive) { ReleasePenaltyShot(R, Aim); return; }
     if (!HasAuthority() || !Rules || !IsValid(R) || Aim.ContainsNaN()) return;
@@ -364,6 +369,7 @@ void ABBMatchState::Release(ABBRiderCharacter* R, FVector Aim)
         B->Cooldown = .3f;
         B->ForceNetUpdate();
     }
+    if (!bDeferConductBoundary) TickConductAdvantage();
 }
 void ABBMatchState::ReleaseDepartedSlot(int32 RosterIndex)
 {
@@ -385,7 +391,7 @@ void ABBMatchState::ReleaseDepartedSlot(int32 RosterIndex)
         B->Cooldown = .3f;
         B->ForceNetUpdate();
     }
-    SyncRules();
+    TickConductAdvantage(); SyncRules();
 }
 void ABBMatchState::ObserveBludgerFlight(ABBBall* B, BB::Contact Contact)
 {
@@ -487,6 +493,16 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         }
         return;
     }
+    if (Action == 13)
+    {
+        if (!CanOfficiate(R) || bConductReviewPending || bPenaltyShotActive
+            || Rules->status == BB::Status::Review || Rules->status == BB::Status::Complete) return;
+        bModerateAdvantageArmed = !bModerateAdvantageArmed;
+        Say(bModerateAdvantageArmed
+            ? TEXT("REFEREE: next basic-cast mobbing may use Moderate advantage only if the victim keeps scoring possession without a disable. Other fouls stop immediately.")
+            : TEXT("REFEREE: Moderate advantage preselection off."));
+        ForceNetUpdate(); return;
+    }
     if (Action >= 9 && Action <= 12) { ReviewConduct(R, Action); return; }
     if (Action == 4 || Action == 5)
     {
@@ -495,6 +511,10 @@ void ABBMatchState::HandleAction(ABBRiderCharacter* R, int32 Action, int32 Value
         if (!CanOfficiate(R)) return;
         if (bConductReviewPending)
         {
+            if (bConductAdvantageLive && Action == 5)
+            {
+                Rules->pause("host ended Moderate advantage"); TickConductAdvantage(); SyncRules(); return;
+            }
             R->NotifySpellResult(TEXT("Resolve BB-0: F6 free shot, F7 possession, F8 shot + removal, F9 ejection."));
             return;
         }
@@ -557,6 +577,7 @@ void ABBMatchState::Tick(float Dt)
         else UE_LOG(LogTemp, Warning, TEXT("Basketbroom point batch rejected: %s"), UTF8_TO_TCHAR(Rules->last_error.c_str()));
         PendingPoints.clear();
     }
+    TickConductAdvantage();
     if (Rules->status == BB::Status::Live)
     {
         MillisecondCarry += FMath::Max(0.f, Dt) * 1000.0;
@@ -627,7 +648,7 @@ void ABBMatchState::Tick(float Dt)
                     && Rules->balls[Penalty.ball].crown_restart_penalty == Penalty.id)
                     Balls[Penalty.ball]->ResetBall(CrownRestartLocation(Rules->balls[Penalty.ball]) + FVector(0,0,80));
             }
-            else if (Penalty.pending && Penalty.severity != BB::Severity::Catastrophic
+            else if (Penalty.pending && !IsUnreviewedConductPenalty(Penalty.id) && Penalty.severity != BB::Severity::Catastrophic
                 && Penalty.severity != BB::Severity::Serious)
             {
                 bool bQueuedConductAward = false;
@@ -731,6 +752,7 @@ void ABBMatchState::UpdateBots(float Dt)
 {
     for (ABBRiderCharacter* R : Riders)
     {
+        if (!bLive) return;
         if (!IsValid(R) || R->IsPlayerControlled() || R->HasSpellMovementLock()) continue;
         ABBBall* Held = nullptr; for (ABBBall* B : Balls) if (B->Holder == R) Held = B;
         FVector Target = StartLocation(R->RosterIndex);
@@ -789,4 +811,110 @@ void ABBMatchState::UpdateBots(float Dt)
         if (To.Size() > 120) R->AddMovementInput(To.GetSafeNormal(), .7f);
         if (!To.IsNearlyZero()) R->SetActorRotation(FRotator(0,To.Rotation().Yaw,0));
     }
+}
+
+
+void ABBMatchState::PresentConductEvidence()
+{
+    bConductReviewPending = !ConductEvidence.IsEmpty();
+    if (!bConductReviewPending) return;
+    const FConductEvidence& Evidence = ConductEvidence[0];
+    ConductOffender = Evidence.Offender; ConductVictimTeam = Evidence.VictimTeam;
+    ConductVictimSlot = Evidence.VictimSlot; ConductBall = Evidence.Ball;
+    LastConductAttack = Evidence.Attack; LastConductViolations = static_cast<int32>(Evidence.Violations);
+    LastConductCall = Evidence.Reason; ConductFoulPoint = Evidence.FoulPoint;
+    ConductMark = ConductFoulPoint;
+    ConductMark.X = FMath::Clamp(ConductMark.X, -BBArena::GoalPlaneX + 500.8, BBArena::GoalPlaneX - 500.8);
+    ConductMark.Y = FMath::Clamp(ConductMark.Y, -BBArena::HalfWidth + 500.4, BBArena::HalfWidth - 500.4);
+    ConductMark.Z = FMath::Clamp(ConductMark.Z, 400.0, BBArena::EaveHeight - 406.24);
+    ConductMark = BBArena::ClampSphere(ConductMark, 250.0);
+    ConductReviewStatus = bConductAdvantageLive
+        ? TEXT("MODERATE ADVANTAGE - offended team keeps scoring possession; original free-shot remedy remains due")
+        : Evidence.PenaltyId > 0
+            ? TEXT("MODERATE ADVANTAGE ENDED - F6 free shot / F7 possession; result remains provisional")
+            : TEXT("PLAYTEST REFEREE - F6 free shot / F7 possession / F8 shot + removal / F9 ejection");
+}
+void ABBMatchState::CompleteConductEvidence()
+{
+    if (!ConductEvidence.IsEmpty())
+    { LastServedConductEvidence = ConductEvidence[0]; ConductEvidence.RemoveAt(0); }
+    PresentConductEvidence();
+}
+bool ABBMatchState::IsUnreviewedConductPenalty(int32 Id) const
+{
+    return ConductEvidence.ContainsByPredicate([Id](const FConductEvidence& Evidence) { return Evidence.PenaltyId == Id; });
+}
+void ABBMatchState::RegisterConductHit(ABBRiderCharacter* Offender, ABBRiderCharacter* Victim,
+    int32 Spell, int32 AffectedBall, uint32 Violations, uint64 Attack, bool bHeadHit)
+{
+    if (!HasAuthority() || !Rules || !IsValid(Offender) || !IsValid(Victim) || Violations == 0 || Attack == 0) return;
+    FConductEvidence Evidence;
+    Evidence.Offender = Offender->RosterIndex; Evidence.VictimTeam = Victim->TeamIndex;
+    Evidence.VictimSlot = Victim->RosterIndex; Evidence.Ball = AffectedBall; Evidence.Spell = Spell;
+    Evidence.Violations = Violations; Evidence.Attack = Attack; Evidence.CommittedMs = Rules->now_ms;
+    Evidence.FoulPoint = Victim->GetActorLocation(); Evidence.OriginalOffender = Offender; Evidence.OriginalVictim = Victim;
+    TArray<FString> Reasons;
+    if (Violations & static_cast<uint32>(BB::ConductViolation::Unforgivable)) Reasons.Add(TEXT("UNFORGIVABLE"));
+    if (Violations & static_cast<uint32>(BB::ConductViolation::Headshot)) Reasons.Add(TEXT("HEADSHOT"));
+    if (Violations & static_cast<uint32>(BB::ConductViolation::Mobbing)) Reasons.Add(TEXT("MOB ATTACK > 3"));
+    if (Violations & static_cast<uint32>(BB::ConductViolation::DoubleTap)) Reasons.Add(TEXT("DOUBLE-TAP"));
+    if (Violations & static_cast<uint32>(BB::ConductViolation::PhysicalHolding)) Reasons.Add(TEXT("PHYSICAL HOLDING"));
+    Evidence.Reason = FString::Join(Reasons, TEXT(" + "));
+    // The host preselects this one prospective Moderate ruling. It never
+    // overrides a dangerous/additional violation or an impaired carrier.
+    const bool bQualifies = bModerateAdvantageArmed && ConductEvidence.IsEmpty()
+        && Rules->status == BB::Status::Live && Spell == 0 && !bHeadHit
+        && Violations == static_cast<uint32>(BB::ConductViolation::Mobbing)
+        && !Victim->HasSpellMovementLock() && Victim->ImpedimentRemaining <= 0 && Victim->Vitality > 50.f
+        && AffectedBall >= 0 && AffectedBall <= 2 && Balls.IsValidIndex(AffectedBall)
+        && Balls[AffectedBall]->Holder == Victim && Rules->balls[AffectedBall].controller == Victim->RosterIndex;
+    bModerateAdvantageArmed = false;
+    if (bQualifies)
+        Evidence.PenaltyId = Rules->record_penalty(Evidence.Offender, TCHAR_TO_UTF8(*Evidence.Reason),
+            BB::Severity::Moderate, Evidence.Ball, Evidence.CommittedMs);
+    bConductAdvantageLive = bQualifies && Evidence.PenaltyId > 0;
+    ConductEvidence.Add(Evidence); ++ConductFoulCount;
+    PresentConductEvidence();
+    if (!bConductAdvantageLive) Rules->pause("BB-0 conduct review after applied hit");
+    SyncRules(); Say(bConductAdvantageLive ? ConductReviewStatus : TEXT("BB-0 FOUL: ") + Evidence.Reason + TEXT(" - hit applied; referee decision due."));
+    UE_LOG(LogTemp, Display, TEXT("BB0 applied hit evidence: id=%llu caster=%d target=%d spell=%d flags=%u committed=%lld advantage=%d"),
+        static_cast<unsigned long long>(Attack), Evidence.Offender, Evidence.VictimSlot, Spell, Violations,
+        static_cast<long long>(Evidence.CommittedMs), bConductAdvantageLive ? 1 : 0);
+}
+void ABBMatchState::TickConductAdvantage()
+{
+    if (!bConductAdvantageLive || !Rules || ConductEvidence.IsEmpty()) return;
+    const FConductEvidence& Evidence = ConductEvidence[0];
+    bool bRetained = false;
+    if (Evidence.Ball >= 0 && Evidence.Ball <= 2)
+    {
+        const BB::Ball& Ball = Rules->balls[Evidence.Ball];
+        bRetained = Ball.live && Ball.controller >= 0 && Ball.controller < 16
+            && Rules->players[Ball.controller].team == Evidence.VictimTeam
+            && Rules->eligible(Ball.controller, Evidence.Ball);
+        if (ABBRiderCharacter* Carrier = RiderForSlot(Ball.controller)) bRetained &= !Carrier->HasSpellMovementLock();
+        else bRetained = false;
+    }
+    if (Rules->status == BB::Status::Live && bRetained) return;
+    // Preserve an already observed terminal event. Its pending penalty prevents
+    // certification; never rewind its catch, points or original clock.
+    if (Rules->status == BB::Status::Live) Rules->pause("Moderate advantage lost: offended team no longer controls affected ball");
+    bConductAdvantageLive = false; PresentConductEvidence(); SyncRules(); Say(ConductReviewStatus);
+}
+TArray<double> ABBMatchState::DevelopmentGetConductAdvantageState() const
+{
+#if !UE_BUILD_SHIPPING
+    if (HasAuthority() && Rules && GetWorld() && GetWorld()->WorldType == EWorldType::PIE)
+    {
+        const FConductEvidence* Evidence = !ConductEvidence.IsEmpty() ? &ConductEvidence[0]
+            : LastServedConductEvidence.Attack ? &LastServedConductEvidence : nullptr;
+        return {bModerateAdvantageArmed ? 1.0 : 0.0, bConductAdvantageLive ? 1.0 : 0.0,
+            static_cast<double>(ConductEvidence.Num()), Evidence ? static_cast<double>(Evidence->CommittedMs) : -1.0,
+            Evidence ? static_cast<double>(Evidence->PenaltyId) : -1.0, Evidence ? static_cast<double>(Evidence->Offender) : -1.0,
+            Evidence ? static_cast<double>(Evidence->VictimSlot) : -1.0, Evidence ? static_cast<double>(Evidence->Ball) : -1.0,
+            Evidence ? static_cast<double>(Evidence->Attack) : -1.0, static_cast<double>(Rules->status),
+            Rules->ending.active ? static_cast<double>(Rules->ending.at_ms) : -1.0, Rules->penalty_shot.post_termination ? 1.0 : 0.0};
+    }
+#endif
+    return {};
 }
