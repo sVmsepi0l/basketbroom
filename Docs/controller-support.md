@@ -6,61 +6,34 @@ and unreal expose the controller as a supported gamepad, the game uses the same
 bindings for both. physical USB/Bluetooth testing is still required and must be
 reported separately from synthetic unreal input tests.
 
-## layout
+## current PlayStation layout (2026-09-16)
 
-button names below use the xbox layout. on a playstation pad, the equivalent
-face buttons are cross (a), circle (b), square (x), and triangle (y);
-L1/R1 correspond to LB/RB and r2 to RT. native compatibility depends on the
-windows input backend, not just these button equivalents.
+- **Left stick:** horizontal flight. **Right stick:** left/right camera steering and up/down altitude.
+- **Hold L3 + right stick:** precision aiming. Penalty shooters enter precision aim automatically.
+- **R2:** normal acceleration even at zero charge. Partial charge adds extra speed and drains while used. A fresh press at 100% spends the meter for a two-second super boost.
+- **L2:** analog braking. Braking takes priority over acceleration and cancels an active super boost without a refund.
+- **✕:** throw during play; start/resume/rematch at an eligible stoppage; confirm a selected referee decision; select a menu item.
+- **□:** hold to grab/catch. **△:** spellbook. **○:** close panels or go back in the pause menu.
+- **R1:** cast selected spell. **L1:** Protego.
+- **D-pad left/right:** select spells. **D-pad up/down:** change position at eligible stoppages.
+- **Touchpad/View input:** position guide. While that guide is open, D-pad left changes team and D-pad right switches the initial lobby between Basketbroom and Bloodbroom.
+- **Options / keyboard Esc:** flight journal. Resume, controller settings, controls, position information and host referee actions are available there.
 
-- left stick flies; right stick looks and aims.
-- hold a to rise or b to descend.
-- hold x to grab or catch; rt throws the held ball.
-- rb casts the selected spell; lb raises Protego.
-- d-pad Left/Right selects spells. y opens or closes the spellbook.
-- menu starts or resumes play, pauses a live match, or starts a rematch.
-- view opens or closes the position guide. d-pad Up/Down changes position at
-  stoppages, subject to eligibility.
-- with the position guide explicitly open, d-pad left switches team and d-pad
-  right toggles bloodbroom in the initial lobby. close the guide to return those
-  buttons to spell selection.
-- during a conduct review, the host selects **moderate free shot** with d-pad
-  left, **moderate possession** with d-pad up, **serious** (shot and removal)
-  with d-pad right, or **severe** (ejection) with d-pad down, then presses menu
-  to confirm. opening a review selects no disposition. choosing a direction
-  alone does not apply a penalty. keyboard F6/F7/F8/F9 request those respective
-  host dispositions. the free shot adds no removal.
+The controller map uses PlayStation face-button symbols. The journal's settings independently invert altitude and precision aim and persist those choices in the user's game settings. Opening and closing it clears held movement, triggers and catch input; recenter/release controls before resuming. Losing focus or disconnecting also clears held input.
 
-the hud changes its hints after gamepad input. Keyboard/mouse controls remain
-available. stick movement is analog; camera rotation uses elapsed time rather
-than adding a fixed angle every frame. focus loss, unpossession and controller
-disconnection must clear held movement and catch input.
+Local standalone play pauses the world without calling a referee stoppage. In multiplayer, the local journal leaves the server match running. These are Basketbroom's standalone menu and controls; complete native Hogwarts pause/broom integration is a separate unfinished task. Standalone dismount/walking is not implemented.
 
-## penalty-shot controls
+Accepted scoring events earn 25 charge; an eligible deliberate enemy Bludger hit earns 15 once per flight. The server validates rewards and caps charge at 100. Own goals and regulation head contacts do not earn those rewards. There is no passive refill. Holding R2 while reaching full charge does not automatically fire a super boost: release and press again.
 
-the same protected shot controls apply in basketbroom and Bloodbroom. sprint 3
-also uses them for the moderate free shot: its stopped five-second attempt,
-no-wand/no-pass/no-second-attempt restrictions and defending restart are explicit
-prototype administration choices, not newly canonical rules. see the
-[sprint 3 handoff](sprint-3-spells-graphics.md) for scope and final validation status.
-the hud identifies the selected ball and point value, designated shooter and
-keeper, and five-second attempt timer. the clock covers aiming and ball flight.
-the normal match clock and combat-effect clocks remain frozen through the shot.
+## referee and protected-shot controls
 
-the shooter uses the right stick to aim and rt to release once, while movement
-is locked at the mark. the keeper alone may fly inside the restricted goal area
-and save by blocking the ball with their body. every other rider stays in place
-and may look around. no wandwork, passes, role changes or second attempt are
-allowed; menu cannot resume the match during the active procedure. after the
-brief decision display, the defending keeper receives the protected restart
-and the host may use menu to resume unless the shot triggers result review. after
-certification, menu starts a new match. keyboard equivalents are mouse/LMB for
-the shot, standard flight keys for the keeper, and enter for resume or rematch.
+During a conduct review the host chooses Moderate free shot with D-pad left, Moderate possession with D-pad up, Serious with D-pad right or Severe with D-pad down, then presses ✕ to confirm. Direction alone does not penalize anyone. The journal's Match referee page also presents these actions. Keyboard F6/F7/F8/F9 retain their respective actions.
 
-existing stuns and impediments are preserved rather than cleared. the designated
-shooter's release and keeper's movement are narrowly allowed during the protected
-procedure; the normal effects apply again when play resumes. these controls do
-not imply that every penalty severity or all bloodbroom rules are implemented.
+A protected shooter aims with the right stick and releases once with ✕. The keeper alone may move within the restricted goal area; other riders stay in place. Wandwork, passes and second attempts are blocked during the procedure. The match clock stays frozen. The HUD names the ball, point value, shooter, keeper and five-second attempt timer. The host can resume with ✕ after the decision and defending restart, when eligible. These prototype procedures do not establish completion of every regulation edge case.
+
+## current verification
+
+The 2026-09-16 UE5 Play session passed all 19 controller input tests. Ten additional flight tests passed actual scoring-derived charge, R2 at zero/partial/full charge, L2 braking/cancellation, menu inversion and pause/resume input clearing. These use real Unreal input bindings with simulated device events; they do not certify physical Bluetooth, USB transport or native Hogwarts integration. The earlier user-confirmed DualSense USB spellbook check remains separate evidence.
 
 ## windows input backend
 

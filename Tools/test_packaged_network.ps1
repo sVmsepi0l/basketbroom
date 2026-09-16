@@ -14,7 +14,8 @@ param(
     [ValidateRange(1024, 65535)][int]$Port = 18779,
     [ValidateRange(5, 30)][int]$TimeoutSeconds = 30,
     [switch]$Bloodbroom,
-    [ValidateSet('Classic', 'Redrock', 'Redwoods')][string]$Arena = 'Classic'
+    [ValidateSet('Classic', 'Redrock', 'Redwoods')][string]$Arena = 'Classic',
+    [string]$PackageManifest
 )
 
 $ErrorActionPreference = 'Stop'
@@ -188,7 +189,7 @@ function Stop-OwnedGame($Record) {
 try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'This packaged test requires Windows.' }
     if (-not (Get-Command Get-NetUDPEndpoint -ErrorAction SilentlyContinue)) { throw 'Get-NetUDPEndpoint is required to verify the actual loopback binding.' }
-    $manifestPath = Join-Path $repo '.local\latest-package.json'
+    $manifestPath = if ($PackageManifest) { [IO.Path]::GetFullPath($PackageManifest) } else { Join-Path $repo '.local\latest-package.json' }
     $package = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
     if ($package.Status -ne 'complete' -or $package.NativeRuntime -ne $true) { throw 'The latest package is not a completed native runtime package.' }
     if ($package.Configuration -ne 'Development') { throw 'Use a Development package so connection logs are available.' }

@@ -19,7 +19,8 @@ param(
     [string]$EngineRoot = 'C:\Program Files\Epic Games\UE_5.8',
     [ValidateSet('Development', 'Shipping')]
     [string]$Configuration = 'Development',
-    [switch]$Plan
+    [switch]$Plan,
+    [switch]$NoPromote
 )
 
 $ErrorActionPreference = 'Stop'
@@ -170,6 +171,10 @@ $result = [ordered]@{
     ArenaMaps = @($cookMaps.Split('+') | Where-Object { $_ -ne '/Basketbroom/Maps/BB_Arena' })
 }
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $workPath 'package-result.json') -Encoding UTF8
-$result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $repoRoot '.local\latest-package.json') -Encoding UTF8
+if (-not $NoPromote) {
+    $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $repoRoot '.local\latest-package.json') -Encoding UTF8
+} else {
+    Write-Host 'Candidate preserved for validation; the desktop launcher still uses its previous package.'
+}
 Write-Host "Playable package ready: $gamePath"
 Write-Output ([pscustomobject]$result)

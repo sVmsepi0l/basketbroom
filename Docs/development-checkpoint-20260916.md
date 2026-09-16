@@ -26,3 +26,13 @@ An initial scenery reimport dirtied the open Redwoods map. The original backup w
 Portable resize checks: 13 passed. Portable flight energy checks: 22 passed. The first controller PIE run passed 14 cases, including pause/resume, then stopped at its headshot fixture. Investigate viewport focus after input flush; do not count the five remaining cases as passed.
 
 Save validated milestones to Git and update this document with actual outcomes. Do not push automatically or add generated videos/build products to Git.
+
+## Gameplay acceptance and executable
+
+The focused controller session passed all 19 cases. The earlier failure was the embedded viewport lacking focus after the normal input-flush safety latch; gameplay behavior was retained. Ten additional real-input flight cases passed, including five actual quaffle goals earning charge, zero/partial/full-meter R2, L2 cancellation, pause settings and inversion. An eleventh Bludger reward check has been added and awaits execution.
+
+All 20 contextual spell cases passed in regulation. The fixture now uses the installed engine's `ECC_PAWN` enum and waits for the full levitation endpoint before measuring it. Bloodbroom acceptance is underway; inspect `.local/native-contextual-spells-bloodbroom-results.json` for its final outcome.
+
+The Development game executable compiled successfully (`.local/ue5/game-build-20260916.log`). All in-game controller text now renders geometric PlayStation face symbols; the new HUD awaits visual verification. `Package.ps1 -NoPromote` preserves a candidate without replacing the tested desktop-launcher package. The packaged network check accepts `-PackageManifest` to test that candidate first.
+
+Native Creator Kit is open in a clean owned dungeon PIE session (PID 19744 at inspection). A fresh inventory probe still reports `can_use_broom=false`. No native mount or full native match integration is claimed.
