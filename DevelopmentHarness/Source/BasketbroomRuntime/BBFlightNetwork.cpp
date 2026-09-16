@@ -6,9 +6,9 @@ void FBBFlightSavedMove::Clear()
     FSavedMove_Character::Clear();
     Throttle = Brake = 0;
 }
-void FBBFlightSavedMove::SetMoveFor(ACharacter* C, float DeltaTime, const FVector& Accel, FNetworkPredictionData_Client_Character& Data)
+void FBBFlightSavedMove::SetMoveFor(ACharacter* C, float MoveDelta, const FVector& Accel, FNetworkPredictionData_Client_Character& Data)
 {
-    FSavedMove_Character::SetMoveFor(C, DeltaTime, Accel, Data);
+    FSavedMove_Character::SetMoveFor(C, MoveDelta, Accel, Data);
     const UBBFlyingMovementComponent* Movement = Cast<UBBFlyingMovementComponent>(C->GetCharacterMovement());
     Throttle = Movement ? Movement->FlightThrottle : 0;
     Brake = Movement ? Movement->FlightBrake : 0;
