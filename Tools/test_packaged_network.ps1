@@ -267,7 +267,7 @@ try {
             $requestIndex = $serverText.IndexOf($request, [StringComparison]::Ordinal)
             if ($requestIndex -ge 0) { $joined = Find-Evidence ($serverText.Substring($requestIndex)) '^.*Join succeeded:.*$' }
         }
-        $welcomed = Find-Evidence $clientText ('^.*Welcomed by server \(Level: ' + $mapPattern + '(?:\?|\)|\s|$).*$')
+        $welcomed = Find-Evidence $clientText ('^.*Welcomed by server \(Level: ' + $mapPattern + '(?:\?|\)|,|\s|$).*$')
         $loaded = $null
         if ($welcomed) {
             $welcomeIndex = $clientText.IndexOf($welcomed, [StringComparison]::Ordinal)
