@@ -1,6 +1,6 @@
-"""portable fixture checks; these do not claim actual hud rendering or rpc delivery."""
+"""Portable fixture checks; these do not claim actual HUD rendering or RPC delivery."""
 import importlib.util
-from pathlib import path
+from pathlib import Path
 import unittest
 
 _spec = importlib.util.spec_from_file_location(
@@ -19,8 +19,8 @@ class ReadOnlyRider:
 
 class Fixture(spells.NativeSpellTests):
     def __init__(self):
-        self.pawn = readonlyrider(
-            spellfeedback='arresto momentum hit - target impeded. no follow-up stun.',
+        self.pawn = ReadOnlyRider(
+            SpellFeedback='Arresto Momentum HIT - target impeded. No follow-up stun.',
             SpellFeedbackRemaining=2.25, SpellCooldownRemaining=0., StunRemaining=0.)
         self.guest = ReadOnlyRider(ImpedimentRemaining=2.)
         self.events = []
@@ -33,12 +33,12 @@ class Fixture(spells.NativeSpellTests):
 
     def require(self, condition, message):
         if not condition:
-            raise runtimeerror(message)
+            raise RuntimeError(message)
 
 
 class DisplayedImpedimentFixtureContract(unittest.TestCase):
     def begin_gate(self):
-        fixture = fixture()
+        fixture = Fixture()
         sequence = fixture.wait_for_displayed_impediment()
         wait = next(sequence)
         return fixture, sequence, wait['predicate']
@@ -47,7 +47,7 @@ class DisplayedImpedimentFixtureContract(unittest.TestCase):
         fixture, sequence, ready = self.begin_gate()
         self.assertFalse(ready())
         with self.assertRaisesRegex(RuntimeError, 'queued text alone is insufficient'):
-            next(sequence)  # simulate the wait expiring with no renderer draw.
+            next(sequence)  # Simulate the wait expiring with no renderer draw.
         self.assertFalse(fixture.events[-1]['displayed_countdown_observed'])
         self.assertEqual(fixture.events[-1]['feedback_seconds_remaining'], 2.25)
 
@@ -65,7 +65,7 @@ class DisplayedImpedimentFixtureContract(unittest.TestCase):
     def test_followup_still_requires_cooldown_and_stun_recovery(self):
         fixture, sequence, ready = self.begin_gate()
         fixture.pawn.values['SpellFeedbackRemaining'] = 1.2
-        for key in ('spellcooldownremaining', 'StunRemaining'):
+        for key in ('SpellCooldownRemaining', 'StunRemaining'):
             fixture.pawn.values[key] = .01
             self.assertFalse(ready(), key)
             fixture.pawn.values[key] = 0.
@@ -82,7 +82,7 @@ class DisplayedImpedimentFixtureContract(unittest.TestCase):
             fixture.guest.values['ImpedimentRemaining'] = timer
             self.assertFalse(ready())
         fixture.guest.values['ImpedimentRemaining'] = 2.
-        fixture.pawn.values['SpellFeedback'] = 'basic cast hit'
+        fixture.pawn.values['SpellFeedback'] = 'Basic Cast HIT'
         self.assertFalse(ready())
         sequence.close()
 
@@ -94,7 +94,7 @@ class DisplayedImpedimentFixtureContract(unittest.TestCase):
         with self.assertRaises(StopIteration):
             next(sequence)
         self.assertEqual((fixture.pawn.values, fixture.guest.values), before)
-        # readonlyrider has no action, setter, hud or acknowledgment methods;
+        # ReadOnlyRider has no action, setter, HUD or acknowledgment methods;
         # the actual gate can complete solely through public observations.
         self.assertEqual(len(fixture.events), 1)
 

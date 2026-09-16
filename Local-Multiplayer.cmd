@@ -1,2 +1,2 @@
 @echo off
-powershell.exe -noprofile -file "%~dp0Multiplayer.ps1" -mode localtest -practice
+powershell.exe -NoProfile -File "%~dp0Multiplayer.ps1" -Mode LocalTest -Practice

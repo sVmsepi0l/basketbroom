@@ -11,157 +11,157 @@
 #include "Sound/SoundWave.h"
 #include "UObject/ConstructorHelpers.h"
 
-define_log_category_static(logbasketbroomaudio, log, all);
+DEFINE_LOG_CATEGORY_STATIC(LogBasketbroomAudio, Log, All);
 
 UBBAudioFeedback::UBBAudioFeedback()
 {
     static ConstructorHelpers::FObjectFinder<USoundWave> ThrowAsset(TEXT("/Basketbroom/Audio/S_BB_Throw.S_BB_Throw"));
     static ConstructorHelpers::FObjectFinder<USoundWave> CatchAsset(TEXT("/Basketbroom/Audio/S_BB_Catch.S_BB_Catch"));
     static ConstructorHelpers::FObjectFinder<USoundWave> ScoreAsset(TEXT("/Basketbroom/Audio/S_BB_Score.S_BB_Score"));
-    throwsound = ThrowAsset.Object;
-    catchsound = CatchAsset.Object;
-    scoresound = ScoreAsset.Object;
-    bassetsready = throwsound && catchsound && scoresound;
+    ThrowSound = ThrowAsset.Object;
+    CatchSound = CatchAsset.Object;
+    ScoreSound = ScoreAsset.Object;
+    bAssetsReady = ThrowSound && CatchSound && ScoreSound;
 }
 
-void UBBAudioFeedback::Play(AHUD* hud, usoundwave* sound, int32 cue, float volume)
+void UBBAudioFeedback::Play(AHUD* HUD, USoundWave* Sound, int32 Cue, float Volume)
 {
-    if (!isvalid(hud) || !sound || cue < 0 || cue >= 3) return;
-    const double now = hud->getworld()->getrealtimeseconds();
-    // each observed state edge is consumed below even when rate-limited.
-    // there are no timers or delayed sounds that can leak into a new match.
-    if (now - lastcuetime[cue] < 0.16) return;
-    lastcuetime[cue] = now;
-    ActiveSounds.RemoveAll([](const tweakobjectptr<uaudiocomponent>& audio)
+    if (!IsValid(HUD) || !Sound || Cue < 0 || Cue >= 3) return;
+    const double Now = HUD->GetWorld()->GetRealTimeSeconds();
+    // Each observed state edge is consumed below even when rate-limited.
+    // There are no timers or delayed sounds that can leak into a new match.
+    if (Now - LastCueTime[Cue] < 0.16) return;
+    LastCueTime[Cue] = Now;
+    ActiveSounds.RemoveAll([](const TWeakObjectPtr<UAudioComponent>& Audio)
     {
-        return !Audio.IsValid() || !audio->isplaying();
+        return !Audio.IsValid() || !Audio->IsPlaying();
     });
-    if (uaudiocomponent* audio = UGameplayStatics::SpawnSound2D(HUD, sound, volume, 1.f, 0.f, nullptr, false, true))
+    if (UAudioComponent* Audio = UGameplayStatics::SpawnSound2D(HUD, Sound, Volume, 1.f, 0.f, nullptr, false, true))
     {
         ActiveSounds.Add(Audio);
-        ++soundsstarted;
-        ue_log(logbasketbroomaudio, verbose, text("started %s for local hud %s"), *sound->getname(), *hud->getname());
+        ++SoundsStarted;
+        UE_LOG(LogBasketbroomAudio, Verbose, TEXT("Started %s for local HUD %s"), *Sound->GetName(), *HUD->GetName());
     }
 }
 
 int32 UBBAudioFeedback::GetActiveSoundCount() const
 {
-    int32 count = 0;
-    for (const auto& audio : activesounds) if (Audio.IsValid() && audio->isplaying()) ++count;
-    return count;
+    int32 Count = 0;
+    for (const auto& Audio : ActiveSounds) if (Audio.IsValid() && Audio->IsPlaying()) ++Count;
+    return Count;
 }
 
 void UBBAudioFeedback::Reset()
 {
-    for (const auto& audio : activesounds) if (Audio.IsValid()) audio->stop();
+    for (const auto& Audio : ActiveSounds) if (Audio.IsValid()) Audio->Stop();
     ActiveSounds.Empty();
     PreviousBalls.Empty();
     ObservedMatch.Reset();
     ObservedRider.Reset();
-    bhasbaseline = false;
-    for (double& time : lastcuetime) time = -1000.0;
+    bHasBaseline = false;
+    for (double& Time : LastCueTime) Time = -1000.0;
 }
 
-void UBBAudioFeedback::Observe(AHUD* hud, abbmatchstate* match, abbridercharacter* rider)
+void UBBAudioFeedback::Observe(AHUD* HUD, ABBMatchState* Match, ABBRiderCharacter* Rider)
 {
-    if (!isvalid(hud) || !isvalid(match) || !isvalid(rider) || !hud->getworld()
-        || !hud->getowningplayercontroller() || !hud->getowningplayercontroller()->islocalcontroller()
-        || !match->hasactorbegunplay() || !rider->hasactorbegunplay()) return;
-    if (ObservedMatch.Get() != match || ObservedRider.Get() != rider)
+    if (!IsValid(HUD) || !IsValid(Match) || !IsValid(Rider) || !HUD->GetWorld()
+        || !HUD->GetOwningPlayerController() || !HUD->GetOwningPlayerController()->IsLocalController()
+        || !Match->HasActorBegunPlay() || !Rider->HasActorBegunPlay()) return;
+    if (ObservedMatch.Get() != Match || ObservedRider.Get() != Rider)
     {
-        reset();
-        observedmatch = match;
-        observedrider = rider;
+        Reset();
+        ObservedMatch = Match;
+        ObservedRider = Rider;
     }
-    if (!breportedassets)
+    if (!bReportedAssets)
     {
-        breportedassets = true;
-        if (bassetsready)
+        bReportedAssets = true;
+        if (bAssetsReady)
         {
-            ue_log(logbasketbroomaudio, log, text("original throw, catch, and score soundwaves bound to local HUD."));
+            UE_LOG(LogBasketbroomAudio, Log, TEXT("Original throw, catch, and score SoundWaves bound to local HUD."));
         }
         else
         {
-            ue_log(logbasketbroomaudio, warning, text("one or more original basketbroom soundwaves are missing; unavailable cues are silent."));
+            UE_LOG(LogBasketbroomAudio, Warning, TEXT("One or more original Basketbroom SoundWaves are missing; unavailable cues are silent."));
         }
     }
 
-    tmap<int32, fballsnapshot> currentballs;
-    for (tactoriterator<abbball> it(hud->getworld()); it; ++it)
+    TMap<int32, FBallSnapshot> CurrentBalls;
+    for (TActorIterator<ABBBall> It(HUD->GetWorld()); It; ++It)
     {
-        abbball* ball = *it;
-        if (!ball->hasactorbegunplay() || ball->ballindex < 0 || ball->ballindex >= 7) continue;
-        fballsnapshot snapshot;
-        Snapshot.Ball = ball;
+        ABBBall* Ball = *It;
+        if (!Ball->HasActorBegunPlay() || Ball->BallIndex < 0 || Ball->BallIndex >= 7) continue;
+        FBallSnapshot Snapshot;
+        Snapshot.Ball = Ball;
         Snapshot.Holder = Ball->Holder.Get();
-        Snapshot.bActive = ball->bactive;
-        // during replication startup, multiple balls can briefly expose the
-        // same default index. wait for the full roster before arming feedback.
-        CurrentBalls.Add(Ball->BallIndex, snapshot);
+        Snapshot.bActive = Ball->bActive;
+        // During replication startup, multiple balls can briefly expose the
+        // same default index. Wait for the full roster before arming feedback.
+        CurrentBalls.Add(Ball->BallIndex, Snapshot);
     }
     if (CurrentBalls.Num() != 7)
     {
-        bhasbaseline = false;
-        previousballs = movetemp(currentballs);
-        previoustealscore = match->tealscore;
-        previouscopperscore = match->copperscore;
+        bHasBaseline = false;
+        PreviousBalls = MoveTemp(CurrentBalls);
+        PreviousTealScore = Match->TealScore;
+        PreviousCopperScore = Match->CopperScore;
         return;
     }
-    if (bhasbaseline)
+    if (bHasBaseline)
     {
-        if (match->tealscore > previoustealscore || match->copperscore > previouscopperscore)
+        if (Match->TealScore > PreviousTealScore || Match->CopperScore > PreviousCopperScore)
         {
-            ++scoreevents;
-            play(hud, scoresound, 2, 0.48f);
+            ++ScoreEvents;
+            Play(HUD, ScoreSound, 2, 0.48f);
         }
-        for (const auto& entry : currentballs)
+        for (const auto& Entry : CurrentBalls)
         {
-            const fballsnapshot& current = Entry.Value;
-            const fballsnapshot* previous = PreviousBalls.Find(Entry.Key);
-            abbball* ball = Current.Ball.Get();
-            if (!previous || previous->ball != Current.Ball || !isvalid(ball)) continue;
-            if (!ball->ischase())
+            const FBallSnapshot& Current = Entry.Value;
+            const FBallSnapshot* Previous = PreviousBalls.Find(Entry.Key);
+            ABBBall* Ball = Current.Ball.Get();
+            if (!Previous || Previous->Ball != Current.Ball || !IsValid(Ball)) continue;
+            if (!Ball->IsChase())
             {
-                if (match->blive && Current.bActive && Current.Holder.Get() == rider && Previous->Holder.Get() != rider)
+                if (Match->bLive && Current.bActive && Current.Holder.Get() == Rider && Previous->Holder.Get() != Rider)
                 {
-                    ++pickupevents;
-                    play(hud, catchsound, 1, 0.34f);
+                    ++PickupEvents;
+                    Play(HUD, CatchSound, 1, 0.34f);
                 }
-                else if (match->blive && Current.bActive && Previous->Holder.Get() == rider
+                else if (Match->bLive && Current.bActive && Previous->Holder.Get() == Rider
                     && !Current.Holder.IsValid() && Ball->BallStatus.IsEmpty()
                     && Ball->FlightVelocity.SizeSquared() > FMath::Square(300.f))
                 {
-                    // a holder disappearing alone can mean a stoppage, no
-                    // crown, or respawn. require live released-ball motion.
-                    ++throwevents;
-                    play(hud, throwsound, 0, 0.55f);
+                    // A holder disappearing alone can mean a stoppage, No
+                    // Crown, or respawn. Require live released-ball motion.
+                    ++ThrowEvents;
+                    Play(HUD, ThrowSound, 0, 0.55f);
                 }
             }
-            else if (previous->bactive && !Current.bActive
-                && ((Entry.Key == 3 && ball->ballstatus == text("timeout"))
-                    || (Entry.Key == 4 && ball->ballstatus == text("score"))))
+            else if (Previous->bActive && !Current.bActive
+                && ((Entry.Key == 3 && Ball->BallStatus == TEXT("timeout"))
+                    || (Entry.Key == 4 && Ball->BallStatus == TEXT("score"))))
             {
-                // these replicated dead reasons identify actual chase awards,
+                // These replicated dead reasons identify actual chase awards,
                 // unlike a disappearing target at a horn or stoppage.
-                ++chasecatchevents;
-                play(hud, catchsound, 1, 0.42f);
+                ++ChaseCatchEvents;
+                Play(HUD, CatchSound, 1, 0.42f);
             }
         }
     }
-    previousballs = movetemp(currentballs);
-    previoustealscore = match->tealscore;
-    previouscopperscore = match->copperscore;
-    bhasbaseline = true;
+    PreviousBalls = MoveTemp(CurrentBalls);
+    PreviousTealScore = Match->TealScore;
+    PreviousCopperScore = Match->CopperScore;
+    bHasBaseline = true;
 }
 
-void ABBHUD::UpdateAudioFeedback(ABBMatchState* match, abbridercharacter* rider)
+void ABBHUD::UpdateAudioFeedback(ABBMatchState* Match, ABBRiderCharacter* Rider)
 {
-    if (!audiofeedback) audiofeedback = newobject<ubbaudiofeedback>(this);
-    audiofeedback->observe(this, match, rider);
+    if (!AudioFeedback) AudioFeedback = NewObject<UBBAudioFeedback>(this);
+    AudioFeedback->Observe(this, Match, Rider);
 }
 
-void ABBHUD::EndPlay(const EEndPlayReason::Type endplayreason)
+void ABBHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (audiofeedback) audiofeedback->reset();
+    if (AudioFeedback) AudioFeedback->Reset();
     Super::EndPlay(EndPlayReason);
 }

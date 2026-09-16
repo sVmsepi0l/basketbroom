@@ -1,73 +1,73 @@
 param(
-    [string]$engineroot = 'C:\Program Files\Epic Games\UE_5.8',
-    [validaterange(640, 7680)][int]$width = 1600,
-    [validaterange(480, 4320)][int]$height = 900,
-    [switch]$editorgame,
-    [validateset('auto','training','regulation')][string]$mode = 'auto',
-    [validateset('auto','classic','redrock','redwoods')][string]$arena = 'auto',
-    [switch]$practice,
-    [switch]$bloodbroom,
-    [switch]$plan
+    [string]$EngineRoot = 'C:\Program Files\Epic Games\UE_5.8',
+    [ValidateRange(640, 7680)][int]$Width = 1600,
+    [ValidateRange(480, 4320)][int]$Height = 900,
+    [switch]$EditorGame,
+    [ValidateSet('Auto','Training','Regulation')][string]$Mode = 'Auto',
+    [ValidateSet('Auto','Classic','Redrock','Redwoods')][string]$Arena = 'Auto',
+    [switch]$Practice,
+    [switch]$Bloodbroom,
+    [switch]$Plan
 )
 
-$erroractionpreference = 'stop'
-. (join-path $psscriptroot 'Tools/Resolve-BBArena.ps1')
-if ($mode -eq 'training' -and $arena -notin @('auto','classic')) { throw 'environment arenas use the regulation game; omit -mode Training.' }
-$gamearguments = @('-windowed', '-nosplash', "-resx=$width", "-resy=$height")
+$ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Tools/Resolve-BBArena.ps1')
+if ($Mode -eq 'Training' -and $Arena -notin @('Auto','Classic')) { throw 'Environment arenas use the regulation game; omit -Mode Training.' }
+$gameArguments = @('-windowed', '-NoSplash', "-ResX=$Width", "-ResY=$Height")
 $map = $null
-if ($mode -eq 'training') { $map = '/Basketbroom/Maps/BB_Arena' }
-if ($mode -eq 'regulation') { $map = '/Basketbroom/Maps/BB_Regulation' }
-if ($bloodbroom) {
-    if ($mode -eq 'training') { throw 'bloodbroom requires the native regulation map; use -mode regulation or Auto.' }
+if ($Mode -eq 'Training') { $map = '/Basketbroom/Maps/BB_Arena' }
+if ($Mode -eq 'Regulation') { $map = '/Basketbroom/Maps/BB_Regulation' }
+if ($Bloodbroom) {
+    if ($Mode -eq 'Training') { throw 'Bloodbroom requires the native Regulation map; use -Mode Regulation or Auto.' }
     $map = '/Basketbroom/Maps/BB_Regulation'
 }
-$mapoptions = ''
-if ($practice) { $mapoptions += '?practice=1' }
-if ($bloodbroom) { $mapoptions += '?bloodbroom=1' }
-$packageexecutable = $null
-if (-not $editorgame) {
-    $packagemanifest = join-path $psscriptroot '.local\latest-package.json'
-    if (test-path -literalpath $packagemanifest -pathtype leaf) {
+$mapOptions = ''
+if ($Practice) { $mapOptions += '?Practice=1' }
+if ($Bloodbroom) { $mapOptions += '?Bloodbroom=1' }
+$packageExecutable = $null
+if (-not $EditorGame) {
+    $packageManifest = Join-Path $PSScriptRoot '.local\latest-package.json'
+    if (Test-Path -LiteralPath $packageManifest -PathType Leaf) {
         try {
-            $package = get-content -literalpath $packagemanifest -raw | convertfrom-json
+            $package = Get-Content -LiteralPath $packageManifest -Raw | ConvertFrom-Json
             if ($package.Status -eq 'complete' -and
                 -not [string]::IsNullOrWhiteSpace($package.Executable) -and
                 [IO.Path]::IsPathRooted($package.Executable) -and
-                (test-path -literalpath $package.Executable -pathtype leaf)) {
-                $packageexecutable = $package.Executable
+                (Test-Path -LiteralPath $package.Executable -PathType Leaf)) {
+                $packageExecutable = $package.Executable
             }
         } catch {
-            write-verbose "could not read the latest package pointer; using the editor game: $_"
+            Write-Verbose "Could not read the latest package pointer; using the editor game: $_"
         }
     }
 }
-if ($packageexecutable) {
-    if (($mode -eq 'regulation' -or $practice -or $bloodbroom) -and -not $package.NativeRuntime) {
-        throw 'the latest playable package is the training build. native regulation is waiting for a successful c++ build and packaging.'
+if ($packageExecutable) {
+    if (($Mode -eq 'Regulation' -or $Practice -or $Bloodbroom) -and -not $package.NativeRuntime) {
+        throw 'The latest playable package is the training build. Native regulation is waiting for a successful C++ build and packaging.'
     }
-    if ($mode -ne 'training' -and $package.NativeRuntime) {
+    if ($Mode -ne 'Training' -and $package.NativeRuntime) {
         $available = if ($package.PSObject.Properties['ArenaMaps']) { @($package.ArenaMaps) } else { @('/Basketbroom/Maps/BB_Regulation') }
-        $map = resolve-bbarenamap -arena $arena -availablemaps $available
+        $map = Resolve-BBArenaMap -Arena $Arena -AvailableMaps $available
     }
-    if ($map) { $gamearguments = @($map + $mapoptions) + $gamearguments }
-    if ($plan) {
-        [pscustomobject]@{runtime='packaged game';executable=$packageexecutable;arguments=$gamearguments;workingdirectory=(split-path -parent $packageexecutable)}
+    if ($map) { $gameArguments = @($map + $mapOptions) + $gameArguments }
+    if ($Plan) {
+        [pscustomobject]@{Runtime='Packaged game';Executable=$packageExecutable;Arguments=$gameArguments;WorkingDirectory=(Split-Path -Parent $packageExecutable)}
         return
     }
-    write-host "opening packaged basketbroom ($width x $Height)."
-    # the game is intentionally visible and interactive.
-    start-process -filepath $packageexecutable -argumentlist $gamearguments -workingdirectory (split-path -parent $packageexecutable) -windowstyle normal
+    Write-Host "Opening packaged Basketbroom ($Width x $Height)."
+    # The game is intentionally visible and interactive.
+    Start-Process -FilePath $packageExecutable -ArgumentList $gameArguments -WorkingDirectory (Split-Path -Parent $packageExecutable) -WindowStyle Normal
     return
 }
 
-$project = join-path $psscriptroot 'DevelopmentHarness\BasketbroomDev.uproject'
-$editor = join-path $engineroot 'Engine\Binaries\Win64\UnrealEditor.exe'
-$versionfile = join-path $engineroot 'Engine\Build\Build.version'
+$project = Join-Path $PSScriptRoot 'DevelopmentHarness\BasketbroomDev.uproject'
+$editor = Join-Path $EngineRoot 'Engine\Binaries\Win64\UnrealEditor.exe'
+$versionFile = Join-Path $EngineRoot 'Engine\Build\Build.version'
 if (-not $map) {
-    $descriptor = get-content -literalpath $project -raw | convertfrom-json
+    $descriptor = Get-Content -LiteralPath $project -Raw | ConvertFrom-Json
     $map = if (@($descriptor.Modules).Where({ $null -ne $_ }).Count -gt 0) { '/Basketbroom/Maps/BB_Regulation' } else { '/Basketbroom/Maps/BB_Arena' }
 }
-if ($map -ne '/Basketbroom/Maps/BB_Arena') { $map = resolve-bbarenamap -arena $arena -availablemaps @(get-bbeditorarenamaps -Repository $PSScriptRoot) }
+if ($map -ne '/Basketbroom/Maps/BB_Arena') { $map = Resolve-BBArenaMap -Arena $Arena -AvailableMaps @(Get-BBEditorArenaMaps -Repository $PSScriptRoot) }
 $arenaFile = Join-Path $PSScriptRoot ('DevelopmentHarness\Plugins\Basketbroom\Content\Maps\' + ($map.Split('/')[-1]) + '.umap')
 
 if (-not (Test-Path -LiteralPath $editor -PathType Leaf)) {

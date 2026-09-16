@@ -1,2 +1,2 @@
 @echo off
-powershell.exe -noprofile -file "%~dp0Play.ps1" -practice -bloodbroom
+powershell.exe -NoProfile -File "%~dp0Play.ps1" -Practice -Bloodbroom

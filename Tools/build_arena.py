@@ -39,7 +39,9 @@ _dimension_spec = importlib.util.spec_from_file_location("_bb_source_dimensions"
 dimensions = importlib.util.module_from_spec(_dimension_spec)
 _dimension_spec.loader.exec_module(dimensions)
 FT = 30.48
-ARENA_SCALE = dimensions.LINEAR_SCALE
+ARENA_SCALE = dimensions.LENGTH_SCALE
+ARENA_WIDTH_SCALE = dimensions.WIDTH_SCALE
+ARENA_HEIGHT_SCALE = dimensions.LINEAR_SCALE
 # Historical name HALF_LENGTH means goal-plane distance, not the enclosing net.
 HALF_LENGTH = dimensions.GOAL_PLANE_X
 HALF_WIDTH = dimensions.HALF_WIDTH
@@ -54,7 +56,7 @@ LARGE_RADIUS = dimensions.LARGE_HOOP_RADIUS
 SMALL_RADIUS = dimensions.SMALL_HOOP_RADIUS
 GOAL_SPACING = dimensions.HOOP_SPACING
 BACKSTOP_X = dimensions.HALF_LENGTH
-CAMERA_LOCATION = tuple(value * ARENA_SCALE for value in (-12400.0, -11400.0, 9400.0))
+CAMERA_LOCATION = (-12400.0 * ARENA_SCALE, -11400.0 * ARENA_WIDTH_SCALE, 9400.0 * ARENA_HEIGHT_SCALE)
 CAMERA_ROTATION = (-25.0, 42.0, 0.0)
 SCENERY_TAG = "BB.Scenery"
 DETAIL_TAG = "BB.ArtDetail"
@@ -328,9 +330,9 @@ def generate_source_meshes():
                  "net_spacing_cm_max": 230.0, "net_cord_radius_cm": 3.8,
                  "scope": "all balls and riders; no roof exit or respawn"},
         "end_net_x_cm": [-BACKSTOP_X, BACKSTOP_X], "side_net_y_cm": [-HALF_WIDTH, HALF_WIDTH],
-        "backstop_note": "Goal plane and behind-goal bay expand together; hoop apertures and sporting distances stay fixed.",
-        "geometry_version": "arena-volume-1.45", "enclosed_volume_scale": dimensions.VOLUME_SCALE,
-        "linear_scale": ARENA_SCALE, "enclosed_volume_cm3": dimensions.enclosed_volume_cm3(),
+        "backstop_note": "Goal planes follow enlarged ends with the prior 509.333038 cm setback; hoop apertures and sporting distances stay fixed.",
+        "geometry_version": dimensions.GEOMETRY_VERSION, "enclosed_volume_scale": dimensions.VOLUME_SCALE,
+        "historical_height_scale": ARENA_HEIGHT_SCALE, "axis_scales": [ARENA_SCALE, ARENA_WIDTH_SCALE, ARENA_HEIGHT_SCALE], "enclosed_volume_cm3": dimensions.enclosed_volume_cm3(),
         "behind_goal_bay_cm": BACKSTOP_X - HALF_LENGTH,
         "restitution": 0.75, "level": LEVEL_PATH,
         "screenshot_camera": {"location": CAMERA_LOCATION, "rotation_pitch_yaw_roll": CAMERA_ROTATION},
@@ -1028,7 +1030,7 @@ class ArenaBuilder:
         self.configure_fog(fog_component)
         for index, x in enumerate((-4400, 0, 4400)):
             for side in (-1, 1):
-                lamp = self.actor(unreal.PointLight, "Court flood %s %s" % (side, index), (x * ARENA_SCALE, side * 2500 * ARENA_SCALE, 3500 * ARENA_SCALE), folder="Lighting")
+                lamp = self.actor(unreal.PointLight, "Court flood %s %s" % (side, index), (x * ARENA_SCALE, side * 2500 * ARENA_WIDTH_SCALE, 3500 * ARENA_HEIGHT_SCALE), folder="Lighting")
                 component = lamp.get_component_by_class(unreal.PointLightComponent)
                 component.set_mobility(unreal.ComponentMobility.MOVABLE)
                 self.configure_flood(component)
@@ -1041,7 +1043,7 @@ class ArenaBuilder:
         camera = self.actor(unreal.CameraActor, "BB Hero Camera", CAMERA_LOCATION, CAMERA_ROTATION,
                             tags=("BB.Camera.Hero",), folder="Cameras")
         camera.get_component_by_class(unreal.CameraComponent).set_field_of_view(58.0)
-        self.actor(unreal.CameraActor, "BB Flight Camera", tuple(v * ARENA_SCALE for v in (-4400, -1300, 1500)), (5, 14, 0), folder="Cameras")
+        self.actor(unreal.CameraActor, "BB Flight Camera", (-4400 * ARENA_SCALE, -1300 * ARENA_WIDTH_SCALE, 1500 * ARENA_HEIGHT_SCALE), (5, 14, 0), folder="Cameras")
         self.actor(unreal.PlayerStart, "BB Player Start", (-3000, 0, 300), (0, 0, 0), tags=("BB.Spawn",), folder="Gameplay anchors")
         self.levels.set_level_viewport_camera_info(
             unreal.Vector(*CAMERA_LOCATION),

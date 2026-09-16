@@ -265,6 +265,12 @@ def run(dry_run=True):
                     mesh=assets.load_asset(ART+'/Meshes/'+item['name'])
                     if mesh is None:raise RuntimeError('Mesh import failed '+item['name'])
                     mesh.set_material(0,load_material(item['material']));assets.save_loaded_asset(mesh)
+            # OBJ import can reflect Y even with convert_scene disabled. Prove
+            # that from all signed bounds/topology before compensating actors.
+            axes=module('_bb_env_import_axes','arena_environment_axes.py')
+            report['import_axes']=axes.audit(unreal,manifest,ART)
+            y_compensation=report['import_axes']['actor_y_compensation']
+            save()
             for venue,item in zip(manifest['venues'],report['maps']):
                 clean()
                 if item['exists_before']:
@@ -285,7 +291,7 @@ def run(dry_run=True):
                     if key in removable and not actors.destroy_actor(a):raise RuntimeError('Cannot replace exact owned backdrop actor')
                 for placement in venue['instances']:
                     static_mesh(placement['label'],assets.load_asset(ART+'/Meshes/'+placement['mesh']),load_material(placement['material']),
-                       placement['location'],placement['scale'],placement['yaw'],placement['cast_shadow'])
+                       placement['location'],[placement['scale'][0],placement['scale'][1]*y_compensation,placement['scale'][2]],placement['yaw'],placement['cast_shadow'])
                 vid=venue['id'];warm=vid=='redrock'
                 static_mesh(vid+' / daylight sky',assets.load_asset('/Engine/BasicShapes/Sphere'),load_material('Sky_'+vid),scale=(6000,6000,6000),shadow=False)
                 sun=actor(unreal.DirectionalLight,vid+' / sun',(0,0,15000),(-31,-76 if warm else -122,0))
@@ -302,7 +308,7 @@ def run(dry_run=True):
                 settings=pp.get_editor_property('settings')
                 for key,value in {'override_auto_exposure_min_brightness':True,'override_auto_exposure_max_brightness':True,'auto_exposure_min_brightness':.6,'auto_exposure_max_brightness':.6,'override_bloom_intensity':True,'bloom_intensity':.14,'override_motion_blur_amount':True,'motion_blur_amount':0.,'override_vignette_intensity':True,'vignette_intensity':.10}.items():settings.set_editor_property(key,value)
                 pp.set_editor_property('settings',settings)
-                actor(unreal.CameraActor,vid+' / environment hero',(-15000,-24000,9400),(-16,58,0))
+                actor(unreal.CameraActor,vid+' / environment hero',(-30000,-32000,9400),(-12,47,0))
                 current=list(actors.get_all_level_actors());assert_protected(baseline,protected(portable_snapshot(unreal,current),False))
                 if world.get_world_settings().get_editor_property('default_game_mode')!=mode:raise RuntimeError('Variant game mode changed')
                 for a in current:

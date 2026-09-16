@@ -18,6 +18,8 @@ _spec = importlib.util.spec_from_file_location('_bb_venue_dimensions', Path(__fi
 dim = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(dim)
 VERSION = 1
+LAYOUT_X = dim.LENGTH_MULTIPLIER
+LAYOUT_Y = dim.WIDTH_MULTIPLIER
 TAG = 'BB.Environment.v1'
 MAPS = {'redrock': '/Basketbroom/Maps/BB_Redrock', 'redwoods': '/Basketbroom/Maps/BB_Redwoods'}
 
@@ -136,6 +138,26 @@ class Venue:
         self.instances.append({'label':label,'mesh':name,'material':self.meshes[name]['material'],
              'location':list(location),'scale':list(scale),'yaw':yaw,'cast_shadow':shadow,'collision':'NoCollision'})
 
+    def resize_landscape(self):
+        # Landforms grow around the enlarged cage; room/tower/foliage sizes
+        # remain authored physical dimensions. Those centers are moved below.
+        world_meshes = {
+            'RR_Overhang', 'RR_DistantMesa', 'RR_Terrace',
+            'RW_ForestShelf', 'RW_CoastalBluff', 'RW_Ocean', 'RW_SeaStacks', 'RW_Surf'}
+        world_meshes.update('RR_AlcoveBed%d' % i for i in range(7))
+        for short in world_meshes:
+            name='SM_BB_ENV_'+short
+            if name in self.meshes:
+                mesh=self.meshes[name]['mesh']
+                mesh.vertices=[(p[0]*LAYOUT_X,p[1]*LAYOUT_Y,p[2]) for p in mesh.vertices]
+        # Standalone tree meshes stay the same shape and size at varied yaw.
+        for instance in self.instances:
+            if any(instance['mesh'].endswith(s) for s in
+                   tuple('RW_Trunk%d'%i for i in range(3)) +
+                   tuple('RW_Crown%d'%i for i in range(3)) + ('RW_FallenLog',)):
+                instance['location'][0] *= LAYOUT_X
+                instance['location'][1] *= LAYOUT_Y
+
     def finish(self):
         return {'id':self.name, 'map':MAPS[self.name], 'meshes':[dict(v['mesh'].save(k),material=v['material']) for k,v in self.meshes.items()],
                 'instances':self.instances}
@@ -202,10 +224,10 @@ def redrock():
     adobe=v.mesh('RR_AdobeRooms','Adobe');plaster=v.mesh('RR_AdobeParapets','AdobeLight')
     dark=v.mesh('RR_Recesses','DoorShadow');wood=v.mesh('RR_VigasLadders','Timber')
     for row in range(3):
-        y=7800+row*2050
+        y=(7800+row*2050)*LAYOUT_Y
         for col in range(14):
             if row==2 and col in (0,13):continue
-            x=-12800+col*1950+rng.uniform(-110,110)
+            x=(-12800+col*1950+rng.uniform(-110,110))*LAYOUT_X
             w=rng.uniform(1550,1930);depth=1900;h=rng.uniform(1100,1650)
             basez=row*850-300
             adobe.box((x,y,basez+h/2),(w,depth,h))
@@ -230,14 +252,14 @@ def redrock():
                     wood.tube((bx-150,yy,z),(bx+150,yy,z),20,sides=7)
     # Round masonry lookout towers and roof-access openings flank the village.
     for side in (-1,1):
-        x=side*14700;y=8100
+        x=side*14700*LAYOUT_X;y=8100*LAYOUT_Y
         adobe.tube((x,y,-250),(x,y,3400),1100,990,48)
         plaster.tube((x,y,3330),(x,y,3550),1100,1090,48)
         dark.box((x,y-1103,800),(430,30,1550))
     for name,label in [('RR_AdobeRooms','terraced pueblo rooms'),('RR_AdobeParapets','adobe roof coping'),('RR_Recesses','recessed doors and windows'),('RR_VigasLadders','timber vigas and roof ladders')]:v.place(name,'redrock / '+label)
     rubble=v.mesh('RR_Talus','SandstoneLight');sage=v.mesh('RR_Sage','Sage')
     for k in range(110):
-        side=rng.choice((-1,1));x=side*rng.uniform(10800,17000);y=rng.uniform(-6500,6600)
+        side=rng.choice((-1,1));x=side*rng.uniform(10800,17000)*LAYOUT_X;y=rng.uniform(-6500,6600)*LAYOUT_Y
         rubble.ellipsoid((x,y,-200),(rng.uniform(130,650),rng.uniform(100,400),rng.uniform(120,510)),k,12,6,.22)
         if k%3==0:sage.ellipsoid((x+180,y,-20),(210,180,165),k,12,6,.28)
     v.place('RR_Talus','redrock / sandstone talus');v.place('RR_Sage','redrock / sagebrush')
@@ -349,6 +371,7 @@ def redwoods():
     for k in range(170):
         x,y=rng.uniform(-28000,28000),rng.uniform(-9000,28000)
         if abs(x)<10800 and y<7000:continue
+        x*=LAYOUT_X;y*=LAYOUT_Y
         if k%3==0:moss.ellipsoid((x,y,-480),(rng.uniform(220,800),rng.uniform(190,620),rng.uniform(180,600)),k,15,8,.2)
         for blade in range(7):
             a=blade*math.tau/7+k;length=rng.uniform(250,440)
@@ -407,9 +430,11 @@ def generate():
     venues=[redrock(),redwoods()]
     manifest={'schema':VERSION,'units':'centimetres_z_up','ownership_tag':TAG,
        'source_map':'/Basketbroom/Maps/BB_Regulation','sporting_dimensions':dim.dimensions(),
+       'geometry_version':dim.GEOMETRY_VERSION, 'layout_multipliers':[LAYOUT_X,LAYOUT_Y,1.],
        'materials':PALETTE,'venues':[],'collision':'Environment instances use NoCollision; existing sporting collision is preserved.',
        'native_status':'Original source ready for native import; this manifest does not claim native map or match integration.'}
     for venue in venues:
+        venue.resize_landscape()
         audit=validate_venue(venue);record=venue.finish();record['clearance_audit']=audit
         manifest['venues'].append(record)
     path=OUTPUT/'environments_manifest.json';path.parent.mkdir(parents=True,exist_ok=True)

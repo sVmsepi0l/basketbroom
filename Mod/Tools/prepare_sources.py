@@ -1,20 +1,20 @@
-"""export portable hlck import sources without starting or modifying any editor.
+"""Export portable HLCK import sources without starting or modifying any editor.
 
-run with ordinary Python: python Mod/Tools/prepare_sources.py
-outputs are source manifests and csv, not unreal DataTable/Blueprint assets.
+Run with ordinary Python: python Mod/Tools/prepare_sources.py
+Outputs are source manifests and CSV, not Unreal DataTable/Blueprint assets.
 """
 import csv
 import hashlib
 import json
 import math
-from pathlib import path
+from pathlib import Path
 import struct
 import wave
 import zlib
 
 
-root = Path(__file__).resolve().parents[2]
-output = root / "mod" / "sourcedata"
+ROOT = Path(__file__).resolve().parents[2]
+OUTPUT = ROOT / "Mod" / "SourceData"
 
 
 def digest(path):
@@ -22,7 +22,7 @@ def digest(path):
 
 
 def validate_source(path, asset_type, expected=None):
-    """validate portable source content without importing unreal or imaging libs."""
+    """Validate portable source content without importing Unreal or imaging libs."""
     if asset_type == "StaticMesh":
         vertices, faces = [], []
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -32,59 +32,59 @@ def validate_source(path, asset_type, expected=None):
             if parts[0] == "v":
                 vertex = tuple(float(value) for value in parts[1:4])
                 if len(vertex) != 3 or not all(math.isfinite(value) for value in vertex):
-                    raise valueerror("invalid obj vertex: " + str(path))
+                    raise ValueError("Invalid OBJ vertex: " + str(path))
                 vertices.append(vertex)
             elif parts[0] == "f":
                 faces.append([int(value.split("/")[0]) for value in parts[1:]])
             elif parts[0] == "mtllib":
-                raise valueerror("portable obj must not import external materials: " + str(path))
+                raise ValueError("Portable OBJ must not import external materials: " + str(path))
         if not vertices or not faces or any(len(face) < 3 or any(index < 1 or index > len(vertices)
                                                                 for index in face) for face in faces):
-            raise valueerror("invalid obj topology: " + str(path))
+            raise ValueError("Invalid OBJ topology: " + str(path))
         result = {"vertices": len(vertices), "polygons": len(faces)}
         if expected and any(result[key] != expected[key] for key in result):
-            raise valueerror("obj counts disagree with arena manifest: " + str(path))
+            raise ValueError("OBJ counts disagree with arena manifest: " + str(path))
         return result
     if asset_type == "SoundWave":
         with wave.open(str(path), "rb") as source:
             if source.getnchannels() != 1 or source.getsampwidth() != 2 or source.getframerate() != 44100:
-                raise valueerror("expected mono 16-bit 44100 hz cue: " + str(path))
+                raise ValueError("Expected mono 16-bit 44100 Hz cue: " + str(path))
             frames = source.getnframes()
             pcm = source.readframes(frames)
         if not frames or len(pcm) != frames * 2:
-            raise valueerror("incomplete wav cue: " + str(path))
+            raise ValueError("Incomplete WAV cue: " + str(path))
         samples = struct.unpack("<%dh" % frames, pcm)
         peak = max(abs(value) for value in samples) / 32768.0
         if peak > 0.55 or samples[0] != 0 or samples[-1] != 0:
-            raise valueerror("cue clipping/fade guard failed: " + str(path))
+            raise ValueError("Cue clipping/fade guard failed: " + str(path))
         return {"sample_rate": 44100, "frames": frames, "peak": round(peak, 6)}
     if asset_type == "Texture2D":
         data = path.read_bytes()
         if data[:8] != b"\x89PNG\r\n\x1a\n":
-            raise valueerror("expected original png texture: " + str(path))
-        offset, dimensions, ended, image_data = 8, none, false, false
+            raise ValueError("Expected original PNG texture: " + str(path))
+        offset, dimensions, ended, image_data = 8, None, False, False
         while offset + 12 <= len(data):
             length = struct.unpack_from(">I", data, offset)[0]
             kind = data[offset + 4:offset + 8]
             payload = data[offset + 8:offset + 8 + length]
             if offset + 12 + length > len(data):
-                raise valueerror("truncated png chunk: " + str(path))
+                raise ValueError("Truncated PNG chunk: " + str(path))
             crc = struct.unpack_from(">I", data, offset + 8 + length)[0]
             if zlib.crc32(kind + payload) & 0xffffffff != crc:
-                raise valueerror("png crc mismatch: " + str(path))
+                raise ValueError("PNG CRC mismatch: " + str(path))
             if kind == b"IHDR":
-                if dimensions is not none or length != 13:
-                    raise valueerror("invalid png header: " + str(path))
+                if dimensions is not None or length != 13:
+                    raise ValueError("Invalid PNG header: " + str(path))
                 dimensions = struct.unpack_from(">II", payload)
-            image_data = image_data or kind == b"idat"
+            image_data = image_data or kind == b"IDAT"
             offset += 12 + length
             if kind == b"IEND":
-                ended = true
+                ended = True
                 break
         if not dimensions or min(dimensions) < 1 or not image_data or not ended or offset != len(data):
-            raise valueerror("incomplete png texture: " + str(path))
+            raise ValueError("Incomplete PNG texture: " + str(path))
         return {"width": dimensions[0], "height": dimensions[1]}
-    raise valueerror("unsupported portable asset type: " + str(asset_type))
+    raise ValueError("Unsupported portable asset type: " + str(asset_type))
 
 
 def flatten_numbers(value, prefix=""):
@@ -113,34 +113,34 @@ def unit_for(path):
 
 
 def build():
-    rules_path = root / "rules" / "alpha_rules.json"
-    arena_path = root / "sourceart" / "arena" / "arena_manifest.json"
+    rules_path = ROOT / "Rules" / "alpha_rules.json"
+    arena_path = ROOT / "SourceArt" / "Arena" / "arena_manifest.json"
     rules = json.loads(rules_path.read_text(encoding="utf-8"))
     arena = json.loads(arena_path.read_text(encoding="utf-8"))
     imports = []
     for item in arena["meshes"]:
-        source = root / "sourceart" / "arena" / item["file"]
+        source = ROOT / "SourceArt" / "Arena" / item["file"]
         imports.append({"source": source.relative_to(ROOT).as_posix(),
                         "destination": "/Basketbroom/Art/Meshes/" + source.stem,
-                        "asset_type": "staticmesh", "sha256": digest(source),
-                        "validated": validate_source(source, "staticmesh", item)})
-    for cue in ("throw", "score", "catch", "Bounce"):
-        source = root / "sourceart" / "audio" / ("s_bb_" + cue + ".wav")
+                        "asset_type": "StaticMesh", "sha256": digest(source),
+                        "validated": validate_source(source, "StaticMesh", item)})
+    for cue in ("Throw", "Score", "Catch", "Bounce"):
+        source = ROOT / "SourceArt" / "Audio" / ("S_BB_" + cue + ".wav")
         imports.append({"source": source.relative_to(ROOT).as_posix(),
                         "destination": "/Basketbroom/Audio/" + source.stem,
-                        "asset_type": "soundwave", "sha256": digest(source),
-                        "validated": validate_source(source, "soundwave")})
-    source = root / "sourceart" / "textures" / "T_BB_Basalt_Albedo.png"
+                        "asset_type": "SoundWave", "sha256": digest(source),
+                        "validated": validate_source(source, "SoundWave")})
+    source = ROOT / "SourceArt" / "Textures" / "T_BB_Basalt_Albedo.png"
     imports.append({"source": source.relative_to(ROOT).as_posix(),
                     "destination": "/Basketbroom/Art/Textures/" + source.stem,
-                    "asset_type": "texture2d", "sha256": digest(source),
-                    "validated": validate_source(source, "texture2d")})
+                    "asset_type": "Texture2D", "sha256": digest(source),
+                    "validated": validate_source(source, "Texture2D")})
     manifest = {
         "schema_version": 1,
         "status": "source_scaffold_native_assets_not_created",
-        "target_engine": "hogwarts legacy creator kit licensee ue 4.27.2",
+        "target_engine": "Hogwarts Legacy Creator Kit licensee UE 4.27.2",
         "compatible_changelist": 17155196,
-        "runtime_python": false,
+        "runtime_python": False,
         "rules_source": rules_path.relative_to(ROOT).as_posix(),
         "rules_sha256": digest(rules_path),
         "arena_source": arena_path.relative_to(ROOT).as_posix(),
@@ -148,9 +148,9 @@ def build():
         "source_imports": imports,
         "datatable_source": "Mod/SourceData/DT_BB_RuleConstants.csv",
         "datatable_row_struct_to_create": {
-            "name": "st_bb_ruleconstant", "members": {
-                "Value": "float", "Unit": "string", "RulePath": "string"}},
-        "template_to_create_in_kit": "dungeon mod",
+            "name": "ST_BB_RuleConstant", "members": {
+                "Value": "Float", "Unit": "String", "RulePath": "String"}},
+        "template_to_create_in_kit": "Dungeon Mod",
         "native_assets_pending": [
             "/Basketbroom/Maps/BB_Arena",
             "/Basketbroom/Data/DT_BB_RuleConstants",
@@ -159,16 +159,16 @@ def build():
             "/Basketbroom/Blueprints/BP_Basketbroom_DataMutator",
             "/Basketbroom/Blueprints/AC_BBMatch"],
         "rules_needing_playtest": rules.get("needs_playtest", []),
-        "network_status": "no official hl multiplayer capability established; external frameworks untested"
+        "network_status": "No official HL multiplayer capability established; external frameworks untested"
     }
-    OUTPUT.mkdir(parents=True, exist_ok=true)
-    with (output / "DT_BB_RuleConstants.csv").open("w", encoding="utf-8", newline="") as output:
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    with (OUTPUT / "DT_BB_RuleConstants.csv").open("w", encoding="utf-8", newline="") as output:
         writer = csv.writer(output)
-        writer.writerow(("Name", "value", "unit", "rulepath"))
+        writer.writerow(("Name", "Value", "Unit", "RulePath"))
         for path, value in flatten_numbers(rules):
             writer.writerow((path.replace(".", "_"), value, unit_for(path), path))
-    (output / "port-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    return {"imports": len(imports), "source_directory": str(output), "native_assets_created": false}
+    (OUTPUT / "port-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return {"imports": len(imports), "source_directory": str(OUTPUT), "native_assets_created": False}
 
 
 if __name__ == "__main__":

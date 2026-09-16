@@ -2,26 +2,26 @@
 #include <algorithm>
 #include <limits>
 
-namespace bb {
+namespace BB {
 namespace {
 bool player_index(int player) { return player >= 0 && player < CombatPolicy::PlayerCount; }
 bool team_value(int team) { return team == 0 || team == 1; }
-bool variant_value(combatvariant variant) {
+bool variant_value(CombatVariant variant) {
     return variant == CombatVariant::Regulation || variant == CombatVariant::Bloodbroom;
 }
-std::uint32_t bit(conductviolation violation) { return static_cast<std::uint32_t>(violation); }
-combatdecision deny(combatdenial reason, std::uint64_t id = 0) {
-    combatdecision result; result.denial = reason; result.attack_id = id; return result;
+std::uint32_t bit(ConductViolation violation) { return static_cast<std::uint32_t>(violation); }
+CombatDecision deny(CombatDenial reason, std::uint64_t id = 0) {
+    CombatDecision result; result.denial = reason; result.attack_id = id; return result;
 }
-combatdecision accept(std::uint64_t id = 0) {
-    combatdecision result; result.accepted = true; result.attack_id = id; return result;
+CombatDecision accept(std::uint64_t id = 0) {
+    CombatDecision result; result.accepted = true; result.attack_id = id; return result;
 }
 bool can_add(std::int64_t time, std::int64_t delta) {
     return delta >= 0 && time <= std::numeric_limits<std::int64_t>::max() - delta;
 }
 } // namespace
 
-CombatPolicy::CombatPolicy(const combatconfig& config, combatvariant variant)
+CombatPolicy::CombatPolicy(const CombatConfig& config, CombatVariant variant)
     : config_(config), variant_(variant), actors_(default_roster()) {
     valid_ = variant_value(variant) && config.mob_window_ms > 0
         && config.max_impediment_ms > 0 && config.pending_attack_ms > 0;
@@ -29,12 +29,12 @@ CombatPolicy::CombatPolicy(const combatconfig& config, combatvariant variant)
 }
 
 std::array<CombatActor, CombatPolicy::PlayerCount> CombatPolicy::default_roster() {
-    std::array<CombatActor, playercount> result{};
-    for (int player = 0; player < playercount; ++player) result[player] = {player / 8, true};
+    std::array<CombatActor, PlayerCount> result{};
+    for (int player = 0; player < PlayerCount; ++player) result[player] = {player / 8, true};
     return result;
 }
 
-bool CombatPolicy::configure_roster(const std::array<CombatActor, playercount>& actors) {
+bool CombatPolicy::configure_roster(const std::array<CombatActor, PlayerCount>& actors) {
     if (!valid_ || now_ != 0 || !attacks_.empty()) return false;
     for (const auto& actor : actors)
         if (!team_value(actor.team) && (actor.team != -1 || actor.eligible)) return false;
@@ -44,11 +44,11 @@ bool CombatPolicy::configure_roster(const std::array<CombatActor, playercount>& 
 }
 
 void CombatPolicy::forget_actor(int player) {
-    for (int index = 0; index < playercount; ++index) {
+    for (int index = 0; index < PlayerCount; ++index) {
         mob_[player][index] = -1;
         mob_[index][player] = -1;
     }
-    attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(), [player](const attack& attack) {
+    attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(), [player](const Attack& attack) {
         return attack.attacker == player || attack.target == player;
     }), attacks_.end());
 }
@@ -63,7 +63,7 @@ bool CombatPolicy::set_actor(int player, int team, bool eligible, bool new_ident
 int CombatPolicy::active_attackers(int team, int target) const {
     if (!valid_ || !team_value(team) || !player_index(target)) return 0;
     int count = 0;
-    for (int attacker = 0; attacker < playercount; ++attacker) {
+    for (int attacker = 0; attacker < PlayerCount; ++attacker) {
         const auto at = mob_[target][attacker];
         if (actors_[attacker].team == team && at >= 0 && now_ - at < config_.mob_window_ms) ++count;
     }
@@ -71,13 +71,13 @@ int CombatPolicy::active_attackers(int team, int target) const {
 }
 
 bool CombatPolicy::confirmed_impediment(int attacker, int target) const {
-    return std::any_of(attacks_.begin(), attacks_.end(), [&](const attack& attack) {
+    return std::any_of(attacks_.begin(), attacks_.end(), [&](const Attack& attack) {
         return attack.attacker == attacker && attack.target == target && attack.successful
             && attack.confirmed && attack.impeded_until > now_;
     });
 }
 
-combatdecision CombatPolicy::begin_attack(int attacker, int target, const attackspec& spec) {
+CombatDecision CombatPolicy::begin_attack(int attacker, int target, const AttackSpec& spec) {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration);
     if (!player_index(attacker) || !team_value(actors_[attacker].team)) return deny(CombatDenial::InvalidActor);
     if (!player_index(target) || !team_value(actors_[target].team) || (spec.offensive && attacker == target))
@@ -86,7 +86,7 @@ combatdecision CombatPolicy::begin_attack(int attacker, int target, const attack
     if (!live_) return deny(CombatDenial::NotLive);
     if (!spec.offensive && (spec.stun || spec.impediment || spec.unforgivable
             || spec.physical_hold || spec.aimed_at_head)) return deny(CombatDenial::InvalidSpec);
-    if (!spec.offensive) return accept(); // protego / utility does not join a mob.
+    if (!spec.offensive) return accept(); // Protego / utility does not join a mob.
     if (!can_add(now_, config_.pending_attack_ms)) return deny(CombatDenial::InvalidTime);
     if (next_id_ == std::numeric_limits<std::uint64_t>::max()) return deny(CombatDenial::IdExhausted);
     prune();
@@ -100,29 +100,29 @@ combatdecision CombatPolicy::begin_attack(int attacker, int target, const attack
     const auto previous = mob_[target][attacker];
     const bool already_attacking = previous >= 0 && now_ - previous < config_.mob_window_ms;
     const int participants = active_attackers(actors_[attacker].team, target) + (already_attacking ? 0 : 1);
-    if (participants > moblimit) candidates |= bit(ConductViolation::Mobbing);
+    if (participants > MobLimit) candidates |= bit(ConductViolation::Mobbing);
     mob_[target][attacker] = now_;
-    attack attack;
+    Attack attack;
     attack.id = next_id_++;
     attack.attacker = attacker; attack.target = target; attack.spec = spec;
     attack.attempt_violations = candidates;
     attack.expires = now_ + config_.pending_attack_ms;
     attacks_.push_back(attack);
-    combatdecision result = accept(attack.id);
+    CombatDecision result = accept(attack.id);
     result.attempt_violations = candidates;
     return result;
 }
 
 CombatPolicy::Attack* CombatPolicy::find(std::uint64_t id) {
     if (id == 0) return nullptr;
-    const auto found = std::find_if(attacks_.begin(), attacks_.end(), [id](const attack& attack) { return attack.id == id; });
+    const auto found = std::find_if(attacks_.begin(), attacks_.end(), [id](const Attack& attack) { return attack.id == id; });
     return found == attacks_.end() ? nullptr : &*found;
 }
 
-combatdecision CombatPolicy::validate_pending_hit(std::uint64_t id, int attacker, int target) const {
+CombatDecision CombatPolicy::validate_pending_hit(std::uint64_t id, int attacker, int target) const {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration, id);
     if (!live_) return deny(CombatDenial::NotLive, id);
-    const auto found = std::find_if(attacks_.begin(), attacks_.end(), [id](const attack& attack) { return attack.id == id; });
+    const auto found = std::find_if(attacks_.begin(), attacks_.end(), [id](const Attack& attack) { return attack.id == id; });
     if (id == 0 || found == attacks_.end() || now_ >= found->expires) return deny(CombatDenial::UnknownAttack, id);
     if (found->attacker != attacker) return deny(CombatDenial::InvalidActor, id);
     if (found->target != target) return deny(CombatDenial::InvalidTarget, id);
@@ -131,12 +131,12 @@ combatdecision CombatPolicy::validate_pending_hit(std::uint64_t id, int attacker
     auto result = accept(id); result.attempt_violations = found->attempt_violations; return result;
 }
 
-combatdecision CombatPolicy::resolve_hit(std::uint64_t id, hitoutcome outcome, bool hit_head,
+CombatDecision CombatPolicy::resolve_hit(std::uint64_t id, HitOutcome outcome, bool hit_head,
                                         std::int64_t impediment_ms) {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration, id);
     if (!live_) return deny(CombatDenial::NotLive, id);
     prune();
-    attack* attack = find(id);
+    Attack* attack = find(id);
     if (!attack) return deny(CombatDenial::UnknownAttack, id);
     if (attack->resolved) return deny(CombatDenial::AlreadyResolved, id);
     if (!actors_[attack->attacker].eligible || !actors_[attack->target].eligible)
@@ -149,10 +149,10 @@ combatdecision CombatPolicy::resolve_hit(std::uint64_t id, hitoutcome outcome, b
             || duration > config_.max_impediment_ms)) return deny(CombatDenial::InvalidOutcome, id);
     if (outcome == HitOutcome::Impeded && !can_add(now_, duration)) return deny(CombatDenial::InvalidTime, id);
     attack->resolved = true;
-    combatdecision result = accept(id);
+    CombatDecision result = accept(id);
     if (outcome == HitOutcome::Miss || outcome == HitOutcome::Blocked) return result;
-    // apply-the-hit policy: accepted remains true even with conduct violations.
-    // headshot depends on the actual impact, not an aim hint that may miss.
+    // Apply-the-hit policy: accepted remains true even with conduct violations.
+    // Headshot depends on the actual impact, not an aim hint that may miss.
     result.violations = attack->attempt_violations & ~bit(ConductViolation::Headshot);
     if (hit_head && variant_ == CombatVariant::Regulation) result.violations |= bit(ConductViolation::Headshot);
     if (outcome == HitOutcome::Impeded) {
@@ -162,9 +162,9 @@ combatdecision CombatPolicy::resolve_hit(std::uint64_t id, hitoutcome outcome, b
     return result;
 }
 
-combatdecision CombatPolicy::confirm_impediment(std::uint64_t id, int notified_caster) {
+CombatDecision CombatPolicy::confirm_impediment(std::uint64_t id, int notified_caster) {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration, id);
-    attack* attack = find(id);
+    Attack* attack = find(id);
     if (!attack) return deny(CombatDenial::UnknownAttack, id);
     if (notified_caster != attack->attacker) return deny(CombatDenial::WrongNotifier, id);
     if (!attack->resolved || !attack->successful) return deny(CombatDenial::NoSuccessfulImpediment, id);
@@ -175,7 +175,7 @@ combatdecision CombatPolicy::confirm_impediment(std::uint64_t id, int notified_c
 }
 
 bool CombatPolicy::end_impediment(std::uint64_t id) {
-    attack* attack = find(id);
+    Attack* attack = find(id);
     if (!attack || !attack->resolved || !attack->successful || attack->impeded_until <= now_) return false;
     attack->impeded_until = now_;
     return true;
@@ -188,7 +188,7 @@ void CombatPolicy::recover_target(int target) {
 }
 
 void CombatPolicy::prune() {
-    attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(), [&](const attack& attack) {
+    attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(), [&](const Attack& attack) {
         return now_ >= attack.expires && now_ >= attack.impeded_until;
     }), attacks_.end());
 }
@@ -214,7 +214,7 @@ bool CombatPolicy::reset_match(CombatVariant variant) {
     return true;
 }
 
-const char* combat_denial_name(combatdenial denial) {
+const char* combat_denial_name(CombatDenial denial) {
     switch (denial) {
     case CombatDenial::None: return "none";
     case CombatDenial::InvalidConfiguration: return "invalid_configuration";
@@ -235,4 +235,4 @@ const char* combat_denial_name(combatdenial denial) {
     }
     return "invalid_denial";
 }
-} // namespace bb
+} // namespace BB

@@ -4,57 +4,57 @@
 #include "UObject/Object.h"
 #include "BBAudioFeedback.generated.h"
 
-class ahud;
-class abbball;
-class abbmatchstate;
-class abbridercharacter;
-class uaudiocomponent;
-class usoundwave;
+class AHUD;
+class ABBBall;
+class ABBMatchState;
+class ABBRiderCharacter;
+class UAudioComponent;
+class USoundWave;
 
-/** local presentation only. observes authoritative/replicated state; never awards play. */
-uclass()
-class basketbroomruntime_api ubbaudiofeedback : public uobject
+/** Local presentation only. Observes authoritative/replicated state; never awards play. */
+UCLASS()
+class BASKETBROOMRUNTIME_API UBBAudioFeedback : public UObject
 {
-    generated_body()
+    GENERATED_BODY()
 
 public:
-    ubbaudiofeedback();
-    void observe(ahud* hud, abbmatchstate* match, abbridercharacter* rider);
-    void reset();
+    UBBAudioFeedback();
+    void Observe(AHUD* HUD, ABBMatchState* Match, ABBRiderCharacter* Rider);
+    void Reset();
 
-    // read-only diagnostics distinguish a detected transition from an audio
+    // Read-only diagnostics distinguish a detected transition from an audio
     // component actually created (for example, -nosound creates no component).
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") bool bhasbaseline = false;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") bool bassetsready = false;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") int32 pickupevents = 0;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") int32 throwevents = 0;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") int32 chasecatchevents = 0;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") int32 scoreevents = 0;
-    uproperty(transient, blueprintreadonly, category="basketbroom|audio") int32 soundsstarted = 0;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") bool bHasBaseline = false;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") bool bAssetsReady = false;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") int32 PickupEvents = 0;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") int32 ThrowEvents = 0;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") int32 ChaseCatchEvents = 0;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") int32 ScoreEvents = 0;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Audio") int32 SoundsStarted = 0;
 
-    ufunction(blueprintpure, category="basketbroom|audio")
-    int32 getactivesoundcount() const;
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Audio")
+    int32 GetActiveSoundCount() const;
 
 private:
-    struct fballsnapshot
+    struct FBallSnapshot
     {
-        tweakobjectptr<abbball> ball;
-        tweakobjectptr<abbridercharacter> holder;
-        bool bactive = false;
+        TWeakObjectPtr<ABBBall> Ball;
+        TWeakObjectPtr<ABBRiderCharacter> Holder;
+        bool bActive = false;
     };
 
-    // hard references include these original soundwaves in native-only cooks.
-    uproperty() tobjectptr<usoundwave> throwsound;
-    uproperty() tobjectptr<usoundwave> catchsound;
-    uproperty() tobjectptr<usoundwave> scoresound;
-    tweakobjectptr<abbmatchstate> observedmatch;
-    tweakobjectptr<abbridercharacter> observedrider;
-    tmap<int32, fballsnapshot> previousballs;
-    tarray<tweakobjectptr<uaudiocomponent>> activesounds;
-    int32 previoustealscore = 0;
-    int32 previouscopperscore = 0;
-    double lastcuetime[3] = {-1000.0, -1000.0, -1000.0};
-    bool breportedassets = false;
+    // Hard references include these original SoundWaves in native-only cooks.
+    UPROPERTY() TObjectPtr<USoundWave> ThrowSound;
+    UPROPERTY() TObjectPtr<USoundWave> CatchSound;
+    UPROPERTY() TObjectPtr<USoundWave> ScoreSound;
+    TWeakObjectPtr<ABBMatchState> ObservedMatch;
+    TWeakObjectPtr<ABBRiderCharacter> ObservedRider;
+    TMap<int32, FBallSnapshot> PreviousBalls;
+    TArray<TWeakObjectPtr<UAudioComponent>> ActiveSounds;
+    int32 PreviousTealScore = 0;
+    int32 PreviousCopperScore = 0;
+    double LastCueTime[3] = {-1000.0, -1000.0, -1000.0};
+    bool bReportedAssets = false;
 
-    void play(ahud* hud, usoundwave* sound, int32 cue, float volume);
+    void Play(AHUD* HUD, USoundWave* Sound, int32 Cue, float Volume);
 };

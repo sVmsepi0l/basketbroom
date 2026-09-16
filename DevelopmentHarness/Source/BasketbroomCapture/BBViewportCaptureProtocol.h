@@ -5,41 +5,41 @@
 #include "MovieSceneCaptureProtocolBase.h"
 #include "BBViewportCaptureProtocol.generated.h"
 
-class iimagewritequeue;
+class IImageWriteQueue;
 
-/** reads the native game render target, independently of the preview window. */
-uclass(meta=(displayname="basketbroom native viewport jpeg"))
-class basketbroomcapture_api ubbviewportcaptureprotocol : public umoviesceneimagecaptureprotocolbase
+/** Reads the native game render target, independently of the preview window. */
+UCLASS(meta=(DisplayName="Basketbroom Native Viewport JPEG"))
+class BASKETBROOMCAPTURE_API UBBViewportCaptureProtocol : public UMovieSceneImageCaptureProtocolBase
 {
-    generated_body()
+    GENERATED_BODY()
 
 public:
-    uproperty(editanywhere, blueprintreadwrite, category="capture")
-    int32 compressionquality = 97;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Capture")
+    int32 CompressionQuality = 97;
 
-    uproperty(visibleanywhere, blueprintreadonly, category="capture")
-    int32 framescaptured = 0;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Capture")
+    int32 FramesCaptured = 0;
 
-    uproperty(visibleanywhere, blueprintreadonly, category="capture")
-    int32 frameswritten = 0;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Capture")
+    int32 FramesWritten = 0;
 
-    uproperty(visibleanywhere, blueprintreadonly, category="capture")
-    fintpoint actualresourcesize = FIntPoint::ZeroValue;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Capture")
+    FIntPoint ActualResourceSize = FIntPoint::ZeroValue;
 
-    uproperty(visibleanywhere, blueprintreadonly, category="capture")
-    fstring failurereason;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Capture")
+    FString FailureReason;
 
 protected:
-    virtual bool setupimpl() override;
-    virtual void captureframeimpl(const fframemetrics& framemetrics) override;
-    virtual void tickimpl() override;
-    virtual void beginfinalizeimpl() override;
-    virtual bool hasfinishedprocessingimpl() const override;
-    virtual void finalizeimpl() override;
+    virtual bool SetupImpl() override;
+    virtual void CaptureFrameImpl(const FFrameMetrics& FrameMetrics) override;
+    virtual void TickImpl() override;
+    virtual void BeginFinalizeImpl() override;
+    virtual bool HasFinishedProcessingImpl() const override;
+    virtual void FinalizeImpl() override;
 
 private:
-    void drainwrites(bool bwait);
-    void fail(const fstring& reason);
-    iimagewritequeue* writequeue = nullptr;
-    tarray<tfuture<bool>> pendingwrites;
+    void DrainWrites(bool bWait);
+    void Fail(const FString& Reason);
+    IImageWriteQueue* WriteQueue = nullptr;
+    TArray<TFuture<bool>> PendingWrites;
 };

@@ -4,37 +4,37 @@
 #include "GameFramework/Actor.h"
 #include "BBSpellVisual.generated.h"
 
-class ustaticmeshcomponent;
-class uinstancedstaticmeshcomponent;
-class umaterialinstancedynamic;
+class UStaticMeshComponent;
+class UInstancedStaticMeshComponent;
+class UMaterialInstanceDynamic;
 
-/** original cosmetic cast trace. keeps server trace evidence; no gameplay collision. */
-uclass()
-class basketbroomruntime_api abbspellvisual : public aactor
+/** Original cosmetic cast trace. Keeps server trace evidence; no gameplay collision. */
+UCLASS()
+class BASKETBROOMRUNTIME_API ABBSpellVisual : public AActor
 {
-    generated_body()
+    GENERATED_BODY()
 public:
-    abbspellvisual();
-    static abbspellvisual* spawn(uworld* world, fvector start, fvector end, int32 spellindex, bool bblocked);
-    virtual void tick(float deltaseconds) override;
-    virtual void getlifetimereplicatedprops(tarray<flifetimeproperty>& outlifetimeprops) const override;
+    ABBSpellVisual();
+    static ABBSpellVisual* Spawn(UWorld* World, FVector Start, FVector End, int32 SpellIndex, bool bBlocked);
+    virtual void Tick(float DeltaSeconds) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    /** the authoritative eye-origin trace; rendering uses the offset muzzle below. */
-    uproperty(replicatedusing=onrep_visual, blueprintreadonly, category="basketbroom|spells") fvector startpoint;
-    uproperty(replicatedusing=onrep_visual, blueprintreadonly, category="basketbroom|spells") fvector endpoint;
-    /** cosmetic origin derived locally from the unchanged server endpoints. */
-    uproperty(transient, blueprintreadonly, category="basketbroom|spells") fvector visualstartpoint;
-    uproperty(replicatedusing=onrep_visual, blueprintreadonly, category="basketbroom|spells") int32 visualspellindex = 0;
-    uproperty(replicatedusing=onrep_visual, blueprintreadonly, category="basketbroom|spells") bool bwasblocked = false;
+    /** The authoritative eye-origin trace; rendering uses the offset muzzle below. */
+    UPROPERTY(ReplicatedUsing=OnRep_Visual, BlueprintReadOnly, Category="Basketbroom|Spells") FVector StartPoint;
+    UPROPERTY(ReplicatedUsing=OnRep_Visual, BlueprintReadOnly, Category="Basketbroom|Spells") FVector EndPoint;
+    /** Cosmetic origin derived locally from the unchanged server endpoints. */
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Basketbroom|Spells") FVector VisualStartPoint;
+    UPROPERTY(ReplicatedUsing=OnRep_Visual, BlueprintReadOnly, Category="Basketbroom|Spells") int32 VisualSpellIndex = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_Visual, BlueprintReadOnly, Category="Basketbroom|Spells") bool bWasBlocked = false;
 protected:
-    virtual void beginplay() override;
+    virtual void BeginPlay() override;
 private:
-    uproperty() tobjectptr<ustaticmeshcomponent> beam;
-    uproperty() tobjectptr<ustaticmeshcomponent> impact;
-    uproperty() tobjectptr<uinstancedstaticmeshcomponent> impactrays;
-    uproperty() tobjectptr<umaterialinstancedynamic> glowmaterial;
-    float visualage = 0.f;
-    float beamlength = 0.f;
-    void updatevisualscale();
-    ufunction() void onrep_visual();
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> Beam;
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> Impact;
+    UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> ImpactRays;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlowMaterial;
+    float VisualAge = 0.f;
+    float BeamLength = 0.f;
+    void UpdateVisualScale();
+    UFUNCTION() void OnRep_Visual();
 };

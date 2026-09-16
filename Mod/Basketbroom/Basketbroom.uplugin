@@ -9,5 +9,5 @@
   "CanContainContent": true,
   "EnabledByDefault": true,
   "IsBetaVersion": true,
-  "SupportedTargetPlatforms": ["win64"]
+  "SupportedTargetPlatforms": ["Win64"]
 }

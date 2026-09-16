@@ -1,14 +1,14 @@
-"""sprint 3 spell replication through an owned client in two real pie worlds.
+"""Sprint 3 spell replication through an owned client in two real PIE worlds.
 
-use editor_bridge.py with bb_regulation open and pie stopped. the network
+Use editor_bridge.py with BB_Regulation open and PIE stopped. The network
 runner's settings_already_configured/settings_source fallback is supported.
-no effect, ownership, hit receipt, possession or conduct state is injected.
+No effect, ownership, hit receipt, possession or conduct state is injected.
 Transforms/component ticks arrange fixtures; movement evidence thereafter uses
-only owning-client addmovementinput and actual charactermovement saved moves.
+only owning-client AddMovementInput and actual CharacterMovement saved moves.
 """
 import importlib.util
 import json
-from pathlib import path
+from pathlib import Path
 import sys
 import time
 import traceback
@@ -16,7 +16,7 @@ import traceback
 ROOT=Path(__file__).resolve().parents[1]
 REPORT=ROOT/'.local/native-sport-spell-network-results.json'
 ARGS={"max_wall_seconds":300, **globals().get("BRIDGE_ARGS", {})}
-tests=(
+TESTS=(
     "two_connected_worlds_and_real_client_roster_rpc",
     "client_disillusionment_replicates_and_hides_from_host_view",
     "host_revelio_replicates_and_reveals_concealed_client",
@@ -44,9 +44,9 @@ def xyz(point):
 
 class SportSpellNetworkTests(spells.SpellNetworkTests):
     def write(self,status):
-        rows=[{"name":name,**self.results.get(name,{"status":"not_run"})} for name in tests]
+        rows=[{"name":name,**self.results.get(name,{"status":"not_run"})} for name in TESTS]
         base.write_json_atomic(REPORT,{
-            "status":status,"phase":self.phase,"scope":"four sporting adapters (disillusionment, revelio, transformation, Imperio): real ownership rpc and replication across two local pie worlds",
+            "status":status,"phase":self.phase,"scope":"four sporting adapters (Disillusionment, Revelio, Transformation, Imperio): real ownership RPC and replication across two local PIE worlds",
             "elapsed_wall_seconds":round(time.monotonic()-self.started,3),
             "passed":sum(row['status']=='passed' for row in rows),"failed":sum(row['status']=='failed' for row in rows),
             "not_run":sum(row['status']=='not_run' for row in rows),"tests":rows,"provenance":self.provenance,
@@ -54,10 +54,10 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
             "time_dilation_restored":self.dilations_restored,
             "external_restore_required":base.net_mode_restore_actions(self.provenance),
             "not_covered":["separate processes/remote machines, latency, loss or reconnect","human physical controller input",
-                "petrificus totalus network cast, status, ownership and double-tap behavior","final art or adverse-network movement reconciliation",
-                "hogwarts legacy multiplayer"],
+                "Petrificus Totalus network cast, status, ownership and double-tap behavior","final art or adverse-network movement reconciliation",
+                "Hogwarts Legacy multiplayer"],
             "fixture_policy":"Disposable transforms, component ticks, public world time dilation and ordinary player inputs only. "
-                "no gameplay status, custody, hit receipt, rule result or network ownership writes."})
+                "No gameplay status, custody, hit receipt, rule result or network ownership writes."})
 
     def record(self,name,passed,**detail):
         super().record(name,passed,**detail)
@@ -75,7 +75,7 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
 
     def statuses(self):
         return {label:{field:[round(v,3) for v in self.values(side,field)] for field in
-            ('concealremaining','revealremaining','transformationremaining','imperioremaining','spellcooldownremaining')}
+            ('ConcealRemaining','RevealRemaining','TransformationRemaining','ImperioRemaining','SpellCooldownRemaining')}
             for label,side in (('host',self.host),('client',self.client))}
 
     def controller(self,side):
@@ -96,7 +96,7 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
             observed.append([xyz(r.get_actor_location()) for r in (remote,owner)])
         feed()
         yield self.wait(seconds,fixture=feed)
-        # give real saved moves and authority responses time to drain; no
+        # Give real saved moves and authority responses time to drain; no
         # transform or velocity fixture runs during this measurement window.
         yield self.wait(.2)
         after=[xyz(r.get_actor_location()) for r in (remote,owner)]
@@ -118,7 +118,7 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
         self.request(self.client,3,1)
         yield self.wait(5,lambda:all(int(prop(r,'TeamIndex'))==1 for r in self.target_pair(self.client)))
         self.request(self.client,2,1)
-        ready=lambda:all(int(prop(r,'Position'))==1 and int(prop(r,'teamindex'))==1 for r in self.target_pair(self.client))
+        ready=lambda:all(int(prop(r,'Position'))==1 and int(prop(r,'TeamIndex'))==1 for r in self.target_pair(self.client))
         yield self.wait(5,ready)
         self.record(TESTS[0],ready() and int(prop(self.host['pawn'],'TeamIndex'))==0,
             worlds=self.provenance['worlds'],host_id=self.player_id(self.host['pawn']),client_id=self.player_id(self.client['pawn']))
@@ -156,9 +156,9 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
         yield from self.cooldowns()
         yield from self.aim(self.host,self.client)
         quark,client_quark=self.host['balls'][1],self.client['balls'][1]
-        self.require(prop(quark,'Holder') is none and prop(quark,'bactive'),'real possession fixture needs a free active quark')
+        self.require(prop(quark,'Holder') is None and prop(quark,'bActive'),'Real possession fixture needs a free active Quark')
         self.require(quark.development_set_flight_fixture(remote.get_actor_location()+vec(0,150,0),vec(0,0,0)),
-            'server physical ball fixture rejected')
+            'Server physical ball fixture rejected')
         quark.set_actor_tick_enabled(True)
         yield self.wait(.4)
         self.require(self.client['pawn'].development_set_interaction(True),'Client pickup input submission rejected')
@@ -169,7 +169,7 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
         yield self.wait(.2)
         quark.set_actor_tick_enabled(False)
         self.request(self.host,6,13)
-        transformed=lambda:min(self.values(self.client,'TransformationRemaining'))>.1 and prop(quark,'holder') is none and prop(client_quark,'holder') is none
+        transformed=lambda:min(self.values(self.client,'TransformationRemaining'))>.1 and prop(quark,'Holder') is None and prop(client_quark,'Holder') is None
         yield self.wait(2,transformed)
         self.require(transformed(),'Actual Transformation/drop must reach the owner and authority')
         proxies=[]
@@ -177,16 +177,16 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
             items=[p for p in rider.get_components_by_class(unreal.StaticMeshComponent) if p.get_name()=='SportTransformationOrb']
             self.require(len(items)==1,'Each replicated rider must have its original sporting orb')
             proxies.append(items[0])
-        # submit while live, so rejection proves the transformed action lock
+        # Submit while LIVE, so rejection proves the transformed action lock
         # rather than the independent ordinary-stoppage gate.
         self.request(self.client,6,20)
         self.client['pawn'].development_set_interaction(True)
         yield self.wait(.3)
         live_actions_denied=self.both_live() and max(self.values(self.client,'ConcealRemaining'))<=.01 \
             and max(self.values(self.client,'SpellCooldownRemaining'))<=.01 \
-            and not any(bool(prop(r,'binteractheld')) for r in self.target_pair(self.client))
-        # freeze while enough of the three-second effect remains for movement
-        # assertions. the actual hit and action rejection happened before pause.
+            and not any(bool(prop(r,'bInteractHeld')) for r in self.target_pair(self.client))
+        # Freeze while enough of the three-second effect remains for movement
+        # assertions. The actual hit and action rejection happened before pause.
         self.request(self.host,5)
         stopped=lambda:not self.live(self.host) and not self.live(self.client)
         yield self.wait(2,stopped)
@@ -194,9 +194,9 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
         yield self.wait(.3)
         self.record(TESTS[4],transformed() and live_actions_denied
             and all(p.is_visible() and not p.is_collision_enabled() for p in proxies)
-            and not any(bool(prop(r,'binteractheld')) for r in self.target_pair(self.client)),
+            and not any(bool(prop(r,'bInteractHeld')) for r in self.target_pair(self.client)),
             live_actions_denied=live_actions_denied,statuses=self.statuses(),
-            actual_ball_drop=prop(quark,'holder') is none and prop(client_quark,'holder') is none)
+            actual_ball_drop=prop(quark,'Holder') is None and prop(client_quark,'Holder') is None)
         self.client['pawn'].development_set_interaction(False)
         locked=yield from self.client_motion()
         self.record(TESTS[5],all(max(abs(v) for v in delta)<3 for delta in locked['delta']),movement=locked,statuses=self.statuses())
@@ -225,20 +225,20 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
         yield self.wait(3,applied)
         same_owner=lambda:self.client['pawn'].get_controller()==owner_controller and remote.get_controller()==server_controller \
             and self.player_id(self.client['pawn'])==identity and int(prop(self.client['pawn'],'RosterIndex'))==slot
-        self.record(TESTS[8],applied() and same_owner() and all('unforgivable' in str(prop(side['match'],'lastconductcall')) for side in (self.host,self.client)),
+        self.record(TESTS[8],applied() and same_owner() and all('UNFORGIVABLE' in str(prop(side['match'],'LastConductCall')) for side in (self.host,self.client)),
             statuses=self.statuses(),server=self.conduct(self.host),client=self.conduct(self.client),player_id=identity,slot=slot)
         before=[self.conduct(side) for side in (self.host,self.client)]
         self.request(self.client,12)
         yield self.wait(.6)
         unchanged=before==[self.conduct(side) for side in (self.host,self.client)]
-        self.record(TESTS[9],review() and unchanged and not any(prop(side['match'],'bpenaltyshotactive') for side in (self.host,self.client)),
+        self.record(TESTS[9],review() and unchanged and not any(prop(side['match'],'bPenaltyShotActive') for side in (self.host,self.client)),
             action=12,unchanged=unchanged,server=self.conduct(self.host),client=self.conduct(self.client))
         self.request(self.host,9)
-        queued=lambda:all(not prop(side['match'],'bconductreviewpending') and not self.live(side) for side in (self.host,self.client))
+        queued=lambda:all(not prop(side['match'],'bConductReviewPending') and not self.live(side) for side in (self.host,self.client))
         yield self.wait(3,queued)
-        self.require(queued(),'Host f7 must actually queue the allowed disposition')
+        self.require(queued(),'Host F7 must actually queue the allowed disposition')
         self.request(self.host,4)
-        served=lambda:self.both_live() and all(int(prop(side['match'],'pendingpenaltycount'))==0 for side in (self.host,self.client))
+        served=lambda:self.both_live() and all(int(prop(side['match'],'PendingPenaltyCount'))==0 for side in (self.host,self.client))
         yield self.wait(4,served)
         self.require(served(),'Host restart must genuinely serve the conduct penalty')
         reverse=yield from self.client_motion()
@@ -252,20 +252,20 @@ class SportSpellNetworkTests(spells.SpellNetworkTests):
 
 
 def main():
-    if unreal is none and '--list' in sys.argv:
+    if unreal is None and '--list' in sys.argv:
         return {"status":"not_run","planned_tests":list(TESTS),"count":len(TESTS)}
-    runner=sportspellnetworktests()
+    runner=SportSpellNetworkTests()
     try:
         started=runner.begin()
     except Exception:
         runner.finish('error',traceback.format_exc())
-        started=false
+        started=False
     if unreal and (started or not runner.done):
         unreal._basketbroom_native_network_test=runner
     return {"status":"started" if started else runner.final_status,"report":str(REPORT),"planned_cases":len(TESTS)}
 
 
 if __name__=='__main__':
-    result=main()
+    RESULT=main()
     if unreal is None:
         print(json.dumps(RESULT,indent=2))

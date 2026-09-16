@@ -1,18 +1,18 @@
-"""portable behavior checks for training geometry and venue-relative fixtures.
+"""Portable behavior checks for training geometry and venue-relative fixtures.
 
-evaluates the author's generated net-node block with a small scalar graph
-adapter; this verifies radius-aware bounds/restitution without claiming unreal
-blueprint compilation, collision meshes, or live gameplay.
+Evaluates the author's generated net-node block with a small scalar graph
+adapter; this verifies radius-aware bounds/restitution without claiming Unreal
+Blueprint compilation, collision meshes, or live gameplay.
 """
 import ast
 import importlib.util
 import math
-from pathlib import path
+from pathlib import Path
 import types
 import unittest
 
-tools = Path(__file__).resolve().parent
-_spec = importlib.util.spec_from_file_location('_bb_training_dimensions_test', tools / 'arena_dimensions.py')
+TOOLS = Path(__file__).resolve().parent
+_spec = importlib.util.spec_from_file_location('_bb_training_dimensions_test', TOOLS / 'arena_dimensions.py')
 dimensions = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(dimensions)
 
@@ -33,8 +33,8 @@ def net_program():
     run.body = [loop]
     module = ast.fix_missing_locations(ast.Module(body=definitions+[run], type_ignores=[]))
     namespace = {'dimensions': dimensions, 'MATH': '/Script/Engine.KismetMathLibrary.',
-                 'surfaces': none, 'sound': lambda *args: none}
-    exec(compile(module, str(tools / 'build_gameplay.py'), 'exec'), namespace)
+                 'surfaces': None, 'sound': lambda *args: None}
+    exec(compile(module, str(TOOLS / 'build_gameplay.py'), 'exec'), namespace)
     return namespace['generated_nets']
 
 
@@ -59,15 +59,15 @@ class ScalarGraph:
         if operation == 'Multiply_DoubleDouble': return a*b
         if operation == 'Greater_DoubleDouble': return a>b
         if operation == 'EqualEqual_IntInt': return a==b
-        if operation == 'SelectFloat': return a if args['bpicka'] else b
+        if operation == 'SelectFloat': return a if args['bPickA'] else b
         if operation == 'Abs': return abs(a)
-        if operation == 'FClamp': return min(max(args['value'], args['min']), args['max'])
-        if operation == 'MakeVector': return (args['x'], args['y'], args['z'])
-        if operation == 'BreakVector': return dict(zip(('x', 'y', 'z'), args['invec']))
-        raise assertionerror('unexpected generated operation: '+operation)
+        if operation == 'FClamp': return min(max(args['Value'], args['Min']), args['Max'])
+        if operation == 'MakeVector': return (args['X'], args['Y'], args['Z'])
+        if operation == 'BreakVector': return dict(zip(('X', 'Y', 'Z'), args['InVec']))
+        raise AssertionError('Unexpected generated operation: '+operation)
 
     def out(self, node, name=None):
-        return node if name is none else node[name]
+        return node if name is None else node[name]
 
     def branch(self, condition):
         return condition
@@ -107,7 +107,7 @@ class TrainingGeometryTests(unittest.TestCase):
                     with self.subTest(kind=kind, axis=axis, sign=sign):
                         point, velocity = [0, 0, 1600], [180, 180, -90]
                         point[axis], velocity[axis] = sign*(extent-radius+20), sign*1000
-                        graph = scalargraph(kind, tuple(point), tuple(velocity))
+                        graph = ScalarGraph(kind, tuple(point), tuple(velocity))
                         run(graph)
                         self.assertAlmostEqual(graph.state['P'][axis], sign*(extent-radius))
                         self.assertAlmostEqual(graph.state['Velocity'][axis], -sign*750)
@@ -118,14 +118,14 @@ class TrainingGeometryTests(unittest.TestCase):
         run = net_program()
         for kind, radius in ((0, 33), (1, 24)):
             point = (0, dimensions.HALF_WIDTH-radius-.01, 1600)
-            graph = scalargraph(kind, point, (0, 1000, -90))
+            graph = ScalarGraph(kind, point, (0, 1000, -90))
             run(graph)
             self.assertEqual(graph.state['P'], point)
             self.assertEqual(graph.state['Velocity'], (0, 1000, -90))
 
     def test_new_side_flight_space_is_live_before_contact(self):
-        # a legal point beyond the old wall must not bounce at its former limit.
-        graph = scalargraph(0, (0, dimensions.BASELINE_HALF_WIDTH+100, 1600), (0, 1000, 0))
+        # A legal point beyond the old wall must not bounce at its former limit.
+        graph = ScalarGraph(0, (0, dimensions.BASELINE_HALF_WIDTH+100, 1600), (0, 1000, 0))
         net_program()(graph)
         self.assertEqual(graph.state['Velocity'][1], 1000)
         self.assertTrue(sphere_inside(graph.state['P'], 33))
@@ -144,7 +144,7 @@ class TrainingGeometryTests(unittest.TestCase):
                      'mg': lambda g, name: g.get(name)}
         exec(compile(module, '<authored training chase>', 'exec'), namespace)
         for kind, rate in ((2, .6), (3, 1.0)):
-            graph = scalargraph(kind, (0, 0, 0), (0, 0, 0))
+            graph = ScalarGraph(kind, (0, 0, 0), (0, 0, 0))
             for seconds in range(0, 60, 3):
                 graph.state['Elapsed'] = seconds
                 start = namespace['chase'](graph, rate)
@@ -155,8 +155,8 @@ class TrainingGeometryTests(unittest.TestCase):
                     self.assertLessEqual(abs(end[axis]-start[axis])/.001, maximum+.01)
 
     def test_training_opening_remains_reachable_and_inside(self):
-        values = authored_values('stage_game.py', {'player_start', 'balls'})
-        start, balls = values['player_start'], values['balls']
+        values = authored_values('stage_game.py', {'PLAYER_START', 'BALLS'})
+        start, balls = values['PLAYER_START'], values['BALLS']
         self.assertTrue(sphere_inside(start, 35))
         quaffle = next(row for row in balls if row[1] == 0)
         self.assertLess(math.dist(start, quaffle[2]), 425)
@@ -165,7 +165,7 @@ class TrainingGeometryTests(unittest.TestCase):
             self.assertTrue(sphere_inside(row[2], row[3]*50), row[0])
 
     def test_bot_roster_and_patrol_fit_expanded_arena(self):
-        roster = authored_values('stage_bots.py', {'roster'})['roster']
+        roster = authored_values('stage_bots.py', {'ROSTER'})['ROSTER']
         self.assertEqual(len(roster), 15)
         for team, role, home, _ in roster:
             self.assertTrue(sphere_inside(home, 105))
@@ -178,7 +178,7 @@ class TrainingGeometryTests(unittest.TestCase):
                 self.assertEqual(home[2], 2060)
 
     def test_training_scoring_fixtures_cross_both_current_goal_planes(self):
-        cls = next(n for n in source('test_playable.py').body if isinstance(n, ast.ClassDef) and n.name == 'playabletests')
+        cls = next(n for n in source('test_playable.py').body if isinstance(n, ast.ClassDef) and n.name == 'PlayableTests')
         setup = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == 'initialize_cases')
         cases = next(n.value for n in setup.body if isinstance(n, ast.Assign)
                      and isinstance(n.targets[0], ast.Attribute) and n.targets[0].attr == 'cases')
@@ -186,7 +186,7 @@ class TrainingGeometryTests(unittest.TestCase):
             def __getattr__(self, name):
                 return lambda *args: args
         planned = eval(compile(ast.Expression(cases), '<authored training fixtures>', 'eval'),
-                       {'dimensions': dimensions, 'self': fixture()})
+                       {'dimensions': dimensions, 'self': Fixture()})
         for name, seed, _ in planned[:6]:
             kind, point, velocity = seed()
             radius = 33 if kind == 0 else 24
