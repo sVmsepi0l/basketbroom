@@ -36,3 +36,5 @@ All 20 contextual spell cases passed in regulation. The fixture now uses the ins
 The Development game executable compiled successfully (`.local/ue5/game-build-20260916.log`). All in-game controller text now renders geometric PlayStation face symbols; the new HUD awaits visual verification. `Package.ps1 -NoPromote` preserves a candidate without replacing the tested desktop-launcher package. The packaged network check accepts `-PackageManifest` to test that candidate first.
 
 Native Creator Kit is open in a clean owned dungeon PIE session (PID 19744 at inspection). A fresh inventory probe still reports `can_use_broom=false`. No native mount or full native match integration is claimed.
+
+Final Play results: **19/19 controller**, **11/11 flight** (including a real enemy Bludger hit earning exactly 15 charge), and **20/20 contextual spell cases in each of regulation and Bloodbroom**. UE5 was closed through its public API with no dirty packages. Candidate packaging started with `-NoPromote`; progress is in `.local/package-resume-20260916.log`. The desktop package pointer still names the previous tested build until candidate acceptance.
