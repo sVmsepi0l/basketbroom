@@ -1,0 +1,119 @@
+{
+  "date": "2026-09-16",
+  "results": [
+    {
+      "local_report": ".local/native-controller-test-results.json",
+      "sha256": "539d6e5b4e03d99e333ad9700010b32a2284d2f096b316980260952a010cf225",
+      "passed": 19,
+      "scope": "simulated gamepad events through real native PlayerInput and gameplay bindings",
+      "tests": [
+        "input_boundary_rejects_unmapped_nonfinite_and_out_of_range_values",
+        "view_and_roster_dpad_context_change_team_and_lobby_variant",
+        "dpad_cycles_roles_at_stoppage",
+        "cross_starts_native_match",
+        "left_stick_deadzone_prevents_drift",
+        "left_stick_partial_deflection_produces_slower_flight",
+        "left_stick_strafe_and_right_stick_control_vertical_flight",
+        "right_stick_turn_rate_and_l3_precision_pitch",
+        "dpad_cycles_spells_and_top_face_toggles_spellbook",
+        "right_shoulder_casts_actual_selected_spell",
+        "left_shoulder_raises_actual_protego",
+        "left_face_catches_ball_and_releases_held_interaction",
+        "cross_releases_actual_carried_ball",
+        "options_local_pause_freezes_clock_without_referee_stoppage",
+        "conduct_review_requires_explicit_choice_and_separate_confirmation",
+        "cross_confirms_selected_possession_award_then_resumes_real_restart",
+        "engine_input_flush_clears_axes_catch_and_ghost_flight",
+        "serious_dpad_choice_selects_without_adjudication_or_spell_change",
+        "free_shot_dpad_choice_selects_without_adjudication_or_spell_change"
+      ]
+    },
+    {
+      "local_report": ".local/native-flight-controls-results.json",
+      "sha256": "fe390bb7e0e2d61fd2f7730b2893df45a052034ae9f1922e71c9d7b7ee3dc15b",
+      "passed": 11,
+      "scope": "simulated gamepad events through real native PlayerInput and gameplay bindings",
+      "tests": [
+        "r2_accelerates_at_zero_charge",
+        "l2_brakes_with_r2_held",
+        "pause_settings_change_altitude_inversion",
+        "inversion_reverses_real_right_stick_altitude",
+        "actual_thrown_quaffle_goal_earns_charge",
+        "partial_charge_boost_drains_only_while_used",
+        "four_more_actual_goals_fill_but_do_not_exceed_meter",
+        "fresh_r2_at_full_starts_super_boost",
+        "l2_cancels_super_without_refunding_charge",
+        "pause_resume_clears_held_trigger_and_preserves_match",
+        "actual_enemy_bludger_hit_earns_charge_once"
+      ]
+    },
+    {
+      "local_report": ".local/native-contextual-spells-regulation-results.json",
+      "sha256": "e7571f29ea78ec7b56aca4afca218c67f7fb9ec83aa4c98c1e198363fbac86c2",
+      "passed": 20,
+      "scope": "eight native sporting workshop/resource spell adapters",
+      "tests": [
+        "two_actual_opposing_humans_in_selected_variant",
+        "one_unique_owned_workshop_each_with_zero_charge",
+        "locked_bay_rejects_conjuring_without_spending_cooldown",
+        "alohomora_unlocks_owned_world_locker",
+        "other_riders_workshop_cannot_be_unlocked_or_edited",
+        "conjuring_creates_one_nonblocking_bounded_construct",
+        "altering_changes_mesh_but_preserves_size_and_permissions",
+        "wingardium_moves_in_live_time_and_freezes_at_stoppage",
+        "actual_cast_damage_then_reparo_restores_construct_without_charge",
+        "evanesco_removes_only_owned_construct",
+        "contextual_spells_cannot_change_official_balls_or_create_arbitrary_objects",
+        "miss_and_protego_block_do_not_earn_ancient_magic",
+        "legal_applied_enemy_hits_earn_capped_ancient_magic",
+        "ancient_magic_spends_meter_even_when_protego_blocks",
+        "ancient_magic_pulse_applies_real_damage_without_refunding_itself",
+        "throw_requires_intact_owned_object_and_valid_target_before_spending",
+        "real_swept_throw_freezes_at_stoppage_then_applies_selected_torso_hit",
+        "protego_blocks_real_construct_impact_after_charge_is_spent",
+        "physical_throw_head_impact_applies_before_mode_specific_review",
+        "departing_player_destroys_only_its_owned_workshop"
+      ]
+    },
+    {
+      "local_report": ".local/native-contextual-spells-bloodbroom-results.json",
+      "sha256": "3002ac1ff11b1c2360ee7c5f37d4897d0ad7f158b6e8c1917c0eb2de7412caed",
+      "passed": 20,
+      "scope": "eight native sporting workshop/resource spell adapters",
+      "tests": [
+        "two_actual_opposing_humans_in_selected_variant",
+        "one_unique_owned_workshop_each_with_zero_charge",
+        "locked_bay_rejects_conjuring_without_spending_cooldown",
+        "alohomora_unlocks_owned_world_locker",
+        "other_riders_workshop_cannot_be_unlocked_or_edited",
+        "conjuring_creates_one_nonblocking_bounded_construct",
+        "altering_changes_mesh_but_preserves_size_and_permissions",
+        "wingardium_moves_in_live_time_and_freezes_at_stoppage",
+        "actual_cast_damage_then_reparo_restores_construct_without_charge",
+        "evanesco_removes_only_owned_construct",
+        "contextual_spells_cannot_change_official_balls_or_create_arbitrary_objects",
+        "miss_and_protego_block_do_not_earn_ancient_magic",
+        "legal_applied_enemy_hits_earn_capped_ancient_magic",
+        "ancient_magic_spends_meter_even_when_protego_blocks",
+        "ancient_magic_pulse_applies_real_damage_without_refunding_itself",
+        "throw_requires_intact_owned_object_and_valid_target_before_spending",
+        "real_swept_throw_freezes_at_stoppage_then_applies_selected_torso_hit",
+        "protego_blocks_real_construct_impact_after_charge_is_spent",
+        "physical_throw_head_impact_applies_before_mode_specific_review",
+        "departing_player_destroys_only_its_owned_workshop"
+      ]
+    },
+    {
+      "local_report": ".local/native-flight-policy/results.json",
+      "sha256": "a0e4608f8114593b5973258398639d9b8b09e0aee47111ad1c1efab71880d597",
+      "passed": 22,
+      "scope": "Portable server-owned flight energy policy; no Unreal or hardware proof",
+      "tests": []
+    }
+  ],
+  "limits": [
+    "Simulated Unreal input, not physical USB/Bluetooth certification",
+    "Standalone UE5 gameplay, not native Hogwarts integration",
+    "No claim of complete regulation or final art"
+  ]
+}
