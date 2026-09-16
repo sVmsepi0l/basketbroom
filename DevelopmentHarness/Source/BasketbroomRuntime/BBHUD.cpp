@@ -30,7 +30,32 @@ void ABBHUD::DrawHUD()
     const FLinearColor Ink(.015,.026,.038,.90), Muted(.56,.67,.7,1), Cream(.94,.91,.82,1), Teal(.12,.9,.73,1), Copper(1,.46,.20,1), Gold(1,.77,.24,1), Violet(.7,.38,1,1);
     UFont* Font = GEngine->GetMediumFont();
     auto Rect = [&](float X,float Y,float Width,float Height,FLinearColor Color) { DrawRect(Color,X*S,Y*S,Width*S,Height*S); };
-    auto Text = [&](const FString& T,float X,float Y,float Size,FLinearColor Color) { DrawText(T,Color,X*S,Y*S,Font,Size*S,false); };
+    auto Text = [&](const FString& T,float X,float Y,float Size,FLinearColor Color)
+    {
+        if (!Pad) { DrawText(T,Color,X*S,Y*S,Font,Size*S,false); return; }
+        // Draw the same geometric PlayStation symbols used by the controller
+        // map. This works even when the HUD font lacks Unicode face glyphs.
+        int32 Start=0;
+        while (Start<T.Len())
+        {
+            int32 Next=T.Len(); FString Symbol;
+            for (const TCHAR* Name : {TEXT("Cross"),TEXT("Square"),TEXT("Triangle"),TEXT("Circle")})
+            {
+                int32 At=T.Find(Name,ESearchCase::CaseSensitive,ESearchDir::FromStart,Start);
+                const int32 Length=FCString::Strlen(Name);
+                while (At!=INDEX_NONE && ((At>0 && FChar::IsAlnum(T[At-1]))
+                    || (At+Length<T.Len() && FChar::IsAlnum(T[At+Length]))))
+                    At=T.Find(Name,ESearchCase::CaseSensitive,ESearchDir::FromStart,At+Length);
+                if (At!=INDEX_NONE && At<Next) { Next=At; Symbol=Name; }
+            }
+            const FString Prefix=T.Mid(Start,Next-Start);
+            DrawText(Prefix,Color,X*S,Y*S,Font,Size*S,false);
+            float Width=0.f,Height=0.f; GetTextSize(Prefix,Width,Height,Font,Size); X+=Width;
+            if (Symbol.IsEmpty()) break;
+            DrawPadGlyph(Symbol,X+8.f*Size,Y+10.f*Size,6.f*Size,Color,S);
+            X+=18.f*Size; Start=Next+Symbol.Len();
+        }
+    };
     const float UW = W/S, UH = H/S;
     auto WrappedText = [&](const FString& Message, float X, float Y, float Size, FLinearColor Color,
                            float MaxWidth, int32 MaxLines)

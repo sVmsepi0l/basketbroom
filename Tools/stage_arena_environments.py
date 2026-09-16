@@ -242,6 +242,10 @@ def run(dry_run=True):
                     if digest(target)!=before[relative]:raise RuntimeError('Environment backup hash mismatch')
                     report['backups'].append({'file':relative,'backup':str(target),'sha256':before[relative]})
             save()
+            # Reimporting referenced meshes dirties the open venue package even
+            # before actor edits. Keep the scenery-free source open for imports.
+            clean()
+            if not levels.load_level(SOURCE):raise RuntimeError('Cannot isolate environment imports from venue maps')
             for name,item in textures.items():
                 task=unreal.AssetImportTask()
                 for key,value in {'filename':item['source'],'destination_path':ART+'/Textures','destination_name':name,'automated':True,'replace_existing':True,'save':True}.items():task.set_editor_property(key,value)

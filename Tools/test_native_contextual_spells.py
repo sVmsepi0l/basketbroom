@@ -133,7 +133,7 @@ class ContextualSpellTests(spells.NativeSpellTests):
             before=before,after=self.state(self.other_workshop))
         yield from self.ensure_construct()
         part=prop(self.workshop,'Construct')
-        response=str(part.get_collision_response_to_channel(unreal.CollisionChannel.PAWN))
+        response=str(part.get_collision_response_to_channel(unreal.CollisionChannel.ECC_PAWN))
         before=self.state();yield from self.cast_object(23,predicate=lambda:False)
         self.record(CASES[5],prop(self.workshop,'bConjured') and self.state()==before and 'IGNORE' in response.upper()
             and len(unreal.GameplayStatics.get_all_actors_of_class(self.world,self.workshop_class))==2,
@@ -141,14 +141,14 @@ class ContextualSpellTests(spells.NativeSpellTests):
         mesh=prop(part,'StaticMesh');scale=xyz(part.get_world_scale());position=xyz(prop(self.workshop,'ConstructPosition'))
         yield from self.cast_object(24,True,lambda:int(prop(self.workshop,'Form'))==1)
         self.record(CASES[6],prop(part,'StaticMesh')!=mesh and xyz(part.get_world_scale())==scale
-            and xyz(prop(self.workshop,'ConstructPosition'))==position and 'IGNORE' in str(part.get_collision_response_to_channel(unreal.CollisionChannel.PAWN)).upper(),
+            and xyz(prop(self.workshop,'ConstructPosition'))==position and 'IGNORE' in str(part.get_collision_response_to_channel(unreal.CollisionChannel.ECC_PAWN)).upper(),
             old_mesh=mesh.get_path_name(),new_mesh=prop(part,'StaticMesh').get_path_name(),scale=scale,state=self.state())
         yield from self.cast_object(21,True,lambda:xyz(prop(self.workshop,'ConstructPosition'))[2]>position[2]+5)
         moving=xyz(prop(self.workshop,'ConstructPosition'));self.request(5)
         yield self.wait_until(lambda:not prop(self.match,'bLive'),timeout=.5)
         frozen=self.state();yield self.wait(.3);self.request(6,25);yield self.wait(.2)
         still=self.state();self.request(4);yield self.wait_until(lambda:prop(self.match,'bLive'),timeout=.5)
-        yield self.wait_until(lambda:xyz(prop(self.workshop,'ConstructPosition'))[2]>=position[2]+159,timeout=2)
+        yield self.wait_until(lambda:xyz(prop(self.workshop,'ConstructPosition'))[2]>=position[2]+159.99,timeout=2)
         self.record(CASES[7],position[2]<moving[2]<position[2]+160 and frozen==still
             and abs(xyz(prop(self.workshop,'ConstructPosition'))[2]-position[2]-160)<.1,
             original=position,intermediate=moving,frozen=frozen,after=self.state())
