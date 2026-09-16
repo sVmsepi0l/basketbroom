@@ -1,56 +1,74 @@
-"""shared arena dimensions for source art, tests, and the generated c++ contract.
+"""Shared arena dimensions for source art, tests, and the generated C++ contract.
 
-units are centimetres. enclosure grows45% in volume; sporting distances and
+Units are centimetres. The current enclosure doubles the prior length and
+widens it by one third, keeping the prior height. Sporting distances and
 physical player/ball/hoop sizes are deliberately independent.
 """
-from pathlib import path
+from pathlib import Path
 import argparse
 
-volume_scale = 1.45
-linear_scale = volume_scale ** (1.0 / 3.0)
-baseline_goal_plane_x = 6400.8
-baseline_half_length = 6850.8
-baseline_half_width = 3200.4
-baseline_eave_height = 4206.24
-baseline_apex_height = 6309.36
-goal_plane_x = baseline_goal_plane_x * linear_scale
-half_length = baseline_half_length * linear_scale
-half_width = baseline_half_width * linear_scale
-eave_height = baseline_eave_height * linear_scale
-apex_height = baseline_apex_height * linear_scale
-large_hoop_height = 2103.12
-small_hoop_height = 3048.0
-hoop_spacing = 1066.8
-large_hoop_radius = 335.28
-small_hoop_radius = 198.12
-free_shot_distance = 1341.12
-restart_distance = 670.56
-header = Path(__file__).resolve().parents[1] / 'DevelopmentHarness/Source/BasketbroomRuntime/BBArenaDimensions.generated.h'
+# Keep the historical isotropic factor for unchanged heights, chase speeds,
+# rider formation spacing and fixed-size art. Never use it as the new X/Y scale.
+PRIOR_VOLUME_SCALE = 1.45
+LINEAR_SCALE = PRIOR_VOLUME_SCALE ** (1.0 / 3.0)
+LENGTH_MULTIPLIER = 2.0
+WIDTH_MULTIPLIER = 4.0 / 3.0
+HEIGHT_MULTIPLIER = 1.0
+LENGTH_SCALE = LINEAR_SCALE * LENGTH_MULTIPLIER
+WIDTH_SCALE = LINEAR_SCALE * WIDTH_MULTIPLIER
+VOLUME_SCALE = PRIOR_VOLUME_SCALE * LENGTH_MULTIPLIER * WIDTH_MULTIPLIER
+GEOMETRY_VERSION = 'arena-length-2-width-4over3-v1'
+BASELINE_GOAL_PLANE_X = 6400.8
+BASELINE_HALF_LENGTH = 6850.8
+BASELINE_HALF_WIDTH = 3200.4
+BASELINE_EAVE_HEIGHT = 4206.24
+BASELINE_APEX_HEIGHT = 6309.36
+BEHIND_GOAL_BAY = (BASELINE_HALF_LENGTH - BASELINE_GOAL_PLANE_X) * LINEAR_SCALE
+HALF_LENGTH = BASELINE_HALF_LENGTH * LENGTH_SCALE
+HALF_WIDTH = BASELINE_HALF_WIDTH * WIDTH_SCALE
+GOAL_PLANE_X = HALF_LENGTH - BEHIND_GOAL_BAY
+EAVE_HEIGHT = BASELINE_EAVE_HEIGHT * LINEAR_SCALE
+APEX_HEIGHT = BASELINE_APEX_HEIGHT * LINEAR_SCALE
+LARGE_HOOP_HEIGHT = 2103.12
+SMALL_HOOP_HEIGHT = 3048.0
+HOOP_SPACING = 1066.8
+LARGE_HOOP_RADIUS = 335.28
+SMALL_HOOP_RADIUS = 198.12
+FREE_SHOT_DISTANCE = 1341.12
+RESTART_DISTANCE = 670.56
+HEADER = Path(__file__).resolve().parents[1] / 'DevelopmentHarness/Source/BasketbroomRuntime/BBArenaDimensions.generated.h'
 
 
-def dimensions(scale=LINEAR_SCALE):
-    return {'half_x': baseline_half_length * scale, 'half_y': baseline_half_width * scale,
-            'eave': baseline_eave_height * scale, 'apex': baseline_apex_height * scale,
-            'goal_x': baseline_goal_plane_x * scale}
+def dimensions(scale=None):
+    if scale is None:
+        return {'half_x': HALF_LENGTH, 'half_y': HALF_WIDTH,
+                'eave': EAVE_HEIGHT, 'apex': APEX_HEIGHT, 'goal_x': GOAL_PLANE_X}
+    # An explicit scale addresses historical isotropic states for old receipts.
+    return {'half_x': BASELINE_HALF_LENGTH * scale, 'half_y': BASELINE_HALF_WIDTH * scale,
+            'eave': BASELINE_EAVE_HEIGHT * scale, 'apex': BASELINE_APEX_HEIGHT * scale,
+            'goal_x': BASELINE_GOAL_PLANE_X * scale}
 
 
 def enclosed_volume_cm3(values=None):
-    d = values if values is not none else dimensions()
+    d = values if values is not None else dimensions()
     return 4 * d['half_x'] * d['half_y'] * (d['eave'] + (d['apex'] - d['eave']) / 3)
 
 
 def header_text():
     entries = (
-        ('volumescale', volume_scale), ('linearscale', linear_scale),
-        ('goalplanex', goal_plane_x), ('halflength', half_length),
-        ('halfwidth', half_width), ('eaveheight', eave_height), ('apexheight', apex_height),
-        ('largehoopheight', large_hoop_height), ('smallhoopheight', small_hoop_height),
-        ('hoopspacing', hoop_spacing), ('largehoopradius', large_hoop_radius),
-        ('smallhoopradius', small_hoop_radius), ('freeshotdistance', free_shot_distance),
-        ('restartdistance', restart_distance),
+        ('VolumeScale', VOLUME_SCALE), ('LinearScale', LINEAR_SCALE),
+        ('LengthScale', LENGTH_SCALE), ('WidthScale', WIDTH_SCALE),
+        ('LengthMultiplier', LENGTH_MULTIPLIER), ('WidthMultiplier', WIDTH_MULTIPLIER),
+        ('BehindGoalBay', BEHIND_GOAL_BAY),
+        ('GoalPlaneX', GOAL_PLANE_X), ('HalfLength', HALF_LENGTH),
+        ('HalfWidth', HALF_WIDTH), ('EaveHeight', EAVE_HEIGHT), ('ApexHeight', APEX_HEIGHT),
+        ('LargeHoopHeight', LARGE_HOOP_HEIGHT), ('SmallHoopHeight', SMALL_HOOP_HEIGHT),
+        ('HoopSpacing', HOOP_SPACING), ('LargeHoopRadius', LARGE_HOOP_RADIUS),
+        ('SmallHoopRadius', SMALL_HOOP_RADIUS), ('FreeShotDistance', FREE_SHOT_DISTANCE),
+        ('RestartDistance', RESTART_DISTANCE),
     )
-    lines = ['#pragma once', '// generated by Tools/arena_dimensions.py --write-header. Units: centimetres.',
-             '// goalplanex is distinct from the end-net HalfLength.', 'namespace bbarena', '{']
+    lines = ['#pragma once', '// Generated by Tools/arena_dimensions.py --write-header. Units: centimetres.',
+             '// GoalPlaneX is distinct from the end-net HalfLength.', 'namespace BBArena', '{']
     lines += ['inline constexpr double %s = %s;' % (name, format(value, '.17g')) for name, value in entries]
     return '\n'.join(lines + ['}', ''])
 
@@ -63,5 +81,5 @@ if __name__ == '__main__':
     if args.write_header:
         HEADER.write_text(header_text(), encoding='utf-8', newline='\n')
     if args.check_header and HEADER.read_text(encoding='utf-8') != header_text():
-        raise systemexit('generated arena dimensions header is stale')
-    print('enclosed volume ratio: %.12f' % (enclosed_volume_cm3() / enclosed_volume_cm3(dimensions(1.0))))
+        raise SystemExit('Generated arena dimensions header is stale')
+    print('Enclosed volume ratio: %.12f' % (enclosed_volume_cm3() / enclosed_volume_cm3(dimensions(1.0))))

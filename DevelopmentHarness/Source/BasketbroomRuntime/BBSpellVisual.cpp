@@ -16,148 +16,148 @@
 ABBSpellVisual::ABBSpellVisual()
 {
     PrimaryActorTick.bCanEverTick = true;
-    breplicates = true;
-    balwaysrelevant = true;
-    setreplicatemovement(false);
+    bReplicates = true;
+    bAlwaysRelevant = true;
+    SetReplicateMovement(false);
     SetNetUpdateFrequency(30.f);
-    setrootcomponent(createdefaultsubobject<uscenecomponent>(text("spellvisualroot")));
+    SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("SpellVisualRoot")));
     GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    beam = createdefaultsubobject<ustaticmeshcomponent>(text("castbeam"));
-    impact = createdefaultsubobject<ustaticmeshcomponent>(text("castimpact"));
-    impactrays = createdefaultsubobject<uinstancedstaticmeshcomponent>(text("impactrays"));
+    Beam = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastBeam"));
+    Impact = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastImpact"));
+    ImpactRays = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("ImpactRays"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-    // existing original material is cooked for instancing and exposes Tint/Glow.
+    // Existing original material is cooked for instancing and exposes Tint/Glow.
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(TEXT("/Basketbroom/Art/Materials/M_BB_RiderIvory.M_BB_RiderIvory"));
     Beam->SetStaticMesh(Cylinder.Object);
     Impact->SetStaticMesh(Sphere.Object);
     ImpactRays->SetStaticMesh(Cylinder.Object);
-    for (ustaticmeshcomponent* part : {Beam.Get(), Impact.Get(), static_cast<UStaticMeshComponent*>(ImpactRays.Get())})
+    for (UStaticMeshComponent* Part : {Beam.Get(), Impact.Get(), static_cast<UStaticMeshComponent*>(ImpactRays.Get())})
     {
-        part->setupattachment(getrootcomponent());
+        Part->SetupAttachment(GetRootComponent());
         Part->SetMobility(EComponentMobility::Movable);
-        part->setmaterial(0, Material.Object);
-        part->setcollisionprofilename(text("nocollision"));
+        Part->SetMaterial(0, Material.Object);
+        Part->SetCollisionProfileName(TEXT("NoCollision"));
         Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        part->setgenerateoverlapevents(false);
-        part->setcaneveraffectnavigation(false);
-        part->setcastshadow(false);
+        Part->SetGenerateOverlapEvents(false);
+        Part->SetCanEverAffectNavigation(false);
+        Part->SetCastShadow(false);
         Part->ComponentTags.Add(TEXT("BB.Spell.Cosmetic"));
-        part->setvisibility(false);
+        Part->SetVisibility(false);
     }
-    for (int32 index = 0; index < 12; ++index)
+    for (int32 Index = 0; Index < 12; ++Index)
     {
-        const float angle = index * ue_two_pi / 12.f;
-        const fvector Direction(0.f, FMath::Cos(Angle), FMath::Sin(Angle));
+        const float Angle = Index * UE_TWO_PI / 12.f;
+        const FVector Direction(0.f, FMath::Cos(Angle), FMath::Sin(Angle));
         ImpactRays->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Direction).ToQuat(),
-            direction * 28.f, FVector(.018, .018, .18)));
+            Direction * 28.f, FVector(.018, .018, .18)));
     }
 }
 
-abbspellvisual* ABBSpellVisual::Spawn(UWorld* world, fvector start, fvector end, int32 spellindex, bool bblocked)
+ABBSpellVisual* ABBSpellVisual::Spawn(UWorld* World, FVector Start, FVector End, int32 SpellIndex, bool bBlocked)
 {
-    if (!world || world->getnetmode() == nm_client || Start.ContainsNaN() || End.ContainsNaN()
-        || spellindex < 0 || spellindex >= BBSpellCatalog::Count()) return nullptr;
-    const ftransform Transform(FRotator::ZeroRotator, (start + end) * .5f);
-    abbspellvisual* visual = world->spawnactordeferred<abbspellvisual>(staticclass(), transform,
+    if (!World || World->GetNetMode() == NM_Client || Start.ContainsNaN() || End.ContainsNaN()
+        || SpellIndex < 0 || SpellIndex >= BBSpellCatalog::Count()) return nullptr;
+    const FTransform Transform(FRotator::ZeroRotator, (Start + End) * .5f);
+    ABBSpellVisual* Visual = World->SpawnActorDeferred<ABBSpellVisual>(StaticClass(), Transform,
         nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-    if (!visual) return nullptr;
-    visual->startpoint = start;
-    visual->endpoint = end;
-    visual->visualspellindex = spellindex;
-    visual->bwasblocked = bblocked;
-    visual->setflags(rf_transient);
-    visual->finishspawning(transform);
-    visual->forcenetupdate();
-    return visual;
+    if (!Visual) return nullptr;
+    Visual->StartPoint = Start;
+    Visual->EndPoint = End;
+    Visual->VisualSpellIndex = SpellIndex;
+    Visual->bWasBlocked = bBlocked;
+    Visual->SetFlags(RF_Transient);
+    Visual->FinishSpawning(Transform);
+    Visual->ForceNetUpdate();
+    return Visual;
 }
 
 void ABBSpellVisual::BeginPlay()
 {
     Super::BeginPlay();
-    glowmaterial = beam->createdynamicmaterialinstance(0);
-    if (glowmaterial)
+    GlowMaterial = Beam->CreateDynamicMaterialInstance(0);
+    if (GlowMaterial)
     {
-        impact->setmaterial(0, glowmaterial);
-        impactrays->setmaterial(0, glowmaterial);
+        Impact->SetMaterial(0, GlowMaterial);
+        ImpactRays->SetMaterial(0, GlowMaterial);
     }
-    onrep_visual();
-    if (hasauthority()) SetLifeSpan(.8f);
+    OnRep_Visual();
+    if (HasAuthority()) SetLifeSpan(.8f);
 }
 
-void ABBSpellVisual::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& outlifetimeprops) const
+void ABBSpellVisual::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    doreplifetime(abbspellvisual, startpoint);
-    doreplifetime(abbspellvisual, endpoint);
-    doreplifetime(abbspellvisual, visualspellindex);
-    doreplifetime(abbspellvisual, bwasblocked);
+    DOREPLIFETIME(ABBSpellVisual, StartPoint);
+    DOREPLIFETIME(ABBSpellVisual, EndPoint);
+    DOREPLIFETIME(ABBSpellVisual, VisualSpellIndex);
+    DOREPLIFETIME(ABBSpellVisual, bWasBlocked);
 }
 
 void ABBSpellVisual::OnRep_Visual()
 {
-    const fvector tracedirection = endpoint - startpoint;
-    const double tracelength = TraceDirection.Size();
-    const frotator aimrotation = TraceDirection.IsNearlyZero() ? FRotator::ZeroRotator : TraceDirection.Rotation();
-    // match the owner's visible wand tip. starting an opaque cylinder at the
-    // camera made its near end fill the reticle. keep the actual trace endpoints
+    const FVector TraceDirection = EndPoint - StartPoint;
+    const double TraceLength = TraceDirection.Size();
+    const FRotator AimRotation = TraceDirection.IsNearlyZero() ? FRotator::ZeroRotator : TraceDirection.Rotation();
+    // Match the owner's visible wand tip. Starting an opaque cylinder at the
+    // camera made its near end fill the reticle. Keep the actual trace endpoints
     // unchanged: this offset affects presentation only, never hit detection.
-    // short casts shorten the offset so it cannot extend past a nearby impact.
-    const double muzzlescale = FMath::Min(1.0, tracelength / 180.0);
-    visualstartpoint = startpoint + AimRotation.RotateVector(FVector(87, 30, -17) * muzzlescale);
-    // the lateral offset can cross a side wall even when the eye-origin ray
-    // reaches its endpoint correctly. clip only this cosmetic origin against
+    // Short casts shorten the offset so it cannot extend past a nearby impact.
+    const double MuzzleScale = FMath::Min(1.0, TraceLength / 180.0);
+    VisualStartPoint = StartPoint + AimRotation.RotateVector(FVector(87, 30, -17) * MuzzleScale);
+    // The lateral offset can cross a side wall even when the eye-origin ray
+    // reaches its endpoint correctly. Clip only this cosmetic origin against
     // visible geometry; pawn bodies do not obstruct their own equipment.
-    if (getworld())
+    if (GetWorld())
     {
-        fcollisionqueryparams muzzlequery(scene_query_stat(basketbroomvisualmuzzle), false, this);
-        for (tactoriterator<apawn> it(getworld()); it; ++it) MuzzleQuery.AddIgnoredActor(*It);
-        fhitresult muzzlehit;
-        if (getworld()->linetracesinglebychannel(muzzlehit, startpoint, visualstartpoint, ecc_visibility, muzzlequery))
+        FCollisionQueryParams MuzzleQuery(SCENE_QUERY_STAT(BasketbroomVisualMuzzle), false, this);
+        for (TActorIterator<APawn> It(GetWorld()); It; ++It) MuzzleQuery.AddIgnoredActor(*It);
+        FHitResult MuzzleHit;
+        if (GetWorld()->LineTraceSingleByChannel(MuzzleHit, StartPoint, VisualStartPoint, ECC_Visibility, MuzzleQuery))
         {
-            const fvector muzzledirection = (visualstartpoint - StartPoint).GetSafeNormal();
-            const double safedistance = MuzzleHit.bStartPenetrating ? 0.0 : FMath::Max(0.0, static_cast<double>(MuzzleHit.Distance) - 3.0);
-            visualstartpoint = startpoint + muzzledirection * safedistance;
+            const FVector MuzzleDirection = (VisualStartPoint - StartPoint).GetSafeNormal();
+            const double SafeDistance = MuzzleHit.bStartPenetrating ? 0.0 : FMath::Max(0.0, static_cast<double>(MuzzleHit.Distance) - 3.0);
+            VisualStartPoint = StartPoint + MuzzleDirection * SafeDistance;
         }
     }
-    const fvector direction = endpoint - visualstartpoint;
-    beamlength = Direction.Size();
-    beam->setworldlocation((visualstartpoint + endpoint) * .5f);
+    const FVector Direction = EndPoint - VisualStartPoint;
+    BeamLength = Direction.Size();
+    Beam->SetWorldLocation((VisualStartPoint + EndPoint) * .5f);
     Beam->SetWorldRotation(FRotationMatrix::MakeFromZ(Direction.GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector)).Rotator());
-    impact->setworldlocation(endpoint);
-    impactrays->setworldlocation(endpoint);
+    Impact->SetWorldLocation(EndPoint);
+    ImpactRays->SetWorldLocation(EndPoint);
     ImpactRays->SetWorldRotation(Direction.IsNearlyZero() ? FRotator::ZeroRotator : Direction.Rotation());
-    flinearcolor Color(1.f, .18f, .055f);
-    if (visualspellindex == 1 || bwasblocked) color = FLinearColor(.15f, .58f, 1.f);
-    else if (visualspellindex >= 6 && visualspellindex <= 13) color = FLinearColor(.55f, .18f, 1.f);
-    else if (visualspellindex >= 26 && visualspellindex <= 28) color = FLinearColor(.18f, 1.f, .26f);
-    else if (visualspellindex >= 29) color = FLinearColor(.38f, .8f, 1.f);
-    else if (visualspellindex == 19) color = FLinearColor(.8f, .92f, 1.f);
-    if (glowmaterial) glowmaterial->setvectorparametervalue(text("tint"), color);
-    // set presentation scale before showing newly spawned/replicated components;
+    FLinearColor Color(1.f, .18f, .055f);
+    if (VisualSpellIndex == 1 || bWasBlocked) Color = FLinearColor(.15f, .58f, 1.f);
+    else if (VisualSpellIndex >= 6 && VisualSpellIndex <= 13) Color = FLinearColor(.55f, .18f, 1.f);
+    else if (VisualSpellIndex >= 26 && VisualSpellIndex <= 28) Color = FLinearColor(.18f, 1.f, .26f);
+    else if (VisualSpellIndex >= 29) Color = FLinearColor(.38f, .8f, 1.f);
+    else if (VisualSpellIndex == 19) Color = FLinearColor(.8f, .92f, 1.f);
+    if (GlowMaterial) GlowMaterial->SetVectorParameterValue(TEXT("Tint"), Color);
+    // Set presentation scale before showing newly spawned/replicated components;
     // default 100 cm primitives must never appear for the first rendered frame.
-    updatevisualscale();
+    UpdateVisualScale();
 }
 
-void ABBSpellVisual::Tick(float deltaseconds)
+void ABBSpellVisual::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    visualage += deltaseconds;
-    updatevisualscale();
+    VisualAge += DeltaSeconds;
+    UpdateVisualScale();
 }
 
 void ABBSpellVisual::UpdateVisualScale()
 {
-    const float remaining = FMath::Clamp(1.f - visualage / .55f, 0.f, 1.f);
-    const float width = .004f + .024f * remaining * remaining;
-    beam->setworldscale3d(fvector(width, width, beamlength / 100.f));
-    impact->setworldscale3d(fvector((bwasblocked ? .28f : .16f) * remaining));
-    ImpactRays->SetWorldScale3D(FVector(1.f + visualage * 2.2f));
-    if (glowmaterial) glowmaterial->setscalarparametervalue(text("glow"), remaining * 2.5f);
-    // a nearly eye-level clamped muzzle would recreate the large near-camera
-    // cylinder cap. preserve the recorded impact but omit that short beam.
-    const bool bmuzzleclearofcamera = FVector::DistSquared(VisualStartPoint, startpoint) >= FMath::Square(35.f);
-    beam->setvisibility(remaining > 0.f && beamlength > 1.f && bmuzzleclearofcamera);
-    impact->setvisibility(remaining > 0.f);
-    impactrays->setvisibility(remaining > 0.f);
+    const float Remaining = FMath::Clamp(1.f - VisualAge / .55f, 0.f, 1.f);
+    const float Width = .004f + .024f * Remaining * Remaining;
+    Beam->SetWorldScale3D(FVector(Width, Width, BeamLength / 100.f));
+    Impact->SetWorldScale3D(FVector((bWasBlocked ? .28f : .16f) * Remaining));
+    ImpactRays->SetWorldScale3D(FVector(1.f + VisualAge * 2.2f));
+    if (GlowMaterial) GlowMaterial->SetScalarParameterValue(TEXT("Glow"), Remaining * 2.5f);
+    // A nearly eye-level clamped muzzle would recreate the large near-camera
+    // cylinder cap. Preserve the recorded impact but omit that short beam.
+    const bool bMuzzleClearOfCamera = FVector::DistSquared(VisualStartPoint, StartPoint) >= FMath::Square(35.f);
+    Beam->SetVisibility(Remaining > 0.f && BeamLength > 1.f && bMuzzleClearOfCamera);
+    Impact->SetVisibility(Remaining > 0.f);
+    ImpactRays->SetVisibility(Remaining > 0.f);
 }

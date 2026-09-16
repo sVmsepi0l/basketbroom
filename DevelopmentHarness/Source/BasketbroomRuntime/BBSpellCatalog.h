@@ -1,27 +1,27 @@
 #pragma once
 #include "CoreMinimal.h"
 
-// native sporting adaptations, not the hogwarts legacy combat implementation.
-// stable indices follow Rules/spell_catalog.json; contextual spells stay visible.
-enum class ebbspelleffect : uint8 { context, impact, shield, stun, pull, push, down,
-    flip, slow, freeze, lift, disarm, light, knockout, curse, reveal, conceal, bodybind, transform, confuse, workshop, ancient, throw };
-struct fbbspellspec
+// Native sporting adaptations, not the Hogwarts Legacy combat implementation.
+// Stable indices follow Rules/spell_catalog.json; contextual spells stay visible.
+enum class EBBSpellEffect : uint8 { Context, Impact, Shield, Stun, Pull, Push, Down,
+    Flip, Slow, Freeze, Lift, Disarm, Light, Knockout, Curse, Reveal, Conceal, BodyBind, Transform, Confuse, Workshop, Ancient, Throw };
+struct FBBSpellSpec
 {
-    const tchar* name;
-    ebbspelleffect effect;
-    float cooldown;
-    float range;
-    float damage;
-    bool bimpediment;
-    bool bstun;
-    bool bunforgivable;
-    const tchar* description;
+    const TCHAR* Name;
+    EBBSpellEffect Effect;
+    float Cooldown;
+    float Range;
+    float Damage;
+    bool bImpediment;
+    bool bStun;
+    bool bUnforgivable;
+    const TCHAR* Description;
 };
-namespace bbspellcatalog
+namespace BBSpellCatalog
 {
-    int32 count();
-    const fbbspellspec* get(int32 index);
-    fstring name(int32 index);
-    fstring description(int32 index);
-    bool isimplemented(int32 index);
+    int32 Count();
+    const FBBSpellSpec* Get(int32 Index);
+    FString Name(int32 Index);
+    FString Description(int32 Index);
+    bool IsImplemented(int32 Index);
 }

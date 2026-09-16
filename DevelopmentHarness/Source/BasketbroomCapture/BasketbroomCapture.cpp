@@ -1,3 +1,3 @@
 #include "Modules/ModuleManager.h"
 
-implement_module(fdefaultmoduleimpl, basketbroomcapture)
+IMPLEMENT_MODULE(FDefaultModuleImpl, BasketbroomCapture)

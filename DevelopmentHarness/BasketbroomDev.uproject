@@ -5,57 +5,57 @@
   "Description": "basketbroom standalone unreal engine 5.8 broom sport with native multiplayer.",
   "Plugins": [
     {
-      "Name": "pythonscriptplugin",
+      "Name": "PythonScriptPlugin",
       "Enabled": true,
       "TargetAllowList": [
-        "editor"
+        "Editor"
       ]
     },
     {
-      "Name": "editorscriptingutilities",
+      "Name": "EditorScriptingUtilities",
       "Enabled": true,
       "TargetAllowList": [
-        "editor"
+        "Editor"
       ]
     },
     {
-      "Name": "sequencerscripting",
+      "Name": "SequencerScripting",
       "Enabled": true,
       "TargetAllowList": [
-        "editor"
+        "Editor"
       ]
     },
     {
-      "Name": "gameinputwindows",
+      "Name": "GameInputWindows",
       "Enabled": true,
       "SupportedTargetPlatforms": [
-        "win64"
+        "Win64"
       ],
       "PlatformAllowList": [
-        "win64"
+        "Win64"
       ]
     },
     {
-      "Name": "xinputdevice",
+      "Name": "XInputDevice",
       "Enabled": true,
       "SupportedTargetPlatforms": [
-        "win64"
+        "Win64"
       ],
       "PlatformAllowList": [
-        "win64"
+        "Win64"
       ]
     }
   ],
   "Modules": [
     {
-      "Name": "basketbroomruntime",
-      "Type": "runtime",
-      "LoadingPhase": "default"
+      "Name": "BasketbroomRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
     },
     {
-      "Name": "basketbroomcapture",
-      "Type": "editor",
-      "LoadingPhase": "default"
+      "Name": "BasketbroomCapture",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
     }
   ]
 }

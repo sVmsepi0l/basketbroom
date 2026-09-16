@@ -20,19 +20,19 @@ CASES = (
     "input_boundary_rejects_unmapped_nonfinite_and_out_of_range_values",
     "view_and_roster_dpad_context_change_team_and_lobby_variant",
     "dpad_cycles_roles_at_stoppage",
-    "menu_starts_native_match",
+    "cross_starts_native_match",
     "left_stick_deadzone_prevents_drift",
     "left_stick_partial_deflection_produces_slower_flight",
-    "left_stick_strafe_and_face_buttons_control_vertical_flight",
-    "right_stick_turn_rate_tracks_game_time_and_pitch_looks_up",
+    "left_stick_strafe_and_right_stick_control_vertical_flight",
+    "right_stick_turn_rate_and_l3_precision_pitch",
     "dpad_cycles_spells_and_top_face_toggles_spellbook",
     "right_shoulder_casts_actual_selected_spell",
     "left_shoulder_raises_actual_protego",
     "left_face_catches_ball_and_releases_held_interaction",
-    "right_trigger_releases_actual_carried_ball",
-    "menu_pauses_freezes_clock_and_resumes",
+    "cross_releases_actual_carried_ball",
+    "options_local_pause_freezes_clock_without_referee_stoppage",
     "conduct_review_requires_explicit_choice_and_separate_confirmation",
-    "menu_confirms_selected_possession_award_then_resumes_real_restart",
+    "cross_confirms_selected_possession_award_then_resumes_real_restart",
     "engine_input_flush_clears_axes_catch_and_ghost_flight",
     "serious_dpad_choice_selects_without_adjudication_or_spell_change",
     "free_shot_dpad_choice_selects_without_adjudication_or_spell_change",
@@ -48,7 +48,13 @@ unreal, prop, xyz, vector = base.unreal, base.prop, base.xyz, base.vector
 class NativeControllerTests(base.NativePlayableTests):
     def __init__(self):
         self.original_dilation = None
+        self.original_inversion = None
         super().__init__()
+
+    def now(self):
+        # Waits must progress while the real world is paused; movement-rate
+        # measurements below explicitly use gameplay time instead.
+        return float(unreal.GameplayStatics.get_real_time_seconds(self.world))
 
     def write_report(self, status, reason=None):
         super().write_report(status, reason)
@@ -135,9 +141,9 @@ class NativeControllerTests(base.NativePlayableTests):
         yield self.wait_until(lambda: self.state()[index] > .05, timeout=1)
         self.require(self.state()[index] > .05, "Right-stick input did not reach the real binding")
         start = self.controller.get_control_rotation()
-        began = self.now()
+        began = float(unreal.GameplayStatics.get_time_seconds(self.world))
         yield self.wait(.35)
-        end, elapsed = self.controller.get_control_rotation(), self.now()-began
+        end, elapsed = self.controller.get_control_rotation(), float(unreal.GameplayStatics.get_time_seconds(self.world))-began
         delta = (float(end.yaw-start.yaw) if index == 2 else float(end.pitch-start.pitch))
         delta = (delta+180) % 360-180
         yield from self.release_axis(key, index)
@@ -161,6 +167,8 @@ class NativeControllerTests(base.NativePlayableTests):
     def scenarios(self):
         for method in ("development_inject_gamepad_input", "development_flush_controller_input", "development_get_controller_input_state"):
             self.require(callable(getattr(self.pawn, method, None)), "Rebuild/load controller DLL before this suite: "+method)
+        self.original_inversion = (bool(prop(self.pawn, "bInvertControllerAltitude")), bool(prop(self.pawn, "bInvertControllerAimY")))
+        self.pawn.set_controller_inversion(False, False)
         self.original_dilation = float(unreal.GameplayStatics.get_global_time_dilation(self.world))
         self.provenance.update(input_boundary="FInputKeyEventArgs::CreateSimulated -> PlayerController::InputKey -> PlayerInput/bindings",
                                hardware_connected="not asserted", controller_ticks="ordinary engine input processing retained",
@@ -189,9 +197,9 @@ class NativeControllerTests(base.NativePlayableTests):
         self.record(CASES[2], cycled and int(prop(self.pawn, "Position")) == role and self.roster_valid(), role=role, cycled=cycled)
         self.require(role == 3, "The standard host Ranger is needed for the real ball pickup fixture")
         yield from self.tap("Gamepad_Special_Left", lambda: not prop(self.pawn, "bShowRoster"))
-        yield from self.tap("Gamepad_Special_Right", lambda: bool(prop(self.match, "bLive")))
+        yield from self.tap("Gamepad_FaceButton_Bottom", lambda: bool(prop(self.match, "bLive")))
         self.record(CASES[3], bool(prop(self.match, "bLive")), status=str(prop(self.match, "Status")))
-        self.require(prop(self.match, "bLive"), "Menu kickoff must enter live match")
+        self.require(prop(self.match, "bLive"), "Cross kickoff must enter live match")
         self.isolate()
 
         yield from self.anchor()
@@ -208,13 +216,17 @@ class NativeControllerTests(base.NativePlayableTests):
                     and 0 < partial["mean_speed"] < full["mean_speed"]*.8
                     and 0 < partial["processed_axis"] < full["processed_axis"], partial=partial, full=full)
         strafe = yield from self.axis_motion("Gamepad_LeftX", 1, 0, 1)
-        up = yield from self.button_motion("Gamepad_FaceButton_Bottom", 1)
-        down = yield from self.button_motion("Gamepad_FaceButton_Right", -1)
-        self.record(CASES[6], strafe["delta"] > 30 and up["signed_vertical_delta"] > 30
-                    and down["signed_vertical_delta"] > 30, strafe=strafe, rise=up, descend=down)
+        up = yield from self.axis_motion("Gamepad_RightY", 1, 3, 2)
+        down = yield from self.axis_motion("Gamepad_RightY", -1, 3, 2)
+        self.record(CASES[6], strafe["delta"] > 30 and up["delta"] > 30
+                    and down["delta"] < -30, strafe=strafe, rise=up, descend=down)
         slower = yield from self.turn(.5)
         normal = yield from self.turn(1)
+        self.pad("Gamepad_LeftThumbstick", 1)
+        yield self.wait(.12)
         pitch = yield from self.turn(1, "Gamepad_RightY", 3)
+        self.pad("Gamepad_LeftThumbstick", 0)
+        yield self.wait(.12)
         self.record(CASES[7], slower["rate"] > 20 and normal["rate"] > 20
                     and .75 < slower["rate"]/normal["rate"] < 1.25 and pitch["delta_degrees"] > 5,
                     slower_step=slower, normal_step=normal, look_up=pitch)
@@ -252,16 +264,21 @@ class NativeControllerTests(base.NativePlayableTests):
         self.record(CASES[11], held and prop(ball, "Holder") == self.pawn and not prop(self.pawn, "bInteractHeld"),
                     actual_pickup=held, input_state=self.state())
         self.require(prop(ball, "Holder") == self.pawn, "Trigger fixture requires actual native custody")
-        yield from self.tap("Gamepad_RightTrigger", lambda: prop(ball, "Holder") is None)
+        yield from self.tap("Gamepad_FaceButton_Bottom", lambda: prop(ball, "Holder") is None)
         velocity = xyz(ball.get_flight_velocity())
         self.record(CASES[12], prop(ball, "Holder") is None and sum(v*v for v in velocity) > 10000,
                     holder=prop(ball, "Holder"), flight_velocity=velocity)
-        yield from self.tap("Gamepad_Special_Right", lambda: not prop(self.match, "bLive"))
+        yield from self.tap("Gamepad_Special_Right", lambda: bool(prop(self.pawn, "bPauseMenuOpen")))
         frozen = float(prop(self.match, "LiveSeconds"))
         yield self.wait(.3)
-        clock_frozen = not prop(self.match, "bLive") and float(prop(self.match, "LiveSeconds")) == frozen
-        yield from self.tap("Gamepad_Special_Right", lambda: bool(prop(self.match, "bLive")))
-        self.record(CASES[13], clock_frozen and prop(self.match, "bLive"), clock_frozen=clock_frozen)
+        clock_frozen = (bool(prop(self.pawn, "bPauseMenuOpen")) and bool(prop(self.match, "bLive"))
+                        and unreal.GameplayStatics.is_game_paused(self.world)
+                        and float(prop(self.match, "LiveSeconds")) == frozen)
+        yield from self.tap("Gamepad_Special_Right", lambda: not prop(self.pawn, "bPauseMenuOpen"))
+        yield self.wait(.2)
+        self.record(CASES[13], clock_frozen and prop(self.match, "bLive")
+                    and float(prop(self.match, "LiveSeconds")) > frozen,
+                    clock_frozen=clock_frozen, world_resumed=not unreal.GameplayStatics.is_game_paused(self.world))
 
         yield self.wait_until(lambda: float(prop(self.pawn, "SpellCooldownRemaining")) == 0, timeout=3)
         target = yield from self.aim_at_target(head=True)
@@ -270,7 +287,7 @@ class NativeControllerTests(base.NativePlayableTests):
                      "Actual gamepad headshot must create referee review")
         pending = self.conduct()
         neutral_choice = int(prop(self.pawn, "GamepadRefereeChoice")) == 0
-        yield from self.tap("Gamepad_Special_Right")
+        yield from self.tap("Gamepad_FaceButton_Bottom")
         menu_did_nothing = self.conduct() == pending and not prop(self.match, "bLive")
         yield from self.tap("Gamepad_DPad_Down", lambda: int(prop(self.pawn, "GamepadRefereeChoice")) == 2)
         severe_selection_only = self.conduct() == pending and int(prop(self.match, "PendingPenaltyCount")) == 0
@@ -303,15 +320,15 @@ class NativeControllerTests(base.NativePlayableTests):
         yield from self.tap("Gamepad_DPad_Up", lambda: int(prop(self.pawn, "GamepadRefereeChoice")) == 1)
         self.record(CASES[14], neutral_choice and menu_did_nothing and severe_selection_only
                     and self.conduct() == pending and int(prop(self.pawn, "GamepadRefereeChoice")) == 1,
-                    neutral_choice=neutral_choice, menu_without_selection_rejected=menu_did_nothing,
+                    neutral_choice=neutral_choice, cross_without_selection_rejected=menu_did_nothing,
                     ejection_selection_has_no_gameplay_effect=severe_selection_only, conduct=self.conduct())
-        yield from self.tap("Gamepad_Special_Right", lambda: not prop(self.match, "bConductReviewPending"))
+        yield from self.tap("Gamepad_FaceButton_Bottom", lambda: not prop(self.match, "bConductReviewPending"))
         queued = self.conduct()
-        self.require(queued[5] in (0, 1, 2), "Confirmed Menu must queue a real scoring-ball possession award")
+        self.require(queued[5] in (0, 1, 2), "Confirmed Cross must queue a real scoring-ball possession award")
         award = self.balls[queued[5]]
         queued_while_paused = not prop(self.match, "bLive") and prop(award, "Holder") is None
         choice_cleared = int(prop(self.pawn, "GamepadRefereeChoice")) == 0
-        yield from self.tap("Gamepad_Special_Right", lambda: prop(self.match, "bLive")
+        yield from self.tap("Gamepad_FaceButton_Bottom", lambda: prop(self.match, "bLive")
                             and prop(award, "Holder") is not None)
         receiver = prop(award, "Holder")
         self.record(CASES[15], queued_while_paused and choice_cleared and receiver is not None
@@ -341,6 +358,8 @@ class NativeControllerTests(base.NativePlayableTests):
     def finish(self, status, reason=None):
         if unreal and self.owns_play:
             try:
+                if self.pawn and self.original_inversion is not None:
+                    self.pawn.set_controller_inversion(*self.original_inversion)
                 if self.pawn and callable(getattr(self.pawn, "development_flush_controller_input", None)):
                     self.pawn.development_flush_controller_input()
                 if self.world and self.original_dilation is not None:

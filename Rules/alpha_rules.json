@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "rules_version": "0.2.1-arena-volume",
+  "rules_version": "0.2.2-longer-wider-arena",
   "source": "Docs/basketbroom_rules_bible_v0.1.md",
   "time_unit": "integer_live_milliseconds",
   "score": {
@@ -39,8 +39,8 @@
     "scout": 1
   },
   "geometry_ft": {
-    "length": 475.3775023044393,
-    "width": 237.68875115221965,
+    "length": 984.1758076392806,
+    "width": 316.91833486962616,
     "roof": 156.19546504288718,
     "chase_ceiling": 234.2931975643308,
     "large_hoop_center_z": 69,
@@ -57,8 +57,8 @@
     "roof_shape": "closed_rectangular_pyramid",
     "net_apex": 234.2931975643308,
     "net_rise": 78.09773252144362,
-    "enclosure_length": 508.79830533484136,
-    "behind_goal_bay": 16.710401515201035
+    "enclosure_length": 1017.5966106696827,
+    "behind_goal_bay": 16.710401515201042
   },
   "physics": {
     "rebound_speed_retention": 0.75,
@@ -71,19 +71,31 @@
     "Own-goal credit, simultaneous event grouping, and exact-tie capture tiebreak",
     "Donnybrook participation, reset, and final point credit",
     "Removal duration and ejection replacement timing",
-    "Expanded closed pyramid net: +45% enclosed volume; visibility, chase room and rebound tuning"
+    "Longer/wider closed pyramid net: length doubled and width +one third, height unchanged; visibility, chase room and rebound tuning"
   ],
   "amendments": [
     "Docs/pyramid-net.md",
-    "Docs/arena-volume-expansion.md"
+    "Docs/arena-volume-expansion.md",
+    "Docs/arena-footprint-resize.md"
   ],
   "enable_legacy_crown_exit": false,
   "arena_volume": {
     "baseline_scale": 1.0,
-    "volume_scale": 1.45,
-    "linear_scale": 1.1318511959629507,
+    "volume_scale": 3.8666666666666663,
     "baseline_volume_m3": 430374.3510173184,
-    "volume_m3": 624042.8089751116,
-    "source": "Tools/arena_dimensions.py"
+    "volume_m3": 1664114.1572669642,
+    "source": "Tools/arena_dimensions.py",
+    "axis_scales": [
+      2.2637023919259014,
+      1.5091349279506008,
+      1.1318511959629507
+    ],
+    "prior_volume_scale": 1.45,
+    "resize_from_prior": [
+      2,
+      1.3333333333333333,
+      1
+    ],
+    "historical_height_scale": 1.1318511959629507
   }
 }

@@ -2,19 +2,21 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "BBHUD.generated.h"
-class abbmatchstate;
-class abbridercharacter;
-class ubbaudiofeedback;
-uclass()
-class basketbroomruntime_api abbhud : public ahud
+class ABBMatchState;
+class ABBRiderCharacter;
+class UBBAudioFeedback;
+UCLASS()
+class BASKETBROOMRUNTIME_API ABBHUD : public AHUD
 {
-    generated_body()
+    GENERATED_BODY()
 public:
-    virtual void drawhud() override;
-    virtual void endplay(const EEndPlayReason::Type endplayreason) override;
-    void updateaudiofeedback(abbmatchstate* match, abbridercharacter* rider);
-    ufunction(blueprintpure, category="basketbroom|audio")
-    ubbaudiofeedback* getaudiofeedback() const { return audiofeedback; }
+    virtual void DrawHUD() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    void UpdateAudioFeedback(ABBMatchState* Match, ABBRiderCharacter* Rider);
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Audio")
+    UBBAudioFeedback* GetAudioFeedback() const { return AudioFeedback; }
 private:
-    uproperty(transient) tobjectptr<ubbaudiofeedback> audiofeedback;
+    void DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider);
+    void DrawPadGlyph(const FString& Glyph, float X, float Y, float Radius, FLinearColor Color, float Scale);
+    UPROPERTY(Transient) TObjectPtr<UBBAudioFeedback> AudioFeedback;
 };

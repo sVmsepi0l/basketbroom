@@ -1,1 +1,1 @@
-insert into dungeonentrances (dungeonname, entranceindex, xpos, ypos, zpos, zrot, beaconxpos, beaconypos, beaconzpos, dev_timestamp, transient) values ('basketbroom_dungeonmap', 0, 329400.00, -466800.00, -85380.66, 180.00, 329400.00, -466800.00, -85380.66, '2026.09.12', 1);
+INSERT INTO DungeonEntrances (DungeonName, EntranceIndex, XPos, YPos, ZPos, ZRot, BeaconXPos, BeaconYPos, BeaconZPos, DEV_TimeStamp, Transient) VALUES ('Basketbroom_DungeonMap', 0, 329400.00, -466800.00, -85380.66, 180.00, 329400.00, -466800.00, -85380.66, '2026.09.12', 1);

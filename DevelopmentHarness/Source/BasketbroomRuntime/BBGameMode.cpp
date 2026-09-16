@@ -6,65 +6,65 @@
 #include "GameFramework/PlayerController.h"
 ABBGameMode::ABBGameMode()
 {
-    defaultpawnclass = ABBRiderCharacter::StaticClass();
-    gamestateclass = ABBMatchState::StaticClass();
-    hudclass = ABBHUD::StaticClass();
-    buseseamlesstravel = true;
+    DefaultPawnClass = ABBRiderCharacter::StaticClass();
+    GameStateClass = ABBMatchState::StaticClass();
+    HUDClass = ABBHUD::StaticClass();
+    bUseSeamlessTravel = true;
 }
-void ABBGameMode::PreLogin(const fstring& options, const fstring& address, const funiquenetidrepl& uniqueid, fstring& errormessage)
+void ABBGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-    Super::PreLogin(Options, address, uniqueid, errormessage);
-    if (ErrorMessage.IsEmpty() && getnumplayers() >= 16)
-        errormessage = text("basketbroom is full: all 16 player positions are occupied.");
+    Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+    if (ErrorMessage.IsEmpty() && GetNumPlayers() >= 16)
+        ErrorMessage = TEXT("Basketbroom is full: all 16 player positions are occupied.");
 }
-void ABBGameMode::RestartPlayer(AController* newplayer)
+void ABBGameMode::RestartPlayer(AController* NewPlayer)
 {
-    if (!isvalid(newplayer)) return;
+    if (!IsValid(NewPlayer)) return;
     Super::RestartPlayer(NewPlayer);
-    if (abbmatchstate* state = getgamestate<abbmatchstate>())
-        if (abbridercharacter* rider = cast<abbridercharacter>(newplayer->getpawn()))
+    if (ABBMatchState* State = GetGameState<ABBMatchState>())
+        if (ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(NewPlayer->GetPawn()))
         {
-            state->assignhuman(rider);
-            if (isvalid(rider) && State->Riders.Contains(Rider)) trackassignedrider(rider);
+            State->AssignHuman(Rider);
+            if (IsValid(Rider) && State->Riders.Contains(Rider)) TrackAssignedRider(Rider);
         }
 }
-void ABBGameMode::TrackAssignedRider(ABBRiderCharacter* rider)
+void ABBGameMode::TrackAssignedRider(ABBRiderCharacter* Rider)
 {
-    if (!hasauthority() || !isvalid(rider) || rider->rosterindex < 0 || rider->rosterindex >= 16) return;
-    if (aplayercontroller* player = cast<aplayercontroller>(rider->getcontroller()))
-        AssignedRiders.Add(Player, fassignedrider{rider, rider->rosterindex});
+    if (!HasAuthority() || !IsValid(Rider) || Rider->RosterIndex < 0 || Rider->RosterIndex >= 16) return;
+    if (APlayerController* Player = Cast<APlayerController>(Rider->GetController()))
+        AssignedRiders.Add(Player, FAssignedRider{Rider, Rider->RosterIndex});
 }
-void ABBGameMode::Logout(AController* exiting)
+void ABBGameMode::Logout(AController* Exiting)
 {
-    if (!isvalid(exiting)) return;
-    if (abbmatchstate* state = getgamestate<abbmatchstate>())
+    if (!IsValid(Exiting)) return;
+    if (ABBMatchState* State = GetGameState<ABBMatchState>())
     {
-        abbridercharacter* rider = cast<abbridercharacter>(exiting->getpawn());
-        int32 departedslot = index_none;
-        if (const auto* assigned = AssignedRiders.Find(Exiting))
+        ABBRiderCharacter* Rider = Cast<ABBRiderCharacter>(Exiting->GetPawn());
+        int32 DepartedSlot = INDEX_NONE;
+        if (const auto* Assigned = AssignedRiders.Find(Exiting))
         {
-            departedslot = assigned->slot;
-            if (!isvalid(rider)) rider = Assigned->Rider.Get();
+            DepartedSlot = Assigned->Slot;
+            if (!IsValid(Rider)) Rider = Assigned->Rider.Get();
         }
-        if (isvalid(rider))
+        if (IsValid(Rider))
         {
-            departedslot = rider->rosterindex;
-            state->release(rider, FVector::ZeroVector);
+            DepartedSlot = Rider->RosterIndex;
+            State->Release(Rider, FVector::ZeroVector);
             State->Riders.Remove(Rider);
-            // remove it before fillroster so it cannot remain as a duplicate
-            // unpossessed actor while the replacement cpu is spawned.
-            rider->destroy();
+            // Remove it before FillRoster so it cannot remain as a duplicate
+            // unpossessed actor while the replacement CPU is spawned.
+            Rider->Destroy();
         }
-        // pawnleavinggame can have destroyed the actor before this callback.
-        // release through the trusted cached slot, never dereference that actor.
-        state->releasedepartedslot(departedslot);
+        // PawnLeavingGame can have destroyed the actor before this callback.
+        // Release through the trusted cached slot, never dereference that actor.
+        State->ReleaseDepartedSlot(DepartedSlot);
     }
     AssignedRiders.Remove(Exiting);
     Super::Logout(Exiting);
-    // logout also runs while the world destroys its local PlayerController.
-    // unreal rejects all spawns after begintearingdown; only an ongoing world
-    // needs a cpu replacement for a departed player or penalty participant.
-    const uworld* world = getworld();
-    if (world && !world->bistearingdown)
-        if (abbmatchstate* state = getgamestate<abbmatchstate>()) state->fillroster();
+    // Logout also runs while the world destroys its local PlayerController.
+    // Unreal rejects all spawns after BeginTearingDown; only an ongoing world
+    // needs a CPU replacement for a departed player or penalty participant.
+    const UWorld* World = GetWorld();
+    if (World && !World->bIsTearingDown)
+        if (ABBMatchState* State = GetGameState<ABBMatchState>()) State->FillRoster();
 }
