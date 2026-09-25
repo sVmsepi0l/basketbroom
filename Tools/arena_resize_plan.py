@@ -1,7 +1,8 @@
-"""Immutable checkpoint-to-current anisotropic arena amendment plan.
+"""Immutable checkpoint-to-current arena amendment plans for both engines.
 
-This is separate from the historical +45% amendment. Source identities are
-preserved, goal sets translate as units, and heights/sporting sizes stay fixed.
+UE5 starts at the verified September 16 shape; the native Kit still starts at
+the historical +45% checkpoint. Neither baseline may be silently recaptured.
+Source identities, heights and sporting sizes are preserved.
 """
 from pathlib import Path
 import importlib.util
@@ -9,7 +10,12 @@ import json
 import math
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = ROOT / 'SourceArt/Arena/arena_resize_baseline.json'
+BASELINE = ROOT / 'SourceArt/Arena/arena_resize_baseline_20260916.json'
+LEGACY_BASELINE = ROOT / 'SourceArt/Arena/arena_resize_baseline.json'
+BASELINES = {
+    'standalone': (BASELINE, '409d22e', '7b8a5fdf314faddf04d2c7a42a1dc916383850cb32b742ae27a8e75eb1b04296'),
+    'hlck': (LEGACY_BASELINE, '0375ec5', '849c2dcaed1e0c8f93f83fcd4922155a2ae1a477dd2d6a33b50281ba71d3e22a'),
+}
 
 def module(name, relative):
     spec=importlib.util.spec_from_file_location(name,ROOT/relative)
@@ -19,10 +25,21 @@ legacy=module('_bb_resize_recorder','Tools/arena_expansion_plan.py')
 dim=module('_bb_resize_dimensions','Tools/arena_dimensions.py')
 digest=legacy.digest
 
-def build_plan():
-    baseline=json.loads(BASELINE.read_text(encoding='utf-8'))
-    if baseline['source_commit']!='0375ec5' or baseline['dimensions']!=dim.dimensions(dim.LINEAR_SCALE):
-        raise ValueError('Resize baseline is not the immutable +45% checkpoint')
+def baseline_dimensions(engine='standalone'):
+    if engine not in BASELINES:raise ValueError('Unknown arena resize engine')
+    return dim.previous_dimensions() if engine=='standalone' else dim.dimensions(dim.LINEAR_SCALE)
+
+def load_baseline(engine='standalone'):
+    if engine not in BASELINES:raise ValueError('Unknown arena resize engine')
+    path,commit,sha=BASELINES[engine]
+    if digest(path)!=sha:raise ValueError('Immutable resize baseline hash differs: '+engine)
+    baseline=json.loads(path.read_text(encoding='utf-8'))
+    if baseline['source_commit']!=commit or baseline['dimensions']!=baseline_dimensions(engine):
+        raise ValueError('Resize baseline is not the reviewed '+engine+' checkpoint')
+    return baseline
+
+def build_plan(engine='standalone'):
+    baseline=load_baseline(engine)
     old={r['label']:r for r in baseline['actors']};new={r['label']:r for r in legacy.source_actors()}
     if set(old)!=set(new) or len(old)!=905:raise ValueError('Resize must preserve all 905 authoring identities')
     actors=[]
@@ -37,23 +54,39 @@ def build_plan():
         now=digest(ROOT/row['source'])
         if now!=row['sha256']:
             meshes.append(dict(name=name,source=row['source'],destination='/Basketbroom/Art/Meshes/'+name,sha256_before=row['sha256'],sha256_after=now))
-    plan=dict(schema_version=2,geometry_version=dim.GEOMETRY_VERSION,baseline_sha256=digest(BASELINE),
+    before,after=baseline['dimensions'],dim.dimensions()
+    plan=dict(schema_version=2,geometry_version=dim.GEOMETRY_VERSION,engine=engine,
+      baseline_source=BASELINES[engine][0].relative_to(ROOT).as_posix(),baseline_sha256=BASELINES[engine][2],
       source_commit=baseline['source_commit'],source_builder_sha256=digest(ROOT/'Tools/build_arena.py'),
-      axis_multipliers=[2.,4./3.,1.],volume_ratio=8./3.,dimensions_before=baseline['dimensions'],dimensions_after=dim.dimensions(),
+      axis_multipliers=[after['half_x']/before['half_x'],after['half_y']/before['half_y'],1.],
+      volume_ratio=dim.enclosed_volume_cm3(after)/dim.enclosed_volume_cm3(before),dimensions_before=before,dimensions_after=after,
       actors=actors,actor_count=len(actors),changed_actor_count=sum(r['changed'] for r in actors),changed_meshes=meshes)
     return validate_plan(plan)
 
 def validate_plan(plan):
     if plan.get('schema_version')!=2 or plan.get('geometry_version')!=dim.GEOMETRY_VERSION:raise ValueError('Wrong resize revision')
+    engine=plan.get('engine')
+    baseline=load_baseline(engine)
+    if (plan.get('baseline_source')!=BASELINES[engine][0].relative_to(ROOT).as_posix() or
+        plan.get('baseline_sha256')!=BASELINES[engine][2] or plan.get('source_commit')!=baseline['source_commit']):
+        raise ValueError('Unexpected resize baseline provenance')
     before,after=plan['dimensions_before'],plan['dimensions_after']
-    if before!=dim.dimensions(dim.LINEAR_SCALE) or after!=dim.dimensions():raise ValueError('Unexpected resize dimensions')
-    if not math.isclose(after['half_x']/before['half_x'],2.) or not math.isclose(after['half_y']/before['half_y'],4./3.):raise ValueError('Wrong footprint ratio')
+    if before!=baseline['dimensions'] or after!=dim.dimensions():raise ValueError('Unexpected resize dimensions')
+    ratios=[after['half_x']/before['half_x'],after['half_y']/before['half_y'],1.]
+    if plan.get('axis_multipliers')!=ratios:raise ValueError('Wrong footprint ratios')
+    if not math.isclose(plan.get('volume_ratio',0),dim.enclosed_volume_cm3(after)/dim.enclosed_volume_cm3(before)):raise ValueError('Wrong volume ratio')
+    if engine=='standalone' and (not math.isclose(ratios[0],math.sqrt(2)) or not math.isclose(ratios[1],math.sqrt(2))):raise ValueError('Floor area must double without changing its aspect ratio')
     if any(after[k]!=before[k] for k in ('eave','apex')):raise ValueError('Height must not change')
     if not math.isclose(after['half_x']-after['goal_x'],before['half_x']-before['goal_x'],abs_tol=1e-8):raise ValueError('Goal setback must not grow')
     allowed={'SM_BB_ReboundNet','SM_BB_PyramidNet','SM_BB_PyramidRibs','SM_BB_PyramidCopper','SM_BB_PyramidCollision',
              'SM_BB_StoneDetail','SM_BB_CopperDetail','SM_BB_IronDetail','SM_BB_TealSeats','SM_BB_CopperSeats'}
     if {r['name'] for r in plan['changed_meshes']}!=allowed:raise ValueError('Resize must change exactly the reviewed ten sources')
+    originals={row['label']:row for row in baseline['actors']}
+    if len(plan['actors'])!=905 or {row['label'] for row in plan['actors']}!=set(originals):raise ValueError('Resize actor identities differ')
     for entry in plan['actors']:
+        original=originals[entry['label']]
+        if any(entry[k]!=original[k] for k in ('class','tags','mesh','folder')) or entry['old']!={k:original[k] for k in ('location','rotation','scale')}:
+            raise ValueError('Resize actor differs from immutable baseline')
         for phase in ('old','new'):
             for key in ('location','rotation','scale'):
                 if len(entry[phase][key])!=3 or any(not math.isfinite(v) for v in entry[phase][key]):raise ValueError('Invalid transform')

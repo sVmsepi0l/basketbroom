@@ -75,7 +75,7 @@ class FlightTests(ctrl.NativeControllerTests):
     def scenarios(self):
         # Give the operator time to focus the fresh embedded Play viewport.
         # The normal focus/neutral safety latch must remain active in this test.
-        yield self.wait(10)
+        yield self.wait(max(10, min(60, float(ctrl.base.ARGS.get('focus_grace_seconds', 10)))))
         self.original_inversion = (bool(prop(self.pawn, 'bInvertControllerAltitude')), bool(prop(self.pawn, 'bInvertControllerAimY')))
         self.pawn.set_controller_inversion(False, False)
         self.original_dilation = float(unreal.GameplayStatics.get_global_time_dilation(self.world))

@@ -6,7 +6,7 @@ No UE5 package copying, installed asset edits, travel or registration occurs.
 """
 from pathlib import Path
 from datetime import datetime,timezone
-import importlib.util,json,shutil,traceback,uuid
+import hashlib,importlib.util,json,shutil,traceback,uuid
 
 ROOT=Path(__file__).resolve().parents[1]
 def module(name,file):
@@ -15,6 +15,30 @@ base=module('_bb_native_resize_preservation','Tools/stage_hlck_arena_expansion.p
 planner=module('_bb_native_resize_plan','Tools/arena_resize_plan.py')
 CONTENT=base.CONTENT;MAPS=base.MAPS
 SUCCESS=ROOT/'.local/hlck/arena-resize-success.json'
+NEWLINE_PROVENANCE=ROOT/'SourceArt/Arena/arena_expansion_source_hashes.json'
+NEWLINE_PROVENANCE_SHA256='52d7e4f138ebdd0ab3185a248a86804b62fe58627fa5d814e3faba5286abbbc7'
+
+def source_hashes_for_phase(plan,baseline,name,phase):
+ """Only unchanged original sources may retain their proved LF import hash.
+
+ The prior native import used LF for eight meshes whose captured checkout is
+ CRLF. Both byte forms were recorded before the first expansion. Changed
+ meshes always require their exact revision hash and never use this exception.
+ """
+ if phase not in ('old','new'):raise ValueError('Unknown native source phase')
+ changed={entry['name']:entry for entry in plan['changed_meshes']}
+ if name in changed:return {changed[name]['sha256_before' if phase=='old' else 'sha256_after']}
+ source=baseline['meshes'][name]
+ if base.digest(NEWLINE_PROVENANCE)!=NEWLINE_PROVENANCE_SHA256:raise RuntimeError('Original newline provenance changed')
+ historical=json.loads(NEWLINE_PROVENANCE.read_text(encoding='utf-8'))['meshes'].get(name,{})
+ if historical.get('source')!=source['source'] or historical.get('baseline_sha256')!=source['sha256']:
+  raise RuntimeError('Unchanged source differs from original newline provenance: '+name)
+ data=(ROOT/source['source']).read_bytes()
+ if hashlib.sha256(data).hexdigest()!=source['sha256']:raise RuntimeError('Unchanged source bytes changed: '+name)
+ lf=data.replace(b'\r\n',b'\n')
+ variants={'lf':hashlib.sha256(lf).hexdigest(),'crlf':hashlib.sha256(lf.replace(b'\n',b'\r\n')).hexdigest()}
+ if historical.get('text_variants')!=variants:raise RuntimeError('Original LF/CRLF byte proof differs: '+name)
+ return set(variants.values())
 
 def validate_sources(plan):
  importer=module('_bb_resize_source_import','Mod/Tools/import_sources.py');manifest=importer.validate_sources()
@@ -28,12 +52,12 @@ def validate_sources(plan):
 def run(dry_run=True):
  stamp=datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-%f')+'-'+uuid.uuid4().hex[:8]
  directory=ROOT/'.local/hlck/arena-resize-stage'/stamp;receipt=directory/'result.json'
- report={'status':'preflight','dry_run':dry_run,'amendment_kind':'arena_length2_width4over3','maps':[],'gameplay_tested':False,'registration_invoked':False,'travel_invoked':False,'runtime_python':False,'installed_assets_modified':False}
+ report={'status':'preflight','dry_run':dry_run,'amendment_kind':'arena_floor_area2_20260925','maps':[],'gameplay_tested':False,'registration_invoked':False,'travel_invoked':False,'runtime_python':False,'installed_assets_modified':False}
  original=None;mutated=False
  def save():base.write(receipt,report)
  try:
   if type(dry_run) is not bool:raise ValueError('dry_run must be boolean')
-  plan=planner.build_plan();manifest=validate_sources(plan);report.update(plan=plan,plan_sha256=base.plan_hash(plan))
+  plan=planner.build_plan('hlck');manifest=validate_sources(plan);report.update(plan=plan,plan_sha256=base.plan_hash(plan))
   import unreal
   guard=module('_bb_resize_hlck_guard','Tools/load_hlck_dungeon.py');roof=module('_bb_resize_hlck_roof','Tools/stage_hlck_pyramid_net.py')
   registrar=module('_bb_resize_hlck_registration','Tools/register_hlck_dungeon.py');dungeon=module('_bb_resize_hlck_dungeon','Tools/stage_hlck_dungeon.py')
@@ -71,17 +95,18 @@ def run(dry_run=True):
    save()
   if len(set(phases))!=1:raise RuntimeError('Mixed native resize phases; inspect previous backups')
   current_phase=phases[0]
-  baseline=json.loads(planner.BASELINE.read_text(encoding='utf-8'));changed={e['name']:e for e in plan['changed_meshes']}
+  baseline=planner.load_baseline('hlck');changed={e['name']:e for e in plan['changed_meshes']}
   slots={};report['mesh_slots_before']={};report['source_metadata_before']=[]
+  report['unchanged_source_newline_provenance_sha256']=NEWLINE_PROVENANCE_SHA256
   for row in manifest['source_imports']:
    if row['asset_type']!='StaticMesh':continue
    name=Path(row['source']).stem;mesh=unreal.EditorAssetLibrary.load_asset(row['destination'])
    if not isinstance(mesh,unreal.StaticMesh):raise RuntimeError('Expected existing original mesh')
    importer._owned(unreal,mesh)
-   expected=(changed[name]['sha256_after'] if current_phase=='new' and name in changed else baseline['meshes'][name]['sha256'])
+   expected=source_hashes_for_phase(plan,baseline,name,current_phase)
    actual=unreal.EditorAssetLibrary.get_metadata_tag(mesh,importer.META_HASH)
-   if actual!=expected or unreal.EditorAssetLibrary.get_metadata_tag(mesh,importer.META_REVISION)!=importer.REVISION:raise RuntimeError('Native original-source metadata differs: '+name)
-   report['source_metadata_before'].append({'asset':row['destination'],'source_sha256':actual})
+   if actual not in expected or unreal.EditorAssetLibrary.get_metadata_tag(mesh,importer.META_REVISION)!=importer.REVISION:raise RuntimeError('Native original-source metadata differs: '+name)
+   report['source_metadata_before'].append({'asset':row['destination'],'source_sha256':actual,'accepted_source_hashes':sorted(expected),'unchanged_source_newline_proof':name not in changed})
    if name in changed:
     slots[row['destination']]=[s.copy() for s in mesh.get_editor_property('static_materials')]
     report['mesh_slots_before'][row['destination']]=base.mesh_slots(mesh)
@@ -151,4 +176,4 @@ def run(dry_run=True):
 if __name__=='__main__':
  if 'BRIDGE_ARGS' in globals():RESULT=run(BRIDGE_ARGS.get('dry_run',True))
  else:
-  plan=planner.build_plan();validate_sources(plan);print(json.dumps({'status':'sources_valid','unreal_called':False,'changed_meshes':len(plan['changed_meshes'])}))
+  plan=planner.build_plan('hlck');validate_sources(plan);print(json.dumps({'status':'sources_valid','unreal_called':False,'changed_meshes':len(plan['changed_meshes'])}))

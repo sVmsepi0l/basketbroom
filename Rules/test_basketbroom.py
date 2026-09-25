@@ -56,16 +56,20 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(config["timing"]["quarter_ms"] * 4, 176 * 60 * 1000)
         geometry = config["geometry_ft"]
         scale = 1.45 ** (1.0 / 3.0)
-        self.assertAlmostEqual(geometry["length"], 420 * scale)
-        self.assertAlmostEqual(geometry["width"], 210 * scale)
+        # September 25 doubles the September 16 floor area at fixed height.
+        length_scale = 2 * 2 ** 0.5
+        width_scale = (4 / 3) * 2 ** 0.5
+        enclosure_length = (420 + 900 / 30.48) * scale * length_scale
+        self.assertAlmostEqual(geometry["length"], enclosure_length - 900 / 30.48 * scale)
+        self.assertAlmostEqual(geometry["width"], 210 * scale * width_scale)
         self.assertAlmostEqual(geometry["roof"], 138 * scale)
         self.assertAlmostEqual(geometry["net_apex"], 207 * scale)
-        self.assertAlmostEqual(geometry["enclosure_length"], (420 + 900 / 30.48) * scale)
+        self.assertAlmostEqual(geometry["enclosure_length"], enclosure_length)
         self.assertEqual(geometry["large_hoop_diameter"], 22)
         self.assertEqual(geometry["small_hoop_diameter"], 13)
         self.assertEqual(geometry["restart_goal_offset"], 22)
         self.assertAlmostEqual(config["arena_volume"]["volume_m3"] /
-                               config["arena_volume"]["baseline_volume_m3"], 1.45)
+                               config["arena_volume"]["baseline_volume_m3"], 1.45 * (8 / 3) * 2)
 
     def test_seven_balls_open_with_delayed_snitch(self):
         match = Match()

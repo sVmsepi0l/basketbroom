@@ -3,16 +3,16 @@
 // GoalPlaneX is distinct from the end-net HalfLength.
 namespace BBArena
 {
-inline constexpr double VolumeScale = 3.8666666666666663;
+inline constexpr double VolumeScale = 7.7333333333333334;
 inline constexpr double LinearScale = 1.1318511959629507;
-inline constexpr double LengthScale = 2.2637023919259014;
-inline constexpr double WidthScale = 1.5091349279506008;
-inline constexpr double LengthMultiplier = 2;
-inline constexpr double WidthMultiplier = 1.3333333333333333;
+inline constexpr double LengthScale = 3.2013586238380256;
+inline constexpr double WidthScale = 2.1342390825586834;
+inline constexpr double LengthMultiplier = 2.8284271247461903;
+inline constexpr double WidthMultiplier = 1.8856180831641267;
 inline constexpr double BehindGoalBay = 509.3330381833278;
-inline constexpr double GoalPlaneX = 14998.839308422637;
-inline constexpr double HalfLength = 15508.172346605965;
-inline constexpr double HalfWidth = 4829.8354234131029;
+inline constexpr double GoalPlaneX = 21422.534622006217;
+inline constexpr double HalfLength = 21931.867660189546;
+inline constexpr double HalfWidth = 6830.4187598208109;
 inline constexpr double EaveHeight = 4760.8377745072012;
 inline constexpr double ApexHeight = 7141.2566617608027;
 inline constexpr double LargeHoopHeight = 2103.1199999999999;
