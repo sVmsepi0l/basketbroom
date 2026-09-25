@@ -35,7 +35,8 @@ def check():
         session = getattr(unreal, '_bb_human_cloud_build', None)
         if session is not None and not session.finished:
             raise RuntimeError('Preserving an active human character cloud session')
-        if not path or not path.startswith(('/Temp/Untitled', '/Game/BasketbroomLab/Maps/Review_')):
+        if not path or not (path.startswith(('/Temp/Untitled', '/Game/BasketbroomLab/Maps/Review_'))
+                            or path == '/Game/BasketbroomLab/Maps/temp_20260925'):
             raise RuntimeError('Expected the clean transient character lab world')
     elif path not in allowed:
         raise RuntimeError('Expected an already-open owned arena map')

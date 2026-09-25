@@ -108,13 +108,31 @@ and sampled skin weights; new boots receive nearest-surface source weights.
 not edit original assemblies or automatically activate the outfit in gameplay.
 R1 was rendered and rejected: unbounded wrist planes removed the knees, material
 IDs followed irregular triangle edges, and the boots were too bulky. The generator
-now defaults to new `Flightwear/<name>/r2` packages, retaining all R1 assets. R2
+staged new `Flightwear/<name>/r2` packages, retaining all R1 assets. R2
 bounds cuff operations to the arm region, asserts continuous trouser coverage,
 projects opening rims to their hem planes, uses continuous pre-skinned panel masks,
 and measures narrower boot cross sections in the actual foot orientation. Offline
 checks preserve every central-leg triangle in 40–90 cm and enclose every sampled
-source foot/lower-leg vertex within the revised boot shell. R2 still requires
-actual render/deformation review and currently has one LOD.
+source foot/lower-leg vertex within the revised boot shell. A's R2 renders at
+`renders/1790339762994606600` confirmed full trousers and slimmer boots. Jagged
+dark marks on the hip and forearm disappeared in the same-pose no-shadow render
+`renders/1790340166724729300/side.png`: these were cast shadows, not cloth cracks
+or material bands. The normal preview keeps shadows enabled.
+
+R2's wide neckline remains a geometry limitation: the source Body's 92-vertex
+chest rim dips from Z144 to Z134.6 cm, leaving part of genuine Face's lower chest
+exposed. The generator now defaults to separate `Flightwear/<name>/r3` packages.
+R3 keeps the lower-body/arm fit, restores 20 top-of-Body triangles, and fits a low
+chest/standing-collar band from the same owned transient Face. It validates matching
+chest rims, overlaps the jacket, and transfers Body weights to the new cloth band;
+the actual Face, its weights and skin material remain untouched. Unexpected rim
+geometry or retained facial skeleton bones aborts before saving. Offline validation
+used actual Body geometry and a synthetic neck-band fixture. Both actual R3 builds
+and three-view lab captures now pass authoring review: A mint at
+`renders/1790341228556516500`, B copper at `renders/1790341304263183900`.
+The neckline and full trousers remain covered in the evaluated flight pose.
+These are one-LOD human outfit
+baselines, not final detailed wardrobe assets.
 `api` reports installed reflected method contracts without fitting or saving.
 
 `Tools/stage_human_cosmetics.py` creates a new cosmetic Blueprint by duplicating
@@ -122,9 +140,13 @@ the owned assembly and editing only the duplicate's clothing template. It replac
 the complete override-material array, compiles, then spawns a transient actor to
 check that construction retained the new mesh and its Body leader. Bone names,
 sampled follower transforms and all other Body/Face/groom/LODSync contracts are
-checked before saving. It currently stages only the corrected R2 revision under
-`Cosmetics/<name>/r2`, refusing the visually rejected R1. Its receipt supplies exact runtime garment bindings and
+checked before saving. It defaults to R3 under `Cosmetics/<name>/r3`, also allows
+explicit R2, and refuses the visually rejected R1. Its receipt supplies exact runtime garment bindings and
 dependency roots. `inventory` reads the existing cosmetic output without editing it.
+`recover` validates an already saved owned output against the same metadata,
+template and live actor contracts, then writes its missing receipt without editing
+or resaving the Blueprint. UE FNames compare case-insensitively; component
+transforms and LODSync use numeric/enum values rather than wrapper addresses.
 
 `create_new_skeletal_mesh_asset_from_mesh` calls
 `MergeAllBonesToBoneTree`, so it must receive a dedicated owned skeleton duplicate
@@ -164,3 +186,20 @@ Appearance identity remains independent of team; team colors apply only to garme
 bindings. The source implementation compiled successfully; configured-asset runtime
 checks remain pending.
 the offline planner neither configures nor activates it.
+
+The combined R3 inventory on September 25 contains 380 saved runtime packages
+(508,473,539 bytes), with no missing files or unresolved registry queries. These
+were exclusively copied to `DevelopmentHarness/Content/BasketbroomHumans` with
+SHA-256 verification; source assets and existing target files were preserved.
+The largest package is 51,187,816 bytes, below GitHub's individual file limit.
+Saved asset paths resolve ten required runtime/content plugins and AnimationData
+for Editor only. The native editor build with those plugins passed.
+
+The saved mesh inventory exposed no AssetGuideline records. Renderer settings
+therefore follow the installed MetaHuman SDK's `MetaHumanValidationTests.cpp`
+(lines 1609–1653): 16-bit bone indices, unlimited influences, compiled skin cache,
+vertex-color tangent blending 2 and experimental skeletal chunking 1. This does
+not change the project's RHI or assume a ray-tracing requirement.
+
+Main-project loading succeeds. Roster staging and gameplay acceptance are still
+in progress; the accepted desktop package remains the tested Quinn/trails build.

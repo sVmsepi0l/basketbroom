@@ -46,7 +46,7 @@ def srgb(value):
     return [v/12.92 if v <= .04045 else ((v+.055)/1.055)**2.4 for v in values]
 
 
-def fit_cloth(positions, triangles, normals, bones):
+def fit_cloth(positions, triangles, normals, bones, neck_band=False):
     """Keep torso/limbs, open wrists and collar, and overlap boot tops.
 
     All existing UVs and skin weights remain attached to their original vertex
@@ -61,6 +61,10 @@ def fit_cloth(positions, triangles, normals, bones):
     boot_top = top*.263
     waist = bones['pelvis'][2]+8.0*scale
     collar = min(top-.4*scale, bones['neck_01'][2]+1.8*scale)
+    if neck_band:
+        # Body ends at a broad chest opening, not at the neck. R3 covers the
+        # remaining chest with a separately fitted low band from owned Face.
+        collar = max(top+2*scale,min(top+5*scale,bones['neck_01'][2]+3*scale))
     wrists = [(bones['hand_'+side], unit(subtract(bones['hand_'+side],bones['lowerarm_'+side]))) for side in ('l','r')]
     arm_start = min(abs(center[0]) for center,_ in wrists)*.62
 
@@ -77,7 +81,7 @@ def fit_cloth(positions, triangles, normals, bones):
         # Wrist planes slope downward in the source rest pose. Applying them
         # globally also amputates the knees: constrain EVERY cuff operation to
         # the arm region, including geometry, allowance and shader masks.
-        return p[2] >= boot_top-1.8*scale and p[2] <= collar and (not is_arm(p) or cuff_distance(p) <= -1.2*scale)
+        return p[2] >= boot_top-1.8*scale and (neck_band or p[2] <= collar) and (not is_arm(p) or cuff_distance(p) <= -1.2*scale)
 
     # Use triangle centroids at the garment openings so the copied surface
     # has a continuous boundary; there is no random decimation or remeshing.
@@ -124,7 +128,7 @@ def fit_cloth(positions, triangles, normals, bones):
     for i in boundary:
         p=positions[i]
         if p[2]<boot_top+scale: fitted[i][2]=boot_top-1.8*scale
-        elif p[2]>collar-2*scale: fitted[i][2]=collar
+        elif not neck_band and p[2]>collar-2*scale: fitted[i][2]=collar
         elif is_arm(p):
             center,direction=min(wrists,key=lambda row:dot(subtract(p,row[0]),subtract(p,row[0])))
             distance=dot(subtract(fitted[i],center),direction)+1.2*scale
@@ -134,10 +138,58 @@ def fit_cloth(positions, triangles, normals, bones):
     material_ids = [0]*len(triangles)
     return fitted, remove, material_ids, vertices, {
         'reference_height_cm':top,'scale':scale,'boot_top_cm':boot_top,'waist_cm':waist,'collar_cm':collar,
+        'separate_neck_band':neck_band,
         'arm_start_cm':arm_start,'wrists':[{'center':center,'direction':direction} for center,direction in wrists],
         'trouser_band_triangles_preserved':len(trouser_band),'opening_boundary_vertices':len(boundary),
         'cloth_triangles':len(retained),'cloth_vertices':len(vertices),
         'cloth_material_triangles':{SLOTS[k]:v for k,v in Counter(material_ids[i] for i in retained).items()}}
+
+
+def fit_neck_band(positions, triangles, normals, body_positions, body_triangles, fitted_body, fit):
+    """Cover the body's open chest rim using only the owned Face's low neck.
+
+    The exported Face and skin are untouched. This copy becomes opaque cloth,
+    receives Body weights, and overlaps the garment rim. Abort if the two owned
+    fitting sources do not actually share the expected chest boundary.
+    """
+    scale,top=fit['scale'],fit['collar_cm']
+    body_edges=Counter(tuple(sorted((a,b))) for tri in body_triangles for a,b in zip(tri,tri[1:]+tri[:1]))
+    rim=sorted({v for edge,count in body_edges.items() if count==1 for v in edge})
+    if not 40<=len(rim)<=250: raise RuntimeError('Unexpected source Body chest rim')
+    bottom=min(body_positions[v][2] for v in rim)
+    if any(body_positions[v][2]<fit['reference_height_cm']-15*scale for v in rim):
+        raise RuntimeError('Source Body has unexpected non-chest openings')
+    centroids=[[sum(positions[v][a] for v in tri)/3 for a in range(3)] for tri in triangles]
+    retained=[i for i,p in enumerate(centroids) if bottom-.5*scale<=p[2]<=top and abs(p[0])<23*scale]
+    if not 100<len(retained)<12000 or len(retained)>len(triangles)*.4:
+        raise RuntimeError('Unexpected owned Face chest/neck coverage: '+str(len(retained)))
+    kept=set(retained); removed=[i for i in range(len(triangles)) if i not in kept]
+    vertices=sorted({v for i in retained for v in triangles[i]})
+    edges=Counter(tuple(sorted((a,b))) for i in retained for a,b in zip(triangles[i],triangles[i][1:]+triangles[i][:1]))
+    boundary={v for edge,count in edges.items() if count==1 for v in edge}
+    fitted=[list(p) for p in positions]
+    seam={}
+    for v in vertices:
+        p=positions[v]
+        fitted[v]=[p[a]+normals[v][a]*1.65*scale for a in range(3)]
+        if v not in boundary: continue
+        nearest=min(rim,key=lambda b:dot(subtract(p,body_positions[b]),subtract(p,body_positions[b])))
+        distance=math.sqrt(dot(subtract(p,body_positions[nearest]),subtract(p,body_positions[nearest])))
+        if distance<.25*scale:
+            seam[v]=nearest
+            # Overlap by 8 mm into the existing jacket so independently
+            # skinned seam vertices cannot expose a fine chest crack.
+            fitted[v]=list(fitted_body[nearest]); fitted[v][2]-=.8*scale
+        elif p[2]>top-2*scale:
+            fitted[v][2]=top
+        else:
+            raise RuntimeError('Neck band has an unmatched low boundary at '+str(p))
+    matched={v for v in seam.values()}
+    if len(matched)<len(rim)*.9:
+        raise RuntimeError('Owned Face/Body chest rims do not match: '+str((len(matched),len(rim))))
+    return fitted,removed,vertices,{'source_chest_rim_vertices':len(rim),'matched_chest_rim_vertices':len(matched),
+        'triangles':len(retained),'vertices':len(vertices),'collar_top_cm':top,'lower_overlap_cm':.8*scale,
+        'body_weight_transfer':'closest_source_body_surface','original_face_modified':False}
 
 
 def boot_buffers(positions, fit):
@@ -307,7 +359,7 @@ def make_material(ue, directory, name, color, roughness, metallic=0., fit=None, 
     return mat
 
 
-def run(operation='inspect', name='BB_AthleteA', revision='r2'):
+def run(operation='inspect', name='BB_AthleteA', revision='r3'):
     import unreal as ue
     if operation not in ('inspect','build','api'): raise ValueError('Choose inspect, build, or api')
     character,subsystem=builder.validate(ue,name)
@@ -317,7 +369,7 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
     if active and not active.finished: raise RuntimeError('Wait for retained cloud work')
     if subsystem.is_object_added_for_editing(character): raise RuntimeError('Close the owned design window first')
     lib=ue.EditorAssetLibrary
-    if revision!='r2': raise ValueError('This generator authors only revision r2; r1 remains preserved')
+    if revision not in ('r2','r3'): raise ValueError('Choose revision r2 or r3; existing outputs remain preserved')
     directory=DESTINATION+'/'+name+'/'+revision
     if lib.list_assets(directory,recursive=True,include_folder=False):
         raise RuntimeError('Preserve existing flightwear; staging only creates a new owned output')
@@ -354,7 +406,7 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
         normals=[xyz(v) for v in ue.GeometryScript_List.convert_vector_list_to_array(normal_list)]
         _,bone_info=ue.GeometryScript_BoneWeights.get_all_bones_info(source)
         bones={str(b.name):xyz(b.world_transform.translation) for b in bone_info}
-        fitted,remove,material_ids,retained,fit=fit_cloth(positions,triangles,normals,bones)
+        fitted,remove,material_ids,retained,fit=fit_cloth(positions,triangles,normals,bones,neck_band=revision=='r3')
         report.update(source_mesh=info['mesh'],source_triangles=len(triangles),source_uv_sets=info['uv_sets'],fit=fit,
                       source_skeleton=source_skeleton.get_path_name())
         samples=retained[::max(1,len(retained)//64)]
@@ -366,6 +418,28 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
         _,deleted=edits.delete_triangles_from_mesh(cloth,lists.convert_array_to_index_list(remove))
         if deleted!=len(remove): raise RuntimeError('Cloth triangle crop was incomplete')
         if any(weight_sample(ue,cloth,i)!=weights_before[i] for i in samples): raise RuntimeError('Copied cloth weights changed')
+        neck_triangles=0
+        if revision=='r3':
+            face=next(c for c in preview.get_components_by_class(ue.SkeletalMeshComponent) if c.get_name()=='Face')
+            neck,neck_info=probe.copy_geometry(ue,face.get_skeletal_mesh_asset())
+            _,neck_normal_list,valid,gaps=ue.GeometryScript_Normals.get_mesh_per_vertex_normals(neck,True)
+            if not valid or gaps or neck_info['uv_sets']!=info['uv_sets']:
+                raise RuntimeError('Owned Face fitting copy needs valid dense normals and matching UV channels')
+            neck_normals=[xyz(v) for v in lists.convert_vector_list_to_array(neck_normal_list)]
+            neck_fitted,neck_remove,neck_vertices,neck_fit=fit_neck_band(neck_info['positions'],neck_info['triangles'],
+                neck_normals,positions,triangles,fitted,fit)
+            edits.set_all_mesh_vertex_positions(neck,lists.convert_array_to_vector_list([ue.Vector(*p) for p in neck_fitted]))
+            ue.GeometryScript_Materials.set_all_triangle_material_i_ds(neck,lists.convert_array_to_index_list([0]*len(neck_info['triangles'])))
+            _,deleted=edits.delete_triangles_from_mesh(neck,lists.convert_array_to_index_list(neck_remove))
+            if deleted!=len(neck_remove): raise RuntimeError('Neck band crop was incomplete')
+            ue.GeometryScript_BoneWeights.transfer_bone_weights_from_mesh(source,neck)
+            for i in neck_vertices: weight_sample(ue,neck,i)
+            _,neck_bones=ue.GeometryScript_BoneWeights.get_all_bones_info(neck)
+            if [str(b.name) for b in neck_bones]!=[str(b.name) for b in bone_info]:
+                raise RuntimeError('Neck band retained facial skeleton bones after Body weight transfer')
+            edits.append_mesh(cloth,neck,ue.Transform())
+            neck_triangles=neck_fit['triangles']
+            report['neck_band']=dict(neck_fit,source_mesh=neck_info['mesh'])
         verts,tris,uvs,mids=boot_buffers(positions,fit)
         boots=ue.DynamicMesh(); buffers=ue.GeometryScriptSimpleMeshBuffers()
         buffers.vertices=[ue.Vector(*p) for p in verts]
@@ -385,7 +459,7 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
         if any(weight_sample(ue,cloth,i)!=weights_before[i] for i in samples): raise RuntimeError('Cloth skin weights changed during append')
         report.update(boot_vertices=len(verts),boot_triangles=len(tris),source_weight_samples_preserved=len(samples),
                       fitted_vertices=ue.GeometryScript_MeshQueries.get_vertex_count(cloth),
-                      fitted_triangles=fit['cloth_triangles']+len(tris),status='fitted_transient_pending_render')
+                      fitted_triangles=fit['cloth_triangles']+neck_triangles+len(tris),status='fitted_transient_pending_render')
         # Close the exact edit registration before asset creation. Removing the
         # subsystem's preview does not touch the separately copied DynamicMeshes.
         subsystem.remove_object_to_edit(character); registered=False
@@ -431,7 +505,7 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
                       material_slots=list(SLOTS),team_materials={team:[m.get_path_name() for m in mats] for team,mats in materials.items()},
                       saved_assets=[a.get_path_name() for a in authored],
                       preview_binding={'component':'SkeletalMesh','leader':'Body','replace_mesh':mesh.get_path_name()},
-                      scope='R2 full-length trousers, bounded cuffs, continuous pre-skinned cloth tailoring and slimmer original boot shells. One LOD; visual and deformation review required.')
+                      scope=revision.upper()+' full-length flightwear with original boot shells'+(' and a fitted standing collar.' if revision=='r3' else '.')+' One LOD; visual and deformation review required.')
         design.write(design.LAB/('flightwear-'+name+'-'+revision+'.json'),report)
         design.write(design.LAB/('flightwear-'+name+'.json'),report)
     except Exception:
@@ -452,4 +526,4 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
 
 if __name__=='__main__':
     args=globals().get('BRIDGE_ARGS',{})
-    RESULT=run(args.get('operation','inspect'),args.get('character','BB_AthleteA'),args.get('revision','r2'))
+    RESULT=run(args.get('operation','inspect'),args.get('character','BB_AthleteA'),args.get('revision','r3'))

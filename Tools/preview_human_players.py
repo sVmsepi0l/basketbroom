@@ -15,7 +15,7 @@ base.REPORT = ROOT/'.local/CharacterLab/preview.json'
 
 
 class Preview(base.Preview):
-    def begin(self,name,team,flightwear=False):
+    def begin(self,name,team,flightwear=False,shadows=True):
         project = Path(ue.Paths.convert_relative_path_to_full(ue.Paths.get_project_file_path())).resolve()
         if project != (ROOT/'.local/CharacterLab/BasketbroomCharacterLab.uproject').resolve():
             raise RuntimeError('Render only in the isolated character lab')
@@ -30,13 +30,16 @@ class Preview(base.Preview):
         self.selection = list(self.actor_system.get_selected_level_actors())
         self.directory = ROOT/'.local/CharacterLab/renders'/str(time.time_ns())
         self.directory.mkdir(parents=True)
-        self.data.update(character=name,team=team,flightwear=flightwear,report=str(base.REPORT),fixture='Assembled human with fitted flight loop; transient CharacterLab render')
+        self.data.update(character=name,team=team,flightwear=flightwear,actor_shadows=shadows,report=str(base.REPORT),fixture='Assembled human with fitted flight loop; transient CharacterLab render')
         library = ue.EditorAssetLibrary
         blueprint = library.load_asset('/Game/BasketbroomHumans/Assembled/'+name+'/BP_'+name)
         if library.get_metadata_tag(blueprint,'BB.Generator') != 'Basketbroom.HumanPlayerAssembly.v1':
             raise RuntimeError('Expected owned assembled character')
         actor = self.spawn(blueprint.generated_class(),(0,0,1400))
         components = actor.get_components_by_class(ue.SkeletalMeshComponent)
+        if not shadows:
+            for primitive in actor.get_components_by_class(ue.PrimitiveComponent):
+                primitive.set_cast_shadow(False)
         body = next(c for c in components if c.get_name() == 'Body')
         animation = library.load_asset('/Game/BasketbroomHumans/Flight/A_BB_SeatedFlight_'+name)
         if animation.get_editor_property('skeleton') != body.get_skeletal_mesh_asset().get_editor_property('skeleton'):
@@ -79,7 +82,7 @@ class Preview(base.Preview):
         if not 1395 < self.data['pelvis_world_z'] < 1440 or self.data['foot_world_z'] > self.data['pelvis_world_z']-25:
             raise RuntimeError('Flight pose did not evaluate')
         self.human_components = components
-        for location,strength in (((100,-180,1550),4),((-80,160,1500),2)):
+        for location,strength in (((100,-180,1550),20),((-80,160,1500),10)):
             light = self.spawn(ue.PointLight,location)
             component = light.get_component_by_class(ue.PointLightComponent)
             component.set_intensity(strength)
@@ -123,7 +126,7 @@ def run(args):
     if prior and prior.data['status']=='running': raise RuntimeError('A human render is already running')
     preview = Preview()
     setattr(ue,KEY,preview)
-    try: preview.begin(args.get('character','BB_AthleteA'),args.get('team','Teal'),bool(args.get('flightwear',False)))
+    try: preview.begin(args.get('character','BB_AthleteA'),args.get('team','Teal'),bool(args.get('flightwear',False)),bool(args.get('shadows',True)))
     except Exception: preview.finish('error',traceback.format_exc())
     return preview.data
 

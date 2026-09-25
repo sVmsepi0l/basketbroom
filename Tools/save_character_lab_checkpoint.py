@@ -19,9 +19,10 @@ def run():
     if saving.get_dirty_content_packages():
         raise RuntimeError('Preserve dirty character assets separately first')
     world = ue.get_editor_subsystem(ue.UnrealEditorSubsystem).get_editor_world()
-    if not world or not world.get_path_name().startswith('/Temp/Untitled'):
-        raise RuntimeError('Expected the transient lab review world')
-    destination = '/Game/BasketbroomLab/Maps/Review_' + datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+    if not world or not world.get_path_name().startswith(('/Temp/Untitled','/Game/BasketbroomLab/Maps/Review_')):
+        raise RuntimeError('Expected an owned lab review world')
+    destination = (world.get_path_name().split('.')[0] if world.get_path_name().startswith('/Game/BasketbroomLab/Maps/Review_')
+                   else '/Game/BasketbroomLab/Maps/Review_' + datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S'))
     if not saving.save_map(world, destination):
         raise RuntimeError('Could not save the lab review world')
     return {'status':'saved', 'map':destination, 'playable_project_changed':False}

@@ -2,7 +2,8 @@
 
 CharacterLab only. inspect validates inputs/templates; build duplicates the
 assembly, changes the duplicate's clothing template, compiles and validates one
-transient instance before saving. inventory only reads an existing owned output.
+transient instance before saving. inventory only reads an existing owned output;
+recover revalidates an already saved exact output and writes its missing receipt.
 No original Blueprint, body, face, hair, skeleton, or main-game asset is edited.
 """
 from datetime import datetime, timezone
@@ -23,16 +24,48 @@ DESTINATION='/Game/BasketbroomHumans/Cosmetics'
 def template_components(ue, blueprint):
     subsystem=ue.get_engine_subsystem(ue.SubobjectDataSubsystem)
     library=ue.SubobjectDataBlueprintFunctionLibrary
-    result={}
+    required=('Body','Face','SkeletalMesh','LODSync')
+    candidates={name:{} for name in required}
     for handle in subsystem.k2_gather_subobject_data_for_blueprint(blueprint):
         data=library.get_data(handle)
-        obj=library.get_object_for_blueprint(data,blueprint)
-        if not isinstance(obj,ue.ActorComponent): continue
         name=str(library.get_variable_name(data))
-        if name in result: raise RuntimeError('Ambiguous template component '+name)
-        result[name]=obj
-    if any(name not in result for name in ('Body','Face','SkeletalMesh','LODSync')):
-        raise RuntimeError('Expected assembled Body, Face, clothing and LODSync templates')
+        # GatherSubobjectData includes native components and the full inherited
+        # SCS hierarchy. Variable names such as Fuzz are not a unique key over
+        # that entire tree. Only resolve our four targets; actor_contract still
+        # compares every spawned groom, attachment and other component.
+        if name not in candidates: continue
+        obj=library.get_object_for_blueprint(data,blueprint)
+        if not isinstance(obj,ue.ActorComponent):
+            raise RuntimeError('Expected an ActorComponent template for '+name)
+        # Multiple handles may resolve to the same UObject. Distinct target
+        # objects with the same variable name remain an error, never first-win.
+        candidates[name][obj.get_path_name()]=obj
+    result={}
+    for name,objects in candidates.items():
+        if len(objects)!=1:
+            raise RuntimeError('Expected one template target '+name+'; found '+str(sorted(objects)))
+        result[name]=next(iter(objects.values()))
+    return result
+
+
+def transform_values(component):
+    # Unreal Struct repr includes allocation addresses, so two otherwise
+    # identical transient actors must be compared using numeric values.
+    fields={'relative_location':('x','y','z'),'relative_rotation':('pitch','yaw','roll'),
+            'relative_scale3d':('x','y','z')}
+    return {name:{axis:float(getattr(component.get_editor_property(name),axis)) for axis in axes}
+            for name,axes in fields.items()}
+
+
+def lod_values(component):
+    # LODSyncComponent.h exposes FComponentSync{Name,SyncOption} and
+    # FLODMappingData.Mapping. Preserve the driver-priority array order while
+    # comparing the mapping by key; its transient InverseMapping is derived.
+    result={p:int(component.get_editor_property(p)) for p in ('num_lods','forced_lod','min_lod')}
+    result['components_to_sync']=[{'name':str(row.name),'sync_option':int(row.sync_option.value)}
+                                  for row in component.get_editor_property('components_to_sync')]
+    result['custom_lod_mapping']={str(name):[int(lod) for lod in row.mapping]
+                                 for name,row in component.get_editor_property('custom_lod_mapping').items()}
     return result
 
 
@@ -61,7 +94,7 @@ def actor_contract(ue, blueprint, animation=None):
             if isinstance(component,ue.SceneComponent):
                 parent=component.get_attach_parent()
                 row.update(parent=parent.get_name() if parent else None,
-                    transform={p:str(component.get_editor_property(p)) for p in ('relative_location','relative_rotation','relative_scale3d')})
+                    transform=transform_values(component))
             if isinstance(component,ue.MeshComponent):
                 row.update(material_slots=[str(n) for n in component.get_material_slot_names()],
                            materials=[inventory.path(component.get_material(i)) for i in range(component.get_num_materials())])
@@ -76,12 +109,13 @@ def actor_contract(ue, blueprint, animation=None):
             if 'Groom' in component.get_class().get_name():
                 row['groom']={p:inventory.prop(component,p) for p in ('groom_asset','binding_asset','forced_lod','use_cards')}
             if name=='LODSync':
-                row['lod_sync']={p:str(component.get_editor_property(p)) for p in
-                    ('num_lods','forced_lod','min_lod','components_to_sync','custom_lod_mapping')}
+                row['lod_sync']=lod_values(component)
             rows[name]=row
         if rows['SkeletalMesh']['leader']!='Body': raise RuntimeError('Clothing construction did not establish the Body leader')
-        body_bones=set(rows['Body']['bones'])
-        missing=sorted(set(rows['SkeletalMesh']['bones'])-body_bones)
+        # FName lookup is case-insensitive: the stock garment calls its root
+        # Root while the genuine Body calls the same bone root.
+        body_bones={name.casefold() for name in rows['Body']['bones']}
+        missing=sorted(name for name in rows['SkeletalMesh']['bones'] if name.casefold() not in body_bones)
         if missing: raise RuntimeError('Clothing contains bones absent from Body: '+str(missing))
         # Names, rather than Skeleton object identity, bind a leader/follower.
         # The new outfit intentionally owns a separate Skeleton asset.
@@ -97,10 +131,10 @@ def actor_contract(ue, blueprint, animation=None):
         if actor is not None and not actors.destroy_actor(actor): raise RuntimeError('Could not destroy transient cosmetic validation actor')
 
 
-def run(operation='inspect', name='BB_AthleteA', revision='r2'):
+def run(operation='inspect', name='BB_AthleteA', revision='r3'):
     import unreal as ue
-    if operation not in ('inspect','build','inventory'): raise ValueError('Choose inspect, build, or inventory')
-    if revision!='r2': raise ValueError('Only the corrected r2 outfit may be staged; preserve rejected r1')
+    if operation not in ('inspect','build','inventory','recover'): raise ValueError('Choose inspect, build, inventory, or recover')
+    if revision not in ('r2','r3'): raise ValueError('Choose r2 or r3; preserve rejected r1')
     character,_=builder.validate(ue,name)
     builder.require_clean(ue)
     lib=ue.EditorAssetLibrary
@@ -118,7 +152,9 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
                 'dependencies':inventory.dependencies(ue,destination),'actor':actor_contract(ue,existing)}
         design.write(output,report)
         return {'status':'cosmetic_inventoried','report':str(output),'local_packages':len(report['dependencies']['local_packages'])}
-    if lib.does_asset_exist(destination): raise RuntimeError('Preserve existing cosmetic output: '+destination)
+    exists=lib.does_asset_exist(destination)
+    if operation=='recover' and not exists: raise RuntimeError('Recovery requires the already saved exact cosmetic output')
+    if operation!='recover' and exists: raise RuntimeError('Preserve existing cosmetic output: '+destination)
     outfit_file=design.LAB/('flightwear-'+name+'.json')
     outfit=json.loads(outfit_file.read_text(encoding='utf-8'))
     if outfit.get('owner')!=FLIGHTWEAR_OWNER or outfit.get('character')!=name or outfit.get('revision')!=revision or not outfit.get('assets_saved') or not outfit.get('existing_asset_bytes_preserved'):
@@ -154,24 +190,33 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
     selected=list(actors.get_selected_level_actors())
     try:
         baseline=actor_contract(ue,source,animation)
-        duplicate=lib.duplicate_asset(source_path,destination)
-        if not isinstance(duplicate,ue.Blueprint): raise RuntimeError('Cosmetic Blueprint duplication failed')
+        expected_tags={'BB.Generator':OWNER,'BB.Revision':revision,'BB.SourceAssembly':source.get_path_name(),
+                       'BB.FlightwearMesh':outfit_mesh.get_path_name()}
+        if operation=='recover':
+            duplicate=lib.load_asset(destination)
+            if not isinstance(duplicate,ue.Blueprint) or any(lib.get_metadata_tag(duplicate,key)!=value for key,value in expected_tags.items()):
+                raise RuntimeError('Recovery metadata does not match the exact owned cosmetic Blueprint')
+            report['recovered_existing_asset']=True
+        else:
+            duplicate=lib.duplicate_asset(source_path,destination)
+            if not isinstance(duplicate,ue.Blueprint): raise RuntimeError('Cosmetic Blueprint duplication failed')
         duplicate_templates=template_components(ue,duplicate)
         garment=duplicate_templates['SkeletalMesh']
         if garment.get_outermost().get_path_name()!=destination:
             raise RuntimeError('Refusing to edit a clothing template outside the new Blueprint package')
         if not isinstance(garment,ue.SkeletalMeshComponent): raise RuntimeError('Expected a skeletal clothing template')
-        garment.set_skeletal_mesh_asset(outfit_mesh)
-        # This is an unregistered Blueprint template. ActorComponent.cpp's
-        # PreEditChange adds a reconstruction context only for registered
-        # components; never use this property setter on a live preview actor.
-        garment.set_editor_property('override_materials',team_materials['Teal'])
+        if operation!='recover':
+            garment.set_skeletal_mesh_asset(outfit_mesh)
+            # This is an unregistered Blueprint template. ActorComponent.cpp's
+            # PreEditChange adds a reconstruction context only for registered
+            # components; never use this property setter on a live preview actor.
+            garment.set_editor_property('override_materials',team_materials['Teal'])
         garment=template_components(ue,duplicate)['SkeletalMesh']
         if garment.get_outermost().get_path_name()!=destination or garment.get_skeletal_mesh_asset()!=outfit_mesh:
             raise RuntimeError('Clothing template changed during property notification')
         if list(garment.get_editor_property('override_materials'))!=team_materials['Teal']:
             raise RuntimeError('Clothing template override materials failed readback')
-        ue.BlueprintEditorLibrary.compile_blueprint(duplicate)
+        if operation!='recover': ue.BlueprintEditorLibrary.compile_blueprint(duplicate)
         if duplicate.generated_class() is None or duplicate.get_editor_property('status') not in (
                 ue.BlueprintStatus.BS_UP_TO_DATE,ue.BlueprintStatus.BS_UP_TO_DATE_WITH_WARNINGS):
             raise RuntimeError('New cosmetic Blueprint did not compile')
@@ -189,18 +234,22 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
         for field in ('parent','transform','leader'):
             if clothing[field]!=baseline['components']['SkeletalMesh'][field]:
                 raise RuntimeError('Clothing relationship changed: '+field)
-        lib.set_metadata_tag(duplicate,'BB.Generator',OWNER)
-        lib.set_metadata_tag(duplicate,'BB.Revision',revision)
-        lib.set_metadata_tag(duplicate,'BB.SourceAssembly',source.get_path_name())
-        lib.set_metadata_tag(duplicate,'BB.FlightwearMesh',outfit_mesh.get_path_name())
+        if operation!='recover':
+            for key,value in expected_tags.items(): lib.set_metadata_tag(duplicate,key,value)
         dirty=[p.get_path_name() for p in list(ue.EditorLoadingAndSavingUtils.get_dirty_map_packages())+
                list(ue.EditorLoadingAndSavingUtils.get_dirty_content_packages())]
-        if any(p!=destination for p in dirty): raise RuntimeError('Unexpected dirty packages: '+str(dirty))
-        if not lib.save_loaded_asset(duplicate,only_if_is_dirty=False): raise RuntimeError('Could not save exact cosmetic Blueprint')
+        if (operation=='recover' and dirty) or any(p!=destination for p in dirty):
+            raise RuntimeError('Unexpected dirty packages: '+str(dirty))
+        if operation!='recover' and not lib.save_loaded_asset(duplicate,only_if_is_dirty=False):
+            raise RuntimeError('Could not save exact cosmetic Blueprint')
+        # Record the successful save before dependency inventory can fail.
+        # Receipt recovery is read-only and never resaves this existing asset.
+        report.update(assets_saved=True,assets_saved_this_operation=operation!='recover',
+                      status='saved_pending_dependency_inventory')
         bindings=[{'component':'SkeletalMesh','material_slot':slot,'material_slot_index':i,
                    'mint_material':outfit['team_materials']['Teal'][i],'copper_material':outfit['team_materials']['Copper'][i]}
                   for i,slot in enumerate(slots)]
-        report.update(status='authored_pending_visual_review',assets_saved=True,actor_class=duplicate.generated_class().get_path_name(),
+        report.update(status='recovered_pending_visual_review' if operation=='recover' else 'authored_pending_visual_review',actor_class=duplicate.generated_class().get_path_name(),
             body_component='Body',garments=bindings,actor_contract=actual,
             dependency_roots=[destination,flight['animation'].split('.')[0]]+
                              [p.split('.')[0] for p in outfit['team_materials']['Copper']],
@@ -216,11 +265,12 @@ def run(operation='inspect', name='BB_AthleteA', revision='r2'):
         report['dirty_after']=[p.get_path_name() for p in list(ue.EditorLoadingAndSavingUtils.get_dirty_map_packages())+
                                list(ue.EditorLoadingAndSavingUtils.get_dirty_content_packages())]
         design.write(attempt/'result.json',report)
-        if report.get('assets_saved'): design.write(design.LAB/('cosmetic-'+name+'.json'),report)
+        if report.get('assets_saved') and report['status']!='failed':
+            design.write(design.LAB/('cosmetic-'+name+'.json'),report)
     return {'status':report['status'],'report':report['report'],'blueprint':destination,
             'existing_asset_bytes_preserved':report['existing_asset_bytes_preserved']}
 
 
 if __name__=='__main__':
     args=globals().get('BRIDGE_ARGS',{})
-    RESULT=run(args.get('operation','inspect'),args.get('character','BB_AthleteA'),args.get('revision','r2'))
+    RESULT=run(args.get('operation','inspect'),args.get('character','BB_AthleteA'),args.get('revision','r3'))

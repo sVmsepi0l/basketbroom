@@ -51,24 +51,43 @@ def material_info(ue,material):
     return row
 
 
+def dependency_edges(registry,package,options,package_file):
+    queried={kind:registry.get_dependencies(package,option) for kind,option in options.items()}
+    rescanned=False
+    if any(value is None for value in queried.values()) and package_file.is_file():
+        # IAssetRegistry::K2_GetDependencies is an optional Python result;
+        # FAssetRegistryState returns false when no dependency node is cached.
+        # A freshly saved package may not be indexed yet. Rescan only this disk
+        # file, never edit/save it, and keep any unresolved query explicit.
+        registry.scan_files_synchronous([str(package_file)],True)
+        rescanned=True
+        queried={kind:registry.get_dependencies(package,option) for kind,option in options.items()}
+    unavailable=[kind for kind,value in queried.items() if value is None]
+    return {kind:sorted(str(n) for n in (value or [])) for kind,value in queried.items()},unavailable,rescanned
+
+
 def dependencies(ue,blueprint_path):
     registry=ue.AssetRegistryHelpers.get_asset_registry()
     options={kind:ue.AssetRegistryDependencyOptions(
         include_soft_package_references=kind=='soft',include_hard_package_references=kind=='hard',
         include_searchable_names=False,include_soft_management_references=False,
         include_hard_management_references=False) for kind in ('hard','soft')}
-    graph={}; pending=[blueprint_path]; external={}; rows=[]
+    graph={}; pending=[blueprint_path]; external={}; rows=[]; unavailable=[]; rescanned=[]
     while pending:
         package=pending.pop()
         if package in graph: continue
-        edges={kind:sorted(str(n) for n in registry.get_dependencies(package,option)) for kind,option in options.items()}
+        base=design.LAB/'Content'/package.removeprefix('/Game/')
+        package_file=base.with_suffix('.uasset')
+        if not package_file.is_file(): package_file=base.with_suffix('.umap')
+        edges,missing_queries,did_rescan=dependency_edges(registry,package,options,package_file)
+        if missing_queries: unavailable.append({'package':package,'reference_kinds':missing_queries})
+        if did_rescan: rescanned.append(package)
         graph[package]=edges
-        asset_data=registry.get_assets_by_package_name(package)
+        asset_data=registry.get_assets_by_package_name(package) or []
         flags=[int(a.package_flags) for a in asset_data if hasattr(a,'package_flags')]
         # PKG_EditorOnly is 0x40 in installed ObjectMacros.h. Missing reflection
         # stays unknown; it is never silently treated as runtime-compatible.
         classes=[str(a.asset_class_path) for a in asset_data]
-        base=design.LAB/'Content'/package.removeprefix('/Game/')
         files=[base.with_suffix(suffix) for suffix in design.ASSET_SUFFIXES if base.with_suffix(suffix).is_file()]
         rows.append({'package':package,'asset_classes':classes,'package_flags':flags,
                      'editor_only':any(f & 0x40 for f in flags) if flags else None,
@@ -93,6 +112,8 @@ def dependencies(ue,blueprint_path):
             'missing_local_packages':[r['package'] for r in rows if not r['saved_package_exists']],
             'editor_only_local_packages':[r['package'] for r in rows if r['editor_only'] is True],
             'unknown_editor_only_flags':[r['package'] for r in rows if r['editor_only'] is None],
+            'unavailable_dependency_queries':unavailable,'dependency_registry_complete':not unavailable,
+            'rescanned_packages':rescanned,
             'files_copied':0,'note':'Registry graph includes editor soft references; it is an inventory, not an automatic migration allowlist.'}
 
 
