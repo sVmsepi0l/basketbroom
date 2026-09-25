@@ -7,6 +7,7 @@
 #include "BBFlightNetwork.h"
 #include "BBFlightPolicy.h"
 #include "BBBroomTrailPolicy.h"
+#include "BBHumanRiderRoster.h"
 #include "BBRiderCharacter.generated.h"
 
 class UCameraComponent;
@@ -20,31 +21,6 @@ class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UPointLightComponent;
 class APlayerController;
-
-/** Explicit garment-only mapping, filled after inspecting the assembled actor. */
-USTRUCT(BlueprintType)
-struct FBBHumanGarmentBinding
-{
-    GENERATED_BODY()
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ComponentName;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName MaterialSlotName;
-    /** Verified LOD slot index; NAME-only bindings still require a unique name. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 MaterialSlotIndex = INDEX_NONE;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UMaterialInterface> TealMaterial;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UMaterialInterface> CopperMaterial;
-};
-
-/** No default assets: staging must supply the verified assembly and fitted loop. */
-USTRUCT(BlueprintType)
-struct FBBHumanRiderVariant
-{
-    GENERATED_BODY()
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AActor> ActorClass;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName BodyComponentName;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UAnimSequence> FlightAnimation;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) FTransform RelativeTransform = FTransform::Identity;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FBBHumanGarmentBinding> Garments;
-};
 
 /** Native movement prediction with the authoritative stun speed constraint. */
 UCLASS()
@@ -67,7 +43,7 @@ protected:
 };
 
 /** An owned, predicted broom rider. MatchState resolves all gameplay requests. */
-UCLASS()
+UCLASS(Config=Game)
 class BASKETBROOMRUNTIME_API ABBRiderCharacter : public ACharacter
 {
     GENERATED_BODY()
@@ -226,6 +202,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Basketbroom|Art")
     TArray<FBBHumanRiderVariant> HumanRiderVariants;
 
+    /** Optional presentation asset. Empty/missing keeps the existing rider body. */
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Basketbroom|Art")
+    TSoftObjectPtr<UBBHumanRiderRoster> HumanRoster;
+
     /** Presentation-only hook; an empty/invalid mapping restores the stock body. */
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Art")
     bool ConfigureHumanCosmetics(const TArray<FBBHumanRiderVariant>& Variants);
@@ -242,6 +222,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     bool DevelopmentSetInteraction(bool bHeld);
+
+    /** PIE-only FIFO: native Tick dispatch avoids Python's local RPC callspace. */
+    UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    bool DevelopmentQueueBroomTrailColor(bool bUseCustomColor, FLinearColor Color, bool bRawServerRPC = false);
 
     /** Tests the actual PlayerInput/binding boundary, never a gameplay action. */
     UFUNCTION(BlueprintCallable, Category="Basketbroom|Development", meta=(DevelopmentOnly))
@@ -281,6 +265,8 @@ private:
     void RefreshSportSpellVisuals();
 
     UPROPERTY() TObjectPtr<UChildActorComponent> HumanCosmetic;
+    /** Keep the shared loaded roster alive; never mutate its authoring data. */
+    UPROPERTY(Transient) TObjectPtr<UBBHumanRiderRoster> LoadedHumanRoster;
     struct FHumanGarmentSlot
     {
         TWeakObjectPtr<UMeshComponent> Component;
@@ -345,6 +331,8 @@ private:
     // FIFO entries: ordinary action/value, or action -1 for held interaction.
     // Never replicated or populated by packaged-game input.
     TArray<TPair<int32, int32>> PendingDevelopmentInputs;
+    struct FDevelopmentTrailColor { bool bCustom; FLinearColor Color; bool bRawRPC; };
+    TArray<FDevelopmentTrailColor> PendingDevelopmentTrailColors;
     static constexpr int32 MaxDevelopmentInputs = 32;
     double LastServerActionTime = -1.0;
     double LastServerInteractTime = -1.0;

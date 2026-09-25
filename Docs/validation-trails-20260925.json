@@ -1,0 +1,64 @@
+{
+  "date_utc": "2026-09-25T12:32:54.7589996Z",
+  "engine": "5.8.1",
+  "scope": "Portable policy and editor runtime; packaged validation recorded separately",
+  "checks": [
+    {
+      "file": ".local/native-broom-trail-policy/results.json",
+      "sha256": "af93fbf70544cdfd03ef5fba6852123d2d9dbf6e8b7efe48cc02647571f4c83e",
+      "status": "passed",
+      "passed": 16,
+      "failed": []
+    },
+    {
+      "file": ".local/native-broom-trails-results.json",
+      "sha256": "5f1e4c7523c10174dd3fd18e1d4a4284b154dd29a933f7e69ad9a17cdfbd2a95",
+      "status": "passed",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "file": ".local/native-trail-color-results.json",
+      "sha256": "471465187c0b9b049af381535ad7f7927d55a189c5f3a3644eba0124af14ea7e",
+      "status": "passed",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "file": ".local/native-trail-network-results.json",
+      "sha256": "1ebd953ef0835940c7aa28cb360ed41e9b030c5dcfdb1a1a79ff05f7af4ec921",
+      "status": "passed",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "file": ".local/native-broom-trail-visual-results.json",
+      "sha256": "9ab6bd6c9f318ca7994f72f3e9212aca1f7c7175aa74e65ef5bbbb4899bbb63a",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "file": ".local/native-combat-rules/results.json",
+      "sha256": "b6de77fbb0648e72a6dbf37bdd0e87a7d40929917b93728293c3d47c0488074f",
+      "status": "passed",
+      "passed": 40,
+      "failed": []
+    }
+  ],
+  "visual_review": {
+    "reviewer": "root",
+    "images": [
+      ".local/native-broom-trail-visual/1790339471564686200/ordinary-03.png",
+      ".local/native-broom-trail-visual/1790339471564686200/partial-03.png",
+      ".local/native-broom-trail-visual/1790339471564686200/super-02.png"
+    ],
+    "observations": "Visible mint filaments originate at bristles, taper, and lengthen under earned boost."
+  },
+  "limitations": [
+    "No physical-controller check requested",
+    "No remote-machine or adverse-network test",
+    "Capture time dilation is not a performance benchmark",
+    "Human flightwear remains separate pending correction"
+  ]
+}

@@ -82,4 +82,8 @@ def run(dry_run=True):
 
 
 if __name__ == '__main__':
-    RESULT = run(globals().get('BRIDGE_ARGS', {}).get('dry_run', True))
+    args = globals().get('BRIDGE_ARGS', {})
+    if args.get('expected_pid') is not None and int(args['expected_pid']) != os.getpid():
+        RESULT = {'status':'skipped_other_process','process_id':os.getpid()}
+    else:
+        RESULT = run(args.get('dry_run', True))

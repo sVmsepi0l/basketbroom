@@ -5,8 +5,23 @@ earlier September 25 build recorded in `validation-package-20260925.json`.
 
 The UE 5.8 editor target compiles with the optional human cosmetic layer,
 three bounded broom-trail filaments and the pause-menu HSV color picker.
-All 16 portable C++ trail-policy cases passed. Actual picker, trail rendering,
-network, and packaged acceptance are still pending at this checkpoint.
+All 16 portable C++ trail-policy cases passed. The editor checks subsequently
+passed 16 native trail cases, eight real input-binding/picker/persistence cases,
+nine three-world network cases, and four capture/restoration cases producing
+nine images. Representative normal, partial and super-boost frames were inspected:
+the mint filaments originate at the bristles, taper, and lengthen under earned
+boost. Captures use quarter-speed world time to avoid PNG I/O hitches; they are
+not a frame-rate benchmark. Packaged acceptance is still pending here.
+
+The enlarged field exceeded Character's default network range. All 16 roster
+members now remain relevant to each client. The network test dispatches queued
+requests from native Tick because Unreal Python's script guard forces direct
+RPC calls local. Real transport, invalid payload rejection and observer sync pass.
+The editor's temporary listen-server configuration is restored to standalone.
+Same-tick repossession now reloads the player's saved color correctly.
+The new roster header exposed an existing Unity-build duplicate helper name;
+renaming the combat-local helper restored compilation, and all 40 portable
+combat-rule scenarios passed afterward.
 
 Two adult MetaHuman designs and Medium assemblies are saved in the isolated,
 ignored `.local/CharacterLab` project. Each has a seated flight animation and
@@ -14,7 +29,10 @@ garment-only mint/copper material variants. Both face/body poses now align in
 the transient render review after reinitializing the genuine Face animation
 class following Body pose evaluation. This editor-specific fix does not yet
 certify game animation. The playable project still uses its existing riders;
-human activation, full flightwear, migration and runtime validation are pending.
+human activation, accepted full flightwear, migration and runtime validation are
+pending. Both first flightwear revisions are saved separately. Automatic renders
+exposed missing knee coverage and jagged trim; these were not activated in-game.
+The next revision corrects the wrist crop that also intersected the lower legs.
 
 The successful intact-body flightwear probe contains 60,816 triangles versus
 11,843 in the assembly's clothing-pruned body. It preserved all saved asset
@@ -30,6 +48,7 @@ Local evidence:
 - `.local/CharacterLab/renders/1790335091596773900/`: aligned A render.
 - `.local/CharacterLab/renders/1790335143930229400/`: aligned B render.
 
-Next: run the picker and trail tests in the main editor, visually verify them,
-then finish and review the humans' flightwear before game integration. Keep the
-accepted desktop launch pointer until a replacement package passes acceptance.
+Next: package and automatically verify the trails/picker, then finish and review
+the humans' flightwear before game integration. Keep the accepted desktop launch
+pointer until a replacement package passes acceptance. The user requested no
+manual check; use automated input and captured-image review.

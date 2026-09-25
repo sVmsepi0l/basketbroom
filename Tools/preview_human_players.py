@@ -15,7 +15,7 @@ base.REPORT = ROOT/'.local/CharacterLab/preview.json'
 
 
 class Preview(base.Preview):
-    def begin(self,name,team):
+    def begin(self,name,team,flightwear=False):
         project = Path(ue.Paths.convert_relative_path_to_full(ue.Paths.get_project_file_path())).resolve()
         if project != (ROOT/'.local/CharacterLab/BasketbroomCharacterLab.uproject').resolve():
             raise RuntimeError('Render only in the isolated character lab')
@@ -30,7 +30,7 @@ class Preview(base.Preview):
         self.selection = list(self.actor_system.get_selected_level_actors())
         self.directory = ROOT/'.local/CharacterLab/renders'/str(time.time_ns())
         self.directory.mkdir(parents=True)
-        self.data.update(character=name,team=team,report=str(base.REPORT),fixture='Assembled human with fitted flight loop; transient CharacterLab render')
+        self.data.update(character=name,team=team,flightwear=flightwear,report=str(base.REPORT),fixture='Assembled human with fitted flight loop; transient CharacterLab render')
         library = ue.EditorAssetLibrary
         blueprint = library.load_asset('/Game/BasketbroomHumans/Assembled/'+name+'/BP_'+name)
         if library.get_metadata_tag(blueprint,'BB.Generator') != 'Basketbroom.HumanPlayerAssembly.v1':
@@ -51,13 +51,26 @@ class Preview(base.Preview):
         face_class = face.get_editor_property('anim_class')
         face.set_anim_instance_class(None)
         face.set_anim_instance_class(face_class)
-        uniform = json.loads((ROOT/'.local/CharacterLab'/('uniform-'+name+'.json')).read_text(encoding='utf-8'))
-        garment = next(c for c in components if c.get_name() == uniform['garments'][0]['component'])
-        for row in uniform['garments']:
-            index = row['material_slot_index']
-            if str(garment.get_material_slot_names()[index]) != row['material_slot']:
-                raise RuntimeError('Garment contract changed')
-            garment.set_material(index,library.load_asset(row['mint_material' if team == 'Teal' else 'copper_material']))
+        if flightwear:
+            outfit = json.loads((ROOT/'.local/CharacterLab'/('flightwear-'+name+'.json')).read_text(encoding='utf-8'))
+            garment = next(c for c in components if c.get_name() == outfit['preview_binding']['component'])
+            mesh = library.load_asset(outfit['mesh'])
+            if library.get_metadata_tag(mesh,'BB.Generator') != 'Basketbroom.HumanFlightwear.v1':
+                raise RuntimeError('Expected owned flightwear')
+            garment.set_skeletal_mesh_asset(mesh)
+            garment.set_leader_pose_component(body,True,False)
+            if [str(x) for x in garment.get_material_slot_names()] != outfit['material_slots']:
+                raise RuntimeError('Flightwear material contract changed: '+str(garment.get_material_slot_names())+' mesh='+str(garment.get_skeletal_mesh_asset()))
+            for index,path in enumerate(outfit['team_materials'][team]):
+                garment.set_material(index,library.load_asset(path))
+        else:
+            uniform = json.loads((ROOT/'.local/CharacterLab'/('uniform-'+name+'.json')).read_text(encoding='utf-8'))
+            garment = next(c for c in components if c.get_name() == uniform['garments'][0]['component'])
+            for row in uniform['garments']:
+                index = row['material_slot_index']
+                if str(garment.get_material_slot_names()[index]) != row['material_slot']:
+                    raise RuntimeError('Garment contract changed')
+                garment.set_material(index,library.load_asset(row['mint_material' if team == 'Teal' else 'copper_material']))
         self.data['pelvis_world_z'] = body.get_socket_location('pelvis').z
         self.data['foot_world_z'] = body.get_socket_location('foot_l').z
         self.data['hand_world_z'] = body.get_socket_location('hand_l').z
@@ -110,7 +123,7 @@ def run(args):
     if prior and prior.data['status']=='running': raise RuntimeError('A human render is already running')
     preview = Preview()
     setattr(ue,KEY,preview)
-    try: preview.begin(args.get('character','BB_AthleteA'),args.get('team','Teal'))
+    try: preview.begin(args.get('character','BB_AthleteA'),args.get('team','Teal'),bool(args.get('flightwear',False)))
     except Exception: preview.finish('error',traceback.format_exc())
     return preview.data
 

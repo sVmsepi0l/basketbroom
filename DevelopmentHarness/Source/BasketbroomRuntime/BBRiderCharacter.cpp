@@ -134,6 +134,9 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
     bReplicates = true;
+    // The enlarged pitch exceeds Character's default network cull distance.
+    // Every client needs all sixteen competitors, including the opposite end.
+    bAlwaysRelevant = true;
     SetReplicateMovement(true);
     SetNetUpdateFrequency(40.0f);
     SetMinNetUpdateFrequency(15.0f);
@@ -492,7 +495,22 @@ void ABBRiderCharacter::BeginPlay()
     if (ShieldMaterial) ShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.18f, .58f, 1.f));
     CockpitShieldMaterial = CockpitShieldVisual->CreateDynamicMaterialInstance(0);
     if (CockpitShieldMaterial) CockpitShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.10f, .40f, .72f));
-    RefreshHumanCosmetics();
+    // Resolve the optional presentation asset once per rider. SoftObjectPtr
+    // reuses Unreal's loaded object cache; LoadedHumanRoster keeps that shared
+    // object alive. Explicit variants supplied by a class or test take priority.
+    if (GetNetMode() != NM_DedicatedServer && HumanRiderVariants.IsEmpty() && !HumanRoster.IsNull())
+    {
+        LoadedHumanRoster = HumanRoster.LoadSynchronous();
+    }
+    if (const UBBHumanRiderRoster* Roster = LoadedHumanRoster.Get())
+    {
+        // Super::BeginPlay has completed, so Configure performs the refresh.
+        ConfigureHumanCosmetics(Roster->Variants);
+    }
+    else
+    {
+        RefreshHumanCosmetics();
+    }
     RefreshSpellVisuals();
 }
 
@@ -599,6 +617,15 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     if (SpellFeedbackRemaining <= 0.f && ActiveImpedimentAttackId == 0)
         ShowNextSpellNotice();
 #if !UE_BUILD_SHIPPING
+    if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentTrailColors.IsEmpty())
+    {
+        const TArray<FDevelopmentTrailColor> Colors = MoveTemp(PendingDevelopmentTrailColors);
+        for (const FDevelopmentTrailColor& Input : Colors)
+        {
+            if (Input.bRawRPC) ServerSetBroomTrailColor(Input.bCustom, Input.Color);
+            else SetBroomTrailColor(Input.bCustom, Input.Color);
+        }
+    }
     if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentInputs.IsEmpty())
     {
         // Python reflected calls hold FEditorScriptExecutionGuard, which makes
@@ -1204,6 +1231,7 @@ void ABBRiderCharacter::ResetLocalInput()
     bLocalInteractHeld = false;
     bDevelopmentInteractHeld = false;
     PendingDevelopmentInputs.Reset();
+    PendingDevelopmentTrailColors.Reset();
     bShowRoster = false;
     bShowSpellbook = false;
     PendingSpellNotices.Reset();
@@ -1216,6 +1244,7 @@ void ABBRiderCharacter::ResetLocalInput()
 
 void ABBRiderCharacter::UnPossessed()
 {
+    BroomTrailPreferenceController.Reset();
     if (HasAuthority())
     {
         bInteractHeld = false;
@@ -1228,6 +1257,7 @@ void ABBRiderCharacter::UnPossessed()
 
 void ABBRiderCharacter::PawnClientRestart()
 {
+    BroomTrailPreferenceController.Reset();
     ResetLocalInput();
     Super::PawnClientRestart();
 }

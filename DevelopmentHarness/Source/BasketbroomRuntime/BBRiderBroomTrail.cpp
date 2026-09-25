@@ -42,12 +42,28 @@ void ABBRiderCharacter::SetBroomTrailColor(bool bUseCustomColor, FLinearColor Co
 
 void ABBRiderCharacter::ServerSetBroomTrailColor_Implementation(bool bUseCustomColor, FLinearColor Color)
 {
+    if (!HasAuthority()) return;
     if (!bUseCustomColor) Color = FLinearColor::White;
     if (!NormalizeTrailColor(Color)) return;
     if (bUseCustomBroomTrailColor == bUseCustomColor && CustomBroomTrailColor.Equals(Color, .0001f)) return;
     bUseCustomBroomTrailColor = bUseCustomColor;
     CustomBroomTrailColor = Color;
     ForceNetUpdate();
+}
+
+bool ABBRiderCharacter::DevelopmentQueueBroomTrailColor(bool bUseCustomColor, FLinearColor Color, bool bRawServerRPC)
+{
+#if UE_BUILD_SHIPPING
+    return false;
+#else
+    if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || !IsLocallyControlled()
+        || !IsPlayerControlled() || PendingDevelopmentTrailColors.Num() >= MaxDevelopmentInputs)
+        return false;
+    // Preserve malformed payloads here: the ordinary setter/RPC must reject
+    // them itself. This queue never writes replicated state or preferences.
+    PendingDevelopmentTrailColors.Add({bUseCustomColor, Color, bRawServerRPC});
+    return true;
+#endif
 }
 
 void ABBRiderCharacter::InitializeBroomTrails()
