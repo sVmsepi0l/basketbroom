@@ -10,6 +10,9 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/InputComponent.h"
+#include "HAL/PlatformTime.h"
+#include "Misc/ConfigCacheIni.h"
 
 void ABBHUD::DrawHUD()
 {
@@ -400,8 +403,195 @@ void ABBHUD::DrawPadGlyph(const FString& Glyph, float X, float Y, float R, FLine
     }
 }
 
+void ABBHUD::SetPauseMenuInputActive(bool bActive)
+{
+    if (!PlayerOwner || bPauseInputActive==bActive) return;
+    bPauseInputActive=bActive;
+    bPauseMouseDown=bPauseMousePressed=false;
+    TrailDragChannel=INDEX_NONE;
+    TrailRepeatKey=FKey();
+    if (bActive)
+    {
+        bCursorWasVisible=PlayerOwner->bShowMouseCursor;
+        EnableInput(PlayerOwner);
+        if (InputComponent && !bPauseBindingsAdded)
+        {
+            // Consume mouse clicks above the pawn's input so editing a color
+            // cannot throw a held ball in an online match that keeps running.
+            InputComponent->BindKey(EKeys::LeftMouseButton,IE_Pressed,this,&ABBHUD::PauseMousePressed).bExecuteWhenPaused=true;
+            InputComponent->BindKey(EKeys::LeftMouseButton,IE_Released,this,&ABBHUD::PauseMouseReleased).bExecuteWhenPaused=true;
+            InputComponent->BindKey(EKeys::BackSpace,IE_Pressed,this,&ABBHUD::PauseBackPressed).bExecuteWhenPaused=true;
+            bPauseBindingsAdded=true;
+        }
+        PlayerOwner->bShowMouseCursor=true;
+        FInputModeGameAndUI Mode;
+        Mode.SetHideCursorDuringCapture(false);
+        Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        PlayerOwner->SetInputMode(Mode);
+    }
+    else
+    {
+        CommitTrailColor(true);
+        DisableInput(PlayerOwner);
+        PlayerOwner->bShowMouseCursor=bCursorWasVisible;
+        PlayerOwner->SetInputMode(FInputModeGameOnly());
+        TrailColorRider.Reset();
+    }
+}
+
+void ABBHUD::PauseMousePressed() { bPauseMouseDown=bPauseMousePressed=true; }
+void ABBHUD::PauseMouseReleased()
+{
+    bPauseMouseDown=false;
+    TrailDragChannel=INDEX_NONE;
+    CommitTrailColor(true);
+}
+void ABBHUD::PauseBackPressed()
+{
+    if (PlayerOwner)
+        if (ABBRiderCharacter* Rider=Cast<ABBRiderCharacter>(PlayerOwner->GetPawn())) Rider->HandlePauseMenuKey(EKeys::BackSpace);
+}
+
+void ABBHUD::BeginTrailColorEdit(ABBRiderCharacter* Rider)
+{
+    CommitTrailColor(true);
+    TrailColorRider=Rider;
+    bCustomTrailColor=Rider && Rider->bUseCustomBroomTrailColor;
+    TrailHSV=(Rider?Rider->GetBroomTrailColor():FLinearColor::White).LinearRGBToHSV();
+    TrailHSV.A=1.f;
+    TrailRepeatKey=FKey();
+    TrailDragChannel=INDEX_NONE;
+}
+
+void ABBHUD::SetTrailChannel(int32 Channel, float Value)
+{
+    if (Channel<0 || Channel>2 || !FMath::IsFinite(Value)) return;
+    if (Channel==0) TrailHSV.R=FMath::Clamp(Value,0.f,1.f)*359.9f;
+    else if (Channel==1) TrailHSV.G=FMath::Clamp(Value,0.f,1.f);
+    else TrailHSV.B=FMath::Clamp(Value,0.f,1.f);
+    bCustomTrailColor=true;
+    bTrailColorPending=true;
+}
+
+void ABBHUD::CommitTrailColor(bool bFlushConfig)
+{
+    const double Now=FPlatformTime::Seconds();
+    if (bTrailColorPending && (bFlushConfig || Now-LastTrailCommitTime>=.12))
+    {
+        ABBRiderCharacter* Rider=TrailColorRider.Get();
+        if (Rider && Rider->IsLocallyControlled())
+        {
+            FLinearColor Color=TrailHSV.HSVToLinearRGB();
+            Color.A=1.f;
+            Rider->SetBroomTrailColor(bCustomTrailColor,Color);
+            if (GConfig)
+            {
+                const TCHAR* Section=TEXT("Basketbroom.BroomTrail");
+                GConfig->SetBool(Section,TEXT("Custom"),bCustomTrailColor,GGameUserSettingsIni);
+                GConfig->SetFloat(Section,TEXT("Red"),Color.R,GGameUserSettingsIni);
+                GConfig->SetFloat(Section,TEXT("Green"),Color.G,GGameUserSettingsIni);
+                GConfig->SetFloat(Section,TEXT("Blue"),Color.B,GGameUserSettingsIni);
+                bTrailConfigDirty=true;
+            }
+        }
+        bTrailColorPending=false;
+        LastTrailCommitTime=Now;
+    }
+    if (bFlushConfig && bTrailConfigDirty && GConfig)
+    {
+        GConfig->Flush(false,GGameUserSettingsIni);
+        bTrailConfigDirty=false;
+    }
+}
+
+bool ABBHUD::HandleTrailColorKey(ABBRiderCharacter* Rider, FKey Key)
+{
+    if (!Rider) return false;
+    if (TrailColorRider.Get()!=Rider) BeginTrailColorEdit(Rider);
+    const bool bConfirm=Key==EKeys::Enter || Key==EKeys::SpaceBar || Key==EKeys::Gamepad_FaceButton_Bottom;
+    const bool bLeft=Key==EKeys::Left || Key==EKeys::A || Key==EKeys::Gamepad_DPad_Left;
+    const bool bRight=Key==EKeys::Right || Key==EKeys::D || Key==EKeys::Gamepad_DPad_Right;
+    if ((bLeft || bRight) && Rider->PauseMenuSelection<3)
+    {
+        const int32 Channel=FMath::Clamp(Rider->PauseMenuSelection,0,2);
+        const float Value=Channel==0?TrailHSV.R/359.9f:Channel==1?TrailHSV.G:TrailHSV.B;
+        SetTrailChannel(Channel,Value+(bRight?1.f:-1.f)*(Channel==0?1.f/120.f:.02f));
+        TrailRepeatKey=Key;
+        LastTrailRepeatTime=FPlatformTime::Seconds();
+        CommitTrailColor(false);
+        return true;
+    }
+    if ((bConfirm && Rider->PauseMenuSelection==3) || Key==EKeys::Gamepad_FaceButton_Top)
+    {
+        bCustomTrailColor=false;
+        bTrailColorPending=true;
+        CommitTrailColor(true);
+        TrailHSV=Rider->GetBroomTrailColor().LinearRGBToHSV();
+        return true;
+    }
+    if (bConfirm && Rider->PauseMenuSelection<3) return true;
+    if (Key==EKeys::Escape || Key==EKeys::BackSpace || Key==EKeys::Gamepad_FaceButton_Right
+        || Key==EKeys::Gamepad_Special_Right || (bConfirm && Rider->PauseMenuSelection==4))
+    {
+        TrailRepeatKey=FKey();
+        CommitTrailColor(true);
+    }
+    return false;
+}
+
+void ABBHUD::UpdatePauseMenuMouse(ABBRiderCharacter* Rider)
+{
+    if (!PlayerOwner || !Rider || !Canvas) return;
+    const float Scale=FMath::Min(Canvas->SizeX/1600.f,Canvas->SizeY/900.f);
+    const FVector2D Origin((Canvas->SizeX/Scale-1440.f)/2.f,(Canvas->SizeY/Scale-800.f)/2.f);
+    float MX=0.f,MY=0.f;
+    const bool bHasMouse=PlayerOwner->GetMousePosition(MX,MY);
+    const FVector2D Mouse=FVector2D(MX,MY)/Scale-Origin;
+    if (bPauseMousePressed && bHasMouse)
+    {
+        Rider->bUsingGamepad=false;
+        const TArray<BBPauseMenu::Item> Choices=BBPauseMenu::Items(Rider);
+        const float Step=Choices.Num()>6?54.f:66.f;
+        for (int32 I=0; I<Choices.Num(); ++I)
+        {
+            if (Mouse.X>=30.f && Mouse.X<=441.f && Mouse.Y>=193.f+I*Step && Mouse.Y<=240.f+I*Step)
+            {
+                Rider->PauseMenuSelection=I;
+                Rider->HandlePauseMenuKey(EKeys::Enter);
+                break;
+            }
+        }
+        if (Rider->PauseMenuPage==BBPauseMenu::TrailColor)
+        {
+            for (int32 I=0; I<3; ++I)
+                if (Mouse.X>=540.f && Mouse.X<=1340.f && FMath::Abs(Mouse.Y-(366.f+I*100.f))<=27.f)
+                {
+                    Rider->PauseMenuSelection=I;
+                    TrailDragChannel=I;
+                    TrailRepeatKey=FKey();
+                }
+        }
+    }
+    bPauseMousePressed=false;
+    if (!Rider->bPauseMenuOpen || Rider->PauseMenuPage!=BBPauseMenu::TrailColor) return;
+    if (TrailColorRider.Get()!=Rider) BeginTrailColorEdit(Rider);
+    if (bPauseMouseDown && TrailDragChannel!=INDEX_NONE && bHasMouse)
+        SetTrailChannel(TrailDragChannel,(Mouse.X-550.f)/780.f);
+    if (TrailRepeatKey.IsValid())
+    {
+        if (!PlayerOwner->IsInputKeyDown(TrailRepeatKey)) TrailRepeatKey=FKey();
+        else if (FPlatformTime::Seconds()-LastTrailRepeatTime>=.14) HandleTrailColorKey(Rider,TrailRepeatKey);
+    }
+    CommitTrailColor(false);
+    // Save an idle keyboard/controller edit even if the journal stays open.
+    if (bTrailConfigDirty && !bPauseMouseDown && !TrailRepeatKey.IsValid()
+        && FPlatformTime::Seconds()-LastTrailCommitTime>=.4) CommitTrailColor(true);
+}
+
 void ABBHUD::DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider)
 {
+    UpdatePauseMenuMouse(Rider);
+    if (!Rider->bPauseMenuOpen) return;
     const float S=FMath::Min(Canvas->SizeX/1600.f,Canvas->SizeY/900.f);
     const float UW=Canvas->SizeX/S, UH=Canvas->SizeY/S, OX=(UW-1440)/2.f, OY=(UH-800)/2.f;
     const FLinearColor Ink(.016f,.025f,.038f,.96f), Cream(.94f,.92f,.84f,1), Muted(.59f,.68f,.70f,1), Gold(.98f,.74f,.32f,1);
@@ -418,8 +608,8 @@ void ABBHUD::DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider)
     Text(GetNetMode()!=NM_Standalone?TEXT("ONLINE / THE MATCH CONTINUES"):Frozen?TEXT("LOCAL PLAY PAUSED"):TEXT("LOCAL MENU"),906,37,.90f,GetNetMode()!=NM_Standalone?Gold:Teal);
     Text(FString::Printf(TEXT("TEAL %d   /   COPPER %d   /   %s"),Match->TealScore,Match->CopperScore,*Match->Phase),906,73,.75f,Muted);
     Line(44,116,1396,116,Muted*.3f); Line(465,146,465,701,Muted*.25f);
-    const TCHAR* Titles[]={TEXT("TAKE A BREATHER"),TEXT("CONTROLLER SETTINGS"),TEXT("CONTROLS & BOOST"),TEXT("POSITIONS & RULES"),TEXT("MATCH REFEREE")};
-    Text(Titles[FMath::Clamp(Rider->PauseMenuPage,0,4)],44,148,.88f,Gold);
+    const TCHAR* Titles[]={TEXT("TAKE A BREATHER"),TEXT("CONTROLLER SETTINGS"),TEXT("CONTROLS & BOOST"),TEXT("POSITIONS & RULES"),TEXT("MATCH REFEREE"),TEXT("BROOM TRAIL COLOR")};
+    Text(Titles[FMath::Clamp(Rider->PauseMenuPage,0,5)],44,148,.88f,Gold);
     const TArray<BBPauseMenu::Item> Choices=BBPauseMenu::Items(Rider);
     const float Step=Choices.Num()>6?54.f:66.f;
     for (int32 I=0;I<Choices.Num();++I)
@@ -457,6 +647,52 @@ void ABBHUD::DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider)
         Text(TEXT("Hold L3 + RS: precision aim / R1 cast / L1 Protego"),511,638,.83f,Muted);
         Text(TEXT("R2 accelerates. Earn boost: scoring +25, legal Bludger hits +15."),511,674,.81f,Gold);
         Text(TEXT("At 100%, release and press R2 for a super boost. L2 brakes."),511,704,.81f,Gold);
+    }
+    else if (Rider->PauseMenuPage==BBPauseMenu::TrailColor)
+    {
+        const FLinearColor Preview=bCustomTrailColor?TrailHSV.HSVToLinearRGB():Rider->GetBroomTrailColor();
+        Text(TEXT("Your signature in the sky"),511,154,1.48f,Cream);
+        Text(TEXT("Choose any hue. Your choice follows you between teams."),513,194,.86f,Muted);
+        Rect(513,233,850,68,FLinearColor(.028f,.045f,.055f,1.f));
+        Rect(531,247,50,40,Preview);
+        for (int32 I=0; I<80; ++I)
+        {
+            FLinearColor Trail=Preview;
+            Trail.A=.08f+.92f*I/79.f;
+            Rect(609.f+I*4.f,262.f,4.f,10.f,Trail);
+        }
+        Line(911,267,953,255,Gold,4.f);
+        Line(942,256,964,267,Muted,3.f);
+        Line(942,256,965,258,Muted,3.f);
+        Line(942,256,961,249,Muted,3.f);
+        Text(bCustomTrailColor?TEXT("CUSTOM"):TEXT("TEAM COLOR"),994,241,.73f,Gold);
+        const FColor Display=Preview.ToFColor(true);
+        Text(FString::Printf(TEXT("#%02X%02X%02X"),Display.R,Display.G,Display.B),994,266,.93f,Cream);
+        const TCHAR* Labels[]={TEXT("HUE"),TEXT("SATURATION"),TEXT("BRIGHTNESS")};
+        for (int32 I=0; I<3; ++I)
+        {
+            const float Y=352.f+I*100.f;
+            const bool bSelected=Rider->PauseMenuSelection==I;
+            const float Value=I==0?TrailHSV.R/359.9f:I==1?TrailHSV.G:TrailHSV.B;
+            if (bSelected) Rect(529,Y-37,823,79,FLinearColor(.065f,.105f,.12f,1.f));
+            Text(Labels[I],550,Y-31,.84f,bSelected?Gold:Muted);
+            Text(I==0?FString::Printf(TEXT("%d deg"),FMath::RoundToInt(TrailHSV.R))
+                :FString::Printf(TEXT("%d%%"),FMath::RoundToInt(Value*100.f)),1250,Y-31,.82f,Cream);
+            for (int32 GradientStep=0; GradientStep<128; ++GradientStep)
+            {
+                const float T=GradientStep/127.f;
+                const FLinearColor HSV=I==0?FLinearColor(T*359.9f,1.f,1.f,1.f)
+                    :I==1?FLinearColor(TrailHSV.R,T,TrailHSV.B,1.f)
+                    :FLinearColor(TrailHSV.R,TrailHSV.G,T,1.f);
+                Rect(550.f+GradientStep*780.f/128.f,Y,780.f/128.f+1.f,28.f,HSV.HSVToLinearRGB());
+            }
+            const float HandleX=550.f+Value*780.f;
+            Rect(HandleX-4.f,Y-5.f,8.f,38.f,FLinearColor(.012f,.019f,.025f,1.f));
+            Rect(HandleX-1.5f,Y-3.f,3.f,34.f,Cream);
+        }
+        Text(TEXT("Preview above / your trail appears in motion after resuming."),513,644,.85f,Cream);
+        Text(TEXT("Saved on this device. Reset uses your current team's color."),513,680,.83f,Muted);
+        Text(TEXT("Dark colors make a subtler trail. Uniform colors stay with your team."),513,711,.77f,Muted);
     }
     else if (Rider->PauseMenuPage==BBPauseMenu::Settings)
     {
@@ -500,8 +736,16 @@ void ABBHUD::DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider)
     {
         Glyph(TEXT("Cross"),57,779,8,Cream);Text(TEXT("select"),77,768,.82f,Cream);
         Glyph(TEXT("Circle"),184,779,8,Gold);Text(TEXT("back"),204,768,.82f,Cream);
-        Text(TEXT("D-pad  navigate     Options  resume"),328,768,.82f,Muted);
+        if (Rider->PauseMenuPage==BBPauseMenu::TrailColor)
+        {
+            Text(TEXT("D-pad  choose / adjust"),328,768,.82f,Muted);
+            Glyph(TEXT("Triangle"),641,779,8,Teal);Text(TEXT("team color"),661,768,.82f,Cream);
+            Text(TEXT("Options  resume"),853,768,.82f,Muted);
+        }
+        else Text(TEXT("D-pad  navigate     Options  resume"),328,768,.82f,Muted);
     }
-    else Text(TEXT("UP / DOWN navigate    ENTER select    BACKSPACE back    ESC resume"),46,768,.85f,Cream);
+    else Text(Rider->PauseMenuPage==BBPauseMenu::TrailColor
+        ?TEXT("UP / DOWN choose    LEFT / RIGHT adjust    MOUSE drag    BACKSPACE back    ESC resume")
+        :TEXT("UP / DOWN navigate    ENTER or CLICK select    BACKSPACE back    ESC resume"),46,768,.82f,Cream);
     Text(TEXT("BASKETBROOM PROTOTYPE"),1154,770,.68f,Muted);
 }

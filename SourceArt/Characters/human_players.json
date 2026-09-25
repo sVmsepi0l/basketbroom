@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "design_intent": "Realistic adult fantasy broom-sport athletes, inspired by Hogwarts-style clothing",
+  "status": "designs_created_not_integrated",
+  "authoring_project": ".local/CharacterLab/BasketbroomCharacterLab.uproject",
+  "engine": "5.8",
+  "authoring_plugin": "MetaHumanCharacter",
+  "designs": [
+    {
+      "id": "BB_AthleteA",
+      "starting_preset": "/MetaHumanCharacter/Optional/Presets/Ada",
+      "owned_design": "/Game/BasketbroomHumans/Design/BB_AthleteA"
+    },
+    {
+      "id": "BB_AthleteB",
+      "starting_preset": "/MetaHumanCharacter/Optional/Presets/Omari",
+      "owned_design": "/Game/BasketbroomHumans/Design/BB_AthleteB"
+    }
+  ],
+  "appearance_requirements": [
+    "Human face, eyes, ears, hair and hands with anatomically plausible adult proportions",
+    "Preserve natural skin and eye materials separately from team clothing",
+    "Forest Service mint with restrained phthalo influence and copper with a small canary-yellow influence",
+    "Flight clothing, trousers, boots and glove details; no visible mannequin or robot panels",
+    "Seated broom pose with correct grips and foot positions",
+    "Verify face, hair, clothing intersections and silhouette at gameplay distances"
+  ],
+  "team_palette": {
+    "mint_srgb": "#8ABFA3",
+    "copper_srgb": "#BB7831",
+    "palette_recipe": "SourceArt/Characters/player_uniforms.json",
+    "apply_only_to": "Garment materials; never to skin, face, eyes or hair"
+  },
+  "assembly_target": {
+    "pipeline": "OPTIMIZED",
+    "quality": "MEDIUM",
+    "texture_resolution": "2K",
+    "character_output": "/Game/BasketbroomHumans/Assembled",
+    "main_game_integration_requires": [
+      "Completed rig and texture requests",
+      "Actual rendered review",
+      "Retargeted seated flight animation",
+      "Correct first-person hiding and remote player appearance",
+      "Unchanged collision, gameplay authority and equipment behavior",
+      "Packaged validation and performance review with the full roster"
+    ]
+  },
+  "native_hogwarts": "Separate native appearance definitions and compatible native cosmetics; do not copy UE5 MetaHuman assets into Creator Kit",
+  "sources": [
+    "https://dev.epicgames.com/documentation/metahuman/getting-started-with-metahuman-creator-in-unreal-engine",
+    "https://dev.epicgames.com/documentation/metahuman/python-scripting-for-metahuman-creator",
+    "https://www.metahuman.com/license"
+  ]
+}

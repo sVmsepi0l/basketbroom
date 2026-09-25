@@ -6,9 +6,13 @@
 #include "InputCoreTypes.h"
 #include "BBFlightNetwork.h"
 #include "BBFlightPolicy.h"
+#include "BBBroomTrailPolicy.h"
 #include "BBRiderCharacter.generated.h"
 
 class UCameraComponent;
+class UChildActorComponent;
+class UAnimSequence;
+class UPrimitiveComponent;
 class UMaterialInterface;
 class UStaticMeshComponent;
 class UMeshComponent;
@@ -16,6 +20,31 @@ class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UPointLightComponent;
 class APlayerController;
+
+/** Explicit garment-only mapping, filled after inspecting the assembled actor. */
+USTRUCT(BlueprintType)
+struct FBBHumanGarmentBinding
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ComponentName;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName MaterialSlotName;
+    /** Verified LOD slot index; NAME-only bindings still require a unique name. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 MaterialSlotIndex = INDEX_NONE;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UMaterialInterface> TealMaterial;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UMaterialInterface> CopperMaterial;
+};
+
+/** No default assets: staging must supply the verified assembly and fitted loop. */
+USTRUCT(BlueprintType)
+struct FBBHumanRiderVariant
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AActor> ActorClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FName BodyComponentName;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UAnimSequence> FlightAnimation;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FTransform RelativeTransform = FTransform::Identity;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FBBHumanGarmentBinding> Garments;
+};
 
 /** Native movement prediction with the authoritative stun speed constraint. */
 UCLASS()
@@ -165,6 +194,19 @@ public:
     UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
     TArray<float> DevelopmentGetFlightState() const;
 
+    /** Custom presentation color is owned by this player; team kit is separate. */
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Broom Trail")
+    bool bUseCustomBroomTrailColor = false;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Basketbroom|Broom Trail")
+    FLinearColor CustomBroomTrailColor = FLinearColor::White;
+    UFUNCTION(BlueprintCallable, Category="Basketbroom|Broom Trail")
+    void SetBroomTrailColor(bool bUseCustomColor, FLinearColor Color);
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Broom Trail")
+    FLinearColor GetBroomTrailColor() const;
+    /** Samples, visible segments, reset count, boost blend, lifetime, RGB. */
+    UFUNCTION(BlueprintPure, Category="Basketbroom|Development", meta=(DevelopmentOnly))
+    TArray<float> DevelopmentGetBroomTrailState() const;
+
     /** Cosmetic equipment only; role 4 outside Donnybrook, with owner-view filtering. */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Basketbroom|Equipment")
     bool bHurleyVisible = false;
@@ -172,6 +214,21 @@ public:
     /** Cosmetic stock skeletal body with an authored Basketbroom seated loop. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Basketbroom|Art")
     bool bSkeletalRiderEnabled = false;
+
+    /** Captured once from the initial server roster; role/team swaps retain it. */
+    UPROPERTY(ReplicatedUsing=OnRep_AppearanceIdentity, BlueprintReadOnly, Category="Basketbroom|Art")
+    int32 AppearanceIdentity = INDEX_NONE;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="Basketbroom|Art")
+    bool bHumanRiderEnabled = false;
+
+    /** Identical verified mappings must be staged on server and clients. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Basketbroom|Art")
+    TArray<FBBHumanRiderVariant> HumanRiderVariants;
+
+    /** Presentation-only hook; an empty/invalid mapping restores the stock body. */
+    UFUNCTION(BlueprintCallable, Category="Basketbroom|Art")
+    bool ConfigureHumanCosmetics(const TArray<FBBHumanRiderVariant>& Variants);
 
     UFUNCTION(BlueprintPure, Category="Basketbroom|Interaction")
     FVector GetAimDirection() const;
@@ -218,10 +275,39 @@ private:
     UPROPERTY() TObjectPtr<UStaticMeshComponent> TransformationVisual;
     UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> SportStatusRings;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> SportStatusMaterial;
-    TSet<TWeakObjectPtr<APlayerController>> ConcealmentViewers;
-    TMap<TWeakObjectPtr<UMeshComponent>, bool> TransformationHiddenBaseline;
+    TMap<TWeakObjectPtr<APlayerController>, TSet<TWeakObjectPtr<AActor>>> ConcealmentViewers;
+    TMap<TWeakObjectPtr<UPrimitiveComponent>, bool> TransformationHiddenBaseline;
     void InitializeSportSpellVisuals();
     void RefreshSportSpellVisuals();
+
+    UPROPERTY() TObjectPtr<UChildActorComponent> HumanCosmetic;
+    struct FHumanGarmentSlot
+    {
+        TWeakObjectPtr<UMeshComponent> Component;
+        int32 MaterialIndex = INDEX_NONE;
+        int32 BindingIndex = INDEX_NONE;
+    };
+    TArray<FHumanGarmentSlot> HumanGarmentSlots;
+    TWeakObjectPtr<AActor> ActiveHumanActor;
+    int32 LastHumanAppearance = INDEX_NONE;
+    int32 ActiveHumanVariant = INDEX_NONE;
+    bool bFallbackBodyWasVisible = true;
+    void RefreshHumanCosmetics();
+    void ResetHumanCosmetics();
+    void RefreshHumanUniform();
+    void GetHumanCosmeticActors(TArray<AActor*>& Actors) const;
+
+    UPROPERTY() TArray<TObjectPtr<UInstancedStaticMeshComponent>> BroomTrailStrands;
+    UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> BroomTrailMaterials;
+    BBBroomTrail::History BroomTrailHistory;
+    TWeakObjectPtr<APlayerController> BroomTrailPreferenceController;
+    float BroomTrailBoostBlend = 0.f;
+    int32 BroomTrailResetCount = 0;
+    int32 BroomTrailVisibleSegments = 0;
+    int32 BroomTrailLastTeam = INDEX_NONE;
+    void InitializeBroomTrails();
+    void TickBroomTrails(float DeltaSeconds);
+    void ClearBroomTrails();
 
 
     struct FSpellNotice { FString Message; uint64 AttackId = 0; double QueuedAt = 0.0; };
@@ -322,6 +408,12 @@ private:
 
     UFUNCTION()
     void OnRep_TeamIndex();
+
+    UFUNCTION()
+    void OnRep_AppearanceIdentity();
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetBroomTrailColor(bool bUseCustomColor, FLinearColor Color);
 
     UFUNCTION()
     void OnRep_StunRemaining();
