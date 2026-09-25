@@ -27,7 +27,11 @@ void ABBHUD::DrawHUD()
     if (Rider->bPauseMenuOpen) { DrawPauseMenu(Match, Rider); return; }
     const float W = Canvas->SizeX, H = Canvas->SizeY;
     const float S = FMath::Min(W/1600.f, H/900.f);
-    const FLinearColor Ink(.015,.026,.038,.90), Muted(.56,.67,.7,1), Cream(.94,.91,.82,1), Teal(.12,.9,.73,1), Copper(1,.46,.20,1), Gold(1,.77,.24,1), Violet(.7,.38,1,1);
+    // Match the sporting uniforms: Forest Service mint with a phthalo tint,
+    // and copper warmed with a small canary-yellow contribution.
+    const FLinearColor Teal = FLinearColor::FromSRGBColor(FColor(138,191,163));
+    const FLinearColor Copper = FLinearColor::FromSRGBColor(FColor(187,120,49));
+    const FLinearColor Ink(.015,.026,.038,.90), Muted(.56,.67,.7,1), Cream(.94,.91,.82,1), Gold(1,.77,.24,1), Violet(.7,.38,1,1);
     UFont* Font = GEngine->GetMediumFont();
     auto Rect = [&](float X,float Y,float Width,float Height,FLinearColor Color) { DrawRect(Color,X*S,Y*S,Width*S,Height*S); };
     auto Text = [&](const FString& T,float X,float Y,float Size,FLinearColor Color)
@@ -400,7 +404,8 @@ void ABBHUD::DrawPauseMenu(ABBMatchState* Match, ABBRiderCharacter* Rider)
 {
     const float S=FMath::Min(Canvas->SizeX/1600.f,Canvas->SizeY/900.f);
     const float UW=Canvas->SizeX/S, UH=Canvas->SizeY/S, OX=(UW-1440)/2.f, OY=(UH-800)/2.f;
-    const FLinearColor Ink(.016f,.025f,.038f,.96f), Cream(.94f,.92f,.84f,1), Muted(.59f,.68f,.70f,1), Gold(.98f,.74f,.32f,1), Teal(.21f,.82f,.71f,1);
+    const FLinearColor Ink(.016f,.025f,.038f,.96f), Cream(.94f,.92f,.84f,1), Muted(.59f,.68f,.70f,1), Gold(.98f,.74f,.32f,1);
+    const FLinearColor Teal = FLinearColor::FromSRGBColor(FColor(138,191,163));
     auto Rect=[&](float X,float Y,float W,float H,FLinearColor C){DrawRect(C,(OX+X)*S,(OY+Y)*S,W*S,H*S);};
     auto Text=[&](const FString& T,float X,float Y,float Size,FLinearColor C){DrawText(T,C,(OX+X)*S,(OY+Y)*S,GEngine->GetMediumFont(),Size*S,false);};
     auto Line=[&](float AX,float AY,float BX,float BY,FLinearColor C,float T=1.f){DrawLine((OX+AX)*S,(OY+AY)*S,(OX+BX)*S,(OY+BY)*S,C,T*S);};

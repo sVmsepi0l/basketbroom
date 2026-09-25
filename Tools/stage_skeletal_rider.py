@@ -311,6 +311,15 @@ def _team_materials(ue):
                     ue.MaterialInstanceConstant, ue.MaterialInstanceConstantFactoryNew())
             if not isinstance(material, ue.MaterialInstanceConstant):
                 raise RuntimeError("Could not create derived team material: " + path)
+            # The newer uniform author owns this material's appearance while
+            # preserving the original runtime paths and instance ownership.
+            # Rebuilding the seated loop must not repaint those garments.
+            if ue.EditorAssetLibrary.get_metadata_tag(material, "BB.UniformGenerator") == "Basketbroom.PlayerUniform.v1":
+                uniform_parent = material.get_editor_property("parent")
+                if uniform_parent is None or uniform_parent.get_path_name().split(".")[0] != "/Basketbroom/Art/Characters/M_BB_WovenFlightUniform":
+                    raise RuntimeError("Uniform instance has an unexpected parent: " + path)
+                outputs[team].append(path)
+                continue
             ue.EditorAssetLibrary.set_metadata_tag(material, "BB.Generator", GENERATOR)
             lib.set_material_instance_parent(material, parent)
             if "Paint Tint" not in [str(v) for v in lib.get_vector_parameter_names(parent)]:

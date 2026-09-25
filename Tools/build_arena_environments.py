@@ -22,6 +22,8 @@ LAYOUT_X = dim.LENGTH_MULTIPLIER
 LAYOUT_Y = dim.WIDTH_MULTIPLIER
 TAG = 'BB.Environment.v1'
 MAPS = {'redrock': '/Basketbroom/Maps/BB_Redrock', 'redwoods': '/Basketbroom/Maps/BB_Redwoods'}
+REDWOOD_GIANT_INDICES = frozenset((3, 8, 14, 21, 26, 31, 38, 44))
+REDWOOD_SCALE_REVISION = 'varied-grove-eight-triple-size-giants-v1'
 
 
 def cross(a, b):
@@ -126,7 +128,7 @@ PALETTE = {
 
 class Venue:
     def __init__(self, name):
-        self.name=name;self.meshes={};self.instances=[]
+        self.name=name;self.meshes={};self.instances=[];self.metadata={}
 
     def mesh(self, short, material):
         name='SM_BB_ENV_'+short
@@ -160,7 +162,7 @@ class Venue:
 
     def finish(self):
         return {'id':self.name, 'map':MAPS[self.name], 'meshes':[dict(v['mesh'].save(k),material=v['material']) for k,v in self.meshes.items()],
-                'instances':self.instances}
+                'instances':self.instances, **self.metadata}
 
 
 def redrock():
@@ -307,6 +309,26 @@ def redwood_tree(v,index):
     leaves.ellipsoid((0,0,height-150),(500,550,1000),index,15,10,.16)
 
 
+def redwood_scale(index, previous_scale):
+    """Keep the original variation, adding selected giants across grove depths.
+
+    Separate deterministic randomness preserves every prior tree position/yaw
+    and the coastal rock, surf and understory layout. Giants are exactly three
+    times their own previous size, rather than three times an arbitrary mean.
+    """
+    if index in REDWOOD_GIANT_INDICES:
+        size_class, multiplier = 'giant', 3.0
+    elif index % 4 in (1, 2):
+        size_class, multiplier = 'medium', random.Random(9331 + index).uniform(1.45, 1.8)
+    else:
+        size_class, multiplier = 'original', 1.0
+    return previous_scale * multiplier, {
+        'id': index, 'size_class': size_class, 'previous_scale': previous_scale,
+        'scale_multiplier': multiplier,
+        'depth_band': ('near', 'middle', 'deep')[index // 11] if index < 33 else 'side',
+    }
+
+
 def redwoods():
     v=Venue('redwoods');rng=random.Random(8392)
     for index in range(3):redwood_tree(v,index)
@@ -317,10 +339,20 @@ def redwoods():
             positions.append((-25000+column*4900+rng.uniform(-650,650),9700+row*6800+rng.uniform(-900,900)))
     for side in (-1,1):
         for k in range(8):positions.append((side*(15000+(k%3)*3900),-8100+(k//3)*4300+rng.uniform(-700,700)))
+    counts = {'original': 0, 'medium': 0, 'giant': 0}
     for k,(x,y) in enumerate(positions):
-        variant=k%3;scale=rng.uniform(.88,1.27);yaw=rng.uniform(0,360)
+        variant=k%3;previous_scale=rng.uniform(.88,1.27);yaw=rng.uniform(0,360)
+        scale, tree = redwood_scale(k, previous_scale)
+        counts[tree['size_class']] += 1
         for part in ('Trunk','Crown'):
             v.place('RW_'+part+str(variant),'redwoods / old growth %02d %s'%(k,part.lower()),(x,y,-500),(scale,scale,scale),yaw,shadow=part=='Trunk')
+            v.instances[-1]['tree'] = dict(tree)
+    v.metadata['forest_scale'] = {
+        'revision': REDWOOD_SCALE_REVISION, 'tree_count': len(positions),
+        'size_counts': counts, 'giant_scale_from_previous': 3.0,
+        'positions_and_yaw_preserved': True,
+        'shared_mesh_geometry_unchanged': True,
+    }
     floor=v.mesh('RW_ForestShelf','ForestFloor')
     # The forest bluff projects below the arena, with a scalloped cliff edge.
     nx,ny=60,40

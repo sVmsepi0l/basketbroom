@@ -10,7 +10,7 @@ Candidate manifest: `.local/PackageWork/Development-20260916-035952-025/package-
 
 Candidate executable: `.local/Build/Development-20260916-035952-025/Windows/BasketbroomDev.exe`.
 
-The desktop launcher still selects `.local/Build/Development-20260915-081623-488/Windows/BasketbroomDev.exe`. Neither the candidate nor the package pointer was changed during recovery. Two preserved candidate loopback tests prove connection, join and map travel only; they do not certify gameplay replication or Bloodbroom activation. Prior visual observations were recovered from session notes, with startup logs still present, but a separate persisted visual acceptance receipt was not found.
+At initial recovery the desktop launcher selected `.local/Build/Development-20260915-081623-488/Windows/BasketbroomDev.exe`; it was preserved until the new candidate completed acceptance later in this session. Two preserved September 16 candidate loopback tests prove connection, join and map travel only; they do not certify gameplay replication or Bloodbroom activation. Prior visual observations were recovered from session notes, with startup logs still present, but a separate persisted September 16 visual acceptance receipt was not found.
 
 ## Saved enlargement and builds
 
@@ -28,14 +28,28 @@ Native Creator Kit passed 20 read-only dungeon inspection checks and 16 observed
 
 `Docs/validation-20260925.json` indexes the six passed gameplay/inspection reports and three successful staging reports with SHA-256 hashes, scope and case names. Exact copies were archived under `.local/validation-archive/20260925-095807-311-9021b040e74d41138a9cabce6a04adb3/` before writing the index. The archive uses a unique directory and read-only files; future test runs may overwrite the original rolling paths without replacing these copies. The archive remains local and ignored by Git; the compact hash/case index is tracked.
 
-## Package acceptance and promotion — pending
+## Player uniforms and giant redwoods
 
-The enlarged-arena candidate `.local/PackageWork/Development-20260925-055521-668/package-result.json` finished successfully with AutomationTool exit code 0. It includes regulation, Redrock and Redwoods. Both candidate loopback checks passed, limited to connection/join/map travel; visual review is underway. The user then requested player textures/skins, so this candidate may be superseded by a build containing those changes.
+The final mint/copper uniform palette was staged in seven owned material packages, and the seven-asset configuration probe and ten equipment/viewport checks passed. The root assistant directly accepted all four captured prototype views. `Docs/validation-player-uniforms-20260925.json` indexes the immutable local reports, final recipe and images. The owner HUD image predates the HUD palette rebuild and does not certify its final colors. This is a material pass on the stock mannequin, with native Hogwarts appearance still separate.
 
-Final visual acceptance and desktop promotion must identify the newest accepted candidate after the player materials are included. Record that manifest, corresponding network/visual receipt paths and promotion receipt here when complete. The desktop pointer has not been changed as part of this evidence archive.
+The coastal grove now retains 49 trees with eight selected giants at exactly three times their prior scale, twenty medium trees and twenty-one original-size trees. Positions/yaw and shared meshes are preserved; no mesh instances or triangles were added. All 2,772,322 transformed redwood triangles cleared the protected arena envelope with zero intrusions, and all seventeen portable environment checks passed.
+
+The final environment stage `.local/environment-stage/20260925-102023-131022-71635645/result.json` saved/reloaded both venue maps with source-map and content-scope preservation. The root assistant directly accepted the actual giant-redwoods hero preview for this prototype. `Docs/validation-environments-20260925.json` indexes exact read-only stage, manifest and preview copies, including review limits. This editor composition check is not a packaged frame-rate or gameplay check; native Creator Kit scenery is outside the giant-tree amendment.
+
+## Package acceptance and promotion — completed
+
+The enlarged-arena candidate `.local/PackageWork/Development-20260925-055521-668/package-result.json` finished successfully and passed both loopback checks, limited to connection/join/map travel. It was subsequently superseded by the player-uniform and giant-tree changes.
+
+Candidate `.local/PackageWork/Development-20260925-062224-613/package-result.json` finished successfully with AutomationTool exit code 0 (53 seconds) and passed its own bounded acceptance. All three maps rendered the enlarged court, uniforms and equipment. Redrock regulation entered live play with a running clock, observed AI score 69 and an opened spellbook. Redwoods Bloodbroom entered live play with observed ball custody/AI score 69; the pause journal showed PlayStation symbols, L2/R2 prompts and mint accents, and resumed successfully. Classic was verified through rendering and the lobby only: concurrent user input blocked the attempted live-start check, so no Classic live-play claim is made.
+
+The final candidate's Redrock and Redwoods loopback receipts passed: `.local/packaged-network/20260925-062355-356-fe818321/result.json` and `.local/packaged-network/20260925-062355-530-125f81a9/result.json`. Their scope remains connection, tagged join and map travel; they do not certify gameplay replication or remote multiplayer. Direct visual acceptance is `.local/package-visual-acceptance-20260925-062224-613.json`.
+
+The accepted candidate was promoted at `2026-09-25T10:29:09.8194659Z`. The desktop launcher now selects `.local/Build/Development-20260925-062224-613/Windows/BasketbroomDev.exe`. Promotion and the retained previous pointer are under `.local/package-promotions/20260925-102909-772-e28cca76c916408493343653ebb20e8d/`. `Docs/validation-package-20260925.json` indexes exact archived manifest, visual/network/promotion evidence and supporting logs. Candidate, promotion and actual launcher-pointer hashes matched during archive. The Classic visual log remained open by the game and was referenced rather than copied; the direct review receipt records its narrower scope.
 
 ## Next safe milestone
 
-Finish the player materials, build a new candidate with `Package.ps1 -NoPromote`, record candidate-specific gameplay and visual acceptance, then promote using `Tools/Promote-Package.ps1`. Its 12 isolated file-only tests passed; it validates candidate-specific evidence, keeps the previous launcher pointer, and replaces it atomically. The preserved gameplay checks above precede the player-material changes; do not label them as testing a later package.
+The user subsequently requested realistic adult Hogwarts-style characters. That addition is in progress; the promoted build still uses the stock Quinn mannequin with the new uniform materials. Do not present the uniform pass as completed realistic human characters. Keep the accepted package available while developing and validating that next art milestone.
+
+The earlier preserved PIE gameplay checks precede the player-material and giant-tree changes; they remain separate from the explicitly scoped packaged checks above. `Tools/Promote-Package.ps1` passed twelve isolated file checks and performed the actual promotion with a retained previous-pointer backup.
 
 Continue complete regulation, remaining spellwork, multiplayer, native Hogwarts broom/menu/match integration and final art after the enlarged arena is playable. Standalone UE5 evidence does not establish native Creator Kit integration. Save checkpoints with explicit test scope, limitations and package status; keep videos, generated builds and private local reports outside Git.

@@ -10,7 +10,7 @@ the architecture is original scenery inspired by the user's cliff Palace/Mesa ve
 
 ## coastal old-growth redwoods
 
-`/Basketbroom/Maps/BB_Redwoods` opens toward an actual sea surface and receding basalt stacks, with a grove around the back and sides. three original redwood variants have tapering fluted boles, buttress roots, asymmetric woody branches and multiple tiers of solid geometric needle clusters. shared source meshes form 49 varied trees. a mossy bluff, sword-fern understory, fallen giant, ocean wave displacement and geometric breaker crests carry the coastal setting through the playable view.
+`/Basketbroom/Maps/BB_Redwoods` opens toward an actual sea surface and receding basalt stacks, with a grove around the back and sides. three original redwood variants have tapering fluted boles, buttress roots, asymmetric woody branches and multiple tiers of solid geometric needle clusters. shared source meshes form 49 varied trees: eight selected giants are exactly three times their previous instance size, twenty medium trees are 1.45–1.8 times their previous size, and twenty-one retain their original varied sizes. the giants are interspersed through the near, middle, deep and side groves, keeping different silhouettes and layers visible. a mossy bluff, sword-fern understory, fallen giant, ocean wave displacement and geometric breaker crests carry the coastal setting through the playable view.
 
 the open side faces the pacific-inspired horizon, with cool daylight and restrained blue-green haze. this is a fictional venue drawing on northern california and southern oregon old growth, not an exact mapped location.
 
@@ -32,9 +32,27 @@ before mutation, the helper checks all source hashes, exact destination ownershi
 
 after authoring, the helper verifies no environment collision, runs actual enclosure/goal collision checks before save and after reload, confirms the native regulation game mode and restores the original map. a complete content hash comparison rejects saved changes outside the exact map/mesh/material/texture allowlist. re-running the stage replaces only the same owned environment actors and assets; unexpected sporting differences cause a failure rather than an overwrite. receipts never claim gameplay tests that were not run.
 
-thirteen offline tests currently pass: source hashes/current dimensions, rotated and scaled placement, outward surface winding, triangle crossing with all vertices outside the box, valid overhang clearance, rejection of intruding scenery, exact package allowlist, false backdrop ownership, and rejection of changed or missing sporting actors/materials/transforms.
+seventeen offline tests currently pass: source hashes/current dimensions, rotated and scaled placement, outward surface winding, triangle crossing with all vertices outside the box, valid overhang clearance, rejection of intruding scenery, exact package allowlist, false backdrop ownership, rejection of changed or missing sporting actors/materials/transforms, exact triple-size giants, paired trunk/crown transforms, varied size/depth distribution and whole-tree clearance.
 
-saved ue5 maps, live gameplay, packaged map selection and visual review remain pending until the root staging and verification run records their receipts here. the native creator kit must import these original sources separately through its supported engine. ue5 `.uasset` files are never a native port mechanism, and no native map registration, entrance, dungeon return or full match integration is claimed by this environment source stage.
+saved ue5 map and editor visual acceptance are recorded in the september 25 checkpoint below. packaged acceptance for the newest giant-tree build remains separate. the native creator kit must import these original sources separately through its supported engine. ue5 `.uasset` files are never a native port mechanism, and no native map registration, entrance, dungeon return or full match integration is claimed by this environment source stage.
+
+## september 25 giant-tree source amendment
+
+the grove keeps all 49 original tree positions and yaw angles. each tree's trunk and crown receive the same uniform scale, preserving their fit and the original three mesh variants. the manifest records the prior instance scale, multiplier, size class and depth band for review; its additive forest metadata uses revision `varied-grove-eight-triple-size-giants-v1`.
+
+source generation checked all 2,772,322 transformed redwood triangles against the enlarged arena's protected envelope and found zero intrusions. a separate test confirms even the full transformed bounding boxes of every trunk and crown remain outside that envelope. the existing 438.637 × 136.608 m enclosure, hoop geometry, red-rock venue, coastal features and all mesh source bytes remain unchanged. the tree increase adds no mesh instances or triangles. native creator kit maps are outside this amendment.
+
+## september 25 giant-tree saved and visual checkpoint
+
+stage `.local/environment-stage/20260925-102023-131022-71635645/result.json` completed with both ue5 environment maps saved/reloaded, the source map preserved and content changes confined to the allowlist. its manifest sha-256 is `283b6fec84a34ba7d9e5510400be317c93c210a04ea0b8bcd5c2a549a5b9b080`, matching the archived source recipe. the seventeen portable environment checks passed in the root development session. the stage itself explicitly reports that it did not test gameplay.
+
+the root assistant directly inspected the actual hero preview `.local/environment-renders/20260925-062135-redwoods.png` and accepted the giant-tree composition for the prototype. this is editor visual acceptance, not packaged gameplay or frame-rate certification. the asynchronous preview request retains its original `requested` status; the captured image and separately recorded review provide the visual evidence.
+
+`Docs/validation-environments-20260925.json` records the source/stage/preview hashes, grove counts, clearance results, seventeen test names, direct visual review and limitations. exact copies of the stage receipt, manifest, preview and capture-request provenance are retained read-only under `.local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31/`.
+
+the final candidate `.local/PackageWork/Development-20260925-062224-613/package-result.json` built successfully and was promoted to the desktop launcher. its own review confirmed all three maps rendered; redrock regulation and redwoods bloodbroom entered live play with running clocks and observed scoring. the giant, medium and smaller redwoods and coastal opening were visible. classic was checked through rendering and its lobby only; live play there was not verified. both loopback connection/join/map-travel checks passed, without certifying gameplay replication or remote multiplayer.
+
+`Docs/validation-package-20260925.json` preserves the candidate-specific acceptance and promotion evidence. promotion receipt: `.local/package-promotions/20260925-102909-772-e28cca76c916408493343653ebb20e8d/promotion.json`. the previous desktop pointer and package were retained. these are prototype environment and mannequin visuals; realistic adult hogwarts-style characters are a newly requested, unfinished addition.
 
 
 ## september 15 staging checkpoint

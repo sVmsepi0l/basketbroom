@@ -1,0 +1,188 @@
+{
+  "date": "2026-09-25",
+  "archived_utc": "2026-09-25T10:13:12.6504536Z",
+  "local_archive": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95",
+  "recipe": {
+    "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/player_uniforms.json",
+    "source_file": "SourceArt/Characters/player_uniforms.json",
+    "sha256": "d14b1fe2c2f7df5182372d9fa1b288b72225bd82536121f7541130517276a0b0",
+    "scope": "Final mint 8ABFA3 / copper BB7831 source palette and original uniform recipe"
+  },
+  "reports": [
+    {
+      "evidence": {
+        "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/uniform-stage.json",
+        "source_file": ".local/player-uniform-stage/20260925-101037-149861-b4eb72ce/result.json",
+        "sha256": "1e8eae8ad8e6f182782d3c8ac450301fde2f8ce73ee2b4adfaa61aa21dd1a0eb",
+        "scope": "Seven owned material packages compiled and saved; unrelated plugin packages preserved; source stage status predates subsequent visual acceptance"
+      },
+      "status": "saved_pending_visual_review",
+      "changed_packages": [
+        "Art\\Characters\\MI_BB_Quinn_Copper_01.uasset",
+        "Art\\Characters\\MI_BB_Quinn_Copper_02.uasset",
+        "Art\\Characters\\MI_BB_Quinn_Teal_01.uasset",
+        "Art\\Characters\\MI_BB_Quinn_Teal_02.uasset",
+        "Art\\Characters\\M_BB_WovenFlightUniform.uasset",
+        "Art\\Materials\\M_BB_RiderCopper.uasset",
+        "Art\\Materials\\M_BB_RiderTeal.uasset"
+      ],
+      "maps_saved": 0,
+      "mesh_animation_edits": 0
+    },
+    {
+      "evidence": {
+        "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/uniform-inspection.json",
+        "source_file": ".local/player-uniform-inspection.json",
+        "sha256": "ed117b700b75783c40ab9385a0810d6b8f8374598ebc057f1fdfd10cce66e169",
+        "scope": "Read-only configuration/bindings inspection of seven material assets; not render proof"
+      },
+      "status": "passed",
+      "assets": 7,
+      "parent_checks": [
+        "owned_parent",
+        "recipe_matches",
+        "skeletal_shader_usage",
+        "lit_material",
+        "required_outputs_connected"
+      ],
+      "asset_checks": [
+        {
+          "path": "/Basketbroom/Art/Characters/MI_BB_Quinn_Teal_01",
+          "checks": [
+            "uniform_parent",
+            "owned_uniform",
+            "recipe_matches",
+            "Team Color",
+            "Contrast Color",
+            "Trim Color",
+            "BNormal",
+            "MRA"
+          ]
+        },
+        {
+          "path": "/Basketbroom/Art/Characters/MI_BB_Quinn_Teal_02",
+          "checks": [
+            "uniform_parent",
+            "owned_uniform",
+            "recipe_matches",
+            "Team Color",
+            "Contrast Color",
+            "Trim Color",
+            "BNormal",
+            "MRA"
+          ]
+        },
+        {
+          "path": "/Basketbroom/Art/Materials/M_BB_RiderTeal",
+          "checks": [
+            "three_preserved_tint_nodes",
+            "base_color_uses_tint",
+            "palette_matches"
+          ]
+        },
+        {
+          "path": "/Basketbroom/Art/Characters/MI_BB_Quinn_Copper_01",
+          "checks": [
+            "uniform_parent",
+            "owned_uniform",
+            "recipe_matches",
+            "Team Color",
+            "Contrast Color",
+            "Trim Color",
+            "BNormal",
+            "MRA"
+          ]
+        },
+        {
+          "path": "/Basketbroom/Art/Characters/MI_BB_Quinn_Copper_02",
+          "checks": [
+            "uniform_parent",
+            "owned_uniform",
+            "recipe_matches",
+            "Team Color",
+            "Contrast Color",
+            "Trim Color",
+            "BNormal",
+            "MRA"
+          ]
+        },
+        {
+          "path": "/Basketbroom/Art/Materials/M_BB_RiderCopper",
+          "checks": [
+            "three_preserved_tint_nodes",
+            "base_color_uses_tint",
+            "palette_matches"
+          ]
+        }
+      ]
+    },
+    {
+      "evidence": {
+        "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/equipment-visual.json",
+        "source_file": ".local/native-equipment-visual-results.json",
+        "sha256": "2a4fbb8eaed3ec885aa8b9fea7fb3b8d39b9fd4123d72baf42620dc1505e5426",
+        "scope": "Standalone UE5 PIE equipment configuration, actual spell visibility and owned viewport capture integrity; not packaged or Hogwarts integration proof"
+      },
+      "status": "passed",
+      "passed": 10,
+      "tests": [
+        "sixteen_native_skeletal_riders_pass_existing_art_probe",
+        "all_eight_authored_meshes_have_two_correct_noncolliding_view_layers",
+        "both_team_accent_materials_match_native_team_identity",
+        "actual_expelliarmus_hides_all_six_wand_layers",
+        "live_recovery_restores_all_six_wand_layers",
+        "owner_first_person_1600x900_image_written",
+        "owner_hud_image_written_at_actual_viewport_size",
+        "teal_third_person_1600x900_image_written",
+        "copper_third_person_1600x900_image_written",
+        "owned_pie_camera_transform_fov_and_original_view_restored"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/owner-first-person.png",
+      "source_file": "C:\\Git\\basketbroom\\.local\\native-equipment-visual\\1790331039489677500\\owner-first-person.png",
+      "sha256": "4b8c81ac5b870388b919b159359714bab0ed11644d1433f77af3296d36a43571",
+      "scope": "Root-reviewed actual standalone UE5 PIE viewport capture of final uniform palette"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/owner-first-person-hud.png",
+      "source_file": "C:\\Git\\basketbroom\\.local\\native-equipment-visual\\1790331039489677500\\owner-first-person-hud.png",
+      "sha256": "2ecee3d996d1e45c7a8224ace33e1db1a3a156932ad7d829d251e0487053c70e",
+      "scope": "Owner first-person HUD image from before the current HUD palette rebuild; not proof of final HUD colors"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/teal-third-person.png",
+      "source_file": "C:\\Git\\basketbroom\\.local\\native-equipment-visual\\1790331039489677500\\teal-third-person.png",
+      "sha256": "74fc7a9ea73469ef11f1505482c6a28df316f4e482f208cbfb496368b49f2ab3",
+      "scope": "Root-reviewed actual standalone UE5 PIE viewport capture of final uniform palette"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-101312-550-uniforms-01562a5169914133ba09d036bd994a95/copper-third-person.png",
+      "source_file": "C:\\Git\\basketbroom\\.local\\native-equipment-visual\\1790331039489677500\\copper-third-person.png",
+      "sha256": "1688359892ebcb932f7796162976f83eb3bd3fd373860470b308d9b8cdc10df3",
+      "scope": "Root-reviewed actual standalone UE5 PIE viewport capture of final uniform palette"
+    }
+  ],
+  "visual_review": {
+    "status": "accepted_for_prototype",
+    "reviewer": "root assistant, direct inspection of all four actual captures",
+    "source": "Root review reported in the active development session before this archive",
+    "observations": [
+      "Final mint and copper teams are distinct.",
+      "Cloth, boots and piping are visible on the stock mannequin.",
+      "No fallback material was observed in the reviewed captures."
+    ],
+    "limits": [
+      "Owner HUD capture predates current HUD palette rebuild; final HUD colors require newer evidence.",
+      "Stock Quinn mannequin material pass; no new human geometry, face textures or finished wardrobe.",
+      "This visual review covers PIE only; later candidate-specific packaged acceptance is recorded separately.",
+      "Current renderer settings only; enabling skin-cache shaders or ray tracing requires another render check."
+    ]
+  },
+  "package_status": "promoted: Development-20260925-062224-613; candidate-specific bounded acceptance recorded separately",
+  "package_validation_index": "Docs/validation-package-20260925.json",
+  "later_character_work": "Realistic adult Hogwarts-style characters requested after this milestone; in progress and absent from the promoted mannequin build.",
+  "archive_snapshot_note": "The immutable archive index preserves its original pre-promotion snapshot; this tracked index adds the later package acceptance reference."
+}

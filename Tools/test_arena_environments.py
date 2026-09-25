@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import itertools
 from pathlib import Path
 import unittest
 
@@ -48,6 +49,58 @@ class EnvironmentTests(unittest.TestCase):
             self.assertEqual(venue['clearance_audit']['decorative_intrusions'],0)
             self.assertGreater(venue['clearance_audit']['triangles_checked'],50000)
             self.assertTrue(all(i['collision']=='NoCollision' for i in venue['instances']))
+
+    def redwood_manifest(self):
+        manifest=json.loads((ROOT/'SourceArt/Environments/environments_manifest.json').read_text())
+        return next(venue for venue in manifest['venues'] if venue['id']=='redwoods')
+
+    def test_redwood_trunks_and_crowns_stay_paired(self):
+        trees={}
+        for item in self.redwood_manifest()['instances']:
+            if 'tree' in item:trees.setdefault(item['tree']['id'],[]).append(item)
+        self.assertEqual(set(trees),set(range(49)))
+        for pair in trees.values():
+            self.assertEqual(len(pair),2)
+            self.assertEqual({item['label'].rsplit(' ',1)[-1] for item in pair},{'trunk','crown'})
+            for key in ('tree','location','scale','yaw'):
+                self.assertEqual(pair[0][key],pair[1][key])
+
+    def test_selected_redwoods_are_triple_the_actual_previous_size(self):
+        # Captured September 25 pre-giant instance scales, before generation.
+        previous={3:.8958462320321466,8:1.1996948291419465,14:.8836743258438154,
+                  21:1.0468040317924385,26:.9582037839542685,31:1.1645726407348995,
+                  38:.9194666613064418,44:1.043001942008899}
+        trunks=[item for item in self.redwood_manifest()['instances'] if item['label'].endswith(' trunk')]
+        giants=[item for item in trunks if item['tree']['size_class']=='giant']
+        self.assertEqual({item['tree']['id'] for item in giants},set(previous))
+        for item in giants:
+            self.assertEqual(item['tree']['previous_scale'],previous[item['tree']['id']])
+            for scale in item['scale']:self.assertAlmostEqual(scale,3*previous[item['tree']['id']])
+
+    def test_redwood_grove_keeps_size_and_depth_variation(self):
+        venue=self.redwood_manifest()
+        self.assertEqual(venue['forest_scale']['size_counts'],{'original':21,'medium':20,'giant':8})
+        trunks=[item for item in venue['instances'] if item['label'].endswith(' trunk')]
+        self.assertEqual(len(trunks),49)
+        self.assertGreater(len({round(item['scale'][0],2) for item in trunks}),30)
+        giants=[item for item in trunks if item['tree']['size_class']=='giant']
+        self.assertEqual({item['tree']['depth_band'] for item in giants},{'near','middle','deep','side'})
+        for item in trunks:
+            tree=item['tree'];multiplier=tree['scale_multiplier']
+            if tree['size_class']=='medium':self.assertTrue(1.45<=multiplier<=1.8)
+            if tree['size_class']=='original':self.assertEqual(multiplier,1)
+            self.assertAlmostEqual(item['scale'][0],tree['previous_scale']*multiplier)
+
+    def test_whole_redwood_bounds_stay_outside_enlarged_arena(self):
+        venue=self.redwood_manifest();meshes={mesh['name']:mesh for mesh in venue['meshes']}
+        arena=venue['clearance_audit'];minimum=arena['protected_box_min'];maximum=arena['protected_box_max']
+        for item in venue['instances']:
+            if 'tree' not in item:continue
+            bounds=meshes[item['mesh']]['bounds']
+            corners=[builder.transformed(point,item) for point in itertools.product(*zip(*bounds))]
+            self.assertTrue(any(max(point[axis] for point in corners)<minimum[axis]
+                                or min(point[axis] for point in corners)>maximum[axis]
+                                for axis in range(3)),item['label'])
 
     def test_all_source_meshes_match_hashes(self):
         manifest=json.loads((ROOT/'SourceArt/Environments/environments_manifest.json').read_text())

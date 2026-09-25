@@ -1,0 +1,145 @@
+{
+  "date": "2026-09-25",
+  "archived_utc": "2026-09-25T10:31:46.0237699Z",
+  "local_archive": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8",
+  "status": "promoted",
+  "promoted_utc": "2026-09-25T10:29:09.8194659Z",
+  "package_manifest": "C:\\Git\\basketbroom\\.local\\PackageWork\\Development-20260925-062224-613\\package-result.json",
+  "package_manifest_sha256": "87f8797024b796c78bc38a0f53ccb3a3b064ec109410436ad9b20c9f6eecb23b",
+  "launcher_executable": "C:\\Git\\basketbroom\\.local\\Build\\Development-20260925-062224-613\\Windows\\BasketbroomDev.exe",
+  "evidence": [
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/promotion.json",
+      "source_file": ".local/package-promotions/20260925-102909-772-e28cca76c916408493343653ebb20e8d/promotion.json",
+      "sha256": "9150c3f1308fda865ed1cfa4c5144a289d52cb361cb09232b0adf1d3b109b282",
+      "scope": "Actual atomic promotion receipt"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/package-manifest.json",
+      "source_file": "C:\\Git\\basketbroom\\.local\\PackageWork\\Development-20260925-062224-613\\package-result.json",
+      "sha256": "87f8797024b796c78bc38a0f53ccb3a3b064ec109410436ad9b20c9f6eecb23b",
+      "scope": "Exact accepted candidate selected by desktop launcher"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/visual-acceptance.json",
+      "source_file": "C:\\Git\\basketbroom\\.local\\package-visual-acceptance-20260925-062224-613.json",
+      "sha256": "00c826c3b59b5f47ebfa742c6383574bcce7f07864d039a33a6c7d7388b3cdfd",
+      "scope": "Root direct packaged review; three maps render/lobby, live play only Redrock and Redwoods"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/previous-latest-package.json",
+      "source_file": "C:\\Git\\basketbroom\\.local\\package-promotions\\20260925-102909-772-e28cca76c916408493343653ebb20e8d\\previous-latest-package.json",
+      "sha256": "9280fd1243768ba0d119ece0b50ea1d4a8444973bd48c361ddd8d7e6bd8a70ad",
+      "scope": "Previous desktop pointer retained as fallback"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/network-redrock.json",
+      "source_file": "C:\\Git\\basketbroom\\.local\\packaged-network\\20260925-062355-356-fe818321\\result.json",
+      "sha256": "367812ce26598628147d6178da94a27bdd9f3c6f4b259576d3a6420afe159306",
+      "scope": "Candidate-specific loopback connection/join/map travel only"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/network-redwoods.json",
+      "source_file": "C:\\Git\\basketbroom\\.local\\packaged-network\\20260925-062355-530-125f81a9\\result.json",
+      "sha256": "41e44437246b3a70def7d5d16065828ca861fdc3a19aa801e64b89d00f02015f",
+      "scope": "Candidate-specific loopback connection/join/map travel only"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/visual-map-0.log",
+      "source_file": ".local/packaged-giants-redwoods-visual.log",
+      "sha256": "0b2f293f47aed93243dacee445ba2d33386fb283fa0c12f81c5efa38c5a848a1",
+      "scope": "Supporting Redwoods packaged log; not independent visual proof"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/visual-map-1.log",
+      "source_file": ".local/packaged-giants-redrock-visual.log",
+      "sha256": "000e9a07ec006f587d6d68fef3ad1119e3c8fa47a54c690e46c3fb4d3e021a36",
+      "scope": "Supporting Redrock packaged log; not independent visual proof"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/BuildCookRun.log",
+      "source_file": "C:\\Git\\basketbroom\\.local\\PackageWork\\Development-20260925-062224-613\\BuildCookRun.log",
+      "sha256": "e77ff1c96f99152fed93fc82d2ed956711dba52ca071e9e431e48fe851168381",
+      "scope": "Successful build/cook/archive with AutomationTool exit code 0"
+    }
+  ],
+  "network_results": [
+    {
+      "arena": "/Basketbroom/Maps/BB_Redrock",
+      "requested_variant": "basketbroom",
+      "status": "passed",
+      "evidence": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/network-redrock.json",
+      "excludes": [
+        "Variant activation/replication",
+        "Role selection",
+        "Score replication",
+        "Remote connectivity",
+        "Latency/load",
+        "Full regulation gameplay"
+      ]
+    },
+    {
+      "arena": "/Basketbroom/Maps/BB_Redwoods",
+      "requested_variant": "bloodbroom",
+      "status": "passed",
+      "evidence": ".local/validation-archive/20260925-103034-973-promoted-package-38071aafdca64029953553df1216f7d8/network-redwoods.json",
+      "excludes": [
+        "Variant activation/replication",
+        "Role selection",
+        "Score replication",
+        "Remote connectivity",
+        "Latency/load",
+        "Full regulation gameplay"
+      ]
+    }
+  ],
+  "map_acceptance": [
+    {
+      "map": "/Basketbroom/Maps/BB_Regulation",
+      "render_and_lobby": "passed",
+      "live_play": "not_verified",
+      "reason": "Live-start attempt was blocked by concurrent user input; no classic live-play claim"
+    },
+    {
+      "map": "/Basketbroom/Maps/BB_Redrock",
+      "render_and_lobby": "passed",
+      "live_play": "observed",
+      "observations": [
+        "Regulation start and running clock",
+        "AI score 69",
+        "Spellbook opened",
+        "Cliff alcove and adobe structures rendered"
+      ]
+    },
+    {
+      "map": "/Basketbroom/Maps/BB_Redwoods",
+      "render_and_lobby": "passed",
+      "live_play": "observed",
+      "observations": [
+        "Bloodbroom start and running clock",
+        "Live ball custody and AI score 69",
+        "Pause journal, PlayStation symbols, L2 brake and R2 boost prompts",
+        "Resume",
+        "Mixed giant, medium and smaller trees with coastal opening"
+      ]
+    }
+  ],
+  "visual_observations": [
+    "All three candidate maps rendered enlarged netted court, goals, equipment, riders and team uniforms without visible fallback materials",
+    "Redwoods: visibly mixed giant, medium and smaller trees; coastal opening retained; Bloodbroom label, lobby start, live ball custody, AI score69, runningclock, pausejournal and resume verified",
+    "Pause journal displayed PlayStation face-button symbols, L2 brake, R2 throttle/earned boost and mint accents",
+    "Redrock: cliff alcove and adobe structures rendered; regulation lobby entered live play, AI score69, spellbook opened",
+    "Classic: original twilight venue, enlarged netted arena, mannequin uniforms and lobby rendered; live-start input blocked by concurrent user input, so classic live play not claimed"
+  ],
+  "limits": [
+    "Prototype geometry and mannequin uniforms, not final AAA art",
+    "No frame-rate benchmark or physical-controller retest",
+    "No complete regulation match, remote multiplayer or native Hogwarts match integration certified",
+    "Earlier full gameplay tests are separately archived; not relabeled as package tests",
+    "Promoted package still uses stock Quinn mannequin geometry with original uniform materials.",
+    "Realistic adult Hogwarts-style characters are newly requested work in progress; they are not included or accepted here.",
+    "Earlier archived PIE gameplay checks are separate from packaged checks.",
+    "Classic packaged visual log was still open by the running game; it remains referenced in the visual acceptance receipt and was not copied into this archive."
+  ],
+  "previous_pointer_backup": "C:\\Git\\basketbroom\\.local\\package-promotions\\20260925-102909-772-e28cca76c916408493343653ebb20e8d\\previous-latest-package.json"
+}

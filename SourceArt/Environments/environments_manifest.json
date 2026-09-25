@@ -1107,7 +1107,14 @@
           ],
           "yaw": 25.92613612049018,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 0,
+            "size_class": "original",
+            "previous_scale": 1.218323785257776,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 00 crown",
@@ -1125,7 +1132,14 @@
           ],
           "yaw": 25.92613612049018,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 0,
+            "size_class": "original",
+            "previous_scale": 1.218323785257776,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 01 trunk",
@@ -1137,13 +1151,20 @@
             -500
           ],
           "scale": [
-            0.9036482790720253,
-            0.9036482790720253,
-            0.9036482790720253
+            1.4617683754463258,
+            1.4617683754463258,
+            1.4617683754463258
           ],
           "yaw": 280.2674546150807,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 1,
+            "size_class": "medium",
+            "previous_scale": 0.9036482790720253,
+            "scale_multiplier": 1.6176297894878362,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 01 crown",
@@ -1155,13 +1176,20 @@
             -500
           ],
           "scale": [
-            0.9036482790720253,
-            0.9036482790720253,
-            0.9036482790720253
+            1.4617683754463258,
+            1.4617683754463258,
+            1.4617683754463258
           ],
           "yaw": 280.2674546150807,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 1,
+            "size_class": "medium",
+            "previous_scale": 0.9036482790720253,
+            "scale_multiplier": 1.6176297894878362,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 02 trunk",
@@ -1173,13 +1201,20 @@
             -500
           ],
           "scale": [
-            1.1780672441647961,
-            1.1780672441647961,
-            1.1780672441647961
+            2.1073140572863167,
+            2.1073140572863167,
+            2.1073140572863167
           ],
           "yaw": 28.514877757987605,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 2,
+            "size_class": "medium",
+            "previous_scale": 1.1780672441647961,
+            "scale_multiplier": 1.7887892798346332,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 02 crown",
@@ -1191,13 +1226,20 @@
             -500
           ],
           "scale": [
-            1.1780672441647961,
-            1.1780672441647961,
-            1.1780672441647961
+            2.1073140572863167,
+            2.1073140572863167,
+            2.1073140572863167
           ],
           "yaw": 28.514877757987605,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 2,
+            "size_class": "medium",
+            "previous_scale": 1.1780672441647961,
+            "scale_multiplier": 1.7887892798346332,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 03 trunk",
@@ -1209,13 +1251,20 @@
             -500
           ],
           "scale": [
-            0.8958462320321466,
-            0.8958462320321466,
-            0.8958462320321466
+            2.68753869609644,
+            2.68753869609644,
+            2.68753869609644
           ],
           "yaw": 113.79781923998148,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 3,
+            "size_class": "giant",
+            "previous_scale": 0.8958462320321466,
+            "scale_multiplier": 3.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 03 crown",
@@ -1227,13 +1276,20 @@
             -500
           ],
           "scale": [
-            0.8958462320321466,
-            0.8958462320321466,
-            0.8958462320321466
+            2.68753869609644,
+            2.68753869609644,
+            2.68753869609644
           ],
           "yaw": 113.79781923998148,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 3,
+            "size_class": "giant",
+            "previous_scale": 0.8958462320321466,
+            "scale_multiplier": 3.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 04 trunk",
@@ -1251,7 +1307,14 @@
           ],
           "yaw": 130.33114900763712,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 4,
+            "size_class": "original",
+            "previous_scale": 1.1833458084563262,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 04 crown",
@@ -1269,7 +1332,14 @@
           ],
           "yaw": 130.33114900763712,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 4,
+            "size_class": "original",
+            "previous_scale": 1.1833458084563262,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 05 trunk",
@@ -1281,13 +1351,20 @@
             -500
           ],
           "scale": [
-            0.9995513159720726,
-            0.9995513159720726,
-            0.9995513159720726
+            1.7530607654148154,
+            1.7530607654148154,
+            1.7530607654148154
           ],
           "yaw": 54.81524063329,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 5,
+            "size_class": "medium",
+            "previous_scale": 0.9995513159720726,
+            "scale_multiplier": 1.7538476888602244,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 05 crown",
@@ -1299,13 +1376,20 @@
             -500
           ],
           "scale": [
-            0.9995513159720726,
-            0.9995513159720726,
-            0.9995513159720726
+            1.7530607654148154,
+            1.7530607654148154,
+            1.7530607654148154
           ],
           "yaw": 54.81524063329,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 5,
+            "size_class": "medium",
+            "previous_scale": 0.9995513159720726,
+            "scale_multiplier": 1.7538476888602244,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 06 trunk",
@@ -1317,13 +1401,20 @@
             -500
           ],
           "scale": [
-            1.2679912512554514,
-            1.2679912512554514,
-            1.2679912512554514
+            1.9718719673911207,
+            1.9718719673911207,
+            1.9718719673911207
           ],
           "yaw": 163.67074398761144,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 6,
+            "size_class": "medium",
+            "previous_scale": 1.2679912512554514,
+            "scale_multiplier": 1.555114804963165,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 06 crown",
@@ -1335,13 +1426,20 @@
             -500
           ],
           "scale": [
-            1.2679912512554514,
-            1.2679912512554514,
-            1.2679912512554514
+            1.9718719673911207,
+            1.9718719673911207,
+            1.9718719673911207
           ],
           "yaw": 163.67074398761144,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 6,
+            "size_class": "medium",
+            "previous_scale": 1.2679912512554514,
+            "scale_multiplier": 1.555114804963165,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 07 trunk",
@@ -1359,7 +1457,14 @@
           ],
           "yaw": 204.10326828383555,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 7,
+            "size_class": "original",
+            "previous_scale": 0.8877602679449546,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 07 crown",
@@ -1377,7 +1482,14 @@
           ],
           "yaw": 204.10326828383555,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 7,
+            "size_class": "original",
+            "previous_scale": 0.8877602679449546,
+            "scale_multiplier": 1.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 08 trunk",
@@ -1389,13 +1501,20 @@
             -500
           ],
           "scale": [
-            1.1996948291419465,
-            1.1996948291419465,
-            1.1996948291419465
+            3.5990844874258396,
+            3.5990844874258396,
+            3.5990844874258396
           ],
           "yaw": 234.02166408248826,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 8,
+            "size_class": "giant",
+            "previous_scale": 1.1996948291419465,
+            "scale_multiplier": 3.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 08 crown",
@@ -1407,13 +1526,20 @@
             -500
           ],
           "scale": [
-            1.1996948291419465,
-            1.1996948291419465,
-            1.1996948291419465
+            3.5990844874258396,
+            3.5990844874258396,
+            3.5990844874258396
           ],
           "yaw": 234.02166408248826,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 8,
+            "size_class": "giant",
+            "previous_scale": 1.1996948291419465,
+            "scale_multiplier": 3.0,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 09 trunk",
@@ -1425,13 +1551,20 @@
             -500
           ],
           "scale": [
-            1.09198848393519,
-            1.09198848393519,
-            1.09198848393519
+            1.82361841344393,
+            1.82361841344393,
+            1.82361841344393
           ],
           "yaw": 141.12132310066087,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 9,
+            "size_class": "medium",
+            "previous_scale": 1.09198848393519,
+            "scale_multiplier": 1.6699978436330858,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 09 crown",
@@ -1443,13 +1576,20 @@
             -500
           ],
           "scale": [
-            1.09198848393519,
-            1.09198848393519,
-            1.09198848393519
+            1.82361841344393,
+            1.82361841344393,
+            1.82361841344393
           ],
           "yaw": 141.12132310066087,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 9,
+            "size_class": "medium",
+            "previous_scale": 1.09198848393519,
+            "scale_multiplier": 1.6699978436330858,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 10 trunk",
@@ -1461,13 +1601,20 @@
             -500
           ],
           "scale": [
-            1.1493045861577127,
-            1.1493045861577127,
-            1.1493045861577127
+            1.9840488609988576,
+            1.9840488609988576,
+            1.9840488609988576
           ],
           "yaw": 142.06706524415998,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 10,
+            "size_class": "medium",
+            "previous_scale": 1.1493045861577127,
+            "scale_multiplier": 1.7263037883036843,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 10 crown",
@@ -1479,13 +1626,20 @@
             -500
           ],
           "scale": [
-            1.1493045861577127,
-            1.1493045861577127,
-            1.1493045861577127
+            1.9840488609988576,
+            1.9840488609988576,
+            1.9840488609988576
           ],
           "yaw": 142.06706524415998,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 10,
+            "size_class": "medium",
+            "previous_scale": 1.1493045861577127,
+            "scale_multiplier": 1.7263037883036843,
+            "depth_band": "near"
+          }
         },
         {
           "label": "redwoods / old growth 11 trunk",
@@ -1503,7 +1657,14 @@
           ],
           "yaw": 189.47969543670584,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 11,
+            "size_class": "original",
+            "previous_scale": 1.0675484124554036,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 11 crown",
@@ -1521,7 +1682,14 @@
           ],
           "yaw": 189.47969543670584,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 11,
+            "size_class": "original",
+            "previous_scale": 1.0675484124554036,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 12 trunk",
@@ -1539,7 +1707,14 @@
           ],
           "yaw": 193.2827861555541,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 12,
+            "size_class": "original",
+            "previous_scale": 1.0440240625798372,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 12 crown",
@@ -1557,7 +1732,14 @@
           ],
           "yaw": 193.2827861555541,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 12,
+            "size_class": "original",
+            "previous_scale": 1.0440240625798372,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 13 trunk",
@@ -1569,13 +1751,20 @@
             -500
           ],
           "scale": [
-            1.2504340742879727,
-            1.2504340742879727,
-            1.2504340742879727
+            2.0085564248138414,
+            2.0085564248138414,
+            2.0085564248138414
           ],
           "yaw": 357.00431466945423,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 13,
+            "size_class": "medium",
+            "previous_scale": 1.2504340742879727,
+            "scale_multiplier": 1.6062873414238668,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 13 crown",
@@ -1587,13 +1776,20 @@
             -500
           ],
           "scale": [
-            1.2504340742879727,
-            1.2504340742879727,
-            1.2504340742879727
+            2.0085564248138414,
+            2.0085564248138414,
+            2.0085564248138414
           ],
           "yaw": 357.00431466945423,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 13,
+            "size_class": "medium",
+            "previous_scale": 1.2504340742879727,
+            "scale_multiplier": 1.6062873414238668,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 14 trunk",
@@ -1605,13 +1801,20 @@
             -500
           ],
           "scale": [
-            0.8836743258438154,
-            0.8836743258438154,
-            0.8836743258438154
+            2.6510229775314462,
+            2.6510229775314462,
+            2.6510229775314462
           ],
           "yaw": 194.7994667455145,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 14,
+            "size_class": "giant",
+            "previous_scale": 0.8836743258438154,
+            "scale_multiplier": 3.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 14 crown",
@@ -1623,13 +1826,20 @@
             -500
           ],
           "scale": [
-            0.8836743258438154,
-            0.8836743258438154,
-            0.8836743258438154
+            2.6510229775314462,
+            2.6510229775314462,
+            2.6510229775314462
           ],
           "yaw": 194.7994667455145,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 14,
+            "size_class": "giant",
+            "previous_scale": 0.8836743258438154,
+            "scale_multiplier": 3.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 15 trunk",
@@ -1647,7 +1857,14 @@
           ],
           "yaw": 3.990887031860364,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 15,
+            "size_class": "original",
+            "previous_scale": 0.9344684147389428,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 15 crown",
@@ -1665,7 +1882,14 @@
           ],
           "yaw": 3.990887031860364,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 15,
+            "size_class": "original",
+            "previous_scale": 0.9344684147389428,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 16 trunk",
@@ -1683,7 +1907,14 @@
           ],
           "yaw": 74.0122829098522,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 16,
+            "size_class": "original",
+            "previous_scale": 1.0635780123225025,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 16 crown",
@@ -1701,7 +1932,14 @@
           ],
           "yaw": 74.0122829098522,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 16,
+            "size_class": "original",
+            "previous_scale": 1.0635780123225025,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 17 trunk",
@@ -1713,13 +1951,20 @@
             -500
           ],
           "scale": [
-            1.0720750968938806,
-            1.0720750968938806,
-            1.0720750968938806
+            1.7063156989618122,
+            1.7063156989618122,
+            1.7063156989618122
           ],
           "yaw": 18.45870575706009,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 17,
+            "size_class": "medium",
+            "previous_scale": 1.0720750968938806,
+            "scale_multiplier": 1.5916009092138366,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 17 crown",
@@ -1731,13 +1976,20 @@
             -500
           ],
           "scale": [
-            1.0720750968938806,
-            1.0720750968938806,
-            1.0720750968938806
+            1.7063156989618122,
+            1.7063156989618122,
+            1.7063156989618122
           ],
           "yaw": 18.45870575706009,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 17,
+            "size_class": "medium",
+            "previous_scale": 1.0720750968938806,
+            "scale_multiplier": 1.5916009092138366,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 18 trunk",
@@ -1749,13 +2001,20 @@
             -500
           ],
           "scale": [
-            1.2261143359183007,
-            1.2261143359183007,
-            1.2261143359183007
+            1.9357260903356448,
+            1.9357260903356448,
+            1.9357260903356448
           ],
           "yaw": 35.596537226046074,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 18,
+            "size_class": "medium",
+            "previous_scale": 1.2261143359183007,
+            "scale_multiplier": 1.578748436120257,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 18 crown",
@@ -1767,13 +2026,20 @@
             -500
           ],
           "scale": [
-            1.2261143359183007,
-            1.2261143359183007,
-            1.2261143359183007
+            1.9357260903356448,
+            1.9357260903356448,
+            1.9357260903356448
           ],
           "yaw": 35.596537226046074,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 18,
+            "size_class": "medium",
+            "previous_scale": 1.2261143359183007,
+            "scale_multiplier": 1.578748436120257,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 19 trunk",
@@ -1791,7 +2057,14 @@
           ],
           "yaw": 158.75760069562537,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 19,
+            "size_class": "original",
+            "previous_scale": 0.9633104466247724,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 19 crown",
@@ -1809,7 +2082,14 @@
           ],
           "yaw": 158.75760069562537,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 19,
+            "size_class": "original",
+            "previous_scale": 0.9633104466247724,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 20 trunk",
@@ -1827,7 +2107,14 @@
           ],
           "yaw": 130.05721701674284,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 20,
+            "size_class": "original",
+            "previous_scale": 1.1761791177574898,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 20 crown",
@@ -1845,7 +2132,14 @@
           ],
           "yaw": 130.05721701674284,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 20,
+            "size_class": "original",
+            "previous_scale": 1.1761791177574898,
+            "scale_multiplier": 1.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 21 trunk",
@@ -1857,13 +2151,20 @@
             -500
           ],
           "scale": [
-            1.0468040317924385,
-            1.0468040317924385,
-            1.0468040317924385
+            3.1404120953773154,
+            3.1404120953773154,
+            3.1404120953773154
           ],
           "yaw": 57.094103072908226,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 21,
+            "size_class": "giant",
+            "previous_scale": 1.0468040317924385,
+            "scale_multiplier": 3.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 21 crown",
@@ -1875,13 +2176,20 @@
             -500
           ],
           "scale": [
-            1.0468040317924385,
-            1.0468040317924385,
-            1.0468040317924385
+            3.1404120953773154,
+            3.1404120953773154,
+            3.1404120953773154
           ],
           "yaw": 57.094103072908226,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 21,
+            "size_class": "giant",
+            "previous_scale": 1.0468040317924385,
+            "scale_multiplier": 3.0,
+            "depth_band": "middle"
+          }
         },
         {
           "label": "redwoods / old growth 22 trunk",
@@ -1893,13 +2201,20 @@
             -500
           ],
           "scale": [
-            0.9246217782493742,
-            0.9246217782493742,
-            0.9246217782493742
+            1.4594573137648943,
+            1.4594573137648943,
+            1.4594573137648943
           ],
           "yaw": 118.2507163715403,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 22,
+            "size_class": "medium",
+            "previous_scale": 0.9246217782493742,
+            "scale_multiplier": 1.578437095141915,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 22 crown",
@@ -1911,13 +2226,20 @@
             -500
           ],
           "scale": [
-            0.9246217782493742,
-            0.9246217782493742,
-            0.9246217782493742
+            1.4594573137648943,
+            1.4594573137648943,
+            1.4594573137648943
           ],
           "yaw": 118.2507163715403,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 22,
+            "size_class": "medium",
+            "previous_scale": 0.9246217782493742,
+            "scale_multiplier": 1.578437095141915,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 23 trunk",
@@ -1935,7 +2257,14 @@
           ],
           "yaw": 73.98457534420987,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 23,
+            "size_class": "original",
+            "previous_scale": 0.9463535815603334,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 23 crown",
@@ -1953,7 +2282,14 @@
           ],
           "yaw": 73.98457534420987,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 23,
+            "size_class": "original",
+            "previous_scale": 0.9463535815603334,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 24 trunk",
@@ -1971,7 +2307,14 @@
           ],
           "yaw": 204.34114684965886,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 24,
+            "size_class": "original",
+            "previous_scale": 1.1028765609356634,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 24 crown",
@@ -1989,7 +2332,14 @@
           ],
           "yaw": 204.34114684965886,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 24,
+            "size_class": "original",
+            "previous_scale": 1.1028765609356634,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 25 trunk",
@@ -2001,13 +2351,20 @@
             -500
           ],
           "scale": [
-            1.1554314425635668,
-            1.1554314425635668,
-            1.1554314425635668
+            1.69517219108043,
+            1.69517219108043,
+            1.69517219108043
           ],
           "yaw": 248.2385130027705,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 25,
+            "size_class": "medium",
+            "previous_scale": 1.1554314425635668,
+            "scale_multiplier": 1.4671335127589529,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 25 crown",
@@ -2019,13 +2376,20 @@
             -500
           ],
           "scale": [
-            1.1554314425635668,
-            1.1554314425635668,
-            1.1554314425635668
+            1.69517219108043,
+            1.69517219108043,
+            1.69517219108043
           ],
           "yaw": 248.2385130027705,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 25,
+            "size_class": "medium",
+            "previous_scale": 1.1554314425635668,
+            "scale_multiplier": 1.4671335127589529,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 26 trunk",
@@ -2037,13 +2401,20 @@
             -500
           ],
           "scale": [
-            0.9582037839542685,
-            0.9582037839542685,
-            0.9582037839542685
+            2.8746113518628054,
+            2.8746113518628054,
+            2.8746113518628054
           ],
           "yaw": 292.40138058070715,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 26,
+            "size_class": "giant",
+            "previous_scale": 0.9582037839542685,
+            "scale_multiplier": 3.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 26 crown",
@@ -2055,13 +2426,20 @@
             -500
           ],
           "scale": [
-            0.9582037839542685,
-            0.9582037839542685,
-            0.9582037839542685
+            2.8746113518628054,
+            2.8746113518628054,
+            2.8746113518628054
           ],
           "yaw": 292.40138058070715,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 26,
+            "size_class": "giant",
+            "previous_scale": 0.9582037839542685,
+            "scale_multiplier": 3.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 27 trunk",
@@ -2079,7 +2457,14 @@
           ],
           "yaw": 82.148357347434,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 27,
+            "size_class": "original",
+            "previous_scale": 0.9287951298230942,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 27 crown",
@@ -2097,7 +2482,14 @@
           ],
           "yaw": 82.148357347434,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 27,
+            "size_class": "original",
+            "previous_scale": 0.9287951298230942,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 28 trunk",
@@ -2115,7 +2507,14 @@
           ],
           "yaw": 11.849875136469459,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 28,
+            "size_class": "original",
+            "previous_scale": 0.9499971234642175,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 28 crown",
@@ -2133,7 +2532,14 @@
           ],
           "yaw": 11.849875136469459,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 28,
+            "size_class": "original",
+            "previous_scale": 0.9499971234642175,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 29 trunk",
@@ -2145,13 +2551,20 @@
             -500
           ],
           "scale": [
-            1.040406170957899,
-            1.040406170957899,
-            1.040406170957899
+            1.5935496393517397,
+            1.5935496393517397,
+            1.5935496393517397
           ],
           "yaw": 57.80810876472956,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 29,
+            "size_class": "medium",
+            "previous_scale": 1.040406170957899,
+            "scale_multiplier": 1.5316610799074397,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 29 crown",
@@ -2163,13 +2576,20 @@
             -500
           ],
           "scale": [
-            1.040406170957899,
-            1.040406170957899,
-            1.040406170957899
+            1.5935496393517397,
+            1.5935496393517397,
+            1.5935496393517397
           ],
           "yaw": 57.80810876472956,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 29,
+            "size_class": "medium",
+            "previous_scale": 1.040406170957899,
+            "scale_multiplier": 1.5316610799074397,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 30 trunk",
@@ -2181,13 +2601,20 @@
             -500
           ],
           "scale": [
-            1.1669660454994701,
-            1.1669660454994701,
-            1.1669660454994701
+            1.6998953962297316,
+            1.6998953962297316,
+            1.6998953962297316
           ],
           "yaw": 79.34639363443112,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 30,
+            "size_class": "medium",
+            "previous_scale": 1.1669660454994701,
+            "scale_multiplier": 1.4566793976444823,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 30 crown",
@@ -2199,13 +2626,20 @@
             -500
           ],
           "scale": [
-            1.1669660454994701,
-            1.1669660454994701,
-            1.1669660454994701
+            1.6998953962297316,
+            1.6998953962297316,
+            1.6998953962297316
           ],
           "yaw": 79.34639363443112,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 30,
+            "size_class": "medium",
+            "previous_scale": 1.1669660454994701,
+            "scale_multiplier": 1.4566793976444823,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 31 trunk",
@@ -2217,13 +2651,20 @@
             -500
           ],
           "scale": [
-            1.1645726407348995,
-            1.1645726407348995,
-            1.1645726407348995
+            3.4937179222046986,
+            3.4937179222046986,
+            3.4937179222046986
           ],
           "yaw": 215.70831387691533,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 31,
+            "size_class": "giant",
+            "previous_scale": 1.1645726407348995,
+            "scale_multiplier": 3.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 31 crown",
@@ -2235,13 +2676,20 @@
             -500
           ],
           "scale": [
-            1.1645726407348995,
-            1.1645726407348995,
-            1.1645726407348995
+            3.4937179222046986,
+            3.4937179222046986,
+            3.4937179222046986
           ],
           "yaw": 215.70831387691533,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 31,
+            "size_class": "giant",
+            "previous_scale": 1.1645726407348995,
+            "scale_multiplier": 3.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 32 trunk",
@@ -2259,7 +2707,14 @@
           ],
           "yaw": 257.5320785992255,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 32,
+            "size_class": "original",
+            "previous_scale": 1.2473457365778788,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 32 crown",
@@ -2277,7 +2732,14 @@
           ],
           "yaw": 257.5320785992255,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 32,
+            "size_class": "original",
+            "previous_scale": 1.2473457365778788,
+            "scale_multiplier": 1.0,
+            "depth_band": "deep"
+          }
         },
         {
           "label": "redwoods / old growth 33 trunk",
@@ -2289,13 +2751,20 @@
             -500
           ],
           "scale": [
-            0.9349162486460033,
-            0.9349162486460033,
-            0.9349162486460033
+            1.6139139193809737,
+            1.6139139193809737,
+            1.6139139193809737
           ],
           "yaw": 304.977741455609,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 33,
+            "size_class": "medium",
+            "previous_scale": 0.9349162486460033,
+            "scale_multiplier": 1.7262657716328407,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 33 crown",
@@ -2307,13 +2776,20 @@
             -500
           ],
           "scale": [
-            0.9349162486460033,
-            0.9349162486460033,
-            0.9349162486460033
+            1.6139139193809737,
+            1.6139139193809737,
+            1.6139139193809737
           ],
           "yaw": 304.977741455609,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 33,
+            "size_class": "medium",
+            "previous_scale": 0.9349162486460033,
+            "scale_multiplier": 1.7262657716328407,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 34 trunk",
@@ -2325,13 +2801,20 @@
             -500
           ],
           "scale": [
-            1.0667280206956962,
-            1.0667280206956962,
-            1.0667280206956962
+            1.6171277470248777,
+            1.6171277470248777,
+            1.6171277470248777
           ],
           "yaw": 38.647574987447165,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 34,
+            "size_class": "medium",
+            "previous_scale": 1.0667280206956962,
+            "scale_multiplier": 1.5159700651438996,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 34 crown",
@@ -2343,13 +2826,20 @@
             -500
           ],
           "scale": [
-            1.0667280206956962,
-            1.0667280206956962,
-            1.0667280206956962
+            1.6171277470248777,
+            1.6171277470248777,
+            1.6171277470248777
           ],
           "yaw": 38.647574987447165,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 34,
+            "size_class": "medium",
+            "previous_scale": 1.0667280206956962,
+            "scale_multiplier": 1.5159700651438996,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 35 trunk",
@@ -2367,7 +2857,14 @@
           ],
           "yaw": 346.9410432425454,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 35,
+            "size_class": "original",
+            "previous_scale": 0.9349643799819198,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 35 crown",
@@ -2385,7 +2882,14 @@
           ],
           "yaw": 346.9410432425454,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 35,
+            "size_class": "original",
+            "previous_scale": 0.9349643799819198,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 36 trunk",
@@ -2403,7 +2907,14 @@
           ],
           "yaw": 139.2836578114121,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 36,
+            "size_class": "original",
+            "previous_scale": 1.1926640891348623,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 36 crown",
@@ -2421,7 +2932,14 @@
           ],
           "yaw": 139.2836578114121,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 36,
+            "size_class": "original",
+            "previous_scale": 1.1926640891348623,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 37 trunk",
@@ -2433,13 +2951,20 @@
             -500
           ],
           "scale": [
-            1.265194221746766,
-            1.265194221746766,
-            1.265194221746766
+            2.2619397873496516,
+            2.2619397873496516,
+            2.2619397873496516
           ],
           "yaw": 5.380559749225884,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 37,
+            "size_class": "medium",
+            "previous_scale": 1.265194221746766,
+            "scale_multiplier": 1.7878202006224373,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 37 crown",
@@ -2451,13 +2976,20 @@
             -500
           ],
           "scale": [
-            1.265194221746766,
-            1.265194221746766,
-            1.265194221746766
+            2.2619397873496516,
+            2.2619397873496516,
+            2.2619397873496516
           ],
           "yaw": 5.380559749225884,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 37,
+            "size_class": "medium",
+            "previous_scale": 1.265194221746766,
+            "scale_multiplier": 1.7878202006224373,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 38 trunk",
@@ -2469,13 +3001,20 @@
             -500
           ],
           "scale": [
-            0.9194666613064418,
-            0.9194666613064418,
-            0.9194666613064418
+            2.7583999839193254,
+            2.7583999839193254,
+            2.7583999839193254
           ],
           "yaw": 220.53077523725915,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 38,
+            "size_class": "giant",
+            "previous_scale": 0.9194666613064418,
+            "scale_multiplier": 3.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 38 crown",
@@ -2487,13 +3026,20 @@
             -500
           ],
           "scale": [
-            0.9194666613064418,
-            0.9194666613064418,
-            0.9194666613064418
+            2.7583999839193254,
+            2.7583999839193254,
+            2.7583999839193254
           ],
           "yaw": 220.53077523725915,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 38,
+            "size_class": "giant",
+            "previous_scale": 0.9194666613064418,
+            "scale_multiplier": 3.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 39 trunk",
@@ -2511,7 +3057,14 @@
           ],
           "yaw": 323.41006754862957,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 39,
+            "size_class": "original",
+            "previous_scale": 1.0325669745426038,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 39 crown",
@@ -2529,7 +3082,14 @@
           ],
           "yaw": 323.41006754862957,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 39,
+            "size_class": "original",
+            "previous_scale": 1.0325669745426038,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 40 trunk",
@@ -2547,7 +3107,14 @@
           ],
           "yaw": 239.23387905214943,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 40,
+            "size_class": "original",
+            "previous_scale": 0.9318089418111618,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 40 crown",
@@ -2565,7 +3132,14 @@
           ],
           "yaw": 239.23387905214943,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 40,
+            "size_class": "original",
+            "previous_scale": 0.9318089418111618,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 41 trunk",
@@ -2577,13 +3151,20 @@
             -500
           ],
           "scale": [
-            0.9501234030018424,
-            0.9501234030018424,
-            0.9501234030018424
+            1.5520888072107966,
+            1.5520888072107966,
+            1.5520888072107966
           ],
           "yaw": 171.67250132418192,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 41,
+            "size_class": "medium",
+            "previous_scale": 0.9501234030018424,
+            "scale_multiplier": 1.6335654950789449,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 41 crown",
@@ -2595,13 +3176,20 @@
             -500
           ],
           "scale": [
-            0.9501234030018424,
-            0.9501234030018424,
-            0.9501234030018424
+            1.5520888072107966,
+            1.5520888072107966,
+            1.5520888072107966
           ],
           "yaw": 171.67250132418192,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 41,
+            "size_class": "medium",
+            "previous_scale": 0.9501234030018424,
+            "scale_multiplier": 1.6335654950789449,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 42 trunk",
@@ -2613,13 +3201,20 @@
             -500
           ],
           "scale": [
-            0.9208727096681564,
-            0.9208727096681564,
-            0.9208727096681564
+            1.646457837011605,
+            1.646457837011605,
+            1.646457837011605
           ],
           "yaw": 125.29067940181726,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 42,
+            "size_class": "medium",
+            "previous_scale": 0.9208727096681564,
+            "scale_multiplier": 1.7879320558917626,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 42 crown",
@@ -2631,13 +3226,20 @@
             -500
           ],
           "scale": [
-            0.9208727096681564,
-            0.9208727096681564,
-            0.9208727096681564
+            1.646457837011605,
+            1.646457837011605,
+            1.646457837011605
           ],
           "yaw": 125.29067940181726,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 42,
+            "size_class": "medium",
+            "previous_scale": 0.9208727096681564,
+            "scale_multiplier": 1.7879320558917626,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 43 trunk",
@@ -2655,7 +3257,14 @@
           ],
           "yaw": 164.88189408218375,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 43,
+            "size_class": "original",
+            "previous_scale": 1.2431289115828164,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 43 crown",
@@ -2673,7 +3282,14 @@
           ],
           "yaw": 164.88189408218375,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 43,
+            "size_class": "original",
+            "previous_scale": 1.2431289115828164,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 44 trunk",
@@ -2685,13 +3301,20 @@
             -500
           ],
           "scale": [
-            1.043001942008899,
-            1.043001942008899,
-            1.043001942008899
+            3.129005826026697,
+            3.129005826026697,
+            3.129005826026697
           ],
           "yaw": 236.24930570089978,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 44,
+            "size_class": "giant",
+            "previous_scale": 1.043001942008899,
+            "scale_multiplier": 3.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 44 crown",
@@ -2703,13 +3326,20 @@
             -500
           ],
           "scale": [
-            1.043001942008899,
-            1.043001942008899,
-            1.043001942008899
+            3.129005826026697,
+            3.129005826026697,
+            3.129005826026697
           ],
           "yaw": 236.24930570089978,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 44,
+            "size_class": "giant",
+            "previous_scale": 1.043001942008899,
+            "scale_multiplier": 3.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 45 trunk",
@@ -2721,13 +3351,20 @@
             -500
           ],
           "scale": [
-            1.2254500075095884,
-            1.2254500075095884,
-            1.2254500075095884
+            1.923782988587929,
+            1.923782988587929,
+            1.923782988587929
           ],
           "yaw": 342.2878602852786,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 45,
+            "size_class": "medium",
+            "previous_scale": 1.2254500075095884,
+            "scale_multiplier": 1.5698584004234677,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 45 crown",
@@ -2739,13 +3376,20 @@
             -500
           ],
           "scale": [
-            1.2254500075095884,
-            1.2254500075095884,
-            1.2254500075095884
+            1.923782988587929,
+            1.923782988587929,
+            1.923782988587929
           ],
           "yaw": 342.2878602852786,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 45,
+            "size_class": "medium",
+            "previous_scale": 1.2254500075095884,
+            "scale_multiplier": 1.5698584004234677,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 46 trunk",
@@ -2757,13 +3401,20 @@
             -500
           ],
           "scale": [
-            0.8815631537702093,
-            0.8815631537702093,
-            0.8815631537702093
+            1.465631753387241,
+            1.465631753387241,
+            1.465631753387241
           ],
           "yaw": 87.7558634569752,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 46,
+            "size_class": "medium",
+            "previous_scale": 0.8815631537702093,
+            "scale_multiplier": 1.6625374451270187,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 46 crown",
@@ -2775,13 +3426,20 @@
             -500
           ],
           "scale": [
-            0.8815631537702093,
-            0.8815631537702093,
-            0.8815631537702093
+            1.465631753387241,
+            1.465631753387241,
+            1.465631753387241
           ],
           "yaw": 87.7558634569752,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 46,
+            "size_class": "medium",
+            "previous_scale": 0.8815631537702093,
+            "scale_multiplier": 1.6625374451270187,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 47 trunk",
@@ -2799,7 +3457,14 @@
           ],
           "yaw": 63.14874198531314,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 47,
+            "size_class": "original",
+            "previous_scale": 0.906818024007583,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 47 crown",
@@ -2817,7 +3482,14 @@
           ],
           "yaw": 63.14874198531314,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 47,
+            "size_class": "original",
+            "previous_scale": 0.906818024007583,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 48 trunk",
@@ -2835,7 +3507,14 @@
           ],
           "yaw": 346.04624240177435,
           "cast_shadow": true,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 48,
+            "size_class": "original",
+            "previous_scale": 1.250189559862763,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / old growth 48 crown",
@@ -2853,7 +3532,14 @@
           ],
           "yaw": 346.04624240177435,
           "cast_shadow": false,
-          "collision": "NoCollision"
+          "collision": "NoCollision",
+          "tree": {
+            "id": 48,
+            "size_class": "original",
+            "previous_scale": 1.250189559862763,
+            "scale_multiplier": 1.0,
+            "depth_band": "side"
+          }
         },
         {
           "label": "redwoods / coastal forest shelf",
@@ -3000,6 +3686,18 @@
           "collision": "NoCollision"
         }
       ],
+      "forest_scale": {
+        "revision": "varied-grove-eight-triple-size-giants-v1",
+        "tree_count": 49,
+        "size_counts": {
+          "original": 21,
+          "medium": 20,
+          "giant": 8
+        },
+        "giant_scale_from_previous": 3.0,
+        "positions_and_yaw_preserved": true,
+        "shared_mesh_geometry_unchanged": true
+      },
       "clearance_audit": {
         "triangles_checked": 2772322,
         "protected_box_min": [
