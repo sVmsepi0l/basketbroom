@@ -53,7 +53,7 @@ CASES = (
 ARENA_MAPS = {'Classic':'/Basketbroom/Maps/BB_Regulation',
               'Redrock':'/Basketbroom/Maps/BB_Redrock', 'Redwoods':'/Basketbroom/Maps/BB_Redwoods'}
 STAGE_RIDER_PROPS = {
-    'lobby':('Controller', 'TeamIndex', 'bUseCustomBroomTrailColor'),
+    'lobby':('Controller', 'TeamIndex', 'bUseCustomBroomTrailColor', 'bHumanRiderEnabled', 'AppearanceIdentity'),
     'paused':('bPauseMenuOpen', 'PauseMenuPage', 'PauseMenuSelection'),
     'picker':('bPauseMenuOpen', 'PauseMenuPage', 'PauseMenuSelection', 'TeamIndex', 'Position', 'RosterIndex', 'FlightBoostCharge'),
     'custom':('bUseCustomBroomTrailColor', 'CustomBroomTrailColor', 'TeamIndex', 'Position', 'RosterIndex', 'FlightBoostCharge'),
@@ -97,7 +97,7 @@ def png_size(path):
     return None
 
 
-def plan(directory):
+def plan(directory, require_humans=False):
     """Return a deterministic frame sequence; no file writes or game calls."""
     steps = []
 
@@ -107,6 +107,8 @@ def plan(directory):
     def snapshot(label, wait=1, screenshot=False):
         commands = ['GETALL BBRiderCharacter '+name for name in STAGE_RIDER_PROPS.get(label, ())]
         commands += ['GETALL BBMatchState '+name for name in STAGE_MATCH_PROPS.get(label, ())]
+        if require_humans and label == 'lobby':
+            commands.append('GETALL ChildActorComponent ChildActor NAME=HumanRiderCosmetic')
         # Obj.cpp GETALL supports NAME=<exact FName>. Query the 48 tracers,
         # excluding the ~176 unrelated shield/hurley components. Static safety
         # flags need only one lobby observation; later stages read changed state.
@@ -162,7 +164,7 @@ def read_states(log_text, steps):
     # even though the native reflected declaration and query use `Position`.
     properties = {name.casefold():name for groups in (STAGE_RIDER_PROPS, STAGE_MATCH_PROPS)
                   for names in groups.values() for name in names}
-    properties.update({name.casefold():name for name in (*TRACER_PROPS, 'Velocity')})
+    properties.update({name.casefold():name for name in (*TRACER_PROPS, 'Velocity', 'ChildActor')})
     states, current = {}, None
     for line in log_text.splitlines():
         marker = re.search(r'LogPlayerManagement:\s*(?:Log:\s*)?Execing (.+)$', line)
@@ -203,7 +205,7 @@ def saved_color(path):
     return {'custom':truth(values.get('custom')), 'rgb':[float(values[key]) for key in ('red', 'green', 'blue')]}
 
 
-def evaluate(log_text, steps, screenshot, ini, baseline):
+def evaluate(log_text, steps, screenshot, ini, baseline, require_humans=False):
     states = read_states(log_text, steps)
     tests, errors = [], {}
     owners = [actor for actor, controller in states.get('lobby', {}).get('Controller', {}).items()
@@ -255,7 +257,24 @@ def evaluate(log_text, steps, screenshot, ini, baseline):
                           for path in tracer_paths for name, expected in expected_flags.items())
         valid = (len(lobby['Controller']) == 16 and len(tracer_paths) == 48 and flags_valid
                  and value('lobby', 'TeamIndex') == '0' and not truth(value('lobby', 'bUseCustomBroomTrailColor')))
-        return valid, dict(rider_count=len(lobby['Controller']), tracer_components=len(tracer_paths), flags_valid=flags_valid)
+        detail = dict(rider_count=len(lobby['Controller']), tracer_components=len(tracer_paths), flags_valid=flags_valid)
+        if require_humans:
+            riders = set(lobby['Controller'])
+            enabled = lobby.get('bHumanRiderEnabled', {})
+            appearances = lobby.get('AppearanceIdentity', {})
+            children = lobby.get('ChildActor', {})
+            expected = {rider+'.HumanRiderCosmetic': ('A' if int(appearances[rider]) % 2 == 0 else 'B')
+                        for rider in riders}
+            actual = {part: re.search(r'BP_BB_Athlete([AB])_Flightwear_C_', value)
+                      for part, value in children.items()}
+            humans_valid = (set(enabled) == riders and all(map(truth, enabled.values()))
+                            and set(appearances) == riders and sorted(int(v) for v in appearances.values()) == list(range(16))
+                            and set(children) == set(expected) and len(set(children.values())) == 16
+                            and all(actual[part] and actual[part][1] == variant for part, variant in expected.items()))
+            valid = valid and humans_valid
+            detail.update(humans_required=True, humans_valid=humans_valid,
+                          enabled=enabled, appearances=appearances, cosmetic_children=children)
+        return valid, detail
 
     def movement(stage):
         parts, velocity = owned_parts(stage, 'bVisible'), speed(stage)
@@ -319,12 +338,14 @@ def main():
     parser.add_argument('--timeout-seconds', type=float, default=90)
     parser.add_argument('--visible', action='store_true',
                         help='Show a normal game window for agent-managed viewport focus; omit RenderOffscreen.')
+    parser.add_argument('--require-humans', action='store_true',
+                        help='Require all 16 cooked human cosmetics with the expected appearance-to-class mapping.')
     parser.add_argument('--run', action='store_true', help='Launch the owned package; default is a read-only plan.')
     args = parser.parse_args()
     if not 20 <= args.timeout_seconds <= 180:
         parser.error('Timeout must be between 20 and 180 seconds')
     directory = ROOT/'.local/packaged-broom-trails'/(datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')+'-'+uuid.uuid4().hex[:8])
-    steps = plan(directory)
+    steps = plan(directory, args.require_humans)
     report = {'status':'not_run', 'scope':'packaged local console-injected input, native tracer flags, picker HUD and isolated color persistence',
               'planned_tests':list(CASES), 'hardware_claim':False, 'remote_replication_claim':False,
               'not_covered':['earned partial/super boosts', 'remote replication', 'physical controllers',
@@ -332,7 +353,7 @@ def main():
               'input_boundary':'UE EnhancedInput Input.+key/Input.-key -> PlayerController::InputKey -> native bindings',
               'readback':'engine GETALL reflected properties; no PIE-only diagnostics',
               'package_manifest':str(args.package_manifest.resolve()), 'output_directory':str(directory),
-              'arena':args.arena, 'map':ARENA_MAPS[args.arena],
+              'arena':args.arena, 'map':ARENA_MAPS[args.arena], 'humans_required':args.require_humans,
               'window_mode':'visible' if args.visible else 'offscreen',
               'viewport_focus':'normal game focus rules apply; driver does not override focus'}
     if not args.run:
@@ -395,7 +416,7 @@ def main():
             raise TimeoutError('Owned packaged smoke exceeded its wall-time bound')
         report['exit_code'] = process.returncode
         log_text = log.read_text(encoding='utf-8-sig', errors='replace')
-        tests, evidence = evaluate(log_text, steps, screenshot, ini, baseline)
+        tests, evidence = evaluate(log_text, steps, screenshot, ini, baseline, args.require_humans)
         by_name = {row['name']:row for row in tests}
         report['tests'] = [by_name.get(name, {'name':name, 'status':'not_run'}) for name in CASES]
         report['evidence'] = evidence

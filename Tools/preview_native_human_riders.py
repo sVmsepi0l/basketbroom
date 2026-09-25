@@ -11,6 +11,10 @@ Only the existing PIE hero-camera copy, local HUD visibility, and view target
 are temporarily changed. Native Body/Face/garment animation is observed intact.
 The camera/HUD/view are restored and owned PIE shutdown is observed. PNGs and
 bone/grip diagnostics are evidence for review, not automatic visual acceptance.
+Captures use ordinary Shot at the actual viewport resolution, never HighResShot
+or a forced LOD. All sixteen riders' predicted LODs must remain unchanged across
+eight advancing game frames and at least 0.35 gameplay seconds before capture.
+Legacy width/height arguments are recorded but deliberately do not resize PIE.
 """
 from datetime import datetime, timezone
 from pathlib import Path
@@ -108,15 +112,16 @@ class Preview:
         self.launch_requested = self.cleanup_pending_start = False
         self.directory = ROOT / '.local/native-human-rider-preview' / str(time.time_ns())
         self.directory.mkdir(parents=True, exist_ok=False)
-        self.width, self.height = int(args.get('width', 1600)), int(args.get('height', 1000))
         self.timeout = float(args.get('timeout_seconds', 180))
-        if not (640 <= self.width <= 3840 and 480 <= self.height <= 2160 and 30 <= self.timeout <= 600):
-            raise ValueError('Use 640..3840 by 480..2160, with a 30..600 second timeout')
+        if not 30 <= self.timeout <= 600:
+            raise ValueError('Use a 30..600 second timeout')
         self.data = {'status': 'running', 'phase': 'preflight', 'requested_utc': datetime.now(timezone.utc).isoformat(),
                      'engine': unreal.SystemLibrary.get_engine_version(), 'views': [], 'roster': [],
                      'maps_saved': 0, 'assets_modified': 0, 'configuration_modified': False,
                      'scope': 'Actual native human cosmetics in a fresh owned authority PIE lobby',
                      'visual_review_status': 'not_rendered', 'first_person_claim': 'pending real owner-view pixels',
+                     'capture_method': 'ordinary Shot at the actual viewport resolution; no global/component LOD writes',
+                     'legacy_dimensions_ignored': {key: args[key] for key in ('width', 'height') if key in args},
                      'not_covered': ['packaged rendering', 'remote-client replication', 'frame-time benchmark',
                                      'facial expressions beyond the existing runtime animation'],
                      'fixture_policy': 'Existing PIE camera/HUD/view only. No human pose, face graph, garment, team or rider-transform edits.'}
@@ -192,7 +197,28 @@ class Preview:
         if any(key not in candidates for key in required):
             return False
         self.selected = [(name, team, candidates[(name, team)]) for name, team in required]
+        self.lod_subjects = []
+        for rider in sorted(self.riders, key=lambda r: int(prop(r, 'RosterIndex'))):
+            mount, child = self.cosmetics(rider)
+            self.lod_subjects.append((rider, child,
+                {name: named_component(child, unreal.SkeletalMeshComponent, name) for name in ('Body', 'Face', 'SkeletalMesh')},
+                named_component(child, unreal.LODSyncComponent, 'LODSync')))
         return True
+
+    def lod_state(self):
+        rows = []
+        for rider, child, parts, sync in self.lod_subjects:
+            rows.append({'rider': path(rider), 'cosmetic_actor': path(child), 'slot': int(prop(rider, 'RosterIndex')),
+                         'components': {name: {'predicted_lod': int(component.get_predicted_lod_level()),
+                                              'forced_lod_one_based': int(component.get_forced_lod()),
+                                              'available_lods': int(component.get_num_lods())}
+                                        for name, component in parts.items()},
+                         'lod_sync_debug_text': sync.get_lod_sync_debug_text()})
+        return rows
+
+    @staticmethod
+    def lod_signature(rows):
+        return tuple((row['slot'], *(row['components'][key]['predicted_lod'] for key in ('Body', 'Face', 'SkeletalMesh'))) for row in rows)
 
     def pose(self, rider):
         mount, child = self.cosmetics(rider)
@@ -271,6 +297,10 @@ class Preview:
         self.view_started = time.monotonic()
         self.last_game_time = float(unreal.GameplayStatics.get_time_seconds(self.world))
         self.settled_frames = 0
+        self.last_lod_signature = None
+        self.lod_stable_frames = 0
+        self.lod_stable_since = self.last_game_time
+        self.lod_transitions = []
         self.pose_before = self.pose(entry['rider'])
         self.data.update(phase='settling_view', current_view=entry['name'])
         self.save()
@@ -292,13 +322,16 @@ class Preview:
                'request_game_seconds': float(unreal.GameplayStatics.get_time_seconds(self.world)),
                'view_target': path(self.controller.get_view_target()), 'before_pose': self.pose_before, 'request_pose': state,
                'head_animation_change_cm': distance(self.pose_before['bones']['head']['world_cm'], state['bones']['head']['world_cm']),
-               'visual_review': 'pending', 'settled_game_frames': self.settled_frames}
+               'visual_review': 'pending', 'settled_game_frames': self.settled_frames,
+               'request_lod_state': self.lod_state(), 'lod_stable_game_frames': self.lod_stable_frames,
+               'lod_stable_game_seconds': self.last_game_time - self.lod_stable_since,
+               'lod_transitions_during_settle': self.lod_transitions}
         if entry['owner_view']:
             manager = unreal.GameplayStatics.get_player_camera_manager(self.world, 0)
             row['camera'] = {'location': xyz(manager.get_camera_location()), 'rotation': rotation(manager.get_camera_rotation())}
         else:
             row['camera'] = frame(self.camera_component)
-        command = 'HighResShot %dx%d filename="%s"' % (self.width, self.height, filename.as_posix())
+        command = 'Shot filename=' + filename.as_posix() + ' -nosuffix'
         row['command'] = command
         self.data['views'].append(row)
         unreal.SystemLibrary.execute_console_command(self.world, command, self.controller)
@@ -363,15 +396,28 @@ class Preview:
                 if current_game_time > self.last_game_time:
                     self.settled_frames += 1
                     self.last_game_time = current_game_time
-                if self.settled_frames >= 8 and time.monotonic() - self.view_started >= 1.5:
+                    signature = self.lod_signature(self.lod_state())
+                    if signature != self.last_lod_signature:
+                        self.last_lod_signature = signature
+                        self.lod_stable_frames = 1
+                        self.lod_stable_since = current_game_time
+                        self.lod_transitions.append({'game_seconds': current_game_time, 'signature': signature})
+                    else:
+                        self.lod_stable_frames += 1
+                if (self.settled_frames >= 8 and self.lod_stable_frames >= 8
+                        and current_game_time - self.lod_stable_since >= .35
+                        and time.monotonic() - self.view_started >= 1.5):
                     self.request_capture()
             elif self.data['phase'] == 'waiting_for_png':
                 row = self.data['views'][-1]
                 dimensions = png_dimensions(Path(row['path']))
                 if dimensions is not None:
-                    if dimensions != [self.width, self.height]:
-                        raise RuntimeError('Native viewport PNG dimensions differ from the request')
-                    row.update(dimensions=dimensions, bytes=Path(row['path']).stat().st_size, png_complete=True)
+                    if dimensions[0] < 640 or dimensions[1] < 360:
+                        raise RuntimeError('Actual PIE viewport is too small for character review')
+                    completion_lods = self.lod_state()
+                    row.update(dimensions=dimensions, bytes=Path(row['path']).stat().st_size, png_complete=True,
+                               completion_lod_state=completion_lods,
+                               lod_unchanged_through_capture=self.lod_signature(row['request_lod_state']) == self.lod_signature(completion_lods))
                     self.view_index += 1
                     if self.view_index == len(self.views):
                         self.data['visual_review_status'] = 'captured_pending_visual_review'
