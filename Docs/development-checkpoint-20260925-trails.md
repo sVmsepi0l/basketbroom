@@ -1,7 +1,9 @@
 # September 25: human authoring and broom-trail checkpoint
 
-Recovered after the user's reboot. The accepted desktop package remains the
-earlier September 25 build recorded in `validation-package-20260925.json`.
+Recovered after the user's reboot. The desktop launcher now selects the accepted
+trails/picker package `Development-20260925-083244-424`. Promotion at 13:00 UTC
+preserved the previous launcher pointer and package. See
+`validation-package-trails-20260925.json` for exact evidence hashes.
 
 The UE 5.8 editor target compiles with the optional human cosmetic layer,
 three bounded broom-trail filaments and the pause-menu HSV color picker.
@@ -11,7 +13,12 @@ nine three-world network cases, and four capture/restoration cases producing
 nine images. Representative normal, partial and super-boost frames were inspected:
 the mint filaments originate at the bristles, taper, and lengthen under earned
 boost. Captures use quarter-speed world time to avoid PNG I/O hitches; they are
-not a frame-rate benchmark. Packaged acceptance is still pending here.
+not a frame-rate benchmark. Packaged acceptance subsequently passed all 11 checks
+in each of Classic, Redrock and Redwoods (33 total): simulated PlayStation inputs,
+native tracer visibility/lifetime, pause clock, color selection and isolated INI
+persistence. Agent inspection covered each arena lobby and picker screenshot.
+Separate packaged loopback join/map-load checks passed Redrock regulation and
+Redwoods Bloodbroom. These do not certify physical controllers or remote machines.
 
 The enlarged field exceeded Character's default network range. All 16 roster
 members now remain relevant to each client. The network test dispatches queued
@@ -48,7 +55,8 @@ Local evidence:
 - `.local/CharacterLab/renders/1790335091596773900/`: aligned A render.
 - `.local/CharacterLab/renders/1790335143930229400/`: aligned B render.
 
-Next: package and automatically verify the trails/picker, then finish and review
-the humans' flightwear before game integration. Keep the accepted desktop launch
-pointer until a replacement package passes acceptance. The user requested no
-manual check; use automated input and captured-image review.
+Next: finish and review the humans' flightwear before game integration. The
+accepted desktop package still uses Quinn riders; its optional human layer is
+disabled. Keep this working launcher pointer until a human package passes its
+own acceptance. The user requested no manual check; use automated input and
+captured-image review.

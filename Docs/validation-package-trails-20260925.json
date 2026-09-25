@@ -1,0 +1,49 @@
+{
+  "created_utc": "2026-09-25T13:01:31.0432333Z",
+  "status": "accepted_and_promoted",
+  "engine": "5.8.1",
+  "package": "Development-20260925-083244-424",
+  "packaged_cases_passed": 33,
+  "packaged_cases_failed": 0,
+  "loopback_maps": [
+    "Redrock regulation",
+    "Redwoods Bloodbroom"
+  ],
+  "human_roster_enabled": false,
+  "physical_controller_claim": false,
+  "remote_multiplayer_claim": false,
+  "evidence": [
+    {
+      "path": ".local/PackageWork/Development-20260925-083244-424/package-result.json",
+      "sha256": "4002ea9409d22acfd33cfda9994967580e32263ee5f5b7d3084b32e09901cd27"
+    },
+    {
+      "path": ".local/packaged-broom-trails/20260925-125827-57652801/result.json",
+      "sha256": "569a3ee572fb73755d32d0ba081383459244e8f87b0d1aea36fe3ff193b44cdc"
+    },
+    {
+      "path": ".local/packaged-broom-trails/20260925-125143-ae679070/result.json",
+      "sha256": "f591048a30986bba95135e9bf353aafc9441ba47960e49065e771e2da86084dc"
+    },
+    {
+      "path": ".local/packaged-broom-trails/20260925-125326-951073a3/result.json",
+      "sha256": "e9b2f274babe0d6976b0142fd8032df955a7d14a009611a91b8b21ca93eb0021"
+    },
+    {
+      "path": ".local/packaged-network/20260925-083352-655-2e50f576/result.json",
+      "sha256": "bbcf943550bc0b3fb33d67960e1a7ab78a50fd585d12540d5956066cd4c0545d"
+    },
+    {
+      "path": ".local/packaged-network/20260925-083518-995-fbac5690/result.json",
+      "sha256": "84ad23fa0602134c16e56258c6ae103b9a782c4e20abb0fca98284b5dd2b3164"
+    },
+    {
+      "path": ".local/visual-acceptance-trails-20260925.json",
+      "sha256": "706ef35470afa95789043a15979556af79e8192f45f42b605fbcc568150f0852"
+    },
+    {
+      "path": ".local/package-promotions/20260925-130027-966-3b52912fc63745e6a94e5d2ec58f9d2a/promotion.json",
+      "sha256": "52b7c7ec43d04bb0b61298fa8c7bb97964896881f6820089b28e0eb962deef41"
+    }
+  ]
+}
