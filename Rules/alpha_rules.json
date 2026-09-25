@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "rules_version": "0.2.2-longer-wider-arena",
+  "rules_version": "0.2.3-double-floor-area",
   "source": "Docs/basketbroom_rules_bible_v0.1.md",
   "time_unit": "integer_live_milliseconds",
   "score": {
@@ -39,8 +39,8 @@
     "scout": 1
   },
   "geometry_ft": {
-    "length": 984.1758076392806,
-    "width": 316.91833486962616,
+    "length": 1405.6781248035575,
+    "width": 448.19020733732356,
     "roof": 156.19546504288718,
     "chase_ceiling": 234.2931975643308,
     "large_hoop_center_z": 69,
@@ -57,7 +57,7 @@
     "roof_shape": "closed_rectangular_pyramid",
     "net_apex": 234.2931975643308,
     "net_rise": 78.09773252144362,
-    "enclosure_length": 1017.5966106696827,
+    "enclosure_length": 1439.0989278339596,
     "behind_goal_bay": 16.710401515201042
   },
   "physics": {
@@ -71,31 +71,34 @@
     "Own-goal credit, simultaneous event grouping, and exact-tie capture tiebreak",
     "Donnybrook participation, reset, and final point credit",
     "Removal duration and ejection replacement timing",
-    "Longer/wider closed pyramid net: length doubled and width +one third, height unchanged; visibility, chase room and rebound tuning"
+    "Enclosure floor area doubled from September 16 at unchanged height; traversal time, visibility, chase room and rebound tuning"
   ],
   "amendments": [
     "Docs/pyramid-net.md",
     "Docs/arena-volume-expansion.md",
-    "Docs/arena-footprint-resize.md"
+    "Docs/arena-footprint-resize.md",
+    "Docs/arena-footprint-20260925.md"
   ],
   "enable_legacy_crown_exit": false,
   "arena_volume": {
     "baseline_scale": 1.0,
-    "volume_scale": 3.8666666666666663,
+    "volume_scale": 7.733333333333333,
     "baseline_volume_m3": 430374.3510173184,
-    "volume_m3": 1664114.1572669642,
+    "volume_m3": 3328228.3145339293,
     "source": "Tools/arena_dimensions.py",
     "axis_scales": [
-      2.2637023919259014,
-      1.5091349279506008,
+      3.2013586238380256,
+      2.1342390825586834,
       1.1318511959629507
     ],
     "prior_volume_scale": 1.45,
     "resize_from_prior": [
-      2,
-      1.3333333333333333,
+      2.8284271247461903,
+      1.8856180831641267,
       1
     ],
-    "historical_height_scale": 1.1318511959629507
+    "historical_height_scale": 1.1318511959629507,
+    "floor_area_from_20260916": 2.0,
+    "geometry_version": "arena-floor-area-2-20260925-v2"
   }
 }

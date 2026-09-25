@@ -197,7 +197,9 @@ class SessionOperation:
         else:
             raise RuntimeError("Editable InEditorGameURLOptions is not exposed")
         cleaned = re.sub(r"(?i)(^|\?)Practice(?:=[^?]*)?(?=\?|$)", "", str(self.original_editor_url))
-        requested_url = cleaned + ("?Practice=1" if self.practice else "?Practice=0")
+        # BBMatchState uses FURL::HasOption: even Practice=0 enables practice.
+        # Absence is the native false value, preserving every unrelated option.
+        requested_url = cleaned + ("?Practice=1" if self.practice else "")
         self.data["practice_launch"].update(
             editor_engine=self.editor_engine.get_path_name(), original_url=self.original_editor_url,
             requested_url=requested_url, url_restored=False)

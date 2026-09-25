@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-25",
+  "archived_utc": "2026-09-25T10:24:20.2462823Z",
+  "local_archive": ".local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31",
+  "evidence": [
+    {
+      "local_file": ".local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31/environment-stage.json",
+      "source_file": ".local/environment-stage/20260925-102023-131022-71635645/result.json",
+      "sha256": "22df789ef4de0a19d4774c0f4bfd80288cf71d8bc2f3daf377a7fe363cca8597",
+      "scope": "UE5 saved/reloaded environment variants, source-map preservation and bounded content changes; no gameplay claimed by this stage"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31/environments_manifest.json",
+      "source_file": "SourceArt/Environments/environments_manifest.json",
+      "sha256": "283b6fec84a34ba7d9e5510400be317c93c210a04ea0b8bcd5c2a549a5b9b080",
+      "scope": "Exact staged environment recipe, source hashes, tree scale metadata and transformed-triangle clearance audit"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31/redwoods-hero-preview.png",
+      "source_file": ".local/environment-renders/20260925-062135-redwoods.png",
+      "sha256": "c5849a50bc82d719324dc80fe7f76003d8a6efd5671fc8f8aa21e5a4e4df6543",
+      "scope": "Actual editor hero viewport preview directly accepted by root; not packaged gameplay or performance proof"
+    },
+    {
+      "local_file": ".local/validation-archive/20260925-102420-172-redwoods-dce6342150034adbaacf1ef0c28ceb31/preview-request.json",
+      "source_file": ".local/environment-preview.json",
+      "sha256": "6e8578da42c9cbbc0fb5a193320624e910d4e383bcf2a4686f9617a885a0248c",
+      "scope": "Original asynchronous capture request provenance; requested status alone is not successful rendering proof"
+    }
+  ],
+  "stage_status": "staged",
+  "engine": "5.8.1-56057345+++UE5+Release-5.8",
+  "manifest_sha256": "283b6fec84a34ba7d9e5510400be317c93c210a04ea0b8bcd5c2a549a5b9b080",
+  "forest": {
+    "revision": "varied-grove-eight-triple-size-giants-v1",
+    "tree_count": 49,
+    "size_counts": {
+      "original": 21,
+      "medium": 20,
+      "giant": 8
+    },
+    "giant_scale_from_previous": 3.0,
+    "positions_and_yaw_preserved": true,
+    "shared_mesh_geometry_unchanged": true
+  },
+  "geometry": {
+    "redwoods_meshes": 14,
+    "redwoods_instances": 106,
+    "redwoods_transformed_triangles": 2772322,
+    "decorative_intrusions": 0,
+    "mesh_instances_or_triangles_added": false
+  },
+  "portable_checks": {
+    "status": "passed",
+    "passed": 17,
+    "source": "Root reported the completed 17-case environment run in this development session; no separate test-run report was available during archive",
+    "test_file": "Tools/test_arena_environments.py",
+    "test_file_sha256": "34dab0460d6835127a8dd34fb3b68507928190f7c6cbd99abf588690e3c6adea",
+    "tests": [
+      "test_triangle_crossing_without_interior_vertices_is_rejected",
+      "test_overhang_above_protected_box_is_clear",
+      "test_slanted_triangle_separates_from_box",
+      "test_instance_rotation_and_scale_transform_real_geometry",
+      "test_intruding_instance_rejected",
+      "test_ellipsoid_triangles_face_outward",
+      "test_source_manifest_has_exact_current_enclosure",
+      "test_redwood_trunks_and_crowns_stay_paired",
+      "test_selected_redwoods_are_triple_the_actual_previous_size",
+      "test_redwood_grove_keeps_size_and_depth_variation",
+      "test_whole_redwood_bounds_stay_outside_enlarged_arena",
+      "test_all_source_meshes_match_hashes",
+      "test_no_sporting_assets_in_write_allowlist",
+      "test_backdrop_label_cannot_claim_unrelated_actor",
+      "test_sporting_transform_change_rejected",
+      "test_sporting_material_change_rejected",
+      "test_missing_actor_rejected"
+    ]
+  },
+  "visual_review": {
+    "status": "accepted_for_prototype",
+    "reviewer": "root assistant, direct inspection of actual giant-redwoods hero preview",
+    "scope": "Editor environment composition and giant-tree rendering",
+    "limits": [
+      "No packaged-game or frame-rate claim from this preview.",
+      "Native Creator Kit maps are outside this giant-tree amendment.",
+      "Procedural prototype environment art; not a completed final-art release."
+    ]
+  },
+  "package_status": "promoted: Development-20260925-062224-613; candidate-specific bounded acceptance recorded separately",
+  "package_manifest": ".local/PackageWork/Development-20260925-062224-613/package-result.json",
+  "package_validation_index": "Docs/validation-package-20260925.json",
+  "later_character_work": "Realistic adult Hogwarts-style characters requested after this milestone; in progress and absent from the promoted mannequin build.",
+  "archive_snapshot_note": "The immutable archive index preserves its original pre-promotion snapshot; this tracked index adds the later package acceptance reference."
+}

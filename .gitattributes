@@ -15,6 +15,7 @@ Mod/Basketbroom/Content/ModEdits.sql text eol=lf
 # these immutable expansion records are identified by their exact bytes.
 SourceArt/Arena/arena_expansion_baseline.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 SourceArt/Arena/arena_expansion_source_hashes.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+SourceArt/Arena/arena_resize_baseline*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 DevelopmentHarness/Source/BasketbroomRuntime/BBArenaDimensions.generated.h text eol=lf
 
 # native import and expansion receipts hash these exact source bytes.

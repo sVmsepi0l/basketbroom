@@ -1,23 +1,28 @@
 """Shared arena dimensions for source art, tests, and the generated C++ contract.
 
-Units are centimetres. The current enclosure doubles the prior length and
-widens it by one third, keeping the prior height. Sporting distances and
+Units are centimetres. The current enclosure doubles the September 16 floor
+area while preserving its aspect ratio and height. Sporting distances and
 physical player/ball/hoop sizes are deliberately independent.
 """
 from pathlib import Path
 import argparse
+import math
 
 # Keep the historical isotropic factor for unchanged heights, chase speeds,
 # rider formation spacing and fixed-size art. Never use it as the new X/Y scale.
 PRIOR_VOLUME_SCALE = 1.45
 LINEAR_SCALE = PRIOR_VOLUME_SCALE ** (1.0 / 3.0)
-LENGTH_MULTIPLIER = 2.0
-WIDTH_MULTIPLIER = 4.0 / 3.0
+PREVIOUS_LENGTH_MULTIPLIER = 2.0
+PREVIOUS_WIDTH_MULTIPLIER = 4.0 / 3.0
+FOOTPRINT_AREA_MULTIPLIER = 2.0
+FOOTPRINT_LINEAR_MULTIPLIER = math.sqrt(FOOTPRINT_AREA_MULTIPLIER)
+LENGTH_MULTIPLIER = PREVIOUS_LENGTH_MULTIPLIER * FOOTPRINT_LINEAR_MULTIPLIER
+WIDTH_MULTIPLIER = PREVIOUS_WIDTH_MULTIPLIER * FOOTPRINT_LINEAR_MULTIPLIER
 HEIGHT_MULTIPLIER = 1.0
 LENGTH_SCALE = LINEAR_SCALE * LENGTH_MULTIPLIER
 WIDTH_SCALE = LINEAR_SCALE * WIDTH_MULTIPLIER
 VOLUME_SCALE = PRIOR_VOLUME_SCALE * LENGTH_MULTIPLIER * WIDTH_MULTIPLIER
-GEOMETRY_VERSION = 'arena-length-2-width-4over3-v1'
+GEOMETRY_VERSION = 'arena-floor-area-2-20260925-v2'
 BASELINE_GOAL_PLANE_X = 6400.8
 BASELINE_HALF_LENGTH = 6850.8
 BASELINE_HALF_WIDTH = 3200.4
@@ -47,6 +52,15 @@ def dimensions(scale=None):
     return {'half_x': BASELINE_HALF_LENGTH * scale, 'half_y': BASELINE_HALF_WIDTH * scale,
             'eave': BASELINE_EAVE_HEIGHT * scale, 'apex': BASELINE_APEX_HEIGHT * scale,
             'goal_x': BASELINE_GOAL_PLANE_X * scale}
+
+
+def previous_dimensions():
+    """The saved September 16 shape, before the second footprint amendment."""
+    half_x = BASELINE_HALF_LENGTH * (LINEAR_SCALE * PREVIOUS_LENGTH_MULTIPLIER)
+    return {'half_x': half_x,
+            'half_y': BASELINE_HALF_WIDTH * (LINEAR_SCALE * PREVIOUS_WIDTH_MULTIPLIER),
+            'eave': EAVE_HEIGHT, 'apex': APEX_HEIGHT,
+            'goal_x': half_x - BEHIND_GOAL_BAY}
 
 
 def enclosed_volume_cm3(values=None):

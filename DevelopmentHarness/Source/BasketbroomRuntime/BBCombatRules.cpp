@@ -4,7 +4,7 @@
 
 namespace BB {
 namespace {
-bool player_index(int player) { return player >= 0 && player < CombatPolicy::PlayerCount; }
+bool combat_player_index(int player) { return player >= 0 && player < CombatPolicy::PlayerCount; }
 bool team_value(int team) { return team == 0 || team == 1; }
 bool variant_value(CombatVariant variant) {
     return variant == CombatVariant::Regulation || variant == CombatVariant::Bloodbroom;
@@ -54,14 +54,14 @@ void CombatPolicy::forget_actor(int player) {
 }
 
 bool CombatPolicy::set_actor(int player, int team, bool eligible, bool new_identity) {
-    if (!valid_ || !player_index(player) || (!team_value(team) && (team != -1 || eligible))) return false;
+    if (!valid_ || !combat_player_index(player) || (!team_value(team) && (team != -1 || eligible))) return false;
     if (new_identity || actors_[player].team != team) forget_actor(player);
     actors_[player] = {team, eligible};
     return true;
 }
 
 int CombatPolicy::active_attackers(int team, int target) const {
-    if (!valid_ || !team_value(team) || !player_index(target)) return 0;
+    if (!valid_ || !team_value(team) || !combat_player_index(target)) return 0;
     int count = 0;
     for (int attacker = 0; attacker < PlayerCount; ++attacker) {
         const auto at = mob_[target][attacker];
@@ -79,8 +79,8 @@ bool CombatPolicy::confirmed_impediment(int attacker, int target) const {
 
 CombatDecision CombatPolicy::begin_attack(int attacker, int target, const AttackSpec& spec) {
     if (!valid_) return deny(CombatDenial::InvalidConfiguration);
-    if (!player_index(attacker) || !team_value(actors_[attacker].team)) return deny(CombatDenial::InvalidActor);
-    if (!player_index(target) || !team_value(actors_[target].team) || (spec.offensive && attacker == target))
+    if (!combat_player_index(attacker) || !team_value(actors_[attacker].team)) return deny(CombatDenial::InvalidActor);
+    if (!combat_player_index(target) || !team_value(actors_[target].team) || (spec.offensive && attacker == target))
         return deny(CombatDenial::InvalidTarget);
     if (!actors_[attacker].eligible || !actors_[target].eligible) return deny(CombatDenial::Unavailable);
     if (!live_) return deny(CombatDenial::NotLive);
@@ -182,7 +182,7 @@ bool CombatPolicy::end_impediment(std::uint64_t id) {
 }
 
 void CombatPolicy::recover_target(int target) {
-    if (!player_index(target)) return;
+    if (!combat_player_index(target)) return;
     for (auto& attack : attacks_)
         if (attack.target == target && attack.successful) attack.impeded_until = now_;
 }

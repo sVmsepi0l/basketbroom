@@ -2,7 +2,7 @@
 
 > **superseded roof rules — 2026/09/14:** the user replaced the open roof and no crown procedure with a [closed, hollow pyramidion net](pyramid-net.md) for basketbroom and Bloodbroom. that amendment overrides this historical draft wherever it specifies an open roof, crown exit/return, dead-roof delay or an exterior chase envelope, including the draft status statement below. the original text remains for provenance; it is not the current roof specification.
 
-> **pending arena expansion — 2026/09/15:** the user requested [40–50% more enclosed arena volume](arena-volume-expansion.md), with a 45% implementation target. the historical dimensions below and current playable builds have not yet been resized.
+> **superseded arena dimensions — 2026/09/25:** the historical dimensions below are superseded by the [45% volume enlargement](arena-volume-expansion.md), the [September 16 length/width amendment](arena-footprint-resize.md), and the [September 25 doubling of floor area](arena-footprint-20260925.md). the latest saved standalone and Creator Kit arenas use the September 25 dimensions; packaged-game acceptance is recorded separately in the development checkpoint.
 
 ## rules bible + playable design specification
 

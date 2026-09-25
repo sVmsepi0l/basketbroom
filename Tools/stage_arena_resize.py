@@ -1,4 +1,4 @@
-"""Bounded checkpoint-to-longer/wider amendment of four existing UE5 arenas.
+"""Bounded September-16-to-double-area amendment of four existing UE5 arenas.
 
 Run through the owned UE5 editor bridge. Default dry_run=True; execute requires
 both dry_run=False and execute=True. Exact legacy preservation, byte backup,
@@ -30,15 +30,20 @@ def match_plan(records,plan,phase='old'):
         return original_match(records,filtered,phase)
     return original_match(records,plan,phase)
 
-def match_training(records,map_path,phase='old'):
-    if map_path!=MAPS[1]:return {}  # Current regulation/native anchors remain fixed.
-    expected=base.training_layout(base.dimensions.LINEAR_SCALE)
-    newer=json.loads(json.dumps(expected))
-    delta=base.dimensions.GOAL_PLANE_X-base.dimensions.BASELINE_GOAL_PLANE_X*base.dimensions.LINEAR_SCALE
-    for row in newer.values():
+def training_layout_at(goal_x):
+    layout=base.training_layout(base.dimensions.LINEAR_SCALE)
+    delta=goal_x-base.dimensions.BASELINE_GOAL_PLANE_X*base.dimensions.LINEAR_SCALE
+    for row in layout.values():
         if row['category']=='bot' and row['bot_identity'][2]==0:
             sign=-1 if row['bot_identity'][0]==0 else 1
             row['location'][0]+=sign*delta;row['home'][0]+=sign*delta
+    return layout
+
+def match_training(records,map_path,phase='old'):
+    if map_path!=MAPS[1]:return {}  # Current regulation/native anchors remain fixed.
+    if phase not in ('old','new'):raise ValueError('Unknown resize phase')
+    expected=training_layout_at(plan_module.baseline_dimensions('standalone')['goal_x'])
+    newer=training_layout_at(base.dimensions.GOAL_PLANE_X)
     selected={}
     for label,old in expected.items():
         found=[(p,r) for p,r in records.items() if r['label']==label]
@@ -65,7 +70,7 @@ def run(args=None):
         if levels.is_in_play_in_editor() or unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages() or unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages():raise RuntimeError('Stop Play and preserve/save editor work first')
     clean();original=worlds.get_editor_world().get_path_name().split('.')[0]
     if original not in MAPS:raise RuntimeError('Open an owned arena')
-    plan=plan_module.build_plan();states=[];before=base.content_hashes();checks=[]
+    plan=plan_module.build_plan('standalone');states=[];before=base.content_hashes();checks=[]
     try:
         for map_path in MAPS:
             clean()

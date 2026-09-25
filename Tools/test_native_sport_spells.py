@@ -106,6 +106,14 @@ class SportingSpellTests(spells.NativeSpellTests):
         yield self.wait_until(aligned, timeout=1)
         self.require(aligned(), "Guest native aim must settle")
 
+    def transformation_parts(self, rider):
+        """Read actual body/equipment and child groom/cloth visibility masks."""
+        parts = list(rider.get_components_by_class(unreal.MeshComponent))
+        for actor in rider.get_all_child_actors(True):
+            parts.extend(actor.get_components_by_class(unreal.PrimitiveComponent))
+        return [part for part in parts
+                if part.get_name() not in ("SportTransformationOrb", "SportSpellStatusRings")]
+
     def movement_sample(self, direction=(0, 1, 0), seconds=.35):
         movement = self.component(self.guest, unreal.CharacterMovementComponent)
         movement.stop_movement_immediately()
@@ -238,6 +246,10 @@ class SportingSpellTests(spells.NativeSpellTests):
         ball=yield from self.guest_ball()
         normal=yield from self.movement_sample()
         yield from self.anchor_pair()
+        transform_parts=self.transformation_parts(self.guest)
+        transform_baseline={part.get_path_name():bool(prop(part,"bHiddenInGame")) for part in transform_parts}
+        human_enabled=bool(prop(self.guest,"bHumanRiderEnabled"))
+        self.require(transform_parts, "Transformation needs real visible-body/equipment components")
         self.request(6,13)
         yield self.wait_until(lambda: float(prop(self.guest,"TransformationRemaining"))>0,timeout=.5)
         yield self.wait(.12)
@@ -245,7 +257,10 @@ class SportingSpellTests(spells.NativeSpellTests):
                  if p.get_name()=="SportTransformationOrb"]
         self.record(CASES[11], float(prop(self.guest,"TransformationRemaining"))>1
             and prop(ball,"Holder") is None and len(proxies)==1 and proxies[0].is_visible()
-            and not proxies[0].is_collision_enabled(), target=self.effects(self.guest), proxy=[p.get_name() for p in proxies])
+            and not proxies[0].is_collision_enabled()
+            and all(bool(prop(part,"bHiddenInGame")) for part in transform_parts),
+            target=self.effects(self.guest), proxy=[p.get_name() for p in proxies],
+            hidden_primitive_count=len(transform_parts), human_cosmetic_enabled=human_enabled)
         locked=yield from self.movement_sample()
         self.guest_request(6,3)
         self.guest.development_set_interaction(True)
@@ -264,7 +279,11 @@ class SportingSpellTests(spells.NativeSpellTests):
         yield self.wait_until(lambda: bool(prop(self.match,"bLive")),timeout=.5)
         yield self.wait_until(lambda: float(prop(self.guest,"TransformationRemaining"))==0,timeout=4)
         recovered=yield from self.movement_sample()
-        self.record(CASES[14], recovered["delta"][1]>20 and not proxies[0].is_visible(), recovered=recovered)
+        restored={part.get_path_name():bool(prop(part,"bHiddenInGame")) for part in transform_parts}
+        self.record(CASES[14], recovered["delta"][1]>20 and not proxies[0].is_visible()
+            and restored==transform_baseline, recovered=recovered,
+            visibility_masks_restored=restored==transform_baseline,
+            human_cosmetic_enabled=human_enabled)
 
         yield from self.cooldowns()
         yield from self.anchor_pair()

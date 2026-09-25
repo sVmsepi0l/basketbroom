@@ -17,7 +17,8 @@ def check():
     project = Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.get_project_file_path())).resolve()
     kit = Path(r'C:\Program Files\HogwartsLegacyCreatorKit\PhoenixGame\Phoenix.uproject').resolve()
     game = (ROOT / 'DevelopmentHarness/BasketbroomDev.uproject').resolve()
-    if project not in (kit, game):
+    lab = (ROOT / '.local/CharacterLab/BasketbroomCharacterLab.uproject').resolve()
+    if project not in (kit, game, lab):
         raise RuntimeError('Refusing to close a different editor project')
     if unreal.EditorLevelLibrary.get_pie_worlds(True):
         raise RuntimeError('Stop the owned PIE session before closing its editor')
@@ -28,7 +29,16 @@ def check():
     world = unreal.EditorLevelLibrary.get_editor_world()
     path = world.get_path_name().split('.')[0] if world else None
     allowed = ('/Basketbroom/Maps/Basketbroom_DungeonMap', '/Basketbroom/Maps/BB_Arena_Port') if project == kit else ('/Basketbroom/Maps/BB_Regulation', '/Basketbroom/Maps/BB_Arena', '/Basketbroom/Maps/BB_Redrock', '/Basketbroom/Maps/BB_Redwoods')
-    if path not in allowed:
+    if project == lab:
+        if not unreal.SystemLibrary.get_engine_version().startswith('5.8.'):
+            raise RuntimeError('Expected the UE5.8 character lab')
+        session = getattr(unreal, '_bb_human_cloud_build', None)
+        if session is not None and not session.finished:
+            raise RuntimeError('Preserving an active human character cloud session')
+        if not path or not (path.startswith(('/Temp/Untitled', '/Game/BasketbroomLab/Maps/Review_'))
+                            or path == '/Game/BasketbroomLab/Maps/temp_20260925'):
+            raise RuntimeError('Expected the clean transient character lab world')
+    elif path not in allowed:
         raise RuntimeError('Expected an already-open owned arena map')
     if project == kit:
         manager = unreal.GameModManagerSubsystem
@@ -73,4 +83,8 @@ def run(dry_run=True):
 
 
 if __name__ == '__main__':
-    RESULT = run(globals().get('BRIDGE_ARGS', {}).get('dry_run', True))
+    args = globals().get('BRIDGE_ARGS', {})
+    if args.get('expected_pid') is not None and int(args['expected_pid']) != os.getpid():
+        RESULT = {'status':'skipped_other_process','process_id':os.getpid()}
+    else:
+        RESULT = run(args.get('dry_run', True))

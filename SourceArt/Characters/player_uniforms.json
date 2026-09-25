@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "generator": "Basketbroom.PlayerUniform.v1",
+  "description": "Original woven flight uniforms for the installed Quinn mannequin. Mint with subtle phthalo green; copper with a little canary yellow. No new human face or character geometry is claimed.",
+  "team_material_paths_preserved": true,
+  "teams": {
+    "Teal": {"display_name": "mint", "color_srgb": "8ABFA3", "contrast_srgb": "173B36", "trim_srgb": "EAE2BF"},
+    "Copper": {"display_name": "copper", "color_srgb": "BB7831", "contrast_srgb": "40281E", "trim_srgb": "EAD87A"}
+  },
+  "fabric_roughness": 0.82,
+  "leather_roughness": 0.57,
+  "weave_cycles_per_uv": 72,
+  "detail_fade_start_cm": 250,
+  "detail_fade_end_cm": 1200,
+  "source_mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+  "texture_sources": "Locally installed Epic UE5.8 Quinn normal and MRA maps, referenced in place. Original mathematical weave and pre-skinned tailoring masks. No Hogwarts Legacy content copied.",
+  "scope": "UE5 standalone prototype only; native Hogwarts Legacy player appearance remains its own integration."
+}

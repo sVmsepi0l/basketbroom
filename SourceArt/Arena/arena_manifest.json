@@ -1,11 +1,11 @@
 {
   "units": "centimeters",
   "origin": "midfield, trampoline top",
-  "pitch_goal_to_goal_cm": 29997.678616845275,
-  "pitch_width_cm": 9659.670846826206,
+  "pitch_goal_to_goal_cm": 42845.06924401243,
+  "pitch_width_cm": 13660.837519641622,
   "goal_planes_x_cm": [
-    -14998.839308422637,
-    14998.839308422637
+    -21422.534622006217,
+    21422.534622006217
   ],
   "large_goal_centers_y_cm": [
     -1066.8,
@@ -27,8 +27,8 @@
       7141.256661760803
     ],
     "rise_cm": 2380.4188872536015,
-    "eave_half_x_cm": 15508.172346605965,
-    "eave_half_y_cm": 4829.835423413103,
+    "eave_half_x_cm": 21931.867660189546,
+    "eave_half_y_cm": 6830.418759820811,
     "faces": 4,
     "horizontal_base": false,
     "collision": "double-sided four-triangle complex-as-simple static shell",
@@ -37,30 +37,30 @@
     "scope": "all balls and riders; no roof exit or respawn"
   },
   "end_net_x_cm": [
-    -15508.172346605965,
-    15508.172346605965
+    -21931.867660189546,
+    21931.867660189546
   ],
   "side_net_y_cm": [
-    -4829.835423413103,
-    4829.835423413103
+    -6830.418759820811,
+    6830.418759820811
   ],
   "backstop_note": "Goal planes follow enlarged ends with the prior 509.333038 cm setback; hoop apertures and sporting distances stay fixed.",
-  "geometry_version": "arena-length-2-width-4over3-v1",
-  "enclosed_volume_scale": 3.8666666666666663,
+  "geometry_version": "arena-floor-area-2-20260925-v2",
+  "enclosed_volume_scale": 7.733333333333333,
   "historical_height_scale": 1.1318511959629507,
   "axis_scales": [
-    2.2637023919259014,
-    1.5091349279506008,
+    3.2013586238380256,
+    2.1342390825586834,
     1.1318511959629507
   ],
-  "enclosed_volume_cm3": 1664114157266.964,
-  "behind_goal_bay_cm": 509.3330381833275,
+  "enclosed_volume_cm3": 3328228314533.929,
+  "behind_goal_bay_cm": 509.33303818332934,
   "restitution": 0.75,
   "level": "/Basketbroom/Maps/BB_Arena",
   "screenshot_camera": {
     "location": [
-      -28069.909659881178,
-      -17204.138178636847,
+      -39696.846935591515,
+      -24330.32554116899,
       10639.401242051737
     ],
     "rotation_pitch_yaw_roll": [
@@ -87,8 +87,8 @@
     },
     {
       "file": "SM_BB_ReboundNet.obj",
-      "vertices": 4896,
-      "polygons": 3264
+      "vertices": 6504,
+      "polygons": 4336
     },
     {
       "file": "SM_BB_Stars.obj",
@@ -142,8 +142,8 @@
     },
     {
       "file": "SM_BB_PyramidNet.obj",
-      "vertices": 6384,
-      "polygons": 4256
+      "vertices": 9000,
+      "polygons": 6000
     },
     {
       "file": "SM_BB_PyramidRibs.obj",

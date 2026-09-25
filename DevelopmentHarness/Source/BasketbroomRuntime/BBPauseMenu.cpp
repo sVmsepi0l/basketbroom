@@ -1,9 +1,30 @@
 #include "BBPauseMenu.h"
+#include "BBHUD.h"
 #include "BBRiderCharacter.h"
 #include "BBMatchState.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/ConfigCacheIni.h"
+
+void BBPauseMenu::LoadBroomTrailPreference(ABBRiderCharacter* Rider)
+{
+    if (!Rider || !Rider->IsLocallyControlled() || !GConfig) return;
+    bool bCustom = false;
+    FLinearColor Color = FLinearColor::White;
+    const TCHAR* Section = TEXT("Basketbroom.BroomTrail");
+    GConfig->GetBool(Section,TEXT("Custom"),bCustom,GGameUserSettingsIni);
+    const bool bHasColor = GConfig->GetFloat(Section,TEXT("Red"),Color.R,GGameUserSettingsIni)
+        && GConfig->GetFloat(Section,TEXT("Green"),Color.G,GGameUserSettingsIni)
+        && GConfig->GetFloat(Section,TEXT("Blue"),Color.B,GGameUserSettingsIni);
+    if (!bHasColor || !FMath::IsFinite(Color.R) || !FMath::IsFinite(Color.G) || !FMath::IsFinite(Color.B))
+    {
+        bCustom = false;
+        Color = FLinearColor::White;
+    }
+    Color = FLinearColor(FMath::Clamp(Color.R,0.f,1.f),FMath::Clamp(Color.G,0.f,1.f),FMath::Clamp(Color.B,0.f,1.f),1.f);
+    Rider->SetBroomTrailColor(bCustom,Color);
+}
 
 TArray<BBPauseMenu::Item> BBPauseMenu::Items(const ABBRiderCharacter* Rider)
 {
@@ -15,7 +36,11 @@ TArray<BBPauseMenu::Item> BBPauseMenu::Items(const ABBRiderCharacter* Rider)
     case Main:
         Result = {{TEXT("Resume flight"),Resume},{TEXT("Controller settings"),OpenSettings},
             {TEXT("Controls & boost"),OpenControls},{TEXT("Positions & rules"),OpenRoles},
-            {TEXT("Match referee"),OpenReferee}};
+            {TEXT("Match referee"),OpenReferee},{TEXT("Broom trail color"),OpenTrailColor}};
+        break;
+    case TrailColor:
+        Result = {{TEXT("Hue"),TrailHue},{TEXT("Saturation"),TrailSaturation},
+            {TEXT("Brightness"),TrailBrightness},{TEXT("Reset to team color"),TrailTeamDefault}};
         break;
     case Settings:
         Result = {{FString(TEXT("Invert altitude   "))+(Rider->bInvertControllerAltitude?TEXT("ON"):TEXT("OFF")),InvertAltitude},
@@ -63,11 +88,15 @@ void ABBRiderCharacter::TogglePauseMenu()
     bPauseMenuOwnsWorldPause = false;
     if (GetNetMode()==NM_Standalone && !UGameplayStatics::IsGamePaused(GetWorld()))
         bPauseMenuOwnsWorldPause = UGameplayStatics::SetGamePaused(GetWorld(),true);
+    if (APlayerController* Player = Cast<APlayerController>(Controller))
+        if (ABBHUD* HUD = Cast<ABBHUD>(Player->GetHUD())) HUD->SetPauseMenuInputActive(true);
 }
 
 void ABBRiderCharacter::ClosePauseMenu()
 {
     if (!IsLocallyControlled()) return;
+    if (APlayerController* Player = Cast<APlayerController>(Controller))
+        if (ABBHUD* HUD = Cast<ABBHUD>(Player->GetHUD())) HUD->SetPauseMenuInputActive(false);
     bPauseMenuOpen = false;
     PauseMenuPage = BBPauseMenu::Main;
     PauseMenuSelection = 0;
@@ -80,6 +109,9 @@ bool ABBRiderCharacter::HandlePauseMenuKey(FKey Key)
 {
     if (!bPauseMenuOpen) return false;
     using namespace BBPauseMenu;
+    ABBHUD* HUD = nullptr;
+    if (APlayerController* Player = Cast<APlayerController>(Controller)) HUD = Cast<ABBHUD>(Player->GetHUD());
+    if (PauseMenuPage==TrailColor && HUD && HUD->HandleTrailColorKey(this,Key)) return true;
     if (Key==EKeys::Escape || Key==EKeys::Gamepad_Special_Right) { ClosePauseMenu(); return true; }
     if (Key==EKeys::Gamepad_FaceButton_Right || Key==EKeys::BackSpace)
     {
@@ -100,7 +132,11 @@ bool ABBRiderCharacter::HandlePauseMenuKey(FKey Key)
     {
         const int32 Command=Choices[PauseMenuSelection].Command;
         if (Command==Resume) ClosePauseMenu();
-        else if (Command>=OpenSettings && Command<=OpenReferee) { PauseMenuPage=Command-10; PauseMenuSelection=0; }
+        else if (Command>=OpenSettings && Command<=OpenTrailColor)
+        {
+            PauseMenuPage=Command-10; PauseMenuSelection=0;
+            if (PauseMenuPage==TrailColor && HUD) HUD->BeginTrailColorEdit(this);
+        }
         else if (Command==Back) { PauseMenuPage=Main; PauseMenuSelection=0; }
         else if (Command==InvertAltitude) SetControllerInversion(!bInvertControllerAltitude,bInvertControllerAimY);
         else if (Command==InvertAim) SetControllerInversion(bInvertControllerAltitude,!bInvertControllerAimY);

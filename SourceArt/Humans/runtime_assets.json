@@ -1,0 +1,2298 @@
+{
+  "schema_version": 1,
+  "engine": "5.8.1",
+  "origin": "Owned adult designs assembled from installed MetaHuman Creator Ada and Omari presets; custom flightwear and seated animation",
+  "inventory_sha256": "d4db3ee1032016baa6f895eaf247f84231529a4b1c727f44c213fc602a6de750",
+  "inventory_status": "inventoried",
+  "source_bytes_preserved": true,
+  "gameplay_accepted": false,
+  "files": [
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_BC.uasset",
+      "bytes": 7982634,
+      "sha256": "529d7ed35541fbb1275445c2820a879a893d71183b5a9436ea4fe9acdf0c7fd6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_N.uasset",
+      "bytes": 5257929,
+      "sha256": "f4b673e2dc8792792870eb1e325a02831c6870cf96864c7daacee0b451cb9f29"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_SRMF.uasset",
+      "bytes": 7583151,
+      "sha256": "d08dc1382b4b19cbaf9314ba6c26459db9402a15d00c7efd2363230e267d3799"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/Baked/T_Body_Scatter.uasset",
+      "bytes": 54282,
+      "sha256": "57ef9356901e12cd54e7d652a6637d1947b50fb1fb761bbc40561954536e0b57"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/Materials/MI_Body_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/Materials/MI_Body_Baked.uasset",
+      "bytes": 9407,
+      "sha256": "56343a12a53b2410cb89084966f7768f693945b287c01640dd4067fef4202033"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/PHYS_BB_AthleteA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/PHYS_BB_AthleteA.uasset",
+      "bytes": 215841,
+      "sha256": "2c8920207958b8557ef4a8586d62141d7ab318b00140b89c1248303d4cf265cb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/SKM_BB_AthleteA_BodyMesh",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/SKM_BB_AthleteA_BodyMesh.uasset",
+      "bytes": 2866278,
+      "sha256": "81343fe0367736d0a31be6d73b29e3c845d14555d8a25fbf35a9f17c80608a27"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Body/SKM_BB_AthleteA_BodyMesh_DNA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Body/SKM_BB_AthleteA_BodyMesh_DNA.uasset",
+      "bytes": 1252568,
+      "sha256": "00962d08ec34ba511e1048b92df689c3febfe82677b1dd7d7a33eed2baa2a61e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/BB_AthleteA_Outfits",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/BB_AthleteA_Outfits.uasset",
+      "bytes": 5345415,
+      "sha256": "cf3205bd45b4ac057c1259790efcd2444f452d70fe2bb2a245473a628b4fbee9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/MI_WI_DefaultGarment_M_DG_bodyShapeB_Shirt",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/MI_WI_DefaultGarment_M_DG_bodyShapeB_Shirt.uasset",
+      "bytes": 8051,
+      "sha256": "7a4762aae1f5850ae2a5a0a7be5b9ec55ff9530899155a174b0aa35fffec30d3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/MI_WI_DefaultGarment_M_DG_bodyShapeB_Short",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Clothing/MI_WI_DefaultGarment_M_DG_bodyShapeB_Short.uasset",
+      "bytes": 7350,
+      "sha256": "b769b4c4c74c69eb54e36410eee0a4b5621ff07da61caed6280f083b216df4e2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_BakedNormal_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_BakedNormal_LOD3.uasset",
+      "bytes": 96281,
+      "sha256": "2c64c300269c1076e563971c73891be5a1acfae67c44af88ef777f539c4a0768"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_BakedNormal_LOD5",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_BakedNormal_LOD5.uasset",
+      "bytes": 109402,
+      "sha256": "92f758c2573550c690c70ed3ef5494ceccb4522a07ba123af60ba36d55bba7d3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisL_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisL_BC.uasset",
+      "bytes": 529677,
+      "sha256": "1a62ceee0b5e4078d9c232ed6c39cdaf7c3d57110e4beff7fc56fef107e8de59"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisL_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisL_N.uasset",
+      "bytes": 1025334,
+      "sha256": "aa37800ec655e2fa0ec88df33e11df56ba03ec288f4bd8ea68cd54460603c827"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisR_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisR_BC.uasset",
+      "bytes": 529677,
+      "sha256": "cb7c2a8fe2a409575d807a7a908524d1d3f375f741d7be0eb03ddd8f7538d7e0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisR_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeIrisR_N.uasset",
+      "bytes": 1025334,
+      "sha256": "a9a0fc2cde00ae2b2c1068547bb43a863cf89fae02059655799af46c8aae0039"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraL_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraL_BC.uasset",
+      "bytes": 972259,
+      "sha256": "a8d125c990f69da3573aa0d2aa6306706e79a22660f1027432bc4d8a1265c607"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraL_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraL_N.uasset",
+      "bytes": 849565,
+      "sha256": "a23a9a6672acb8a1e825408a1215f3c5aafd33d23bf19ec2f060d6834a25bae0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraR_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraR_BC.uasset",
+      "bytes": 959345,
+      "sha256": "d87d45e013e1cb07015d980e849a9811648feb31944be24a46edead7f1a3f1fd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraR_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_EyeScleraR_N.uasset",
+      "bytes": 846605,
+      "sha256": "4683994bdbbdb79a61f8facb7042f01d78572f3648494f81d2e83b7883e297be"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_BC.uasset",
+      "bytes": 2199838,
+      "sha256": "4a2391daa16e2f9263c835837591391bb7d0763325a82b105f29a11880fbd701"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_N.uasset",
+      "bytes": 7378374,
+      "sha256": "54530317ae93767b23f3070a1f02d7c5c432d3b404ceb031da7502fbf0a7281d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_SRMF.uasset",
+      "bytes": 6440246,
+      "sha256": "efa621859f98433a5dd7df637172f0c2d32e1c30955fb79801cdb8f1085be5dd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD3_Scatter.uasset",
+      "bytes": 70265,
+      "sha256": "5430a6f695f28090169cc2cea03099409ab078582c10bd34ab240797f14932e5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_BC.uasset",
+      "bytes": 794132,
+      "sha256": "7f4bf500645de4c006924a42be654eb77cb6358b49a72f75494356617c5ee442"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_N.uasset",
+      "bytes": 2218017,
+      "sha256": "fb23947be6f89ae01042119897f147b5db67a41bce6d06c4efc1768b17056f22"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_SRMF.uasset",
+      "bytes": 1784961,
+      "sha256": "c2f74d66fd7e0bd716a90fe3a51e7f4e8dee65ad00ab42cbb9d139a6dd4e93c2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Head_LOD5to7_Scatter.uasset",
+      "bytes": 26748,
+      "sha256": "6c453042be072c7df8dd3f23c7dc152441c5516ba3f29140d172ec56f67394ea"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_BC.uasset",
+      "bytes": 1033394,
+      "sha256": "e1cabb451868f37176e82fbaa11652c9c9a2705ee16e14be0f08c8e1b67ecb53"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_N.uasset",
+      "bytes": 1775047,
+      "sha256": "08a9a7e818ac1cf5065fd0afc8fe400e7ec1346c979a04020a8b038a4482e467"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_SRM",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_SRM.uasset",
+      "bytes": 270044,
+      "sha256": "accdd8d57a94b625819e05a31e4c8a31eb10c3850269e4753019ea802c065849"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Baked/T_Teeth_Scatter.uasset",
+      "bytes": 5651,
+      "sha256": "73c0439853632fc9c1b8ac55d5bbbccfdc287b4186eb5820b85cce17aeb8b806"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_EyeL_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_EyeL_Baked.uasset",
+      "bytes": 13381,
+      "sha256": "cfe506e90aa0ebfacf5c36cc5e1989935a767a2e88ebb70a49ba09d4fec8bb55"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_EyeR_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_EyeR_Baked.uasset",
+      "bytes": 14316,
+      "sha256": "0f97fdffa280dbf495c8dc4e231c4b0191ec710fff0cffa1cbb5c75a1986e4cf"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_EyeShell",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_EyeShell.uasset",
+      "bytes": 5331,
+      "sha256": "fe12f02e9dd46407326c25ad57423cc6cb4c46319a7da2a7ac98d1b1b677c1e8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_EyelashesHiLODs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_EyelashesHiLODs.uasset",
+      "bytes": 7964,
+      "sha256": "69520006f8d52fffd61e8b47bfc7b9a183dcb221127b72f4cd3b58761ef4f5a3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_LacrimalFluid",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_LacrimalFluid.uasset",
+      "bytes": 5390,
+      "sha256": "002350721e027196bb5678342608896735a57cc1a271126c661dc28278ce6be6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_Skin_Baked_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_Skin_Baked_LOD3.uasset",
+      "bytes": 6728,
+      "sha256": "45837a4ae1029fbc07d4d5fcf3e619ae48f4ad81f572e410e390e1c34711b5af"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_Skin_Baked_LOD5to7",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Face_Skin_Baked_LOD5to7.uasset",
+      "bytes": 10039,
+      "sha256": "bf84d63eb71952dc81400b5f3d661df44665f59e759203f7e1471ae60a935e82"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Teeth_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/Materials/MI_Teeth_Baked.uasset",
+      "bytes": 6194,
+      "sha256": "f78cc4e2810079e5f1300e8a29819edf56cd148ceff47a81e3de37b50f40d12f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/SKM_BB_AthleteA_FaceMesh",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/SKM_BB_AthleteA_FaceMesh.uasset",
+      "bytes": 1686755,
+      "sha256": "56d79d00a7d47ec0e2c2a651ce232490acf0c125c53dd70928d3ceee746d3fbb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Face/SKM_BB_AthleteA_FaceMesh_DNA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Face/SKM_BB_AthleteA_FaceMesh_DNA.uasset",
+      "bytes": 1877868,
+      "sha256": "207b3fa745f12fff83575fa180cb0618e9cd8adcbc356317f88299dac7ed13f5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch.uasset",
+      "bytes": 143081,
+      "sha256": "d64b2eb4cfe252bd04861d71da6bb294ba4dad68f8582605382329d7d757c192"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch_Binding.uasset",
+      "bytes": 7254,
+      "sha256": "cd07d812d8317fddf1b686754276d9ca7911964be46f13a22f42b59a21cc108c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Eyebrows_M_SlightArch_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 105642,
+      "sha256": "a364a7d36dc79eb337040a7c5a78c4c359268e8aec9946955eef8d1833ecf4e5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil.uasset",
+      "bytes": 51187816,
+      "sha256": "3e5e17c6364d1832eae93a75fbd6f133f1caa29a6ecde7e73cfcd9d8659bcdbb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Binding.uasset",
+      "bytes": 7496,
+      "sha256": "ef0f436976cae1a1752d207bd1d58d294769be90084d4c3aedf8292359c51a95"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 249488,
+      "sha256": "451d2c46062fbf9547eb7b31ef1bb3fe97b5bb72d591fe8c3361f05d756ef675"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Helmet_LOD5",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Helmet_LOD5.uasset",
+      "bytes": 117597,
+      "sha256": "783caca0198ee7d5f405a0f5fe18dc2c30f2d8e66427761542002dfae10d41c2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Helmet_LOD7",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Hair_S_Coil_Helmet_LOD7.uasset",
+      "bytes": 78876,
+      "sha256": "a3b6c63049728114e6b813c1f6af8d0e735d7a9d9e0bdc4facef26910b39f22d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Eyebrows_M_SlightArch_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Eyebrows_M_SlightArch_Facial_Hair.uasset",
+      "bytes": 7507,
+      "sha256": "4de0ab816d3f612caa2677809b7d4b4b0e2ea41c49ba93b4da3df4618ef9e383"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Eyebrows_M_SlightArch_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Eyebrows_M_SlightArch_Hair.uasset",
+      "bytes": 9578,
+      "sha256": "00f5fea1b24fa7994ff98d241e8386d10e3d3196fb52ea6a98acb9836295ec06"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair.uasset",
+      "bytes": 8833,
+      "sha256": "7d28154e7d02aa27f0db34cbc1d2b4b4a09678b3429af9dc4004f92f520b6d8b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair_Cards",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair_Cards.uasset",
+      "bytes": 8893,
+      "sha256": "a065572582a167239b193d59c2e7aef89d39909179508ac385b6b819b1214f81"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair_Helmet",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/MI_WI_Hair_S_Coil_Hair_Helmet.uasset",
+      "bytes": 8903,
+      "sha256": "a050f5c15a8fb0cde68476d3fb5e1decb6935a794d1502a8c6e5003e56ab0884"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Textures/Hair_S_Coil_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Textures/Hair_S_Coil_CardsAtlas_Attribute.uasset",
+      "bytes": 6686632,
+      "sha256": "85665bfc5f561b170bd3eeac059f25c5e9313426dc5d7e4e8a3825632583056b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Textures/Hair_S_Coil_RootUVSeedCoverage",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteA/Grooms/Textures/Hair_S_Coil_RootUVSeedCoverage.uasset",
+      "bytes": 443442,
+      "sha256": "d53b7083f46778799c1c42d3aab1e3c42610bfa5d17492fdb187a3089f4d75cc"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_BC.uasset",
+      "bytes": 8187159,
+      "sha256": "4012f136372c3edb1bd1fa23b9ed54cd419d5b8158c68f91efdb75ac22dee62f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_N.uasset",
+      "bytes": 6278787,
+      "sha256": "3f9a0e08d7a52de0c8f4ab3bf739dbb4675b4370dc6cbabbe633846caf0428f1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_SRMF.uasset",
+      "bytes": 8085084,
+      "sha256": "041d6174161a63fbd23bff7b71c3d03d9f8695388c78c408d5a9c6b8196178ab"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/Baked/T_Body_Scatter.uasset",
+      "bytes": 42433,
+      "sha256": "2a26c72c12147f0a373fbe11d5d8b53c76131161be81b1728d7ff2d1b81c147a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/Materials/MI_Body_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/Materials/MI_Body_Baked.uasset",
+      "bytes": 9407,
+      "sha256": "1bdab66fbda9f9ecb80171dd686069b7f8250f1e176bc18c2a3be3bc241a9bc1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/PHYS_BB_AthleteB",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/PHYS_BB_AthleteB.uasset",
+      "bytes": 215841,
+      "sha256": "5aab649374d896b0aa42b0a5f285f92a4006fd4208b92cdcebdee0bda11714a5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/SKM_BB_AthleteB_BodyMesh",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/SKM_BB_AthleteB_BodyMesh.uasset",
+      "bytes": 2872254,
+      "sha256": "df5e74c17ab6ddc3ae89de67b00ff30dcc483d8683e7fbe0387abb053854daf9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Body/SKM_BB_AthleteB_BodyMesh_DNA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Body/SKM_BB_AthleteB_BodyMesh_DNA.uasset",
+      "bytes": 1260908,
+      "sha256": "a753ab65afa969f90cbcd4cceab17b52da498e32dc328e5b9a2f17c8979439f7"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_BakedNormal_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_BakedNormal_LOD3.uasset",
+      "bytes": 98927,
+      "sha256": "b926dbeae34192f56201b6d305c06ce3781f44577a6bfed43ac8eef5777d8095"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_BakedNormal_LOD5",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_BakedNormal_LOD5.uasset",
+      "bytes": 112135,
+      "sha256": "187a8d85728e66b6c8e72bb1445d184bedef3c83531ea93460da18165545c5e0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisL_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisL_BC.uasset",
+      "bytes": 652929,
+      "sha256": "0d88eeb98d9f3498e2905ef9f7c814cd2ca74b3dafc25ff4f0e1e8fa8708538b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisL_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisL_N.uasset",
+      "bytes": 1025334,
+      "sha256": "f2188fd2ea3ab6a2d9cf6bb67da9f0cb92bf8a135dc45e47894d2a2a1b92bf07"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisR_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisR_BC.uasset",
+      "bytes": 652929,
+      "sha256": "178b1316cce95b619494372b58d5fdcda4e886fd02e7f27dca98e624743e1223"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisR_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeIrisR_N.uasset",
+      "bytes": 1025334,
+      "sha256": "31eda2f03ac3a4e44b57ef36b19ae4ff365298f5f205155692cacddc1c278664"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraL_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraL_BC.uasset",
+      "bytes": 720364,
+      "sha256": "9c44e94298fcf5de0fb8858949d713602c9f5f2e92e5cbb48ad0ce370a4b4268"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraL_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraL_N.uasset",
+      "bytes": 795912,
+      "sha256": "d5e631c6a9b20f459203a32ddd4197fefac5cba4327fbd993806d62d146411db"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraR_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraR_BC.uasset",
+      "bytes": 719195,
+      "sha256": "4b7598860a3e238db6585f0bd24d88da42bab2ced8e0604eb9d7467a6d7839cd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraR_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_EyeScleraR_N.uasset",
+      "bytes": 795912,
+      "sha256": "150eca47060e3ad272a43c7640e9acfede5ad750e242ba54f229910be46a54c2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_BC.uasset",
+      "bytes": 5277749,
+      "sha256": "bb7af707745e3951709b9c3b259e981678c2c7743083246ee64239c232330fab"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_N.uasset",
+      "bytes": 7677784,
+      "sha256": "f8983169eab84f4861c3a119d71c057c5577fcd0c61fcb3ca6f14bee2838d335"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_SRMF.uasset",
+      "bytes": 7131710,
+      "sha256": "e3a5bcce6234d1376d30f657dab6223aa3111b8d12741df52a0e50208e4c58b5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD3_Scatter.uasset",
+      "bytes": 123307,
+      "sha256": "8a5f2660c54c34d1a9bd0a0104d1c03ef139d3796d83aa4c096e113f8b3f4af1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_BC.uasset",
+      "bytes": 1738176,
+      "sha256": "bd50c2296776ff25d4f07b8aeb9f1a28c2f22e9fc08b3e3693a15ca4eccc9b36"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_N.uasset",
+      "bytes": 2156711,
+      "sha256": "696061a2fe5db3c4649b59aca1cc65d18bf6ef560dd382a3f00cb557eed2299e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_SRMF",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_SRMF.uasset",
+      "bytes": 2167219,
+      "sha256": "17fc2404a9612ff321b267a4329ff9b7b6722eace5887e0d7bfda6adbbd05c28"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Head_LOD5to7_Scatter.uasset",
+      "bytes": 40661,
+      "sha256": "7079e4f47d4ab973b7656cb916f47bc63fd6891c4265eb7cad60f6e045fb77b4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_BC",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_BC.uasset",
+      "bytes": 984343,
+      "sha256": "001c6c6230c0e0f46a6e819f7138ac8171d4a41d804041b77af44ecb825fe207"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_N.uasset",
+      "bytes": 1775047,
+      "sha256": "a9807c0e35ed9ce996f1e1e418bfd1ae7a90e492bcbf3ed787b025ca748c238a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_SRM",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_SRM.uasset",
+      "bytes": 270044,
+      "sha256": "3f6c871b9c5585f4fdbb2c6b4af51da8cc66f6b4ea1dcd44e98175d44be9f3b3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_Scatter",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Baked/T_Teeth_Scatter.uasset",
+      "bytes": 5651,
+      "sha256": "cdc0a28a9672ee4127ee3113efd172884de4e519c2d666842f7f2782d588453e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_EyeL_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_EyeL_Baked.uasset",
+      "bytes": 11467,
+      "sha256": "b83b28ec44340d63888c2fe94d941a426d19e59f0a85b18d5b7cd703569b70ed"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_EyeR_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_EyeR_Baked.uasset",
+      "bytes": 12257,
+      "sha256": "c7a2a2c8234d64993613c3c060f70009750c9abb9e84314868cde3b5220a95e9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_EyeShell",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_EyeShell.uasset",
+      "bytes": 4912,
+      "sha256": "47d11fb81411049b0912393e77effd6a5cecdc18eca184db7bda6e9fadc4cfe6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_EyelashesHiLODs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_EyelashesHiLODs.uasset",
+      "bytes": 7545,
+      "sha256": "f5747ad39f7cfcaddaeafa9dbea471e867e0f76e7f2a72b180065e1c64766cfc"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_LacrimalFluid",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_LacrimalFluid.uasset",
+      "bytes": 4968,
+      "sha256": "68de4b330be3a682889360252de23ed7a32b5c24f0878876656eda712bbf9ab5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_Skin_Baked_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_Skin_Baked_LOD3.uasset",
+      "bytes": 6728,
+      "sha256": "097822ffc48ef7b0d70c08ae39e4550844d26c1f596271a47c0ded4a2430f0e5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_Skin_Baked_LOD5to7",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Face_Skin_Baked_LOD5to7.uasset",
+      "bytes": 9894,
+      "sha256": "bd3fe2484c65601953e209e147d292d68f8c878202ac3cae224821f344e691c8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Teeth_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/Materials/MI_Teeth_Baked.uasset",
+      "bytes": 6194,
+      "sha256": "de40ccdbd41ffda9bed7f8d38214460f048dea6a3604a279173af41f01fd0e41"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/SKM_BB_AthleteB_FaceMesh",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/SKM_BB_AthleteB_FaceMesh.uasset",
+      "bytes": 1687156,
+      "sha256": "5286a3e0624c7373cbf7232f896aa505cfb8389a482ce851ce5a8091b5af62c9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Face/SKM_BB_AthleteB_FaceMesh_DNA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Face/SKM_BB_AthleteB_FaceMesh_DNA.uasset",
+      "bytes": 1877952,
+      "sha256": "89b67762bbcb3f3e316e85f87c439649e94063eae77eec91350f5dadb250efa8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin.uasset",
+      "bytes": 1289583,
+      "sha256": "6d00ff1757dec88d4e5298fc43b65b9ff5dd985f12e53adc8715b0044673456d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin_Binding.uasset",
+      "bytes": 6007,
+      "sha256": "babb7cdcc4fdd82657dda3a8dfb47f41418165f650edaef8d366dad41a5484f6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Beard_S_PencilThin_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 243345,
+      "sha256": "393456ee29bdbcda117ff3aa15ca02282a515e20e7988577cdbf5c3e502ea6b8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide.uasset",
+      "bytes": 872640,
+      "sha256": "0393dea6033add291d8944de1f519ac531918d6c76e91ccee028664ac4cf0dad"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide_Binding.uasset",
+      "bytes": 5980,
+      "sha256": "df8c7d45a903f6f1f8d21a24b8d8dedb3a2b2dd871a1a5675576162e20c56fb3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Eyebrows_M_Wide_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 45409,
+      "sha256": "bb331bf260c805519c6f2bd012e6845cf7cae00034991a294ff9779425229f46"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade.uasset",
+      "bytes": 31046916,
+      "sha256": "282d99d1fcb977e6d88d49f8f838af6a0271bfe447a1765f06d938c2e66d3a1d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Binding.uasset",
+      "bytes": 5989,
+      "sha256": "649db7082d81d5d7b8b371aaf6989985b3d13a5d2b5bff67cfc59c9516592357"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 350000,
+      "sha256": "3172362af373f8667c8d885e6105e1c945224652baf6fd25928de5cd27e73fdd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Helmet_LOD5",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Helmet_LOD5.uasset",
+      "bytes": 52611,
+      "sha256": "512c36bebccf80e320ed2809ecb125c94aa272d0558fd83c79280c04e70afd15"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Helmet_LOD7",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Hair_S_CurlyFade_Helmet_LOD7.uasset",
+      "bytes": 30198,
+      "sha256": "07f5b00309d43c1c9e520d8ef23d7f111cff26cb1b2f1ce9ab33a4f5942f64dd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Beard_S_PencilThin_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Beard_S_PencilThin_Facial_Hair.uasset",
+      "bytes": 7508,
+      "sha256": "2a01ed9c0510818d58d4a49d718b9f94289ff72349af0d5c6e285c738b2fc0bc"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Beard_S_PencilThin_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Beard_S_PencilThin_Hair.uasset",
+      "bytes": 9853,
+      "sha256": "7e5b1305ae6c79dc7e899b978f5f423453bfc4bb60669d24bf488795c6768f34"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Eyebrows_M_Wide_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Eyebrows_M_Wide_Facial_Hair.uasset",
+      "bytes": 7052,
+      "sha256": "65f376ab26dd4706f540701461cb99c7793ff563b85e145dea79a88f4a387463"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Eyebrows_M_Wide_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Eyebrows_M_Wide_Hair.uasset",
+      "bytes": 9397,
+      "sha256": "4b96ee1c463d3e2c201be260dd173cde50b82929c8cf4378cab17ae5aac27392"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair.uasset",
+      "bytes": 10949,
+      "sha256": "4b56fc64ab8d5fed81f6482b80031fddaec7b6ca54eb9a6be683543238a1ddc1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair_Cards",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair_Cards.uasset",
+      "bytes": 11009,
+      "sha256": "caabaaf897f68764fee462fb1d31e0aa215d26701a24bfac15f7fe0dda6badad"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair_Helmet",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Hair_S_CurlyFade_Hair_Helmet.uasset",
+      "bytes": 11019,
+      "sha256": "d02483d036a6a4a038bf32e93a5625b5e4dd234269426e19028736ee6e60ecef"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Facial_Hair.uasset",
+      "bytes": 7970,
+      "sha256": "cd173ddadf977d75a9b44ccaed29f997d1abbde0b9a366768d604455c107ff93"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Hair.uasset",
+      "bytes": 9367,
+      "sha256": "f5dc5aef17989b956220282ec06cff8f3b3d9bad89270c79c4bd1354682399a9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Hair_Helmet",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/MI_WI_Mustache_S_Curly_Hair_Helmet.uasset",
+      "bytes": 9437,
+      "sha256": "08dfe4e1ba1318f32987c737502c636521bf2d8fd39fb4d1484d66e334062220"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly.uasset",
+      "bytes": 744550,
+      "sha256": "c58dfcea0d406f758ea11508454b997fb22ba6795beb56e9a5928a2cd9ef5383"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Binding",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Binding.uasset",
+      "bytes": 5989,
+      "sha256": "3076cfbd9fb5c321944b2ebae6e87677aa61f54430358a033dd1617cdd7890ef"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_CardsMesh_Group0_LOD3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_CardsMesh_Group0_LOD3.uasset",
+      "bytes": 216095,
+      "sha256": "c5cbc0ecb521d4922f83ad546556c4eea00663d44fc2c9919a46767270117fec"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Helmet_LOD5",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Helmet_LOD5.uasset",
+      "bytes": 48544,
+      "sha256": "fc0ee1e349f93437717081eb5c86606236487f959c6dfdaeebb5fe57ed5e3aa0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Helmet_LOD7",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Mustache_S_Curly_Helmet_LOD7.uasset",
+      "bytes": 23902,
+      "sha256": "cedfd7a0a87b290501b6c11afd839a5e51cf97fa66e3dccfb2c9b20581b6786f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Hair_S_CurlyFade_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Hair_S_CurlyFade_CardsAtlas_Attribute.uasset",
+      "bytes": 4430851,
+      "sha256": "5afdb7cc69ad58df4b22c9d974619d83a8392f409daa1fbdb63a36d47ee6537e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Hair_S_CurlyFade_RootUVSeedCoverage",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Hair_S_CurlyFade_RootUVSeedCoverage.uasset",
+      "bytes": 470159,
+      "sha256": "c0a4df83dd0ef3581423b8895d5d4d586ce2a99039fcb9bab87fd19b799088c7"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Mustache_S_Curly_RootUVSeedCoverage",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/BB_AthleteB/Grooms/Textures/Mustache_S_Curly_RootUVSeedCoverage.uasset",
+      "bytes": 349434,
+      "sha256": "6ccefee1e74eb36408c76c7f9d2e95281aeb147a1fc7fe5aed385e0a3ba3c51f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Animation/ABP_Clothing_PostProcess",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Animation/ABP_Clothing_PostProcess.uasset",
+      "bytes": 200447,
+      "sha256": "ea5d4a91198cd0e44fc3ca2c8f7aa4d2d83e07b85ce3c46906f8d8a863bf460b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Animation/ABP_MH_LiveLink",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Animation/ABP_MH_LiveLink.uasset",
+      "bytes": 345538,
+      "sha256": "2701b270ec8da97baa909aee7c3a144bf59a0404af0a5a57debef836c54787a5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Animation/CR_PlaceHolder",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Animation/CR_PlaceHolder.uasset",
+      "bytes": 23597,
+      "sha256": "61a8c6d07349368eb97b3f9617b0b670ad8c51cbb4df8daf4c2669683f738d41"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Body/ABP_Body_PostProcess",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Body/ABP_Body_PostProcess.uasset",
+      "bytes": 131871,
+      "sha256": "6d59f8dc0148c7ae981d572a1d3888a5ab1a149af12f10d0e0880946be44e3a4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Body/IdentityTemplate/Body_LODSettings_Medium",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Body/IdentityTemplate/Body_LODSettings_Medium.uasset",
+      "bytes": 55777,
+      "sha256": "081ee64ff7cc931dea367d8e6747ae1d64df83f40a4a790835e0a6081e17e562"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Common/MetaHuman_ControlRig",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Common/MetaHuman_ControlRig.uasset",
+      "bytes": 20853927,
+      "sha256": "ed72ec7c5ca2578fd32e15a2f2c99f68124f4dec2398185eb651e589cb887d30"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Controls/CRSL_MetaHuman_Gizmo",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Controls/CRSL_MetaHuman_Gizmo.uasset",
+      "bytes": 4662,
+      "sha256": "4f6af73ecce9a76cabd00be46e142796a063f8fc2382b989e28b857aefe84a23"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Controls/M_RigControlActor_Black",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Controls/M_RigControlActor_Black.uasset",
+      "bytes": 10295,
+      "sha256": "a1da0982926ef3befb584ed19b9e169d647c5df6fcb38d569e51a6ec8d9f4d50"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_2x",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_2x.uasset",
+      "bytes": 535680,
+      "sha256": "322a8b35e3a8e9e520cebfd96acb49d2856c18a060ea4f6bdacf40bdeb2ce95e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_Convergence",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_Convergence.uasset",
+      "bytes": 194809,
+      "sha256": "3b1e27c9ac87b9a4999c5a19c2c7bfb0642a6f8c30604043571a0ec907b3ee4f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_FollowGrp",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Controls/SM_MetaHuman_Faceboard_FollowGrp.uasset",
+      "bytes": 79313,
+      "sha256": "3c78a93f84ac892c34952e08791dc2c31f7d078014d7fc736ddc199114a529f2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/ABP_Face",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/ABP_Face.uasset",
+      "bytes": 31100,
+      "sha256": "a20a067c95ae47b760126cb8824599b22aa39ce6b361e37f39888fc716c328b0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/ABP_Face_PostProcess",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/ABP_Face_PostProcess.uasset",
+      "bytes": 204634,
+      "sha256": "22fbdc37596fe26809d23b3b5fdad6d9578f74cc2fc42f4d737ff603b66e49bb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/ARKit/AS_MetaHuman_ARKit_Mapping",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/ARKit/AS_MetaHuman_ARKit_Mapping.uasset",
+      "bytes": 5329895,
+      "sha256": "26a138203e5c4b0a0313a393bc627b301b91f86f67549a387f93815309c3f917"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/ARKit/PA_MetaHuman_ARKit_Mapping",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/ARKit/PA_MetaHuman_ARKit_Mapping.uasset",
+      "bytes": 929583,
+      "sha256": "ec7acf83e894b1f10cc5fd0c0865a53262a2e3d7794df1ccd3a7df7d32c8efd5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/CR_MetaHuman_HeadMovement_IK_Proc",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/CR_MetaHuman_HeadMovement_IK_Proc.uasset",
+      "bytes": 1272098,
+      "sha256": "5ab8a293eef9537b8a22fd23a8cbc45ddf083ff15baf0c07f37ae2c8dec0e92c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/Face_Archetype_Skeleton",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/Face_Archetype_Skeleton.uasset",
+      "bytes": 801088,
+      "sha256": "3b4dd525dd730590da63e24d33a1001874c9085b91e783811ec107e27e90e53a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/Face_ControlBoard_CtrlRig",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/Face_ControlBoard_CtrlRig.uasset",
+      "bytes": 11993860,
+      "sha256": "b543a9bad05d094587d59e556723b00f2c92c422ff63eb0da8145054ee569b0f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/Face_LODSettings",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/Face_LODSettings.uasset",
+      "bytes": 150209,
+      "sha256": "3d83fdc844452ea95ba72e5bc984aefb0e3cf6c08895578e4b5262518f3d7cdd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/Face_LODSettings_Medium",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/Face_LODSettings_Medium.uasset",
+      "bytes": 47310,
+      "sha256": "cae32c6c38ac7029f80e51a8e27d6f799a90d928488fb57c67e8ece62a3f0164"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/PHYS_Face",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/PHYS_Face.uasset",
+      "bytes": 12798,
+      "sha256": "b98d41fa1b819e686c09896685469965f1a5d522c7af1f3f7480939926d6c628"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/SKM_Face",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/SKM_Face.uasset",
+      "bytes": 18543090,
+      "sha256": "4dd5546e5956d82395cf2371822d119c2a3944a4240755b5e12a3b9de61b27fd"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Face/SKM_Face_DNA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Face/SKM_Face_DNA.uasset",
+      "bytes": 11048701,
+      "sha256": "daf8828d01d6687e4bf78106108291544ceec3844bff469433fa20bc15657e95"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Female/Medium/NormalWeight/Body/metahuman_base_skel",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Female/Medium/NormalWeight/Body/metahuman_base_skel.uasset",
+      "bytes": 75653,
+      "sha256": "4c72b4e8175834a65c4ce1bde8da56cfbbe002dece83fad834c1bfafea6b9f29"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UDIMs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UDIMs.uasset",
+      "bytes": 13300,
+      "sha256": "145cd449fc81fd1c84f41e53d19fffeb044bd78042ffd0df02a5721f68b57346"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_MaterialAttributes",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_MaterialAttributes.uasset",
+      "bytes": 14240,
+      "sha256": "87bd62187196cf1050140ab63139d6763058b5a2ba1bce3300accac9d24fcbdf"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_Scalar",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_Scalar.uasset",
+      "bytes": 14062,
+      "sha256": "be85534b0a4acaaf9df82a30e082b84da078508573b9af7243455375a2bbb394"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_Vector3",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_UHM_QualitySwitch_Vector3.uasset",
+      "bytes": 13726,
+      "sha256": "ac6244ec5e39ce98cf33574b7938ea6a268d4e9e70ddcdb68431c4253d033f98"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_blendNormals",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_blendNormals.uasset",
+      "bytes": 16584,
+      "sha256": "48637e093471b28d16e2e9892066c7f2233fa88f2d25e68aa3e52c5f812b45df"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_color_LinearTosRGB",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_color_LinearTosRGB.uasset",
+      "bytes": 16070,
+      "sha256": "769e080efed90250dd5c3a348ca7d59da421311406b829f7a4169c1c2a6f9922"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_color_sRGBToLinear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_color_sRGBToLinear.uasset",
+      "bytes": 16070,
+      "sha256": "f2b44becb5b07085bdae910699766f110528a6f441ebfab36d168179ee8a3e45"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_normalRotator",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_normalRotator.uasset",
+      "bytes": 19174,
+      "sha256": "c8230cf5efab72dc467cc789a5b981514aab5489372689f0292cbbd0c809913a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_normalStrength",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_normalStrength.uasset",
+      "bytes": 9677,
+      "sha256": "f6b1a1c33155ecf7bcb7dca328dd40abccc8cd67c1cb2e1453974abe9a79eb49"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_ruler",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Material_Functions/MF_ruler.uasset",
+      "bytes": 11171,
+      "sha256": "69bce6ad9527e0581e55365fb86b2956e2e90f5341419bade3e54fcc6c8f655b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Black_M",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Black_M.uasset",
+      "bytes": 7922,
+      "sha256": "f587e9d799d1a8b06c18ff49e928e9d07b47109349f5936dde99118262f765ca"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Black_M_VT",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Black_M_VT.uasset",
+      "bytes": 8480,
+      "sha256": "ed06277f399e32dd1bda78734925c1eee27688b3d7bcb78d54162d16683bce4e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_C.uasset",
+      "bytes": 7729,
+      "sha256": "6fdc5fd6a5395d5186bdcc000ba693a11c05d1745905e69dab2a9ce39e6547ce"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_C_VT",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_C_VT.uasset",
+      "bytes": 8205,
+      "sha256": "08568b5914327995382c6e357c25b7ea021a109a69ba957973abf0fdc9ea8a8a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_HDR_C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_HDR_C.uasset",
+      "bytes": 8068,
+      "sha256": "54fc69c1fe15a241e3595dcb21f82eac27a25ade404a688241212ee626c38216"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_linear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_Grey_linear.uasset",
+      "bytes": 7946,
+      "sha256": "b8954919629990fea3f5026c4f274a8dfa053a7316221aadf041528b37fd3879"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_N.uasset",
+      "bytes": 7977,
+      "sha256": "1bc3037552cfb1de0277e7ec8ccb440581614c662631c3de4b64d0bfed21841f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_N_VT",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_N_VT.uasset",
+      "bytes": 8488,
+      "sha256": "92a626994541413207bd7a1a9e7b51da665b47b39f455dd85a20baecc6cd5b35"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_White_C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_White_C.uasset",
+      "bytes": 7750,
+      "sha256": "cda775058633d9acb09a9204ca67bbc2f02accbd473c40f97a7f592190074973"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_White_C_VT",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_White_C_VT.uasset",
+      "bytes": 8242,
+      "sha256": "b916b947b4a7902cee4be4936b86411be59bcaaf48abcefee37c22cdea6df256"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_MH_BentNormal_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_MH_BentNormal_AO.uasset",
+      "bytes": 898421,
+      "sha256": "dc615a8795c02d21d512b5995a91efc0c5f417957bd988c0e4aa01e6d8dd5c44"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_MicroDetail001_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_MicroDetail001_N.uasset",
+      "bytes": 1432650,
+      "sha256": "a48f826809538df7c42e3342bce10c1c771e3ede2f58f3f1d35af67a96386ea8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_TilingNoise_001",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Common/Textures/T_TilingNoise_001.uasset",
+      "bytes": 99200,
+      "sha256": "1e57002aa2891983ca8af101030f015ff45b30ec7423e1aa81eab39b5ba9f773"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_circularMask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_circularMask.uasset",
+      "bytes": 15018,
+      "sha256": "32ec4ccb861ce84e6737e329e99c96683ae576a51ea4116cd1e5172278206c42"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_customIris",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_customIris.uasset",
+      "bytes": 57032,
+      "sha256": "3fb2f8eb1ce5fbd8eac484195015f159ccb345671618ec47529b211978efc44d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_pupilScale",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_pupilScale.uasset",
+      "bytes": 32806,
+      "sha256": "74567ce8915c1210b5387c0a356c4f5ed48baa26e6da3629dd6590e30293084c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_refractedUVs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Material_Functions/MF_refractedUVs.uasset",
+      "bytes": 46661,
+      "sha256": "2fd7955c64ec97c9a46bb76e33c9d09d29e3454a8be17185913f82234df5c6a9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/Baked/MI_EyeL_Baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/Baked/MI_EyeL_Baked.uasset",
+      "bytes": 6414,
+      "sha256": "29aad92a06ded242109715f351da12a3297401b2a651b91fe7d27f3f2acbae76"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_eyeball_unified_MH_preset_left",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_eyeball_unified_MH_preset_left.uasset",
+      "bytes": 37554,
+      "sha256": "bdbe8fe3d2a9b65fd2c7fe125ef101490f10330b4cd5f5bfa6cc3de65d853e02"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_lacrimal_fluid_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_lacrimal_fluid_unified.uasset",
+      "bytes": 9126,
+      "sha256": "4fb65994f893f464d27b3b7365c326dc17efe651e94fca73877f4b540036c086"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_occlusion_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/MI_eye_occlusion_unified.uasset",
+      "bytes": 19629,
+      "sha256": "94bb2a962cf75ed45daffe7c78e866beade69d16e83fa2bcc91dae9879770b70"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_eyeball_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_eyeball_unified.uasset",
+      "bytes": 400201,
+      "sha256": "09dca2733189e8cd12efbfbda5f7d4172c5374677b6ce1ccac42e724b40f7e23"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_lacrimal_fluid_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_lacrimal_fluid_unified.uasset",
+      "bytes": 27058,
+      "sha256": "032932cba82b4fc3067d3045cdaf959633fca2bf35eb78cb0b11840e5fb071e9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_occlusion_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/M_eye_occlusion_unified.uasset",
+      "bytes": 101723,
+      "sha256": "048285d4d15f1a64ea7223efbc6133eccac5cae27e194ae70d4aca5dcd80deb0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/SSP_eye_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Materials/SSP_eye_unified.uasset",
+      "bytes": 3229,
+      "sha256": "44573b857ed2fa96645454d2abbbf02fa8fe058a0ecf3042092cd50eb16df217"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_Iris_H_M",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_Iris_H_M.uasset",
+      "bytes": 1587188,
+      "sha256": "32e6e391d52fb4b819cded333a1b1d740d83e20ba5f85f2257a37ff2ca935070"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_Iris_I_M",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_Iris_I_M.uasset",
+      "bytes": 1418714,
+      "sha256": "121709aa7da6ede761b1c99f4f208b23c5bd9f819b05a441a884bd49ab69eace"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_iris_H_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_iris_H_N.uasset",
+      "bytes": 6011709,
+      "sha256": "833ac3c0419e49de6455a77788a7ad8d825c9447f11e791cd0a96aea65b3a12c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_iris_I_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/T_iris_I_N.uasset",
+      "bytes": 5572617,
+      "sha256": "b15cd2ccca8a01ad12eafb290552fb01f2c294173f3716ab89b9cee9a054e35b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/feather_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/Iris/feather_N.uasset",
+      "bytes": 2069263,
+      "sha256": "d0b01a651dc06057d8f3886ed43df3be32670bbce2c08be390010a53e45a1aa9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Base_Tile_DetailNormal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Base_Tile_DetailNormal.uasset",
+      "bytes": 143468,
+      "sha256": "7bda850fd98df97966b3e92fabdd0a624c1cff1f5fbbcdaf58cfe1da6fc9f3d8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EV_DustPanner_01",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EV_DustPanner_01.uasset",
+      "bytes": 53609,
+      "sha256": "b7a3eb50f8c6c654af20f4758db5d807d7af66b8825cfe09bde068fad2bfc56a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeMidPlaneDisplacement",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeMidPlaneDisplacement.uasset",
+      "bytes": 1106669,
+      "sha256": "0d4ba7264404d8eb2852b5d87ed4ad228e7224944eae5099fae624986c54143f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeSclera_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeSclera_D.uasset",
+      "bytes": 3869480,
+      "sha256": "4b52c58f510c5b2e26821ee26fa1e3c708865751d09f18dfe4021e2073d8bb32"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeSclera_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_EyeSclera_N.uasset",
+      "bytes": 15222508,
+      "sha256": "f1cba6b2d8c35a778806d86aac1bbff9f3f26f0a001abf0aaad691bf9f1f24b3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Eye_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Eye_N.uasset",
+      "bytes": 209890,
+      "sha256": "b1a184048a757db45f4d67a80605c5d5af77f38634743b75a640fb98f341ec8e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Iris001_01_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Iris001_01_D.uasset",
+      "bytes": 1403434,
+      "sha256": "730cf02d7cadc5201b4cdc47779fd4aff063c91db04596967dc7031814344c6f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Shared_Eye_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Shared_Eye_AO.uasset",
+      "bytes": 95537,
+      "sha256": "eb2679b45a0ec4ec7c150fb12a82dccc0262a12d836b402aae7ef5ded0d4dab7"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Veins_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_Veins_D.uasset",
+      "bytes": 5354141,
+      "sha256": "966d566c160d8e5d34b0f7936da16e50f639c69f128286d2cc3a744983f3364e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_alice_sun_painted",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_alice_sun_painted.uasset",
+      "bytes": 228495,
+      "sha256": "82d18dd91e91518bd2e769f1bace1edd6bd2e45652cb47f4f3ef734afa962a18"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_iris_color_picker",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_iris_color_picker.uasset",
+      "bytes": 90687,
+      "sha256": "b9f2c3b542f0bcd084610575b5f18c2d44a5701e092d5eed6f2664f14808df84"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_lacrimal_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Eye/Textures/T_lacrimal_N.uasset",
+      "bytes": 1432644,
+      "sha256": "208fb02327befb4ef8051deade2caec40bb5a7c82503969a31c6d3b40dcb8b2c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_Skin_ScalableNormals",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_Skin_ScalableNormals.uasset",
+      "bytes": 193179,
+      "sha256": "56cdd9c40bb48285316cee5cd231cca45c3eecb22a1f939cd6f03778d730ee74"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_Skin_ScalableNormals_Regions",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_Skin_ScalableNormals_Regions.uasset",
+      "bytes": 30222,
+      "sha256": "e3154bf5c968d480fd9ff24e38e75e7c94c83c91941a778403b14d05ecb2d642"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_animated",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_animated.uasset",
+      "bytes": 102991,
+      "sha256": "bcde2e9b646061826d0529eecca16f99eb4aab05bfcc319705a7678cdd8b571e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_bakedInputs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_bakedInputs.uasset",
+      "bytes": 45929,
+      "sha256": "3b8caa3cab802269aa60a192587cd0f84f48128ee9b17db7153557bc2faba929"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_bentNormalsAO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_bentNormalsAO.uasset",
+      "bytes": 23890,
+      "sha256": "d645a24087b3e083b3e0fab320730dfa749ca7ee17a05c8731e4e9caebadf81f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_fakeAO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_fakeAO.uasset",
+      "bytes": 28696,
+      "sha256": "9dc664888e914304ec47b7d5078278c2cf3621785d862397109ff6c9efce1aa9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_fuzzApply",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_fuzzApply.uasset",
+      "bytes": 31861,
+      "sha256": "2334f1e2c9ca9e9d30fe22b8b55aa5c24a92a6797d4a61deaa7584a4eb88b468"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_globalAdjustmentsPostBake",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_globalAdjustmentsPostBake.uasset",
+      "bytes": 51302,
+      "sha256": "80a0a64be7865f7cb53eb01ab3a65fb7e99dd9fc5db89b52b99b687772fcd349"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_microSkinDetails",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_microSkinDetails.uasset",
+      "bytes": 55011,
+      "sha256": "e021b66df709570f6be1284bd82e3a621bad56aad324956618f8e9ada1e88134"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_mipmapAdjustments",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_mipmapAdjustments.uasset",
+      "bytes": 43349,
+      "sha256": "7a75f46413458a985ba8bc52bc339bd1ef02b969e4d1218aec7fe1e6762db888"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_scalability",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_scalability.uasset",
+      "bytes": 57125,
+      "sha256": "53859bcb000b592f462945beccbdd87a103ab26afce49123d3cb9375f3da1083"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_scatterAnisotropyPT",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_scatterAnisotropyPT.uasset",
+      "bytes": 10956,
+      "sha256": "eeb02ead0c55419465d3eb18ef4e9b7f2fe0a44c3c444e331800445e0f7afe67"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_utils",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/MF_skin_utils.uasset",
+      "bytes": 18808,
+      "sha256": "cbfcd084f03aa25f920f1c4681dc16ab3a47abc63e36735510a37113adcbfa1b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_AnimatedMaps",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_AnimatedMaps.uasset",
+      "bytes": 21037,
+      "sha256": "5745ad6e0419e4bc47875957b896a0fb22b66f51a76a9dc9c2726396d92eee0c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_01A",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_01A.uasset",
+      "bytes": 36509,
+      "sha256": "14d9d4c7bdfdac714fe009d1da5bdf1f606edf76eb12948cdf3175e766e81040"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_02A",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_02A.uasset",
+      "bytes": 24447,
+      "sha256": "7ea2580354a133b8307f45398a01897d466d6bd5a98efc23e0daa303cf666481"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_03A",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_03A.uasset",
+      "bytes": 25445,
+      "sha256": "9ebb15f39d8ef54fb711b968ea0a366472965fdb98cf47fb4dfa2a2c74843db2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_TexArraySample",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Material_Functions/Skin_Animated/MF_HeadMask_TexArraySample.uasset",
+      "bytes": 13420,
+      "sha256": "4f5d04e92964727f2252b64c57328cb444a5ca122c245e3bd9baefe6d0958132"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD0",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD0.uasset",
+      "bytes": 17326,
+      "sha256": "b2293904db4d7523a89c78fdababa5d6a1a22f22c8a4cdde449f51070eef9a8f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD1",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD1.uasset",
+      "bytes": 11331,
+      "sha256": "b76f68afb0c1d6de1fd50e7e25ee0d19351cd8a2197ffb8f44859d48a7175edf"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD2",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD2.uasset",
+      "bytes": 11595,
+      "sha256": "e55c9eaaf76d7dd65ac28cb6bd4f094e8ccb10da1ccf569b5fa4ae8190e2e916"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/M_skin_unified_baked",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/M_skin_unified_baked.uasset",
+      "bytes": 83073,
+      "sha256": "177792d501ef777552d1c4e9509ad7acdffbfcf6c51da349adec746be89e57aa"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/SSP_skin_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Materials/SSP_skin_unified.uasset",
+      "bytes": 3393,
+      "sha256": "ea0d9ef665bb8c568ed116f707573df092c314b4ee1d245214b080f08695ffb3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_FlowMap",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_FlowMap.uasset",
+      "bytes": 604473,
+      "sha256": "43d536674a6d8ed1409fb873a56765e42f5d443692ddd4ae28668523dc5b5dfb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Horizontal_Normal3C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Horizontal_Normal3C.uasset",
+      "bytes": 395856,
+      "sha256": "2412c325896e4f7fe001e5541006767daae546207c53b0774ee712bd43d0272a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Neutral_Normal3C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Neutral_Normal3C.uasset",
+      "bytes": 768318,
+      "sha256": "7d8302a9626de3edb48905c5790210259dad5af8eb26af55c0d9f6bdf40c772d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Nose_Normal3C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Nose_Normal3C.uasset",
+      "bytes": 877792,
+      "sha256": "867533e85ea5b0709d3fa521b514d502ae755451ecb68144add6ba6a391ba323"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_PoreMask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_PoreMask.uasset",
+      "bytes": 98799,
+      "sha256": "64d19dcd13d691deafd6a1fd316f3e6c9c011ec07ae56ae372b6abaf9b15b92b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_RegionMask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_RegionMask.uasset",
+      "bytes": 31467,
+      "sha256": "1bf473e231fda2b48f17881c52fe044b4a994f5dbb8a82ff9e38e9dda43efae5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Vertical_Normal3C",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Scalable_Normals/T_Pores_Vertical_Normal3C.uasset",
+      "bytes": 655438,
+      "sha256": "7e48e97d01b20d8b21c6cc3b512b1fe46ce9862dd1e083fd0a989c756817fe85"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm13_msk_01",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm13_msk_01.uasset",
+      "bytes": 59936,
+      "sha256": "a0ed458f22f64a33aaf02546ed561ff0093d0a0375c10180db3624a63a3e26a5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_01",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_01.uasset",
+      "bytes": 159965,
+      "sha256": "b1427ebfc8ebd4c22babefc56f09c9277da6ace51c817ced01e0095b5695fd97"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_02",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_02.uasset",
+      "bytes": 249639,
+      "sha256": "8abc5a026173db2cd3ef63131ce422a5ac574ce7e0e435b195861849a279652e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_03",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_03.uasset",
+      "bytes": 538625,
+      "sha256": "23628d5262c6a11c54a1bd53f1923824ef0aa11de024c2af57be2ea841ffa59d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_04a",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm1_msk_04a.uasset",
+      "bytes": 198335,
+      "sha256": "348d2e687dbaf986fb66d2366d38732b5bd71edf281f87755d301128be0458c6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_01",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_01.uasset",
+      "bytes": 210310,
+      "sha256": "7a000d10296d3e6494a20269b4c2da127f6ce54fb2905f5a91479e9f64fc80ec"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_02",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_02.uasset",
+      "bytes": 401809,
+      "sha256": "3cdf25e04e2b49ebb1e24c8b9fe1f20467290d014ee799e3e198825de28fe7e3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_03a",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm2_msk_03a.uasset",
+      "bytes": 321897,
+      "sha256": "d272bf7b69b56b8a75c9e8661a1a212b1dbf16eca57faa4d25a2d38f9b244f21"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm3_msk_01",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm3_msk_01.uasset",
+      "bytes": 152377,
+      "sha256": "162cce8b5c2a5d0336910e95ee65e43318fcc782d9291cbcc001514a4bde5b53"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm3_msk_02",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm3_msk_02.uasset",
+      "bytes": 306726,
+      "sha256": "012b0634297e91fbf2761176ff01150729ff34f2f2703cbca029303166c4a893"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm_msk_Array",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/Skin_Animated/T_head_wm_msk_Array.uasset",
+      "bytes": 2504416,
+      "sha256": "75aa75848fbc07d01286a60edcebbfe2cb41239015c0a85b32cf9a0613576256"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/T_SkinMicro3_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/T_SkinMicro3_N.uasset",
+      "bytes": 2184296,
+      "sha256": "23959c76473b941b1ddf9a38557e912f65ab9f5e889c1e95d38fe1ed76da9884"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/T_skinMicro3_CAV",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Skin/Textures/T_skinMicro3_CAV.uasset",
+      "bytes": 1721854,
+      "sha256": "e19b22cc237bfe6d4e3fd6c351a7047e5363e057d215efbc4202547575cdb2df"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/MI_teeth_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/MI_teeth_unified.uasset",
+      "bytes": 10515,
+      "sha256": "8b155d611f2a21f8e0d5f500f4cc7350df48c89b2080fc41742a782375fa0712"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/MI_teeth_unified_MH_preset",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/MI_teeth_unified_MH_preset.uasset",
+      "bytes": 22345,
+      "sha256": "dde13935bbb3587c373151be0c11c75c98f6ec04101c86febdf3871eb8788ce0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/M_teeth_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/M_teeth_unified.uasset",
+      "bytes": 217232,
+      "sha256": "ade238ce52c372c89c43f8fcc9a14cd26f710321154c138b5aad37b48cb369ab"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/SSP_teeth_unified",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Materials/SSP_teeth_unified.uasset",
+      "bytes": 3436,
+      "sha256": "bc711d7f7f724c5ad1e6cc90d6d1e6fb4631e324c6720c0c9676b61181d3cad1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_BaseColor",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_BaseColor.uasset",
+      "bytes": 4448120,
+      "sha256": "88d009923affc235944bd572eb138efee7b9cecd0033f6452eab5eab52e0082a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_DetailNormal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_DetailNormal.uasset",
+      "bytes": 6101873,
+      "sha256": "ddbc1bef98e55efbf93d21eaefd31dcaa71123bdee6c2365e00511c0fbdc360c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Masks_001",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Masks_001.uasset",
+      "bytes": 2230662,
+      "sha256": "9d63e3235a129917f67b6277dc0e8b8724290189067d3bacd84eab68604e5f25"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Masks_002",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Masks_002.uasset",
+      "bytes": 384226,
+      "sha256": "b7cdd077dfefdfa035f7aadfbf3688c70f5e52939c10fed431b27d8d7e33242c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Normal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_Normal.uasset",
+      "bytes": 2994501,
+      "sha256": "fd70ff15934214126323ace0ed831243e9ff02d6dfaf89c0025c6a55ce3ab032"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_SharpNormal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Lookdev_UHM/Teeth/Textures/T_Teeth_SharpNormal.uasset",
+      "bytes": 2494715,
+      "sha256": "74811cc1fa043d761144940fd93896f0edd7d3f180126f0a554c2d8161db087d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_GrayNormal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_GrayNormal.uasset",
+      "bytes": 12187,
+      "sha256": "caf3c1a72e573a61e8c4fd4726f2eec41471e7b8515601084e0c3ed1a7b7af05"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_HairAnisotropic",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_HairAnisotropic.uasset",
+      "bytes": 65438,
+      "sha256": "5a2c50a09a338509ff696cf34c6ab3d0b6e6b2781df7a3055ff2bf0f5d368eb0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_Color",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_Color.uasset",
+      "bytes": 19849,
+      "sha256": "20025e900981a6929a08fad2811f6674c41edb817b7a94e8317dcf4073a95ea9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_ColorBlending",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_ColorBlending.uasset",
+      "bytes": 37566,
+      "sha256": "85b66c15c26c22e49a3c3ef7046ebae0da54bd71a201c87fcb763525cccd6dee"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_SaltAndPeper",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_SaltAndPeper.uasset",
+      "bytes": 22407,
+      "sha256": "16cae1a5b294ba86ce672b3b3d6c18b4d6f713c08c1ff4f230533a7db5bf84d9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_SecondaryColors",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_Hair_SecondaryColors.uasset",
+      "bytes": 64574,
+      "sha256": "5231bd9e3bb6c984720918ded847719694085ac18ee0c6ee160dc39e1d0aa12c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_RGB2YCbCr",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_RGB2YCbCr.uasset",
+      "bytes": 18993,
+      "sha256": "690662b9c5d904245b000fa8b34f05c78d1af49861fcec2da5592372fc1dcd2d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_RedHairBoost",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_RedHairBoost.uasset",
+      "bytes": 16386,
+      "sha256": "62f18b2253712460ff95a5930a594f1b2c194648034e6275800dc5bd5da518d4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_Variation",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_Variation.uasset",
+      "bytes": 14405,
+      "sha256": "f659644ccf43c0a8ef7b0e95dc04aca97b449835bcbe308b0af9e48d4d85dab3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_YCbCr2RGB",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_YCbCr2RGB.uasset",
+      "bytes": 19295,
+      "sha256": "cab1747751f6ef7b52d4a3ab9449c7d4ca645e5f124b8fcaa6703c573c7098f5"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MF_YCbCrAdjustments_BoostRedness",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MF_YCbCrAdjustments_BoostRedness.uasset",
+      "bytes": 14156,
+      "sha256": "09204ed9bc954a4728a190e446bbfa646dea25df564e9b955f5d2fe53ff14ca4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MI_Eyelashes_HigherLODs",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MI_Eyelashes_HigherLODs.uasset",
+      "bytes": 10016,
+      "sha256": "bef664ef087c728fe25c9f1cd1debf338817c62b09700cbfb6d7bb7ea0aa5628"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MI_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MI_Facial_Hair.uasset",
+      "bytes": 10091,
+      "sha256": "3824dad314afb9c0d9e5c45dbb8d2d3a0b7e316c999f9980637fa2bd84ca330a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MI_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MI_Hair.uasset",
+      "bytes": 16999,
+      "sha256": "d195433fb788f5d38bda525ae622f0489010a4ef9d502eb929de4f81cb4cbb36"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MI_Hair_Cards",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MI_Hair_Cards.uasset",
+      "bytes": 8400,
+      "sha256": "d48a8baeb831c48ac64776392028b0d75d7a3b973ff5d3c5ff3a5d56f3b82534"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/MI_Hair_Helmet",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/MI_Hair_Helmet.uasset",
+      "bytes": 6953,
+      "sha256": "480afccbd911dcd655b93f6a377dcbd3f71ed1372282469770dafc502db96a64"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_Eyelashes_Cards",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_Eyelashes_Cards.uasset",
+      "bytes": 19772,
+      "sha256": "5f1a3e8a6a6f8d0456a26abf1c70f0e92adc62680da0a918e4b5cae1ca4f1fc3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_Facial_Hair",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_Facial_Hair.uasset",
+      "bytes": 90814,
+      "sha256": "d93f0f8e83e1c6bff2450af021e8ebce2e2ea600f26af2fc52eaa6b850ba0eee"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Eyes",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Eyes.uasset",
+      "bytes": 11694,
+      "sha256": "2505302a04b468d8080651e4055970de3526ff1aae122ff4735e6493991ca28f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Head",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Head.uasset",
+      "bytes": 14052,
+      "sha256": "351d6cc0e1f291f091cbb9f23332f5ddd3bae442208e2f8483d47a7056b67943"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Teeth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_GrayTexture_Teeth.uasset",
+      "bytes": 17473,
+      "sha256": "a80e5bd50d1672a13e47525cf90256002f2d5fb5e56e248f63372047b159e589"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_Hide",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_Hide.uasset",
+      "bytes": 8628,
+      "sha256": "1850ba1772229e3a0d663987fd67617a227004c71020358cc68acd1d0cd36707"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/M_hair_v4",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/M_hair_v4.uasset",
+      "bytes": 115126,
+      "sha256": "68cd2ba5097f32b37c0a78e354fc795565b827ddcab74fd2bf1d4c089e0e0db9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Materials/T_Black_Linear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Materials/T_Black_Linear.uasset",
+      "bytes": 4673,
+      "sha256": "63b660b622315e67ac6ed98d58c65b328b7ae48321bea202972eae288a8ab946"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/BodyTextures/T_Skin_Microtiling_M",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/BodyTextures/T_Skin_Microtiling_M.uasset",
+      "bytes": 755044,
+      "sha256": "1a4fa8e9741242bad92aa7a1d4f6b9db9cf89972b95b9ee3821553cf6e40095b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/M_top_crewneckt",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/M_top_crewneckt.uasset",
+      "bytes": 37428,
+      "sha256": "5f6c93558a7986dc6071ef8fcaf5c23cce03e895b145da009353b353995ab142"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_m_top_crewneckt_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_m_top_crewneckt_N.uasset",
+      "bytes": 12512533,
+      "sha256": "99440e253058f5c6ee5538be1ecd8818c53d969001eb52c8be67634dec5b86f6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_AO.uasset",
+      "bytes": 6668432,
+      "sha256": "17b1b494ecb616b4380b8b219cf5264f80be5919f239cf06b880519d57eeae16"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_Mask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_Mask.uasset",
+      "bytes": 6388272,
+      "sha256": "3a8c80b85a10ba4bf902470aac4d8cc60b15ad5bdae030bf000c7d30e41edba2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_customstitches",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Crewneckt/Male/M_top_crewneckt_customstitches.uasset",
+      "bytes": 101703,
+      "sha256": "382806537c72bd61eef83c389dea25389d286e444b918857e2951157ab4e585d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/MF_Passthrough",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/MF_Passthrough.uasset",
+      "bytes": 12153,
+      "sha256": "012d9b0d870ad1986d5fb8c53f343e0509d5f9c9e73930cc5846e3d35686e285"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/M_fabric_simpler",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/M_fabric_simpler.uasset",
+      "bytes": 248187,
+      "sha256": "27fd9ba8ed89055b0ee00ff25308f0dddb447f6a6fa0d3605af819387aeb9901"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/Clothing_Default_Mask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/Clothing_Default_Mask.uasset",
+      "bytes": 65069,
+      "sha256": "d89ab8352e913a04ae015f7c0b845729932f204f4abc1bc52c5723e29c2496ea"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/WhiteSquareTexture",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/WhiteSquareTexture.uasset",
+      "bytes": 4996,
+      "sha256": "d2eb12203c45af5df62bc6237f9382e26450a0aee6fa6954848b0166c84ba4a2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/black_masks",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/black_masks.uasset",
+      "bytes": 4909,
+      "sha256": "cc35b4c24836487fd724628d99f73a6ab54b8851d723db5bf290ea7c4811143e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/color_spectrum",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/DefaultMaps/color_spectrum.uasset",
+      "bytes": 58503,
+      "sha256": "c5e383e6f5aad93f790ebff0e56bb0dc01aa1133d4f888d44c74bfc893be3a58"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_fibers_distort_h_A",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_fibers_distort_h_A.uasset",
+      "bytes": 393281,
+      "sha256": "54cd67c7091ef6659fd82e84b81aec182885c1b7696c22ea2501239256d479b8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_heather_04",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_heather_04.uasset",
+      "bytes": 3694469,
+      "sha256": "db95469c3f0bdbf9b914b2a9fcab0b7e1a0b737703f811890ca405896d13824f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_linen_rbess3s_4K",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_linen_rbess3s_4K.uasset",
+      "bytes": 3626533,
+      "sha256": "3c589acd363d9f66c6156fdd68f7ff0fdc0fdc7cde06aae4c8825f4060617d1b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_pilling_A",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_pilling_A.uasset",
+      "bytes": 3298000,
+      "sha256": "f35c2053ce12de5594cc0250d35ed3f157ab82da999577938b31016de3ee615a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_pilling_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Macros/macro_pilling_N.uasset",
+      "bytes": 14513327,
+      "sha256": "abee641ecfbd6d3cbbb9b9432507eff69670608b7cafd46c674a7c212f7ee985"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_AvgColorReplace",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_AvgColorReplace.uasset",
+      "bytes": 13945,
+      "sha256": "bbd42ea3b33720d481394b300e6ebcc7a7d5f0c1717d6e30bdf3093b911c8e7b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PowerVariation",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PowerVariation.uasset",
+      "bytes": 14118,
+      "sha256": "d1eef82a6de9e847a57c9514f24d7f099a5e5c36227b50171d1891edf814595e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PrintGraphic",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PrintGraphic.uasset",
+      "bytes": 24999,
+      "sha256": "a83dca4caa93f1d4acfb2e3459e185329e61f73c182e621235a3828d99f82be8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PrintRepeats",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MF_PrintRepeats.uasset",
+      "bytes": 41136,
+      "sha256": "2c214a02122ae7de510475536ca7c682e189058ac715c1639bbdac4ddecc62c4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MatLayerBlend_Aniso",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/MaterialFunction/MatLayerBlend_Aniso.uasset",
+      "bytes": 23022,
+      "sha256": "a81113f6e81bb7520f66bbea632043c80d53ae0ba7defa8aeafcd68d13adc63e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_knit_front_H",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_knit_front_H.uasset",
+      "bytes": 531513,
+      "sha256": "897077361abf6c93675f9d3fad0815fe9d68ae39db6af95fbfeb75be5e544814"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_knit_front_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_knit_front_N.uasset",
+      "bytes": 5287941,
+      "sha256": "ede8e2244a42d1b36eb01069231910b3646f1bdd28d0db63c02747b76e5d018a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_poplin_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_poplin_N.uasset",
+      "bytes": 1230823,
+      "sha256": "e68cf4f278637e63906a49e00a459cdc295cdd2f15d78be177528d01301e1153"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_poplin_height",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_poplin_height.uasset",
+      "bytes": 422290,
+      "sha256": "9b690bd7c6f07e5d0b93938fc2477f668887fe31cb65db30884e6600a1df1ac8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_denim_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_denim_N.uasset",
+      "bytes": 2204473,
+      "sha256": "eedcffbffe80c0c4dce893c40680e519d4d07ccd26c2c93b7eef89a1e745ebea"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_denim_diffuse",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_denim_diffuse.uasset",
+      "bytes": 210073,
+      "sha256": "0b831ac8b7f430ed576d2b58b5b268840a2cf0fa4ade83d0d1bdcf8f1a638abb"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_plain",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_plain.uasset",
+      "bytes": 350926,
+      "sha256": "2509577ff52c4ee7eccc8f1381e8f65a478b6fed646e9746424cc4876f8177e3"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_plain_normal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Micros/micro_weave_plain_normal.uasset",
+      "bytes": 2831403,
+      "sha256": "8b8ef0d226e62fcb9149bbfe33d72370984ed80a19b5a289a52ce56cb38114f8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Wrinkles/crease_a_tileable_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Wrinkles/crease_a_tileable_N.uasset",
+      "bytes": 965109,
+      "sha256": "6cc30198d52ffa7f0c9707d098550c521d74141b1e71659e1db3d7dc7c42dd07"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Wrinkles/memory_wrinkles_normal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/Wrinkles/memory_wrinkles_normal.uasset",
+      "bytes": 3574227,
+      "sha256": "c2c402d7d272d1c5f6014ac41a49e249ddbbbcb7dc5737a9c0abe7cd0da9b293"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/clothing_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/clothing_AO.uasset",
+      "bytes": 35696,
+      "sha256": "40a7978a774a886cd04f4dd2444dc63b094e831e0ad72a16e9e5d5f8404b4237"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/clothing_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/clothing_N.uasset",
+      "bytes": 6422,
+      "sha256": "2c5cad5357eb4000775bf013ad78f3828392980d1805f327d49cd6dd7a64ada7"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/upresTest/MF_NormalStrength",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/Common/Materials/Textures/Clothing/upresTest/MF_NormalStrength.uasset",
+      "bytes": 10043,
+      "sha256": "cdf7d83a327e8e61f77b9154016300aa73b00b3ce92c642454790774a611612a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeA/Textures/white",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeA/Textures/white.uasset",
+      "bytes": 18142,
+      "sha256": "5f13aeb2a5cf693e81014744c02db997581bb190afb8ffc86882b32a0d680c62"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Materials/M_DG_bodyShapeB_Shirt",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Materials/M_DG_bodyShapeB_Shirt.uasset",
+      "bytes": 45274,
+      "sha256": "09a32b05eaa46b097351f90d3b098c9ad8c4a1bb346740ac505f9a8b3700e650"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Materials/M_DG_bodyShapeB_Short",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Materials/M_DG_bodyShapeB_Short.uasset",
+      "bytes": 46078,
+      "sha256": "acce4fdd333ff5ad3d147827da0cf3e2b4827677786d9cba8ce57f3819308c03"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Meshes/bodytype2_short",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Meshes/bodytype2_short.uasset",
+      "bytes": 25002,
+      "sha256": "360f5e0bc061c847802a70edf99fd087568875cf3c926144ffaceebdf04afc8d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_AO.uasset",
+      "bytes": 2920431,
+      "sha256": "1ce0a76c9c2726a18f9fbe24e906cc99a483fd1ca7f6fb692e35d555f9fa51f4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_Mask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_Mask.uasset",
+      "bytes": 2422842,
+      "sha256": "40abfde5d6b2322bacfe0cccebaba00c4fefc5797097e914d19b806c92eb42c0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_Normal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_Normal.uasset",
+      "bytes": 7808423,
+      "sha256": "98fe45660234861278a8cebe7985c3e89039b40cf578fdbc142e4a3e70edd7ba"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_StitchMask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Shirt_StitchMask.uasset",
+      "bytes": 76849,
+      "sha256": "9642662bb642e1bd4fa79a2193963d0a1c33719b43f601435ebb349d7db71c14"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_AO",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_AO.uasset",
+      "bytes": 2782336,
+      "sha256": "42cce7a3623b14c929b5b88ce7a40335a314052363c5a869043f568347efe9d6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_Mask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_Mask.uasset",
+      "bytes": 1881141,
+      "sha256": "c23e6755e2cafe9541c046dbd159a5a913cd5747ba667bd10cdfe6474ba27eb8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_Normal",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_Normal.uasset",
+      "bytes": 6707017,
+      "sha256": "1ab98022ee077d1e00b62b1ac6b0ae31619b0ee8e0227fc84eee025dd606ea15"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_StitchMask",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeB/Textures/DG_bodyShapeB_Short_StitchMask.uasset",
+      "bytes": 74415,
+      "sha256": "4561ae2708aa3133afb56a1c0cdcfe7399c52fc1e45b1744028bab9b9fc5ab7f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Beards/Beard_S_PencilThin/Beard_S_PencilThin_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Beards/Beard_S_PencilThin/Beard_S_PencilThin_CardsAtlas_Attribute.uasset",
+      "bytes": 179692,
+      "sha256": "4b4e669138dbcefaaa79697eb444c112b8a2cb57cf49be65b7e88e85784589a2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Beards/Beard_S_PencilThin/Beard_S_PencilThin_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Beards/Beard_S_PencilThin/Beard_S_PencilThin_CardsAtlas_Tangent.uasset",
+      "bytes": 101149,
+      "sha256": "ead4cb0b135c786f2eaae7b419e945ae51d5e6b09c95112af413e3db88d0f69e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_SlightArch/Eyebrows_M_SlightArch_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_SlightArch/Eyebrows_M_SlightArch_CardsAtlas_Attribute.uasset",
+      "bytes": 3142522,
+      "sha256": "9d633d4e2a2f027bce4271c32614f7dbf4a9df696a6b7f223b46d307348a3c07"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_SlightArch/Eyebrows_M_SlightArch_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_SlightArch/Eyebrows_M_SlightArch_CardsAtlas_Tangent.uasset",
+      "bytes": 101461,
+      "sha256": "81e4d956795e36f4d5ebc370e7e8722b101caed9e13115ac4fbed07977c85982"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_Wide/Eyebrows_M_Wide_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_Wide/Eyebrows_M_Wide_CardsAtlas_Attribute.uasset",
+      "bytes": 3650141,
+      "sha256": "a9e36b80d9a5859250d449478555501c6562f763b8b4ece740188e7a53821892"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_Wide/Eyebrows_M_Wide_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Eyebrows/Eyebrows_M_Wide/Eyebrows_M_Wide_CardsAtlas_Tangent.uasset",
+      "bytes": 196419,
+      "sha256": "085b11ede6491add303d53d670a6914cc6ae3110cadc2cd05d377a79d8f9923d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_CardsAtlas_Tangent.uasset",
+      "bytes": 690188,
+      "sha256": "f7c373a4e96ac53f7bb2004833a4119f7fd2f01d1fdf01df08e4ed778d1464f4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_ColorXYDepthGroupID",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_ColorXYDepthGroupID.uasset",
+      "bytes": 541326,
+      "sha256": "ba24322086ad376a7470ad04c0af5d469fdbc143233028ff7e0cbf2ba39981da"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_TangentStrandU",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_Coil/Hair_S_Coil_TangentStrandU.uasset",
+      "bytes": 673051,
+      "sha256": "0e920cffc1966d59116fc8ac7c7e80bd3524c5e3630ed3ee12db271b9b3228ef"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_CardsAtlas_Tangent.uasset",
+      "bytes": 358651,
+      "sha256": "8e28b8fb5e71f701f711d9e03f6555225760beee1fa8ce581449225b6aab7146"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_ColorXYDepthGroupID",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_ColorXYDepthGroupID.uasset",
+      "bytes": 468446,
+      "sha256": "2533f804a9a4dc4cbf693ec7271dbae5e09c7342d50bfd6489aeab6b2b868c6f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_TangentStrandU",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Hair/Hair_S_CurlyFade/Hair_S_CurlyFade_TangentStrandU.uasset",
+      "bytes": 536820,
+      "sha256": "45b7f58f308df308c0efdd3865cafcb9f6cc2860cb1a3e15a19b2ac070561688"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_CardsAtlas_Attribute",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_CardsAtlas_Attribute.uasset",
+      "bytes": 2563983,
+      "sha256": "e7848739ea3135d92db31dbc88f6510c609ca19e3186b15877370d71f174ddbf"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_CardsAtlas_Tangent",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_CardsAtlas_Tangent.uasset",
+      "bytes": 125417,
+      "sha256": "5459878a1cf3633d429a61db17edc28e32d97013870cb879c0ef23fb3b7d840b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_ColorXYDepthGroupID",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_ColorXYDepthGroupID.uasset",
+      "bytes": 105605,
+      "sha256": "d510bc8725d46dfb324529dc236353bd0ea88e76483d2b6255012daa45c4bb0f"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_TangentCoordU",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/GroomAssets/Mustaches/Mustache_S_Curly/Mustache_S_Curly_TangentCoordU.uasset",
+      "bytes": 383046,
+      "sha256": "722f2053eb84d09bead37537c9dc05395a8f76de65abc8c9696be6c31c29043b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/HighlightsTextures/HighlightMask_contrasty",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/HighlightsTextures/HighlightMask_contrasty.uasset",
+      "bytes": 280223,
+      "sha256": "eaaccabc0ab9c202231cf9e355b12404a1318a156323a212e1475f7c705dbf12"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Optional/Grooms/HighlightsTextures/HighlightsMask_dense",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Optional/Grooms/HighlightsTextures/HighlightsMask_dense.uasset",
+      "bytes": 383418,
+      "sha256": "ad5ce7fd2c5aff50971ea2807767e38b082171ea3c38ca31193cfe9d651fae4c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/Eyelashes/T_Eyelashes_S_Sparse_Coverage",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/Eyelashes/T_Eyelashes_S_Sparse_Coverage.uasset",
+      "bytes": 431623,
+      "sha256": "889081f9107c5bf2c2ba529424ad0bc9fe2d2f454454fefb499e2a1cee7459ac"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_Black_Linear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_Black_Linear.uasset",
+      "bytes": 4671,
+      "sha256": "f0cfbe7da3dd07814d0e5105deb76a64461f1246068c876fd95a06d21de0f01a"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Eyes_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Eyes_D.uasset",
+      "bytes": 24123,
+      "sha256": "8606f0963ec57c7ce6985581e55803b190eccbcb4505cb2e67d8fc4c02e6a46c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Head_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Head_D.uasset",
+      "bytes": 1528389,
+      "sha256": "dec3a4d57f3b3e54c6f1dedbdd74f6c408ba43e5f3b6503786760dabb5bd8781"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_Gray_N",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_Gray_N.uasset",
+      "bytes": 19326,
+      "sha256": "7db6a47bd517237901d4b42129af974cc77081a5f2fe4e981b7c8d530cc5efd1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Teeth_D",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_Gray_Teeth_D.uasset",
+      "bytes": 624160,
+      "sha256": "11139da4ac79c5811e3402c30ff4688f72405dccb054be826bb37c3b2adb269d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Assembled/Common/Textures/T_TilingNoise_005",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Assembled/Common/Textures/T_TilingNoise_005.uasset",
+      "bytes": 166799,
+      "sha256": "4ef46cc9bd7d602d64e2ba89a4c418ea8005b0518f62fa7db94ff6f376169c96"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Cosmetics/BB_AthleteA/r3/BP_BB_AthleteA_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Cosmetics/BB_AthleteA/r3/BP_BB_AthleteA_Flightwear.uasset",
+      "bytes": 205387,
+      "sha256": "eaa40791dae2a55eed3e5530fb9ccb0c6ff1a8155f4b4799f83d8a085edbb01e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Cosmetics/BB_AthleteB/r3/BP_BB_AthleteB_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Cosmetics/BB_AthleteB/r3/BP_BB_AthleteB_Flightwear.uasset",
+      "bytes": 208953,
+      "sha256": "0a1b29dd5c4906a82dc488290922a4a37a3c087c8fa3047831e347917af411c9"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flight/A_BB_SeatedFlight_BB_AthleteA",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flight/A_BB_SeatedFlight_BB_AthleteA.uasset",
+      "bytes": 352011,
+      "sha256": "8f6f960633ba961b1534e4a2b4397106ef625928dc4b2083f10d4e19eeef05b2"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flight/A_BB_SeatedFlight_BB_AthleteB",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flight/A_BB_SeatedFlight_BB_AthleteB.uasset",
+      "bytes": 351882,
+      "sha256": "d073d810a093cd33ad5f1fe64e47b9e4baeb919d198c3b89c881fc267aee039b"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_DarkCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_DarkCloth.uasset",
+      "bytes": 13402,
+      "sha256": "5e103873bb735f9d41f1ecec8629378a2afe1d4f81b8cedea7334134cd70a85c"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Leather",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Leather.uasset",
+      "bytes": 9400,
+      "sha256": "c8a491d891ed3d1b5f628dd6753ee7262c7d14c95f096e1f6d7b38ad5090a368"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Sole",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Sole.uasset",
+      "bytes": 13048,
+      "sha256": "869e171c8663f8cafe06e0d78fdc0f7f4b6990223fcda524e374f9f52267d903"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_TeamCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_TeamCloth.uasset",
+      "bytes": 66707,
+      "sha256": "d04500e70aa2ea0085684d0ce3b4d68301e8f047c4c7849e5cdd2cfc38dd423d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Trim",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Copper_Trim.uasset",
+      "bytes": 10890,
+      "sha256": "567717121dd11ae02cd09108b9c0f1f5477df692dbe1aaddd4c02503d605cf11"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_DarkCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_DarkCloth.uasset",
+      "bytes": 13573,
+      "sha256": "6b42da209af7bdfe63dd0c062b61b688b90e341bb2c4691a867097e9eacae095"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Leather",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Leather.uasset",
+      "bytes": 9388,
+      "sha256": "1b0f87d6ecbc973f83b822ab13930e41e146c4df5f4385b034ddaca9456ff093"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Sole",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Sole.uasset",
+      "bytes": 13036,
+      "sha256": "81a6d5518b294e5f5ca76be55aa0e7d667f37351b1d5e4accca6594e8fad7bc4"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_TeamCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_TeamCloth.uasset",
+      "bytes": 66838,
+      "sha256": "9e228c01a0cf3ee0050d007921f40b061096e8e881ac2e9eb464d0863ab21845"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Trim",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/M_BB_AthleteA_Teal_Trim.uasset",
+      "bytes": 10729,
+      "sha256": "982de5d85a4d186012643fd123ede1ceff3b531e74014016079f66ef2e8b8c50"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/SKEL_BB_AthleteA_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/SKEL_BB_AthleteA_Flightwear.uasset",
+      "bytes": 82035,
+      "sha256": "3718263e72a7e2a3c0b7cd843b9b24e6e0fd6e59e53b6ed534b905658b8bf3e6"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteA/r3/SKM_BB_AthleteA_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteA/r3/SKM_BB_AthleteA_Flightwear.uasset",
+      "bytes": 4163716,
+      "sha256": "58fcbac503ce6612656927f8a4c62a0a7fadd298ae24f95cb3cbbdb27f0986a1"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_DarkCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_DarkCloth.uasset",
+      "bytes": 13402,
+      "sha256": "c5a4356e57cd8f71d2ca55c17985653c6ddc33081cd81390d528bcb3db5fe243"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Leather",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Leather.uasset",
+      "bytes": 9400,
+      "sha256": "e309a974b5f9cb59f6a2ef09e1c4a30ca0a3b6b4cb9247dc4a70dd0e196ddc33"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Sole",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Sole.uasset",
+      "bytes": 13048,
+      "sha256": "88ee93d569618d50e7fd03951ff212c8f724d89e2312078754c327534e5bbed0"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_TeamCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_TeamCloth.uasset",
+      "bytes": 66925,
+      "sha256": "1e4ccdd20f9dac1ddb7c5f27d34df009c907c5df1effe1b1c83cb83310dde9de"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Trim",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Copper_Trim.uasset",
+      "bytes": 10890,
+      "sha256": "ea62b63b121d7cbdcf262f76142b7623e6deafd0db1e4449393ecfdf9ab9f21d"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_DarkCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_DarkCloth.uasset",
+      "bytes": 13573,
+      "sha256": "b1b6a75aa6fd9f8a9491eeb9f6a598d81501dfb8a4a4108406be72c618ca7343"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Leather",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Leather.uasset",
+      "bytes": 9388,
+      "sha256": "8200a672f75808953135f3ea44b600b076de3d84ffbb06b42d1f82f99f3d51f7"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Sole",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Sole.uasset",
+      "bytes": 13036,
+      "sha256": "ba3152957ed2a6cd86e63e0f258691fe8eb9a9038dd5244ee511b436204973a8"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_TeamCloth",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_TeamCloth.uasset",
+      "bytes": 67035,
+      "sha256": "3a19003fd5aa289e86c1d1ff5eb37fc09f3c299955616b5d7fa2ac83ab91ca0e"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Trim",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/M_BB_AthleteB_Teal_Trim.uasset",
+      "bytes": 10729,
+      "sha256": "9b6926bb4fe2cc576957d61480ccbedcff31569a00dc04d116b40a2dc895ab19"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/SKEL_BB_AthleteB_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/SKEL_BB_AthleteB_Flightwear.uasset",
+      "bytes": 82067,
+      "sha256": "e610909e34b27b2297e013397f4dc594e6d126fbc291a7e2b4191d0bcaad8200"
+    },
+    {
+      "package": "/Game/BasketbroomHumans/Flightwear/BB_AthleteB/r3/SKM_BB_AthleteB_Flightwear",
+      "file": "DevelopmentHarness/Content/BasketbroomHumans/Flightwear/BB_AthleteB/r3/SKM_BB_AthleteB_Flightwear.uasset",
+      "bytes": 4146880,
+      "sha256": "8967947e16a5fe1f7b1d6b481feb747e7404c2a24acb71bcc204e3ae1370e12d"
+    }
+  ],
+  "roster": {
+    "file": "DevelopmentHarness/Content/BasketbroomHumans/Runtime/DA_BB_HumanRoster.uasset",
+    "bytes": 9557,
+    "sha256": "7d1f5801ad808df634e8519fe6bd020f9d3899cd2e7fe0d208ac3b23d20f630d",
+    "stage_receipt": ".local/CharacterLab/roster-receipts/20260925-131022-881920-05ddeecd-stage/result.json",
+    "alignment_status": "candidate_pending_runtime_render"
+  }
+}

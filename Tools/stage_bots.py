@@ -53,9 +53,12 @@ ROSTER = tuple((team, role, ((-1 if team == 0 else 1)*(dimensions.GOAL_PLANE_X-6
 
 
 def rider_materials(builder):
+    # Preserve the user-approved uniform identity if the old primitive rider
+    # construction is explicitly regenerated for a training fixture.
+    from stage_player_uniforms import srgb
     for name, color, roughness, metallic, glow in (
-        ("M_BB_RiderTeal", (0.035, 0.60, 0.50), 0.66, 0.03, 0.16),
-        ("M_BB_RiderCopper", (0.93, 0.29, 0.065), 0.64, 0.03, 0.16),
+        ("M_BB_RiderTeal", srgb("8ABFA3"), 0.66, 0.03, 0.16),
+        ("M_BB_RiderCopper", srgb("BB7831"), 0.64, 0.03, 0.16),
         ("M_BB_RiderFace", (0.64, 0.45, 0.27), 0.88, 0.0, 0.04),
         ("M_BB_RiderPants", (0.028, 0.044, 0.061), 0.85, 0.0, 0.02),
         ("M_BB_RiderLeather", (0.07, 0.047, 0.027), 0.71, 0.0, 0.0),

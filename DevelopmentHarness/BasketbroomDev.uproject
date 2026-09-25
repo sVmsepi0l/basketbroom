@@ -1,61 +1,123 @@
 {
-  "FileVersion": 3,
-  "EngineAssociation": "5.8",
-  "Category": "games",
-  "Description": "basketbroom standalone unreal engine 5.8 broom sport with native multiplayer.",
-  "Plugins": [
-    {
-      "Name": "PythonScriptPlugin",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Editor"
-      ]
-    },
-    {
-      "Name": "EditorScriptingUtilities",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Editor"
-      ]
-    },
-    {
-      "Name": "SequencerScripting",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Editor"
-      ]
-    },
-    {
-      "Name": "GameInputWindows",
-      "Enabled": true,
-      "SupportedTargetPlatforms": [
-        "Win64"
-      ],
-      "PlatformAllowList": [
-        "Win64"
-      ]
-    },
-    {
-      "Name": "XInputDevice",
-      "Enabled": true,
-      "SupportedTargetPlatforms": [
-        "Win64"
-      ],
-      "PlatformAllowList": [
-        "Win64"
-      ]
-    }
-  ],
-  "Modules": [
-    {
-      "Name": "BasketbroomRuntime",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
-      "Name": "BasketbroomCapture",
-      "Type": "Editor",
-      "LoadingPhase": "Default"
-    }
-  ]
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "games",
+	"Description": "basketbroom standalone unreal engine 5.8 broom sport with native multiplayer.",
+	"Modules": [
+		{
+			"Name": "BasketbroomRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "BasketbroomCapture",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "SequencerScripting",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "GameInputWindows",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			],
+			"PlatformAllowList": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "XInputDevice",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			],
+			"PlatformAllowList": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "ACLPlugin",
+			"Enabled": true
+		},
+		{
+			"Name": "ControlRig",
+			"Enabled": true
+		},
+		{
+			"Name": "ControlRigSpline",
+			"Enabled": true
+		},
+		{
+			"Name": "FullBodyIK",
+			"Enabled": true
+		},
+		{
+			"Name": "HairStrands",
+			"Enabled": true
+		},
+		{
+			"Name": "InterchangeAssets",
+			"Enabled": true
+		},
+		{
+			"Name": "LiveLink",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanSDK",
+			"Enabled": true
+		},
+		{
+			"Name": "RigLogic",
+			"Enabled": true
+		},
+		{
+			"Name": "RigVM",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationData",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "LiveLinkControlRig",
+			"Enabled": true
+		},
+		{
+			"Name": "AppleARKitFaceSupport",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"IOS",
+				"Win64",
+				"Mac",
+				"Linux",
+				"Android"
+			]
+		}
+	]
 }

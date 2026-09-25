@@ -312,7 +312,9 @@ def run(dry_run=True):
                 settings=pp.get_editor_property('settings')
                 for key,value in {'override_auto_exposure_min_brightness':True,'override_auto_exposure_max_brightness':True,'auto_exposure_min_brightness':.6,'auto_exposure_max_brightness':.6,'override_bloom_intensity':True,'bloom_intensity':.14,'override_motion_blur_amount':True,'motion_blur_amount':0.,'override_vignette_intensity':True,'vignette_intensity':.10}.items():settings.set_editor_property(key,value)
                 pp.set_editor_property('settings',settings)
-                actor(unreal.CameraActor,vid+' / environment hero',(-30000,-32000,9400),(-12,47,0))
+                # Preserve the overview framing as the arena footprint grows.
+                framing=module('_bb_env_camera_dimensions','arena_dimensions.py').FOOTPRINT_LINEAR_MULTIPLIER
+                actor(unreal.CameraActor,vid+' / environment hero',(-30000*framing,-32000*framing,9400*framing),(-12,47,0))
                 current=list(actors.get_all_level_actors());assert_protected(baseline,protected(portable_snapshot(unreal,current),False))
                 if world.get_world_settings().get_editor_property('default_game_mode')!=mode:raise RuntimeError('Variant game mode changed')
                 for a in current:

@@ -127,7 +127,11 @@ def map_file(path):
 
 
 def _receipt(pointer, kind, seen):
-    root = (ROOT / (".local/hlck/arena-expansion-stage" if kind == "expansion" else ".local/hlck/pyramid-net-stage")).resolve()
+    roots = {"resize": ".local/hlck/arena-resize-stage", "expansion": ".local/hlck/arena-expansion-stage",
+             "roof": ".local/hlck/pyramid-net-stage"}
+    if kind not in roots:
+        raise RuntimeError("Unknown native amendment kind")
+    root = (ROOT / roots[kind]).resolve()
     path = Path(pointer["report"]).resolve()
     path.relative_to(root)
     if path in seen or digest(path) != pointer["sha256"]:
@@ -136,24 +140,57 @@ def _receipt(pointer, kind, seen):
     report = json.loads(path.read_text(encoding="utf-8"))
     if report.get("status") != "staged" or not report.get("preservation_verified"):
         raise RuntimeError("Only a completed, preserved native amendment is evidence")
-    if kind == "expansion":
+    if kind == "resize":
+        planner = module("_bb_verified_resize_plan", "Tools/arena_resize_plan.py")
+        if (report.get("amendment_kind") != "arena_floor_area2_20260925"
+                or report.get("materials_preserved") is not True
+                or report.get("plan_sha256") != plan_hash(report["plan"])
+                or report["plan"].get("engine") != "hlck" or not report.get("saved_package_hashes")
+                or report.get("registration_before") != report.get("registration_after")
+                or report.get("installed_assets_modified") is not False):
+            raise RuntimeError("Resize lacks its exact plan/material/registration preservation contract")
+        planner.validate_plan(report["plan"])
+    elif kind == "expansion":
         if report.get("amendment_kind") != "arena_volume_45_percent" or report.get("materials_preserved") is not True or report.get("plan_sha256") != plan_hash(report["plan"]) or not report.get("saved_package_hashes"):
             raise RuntimeError("Expansion lacks its exact plan/material preservation contract")
     return path, report
 
 
+def verified_resize_predecessor(item, predecessor, predecessor_plan):
+    """Bridge a saved editor resave only when its complete snapshot is preserved.
+
+    A different package hash alone is never sufficient. The hash-verified
+    resize receipt must identify the exact earlier amendment, whose captured
+    actor/component/material state must still match after its planned moves.
+    """
+    if item.get("prior_expansion_map_sha256") != predecessor.get("sha256_after"):
+        raise RuntimeError("Resize does not identify its exact predecessor map")
+    if item["sha256_before"] == predecessor["sha256_after"]:
+        return False
+    if (item.get("preexisting_saved_changes_since_expansion") is not True
+            or item.get("game_mode_before") != predecessor.get("game_mode_before")):
+        raise RuntimeError("Unproved pre-resize map change")
+    prior = predecessor["actors_before"]
+    selected = match_plan(prior, predecessor_plan, "old")
+    compare_preservation(prior, item["actors_before"], selected)
+    return True
+
+
 def verified_amendment(path, original_sha256):
-    """Verify expansion -> optional earlier expansion -> immutable roof chain.
+    """Verify resize -> expansion -> immutable roof backups to the original map.
 
     Roof-only worlds return None for the original roof verifier. Every linked
     predecessor map requires its verified byte backup, never just a claimed hash.
     """
-    if path not in MAPS or not SUCCESS.is_file():
+    resize_success = ROOT / ".local/hlck/arena-resize-success.json"
+    success = resize_success if resize_success.is_file() else SUCCESS
+    if path not in MAPS or not success.is_file():
         return None
-    pointer = json.loads(SUCCESS.read_text(encoding="utf-8"))
+    pointer = json.loads(success.read_text(encoding="utf-8"))
     current_hash = digest(map_file(path))
     saved_hash = current_hash
-    kind, seen, expansions, roofs = "expansion", set(), 0, 0
+    kind = "resize" if success == resize_success else "expansion"
+    seen, expansions, roofs, resizes, resaves = set(), 0, 0, 0, 0
     latest = None
     while pointer:
         receipt_path, report = _receipt(pointer, kind, seen)
@@ -165,10 +202,16 @@ def verified_amendment(path, original_sha256):
         backup.relative_to(receipt_path.parent / "backups")
         if digest(backup) != item["sha256_before"] or not item.get("unrelated_actors_preserved"):
             raise RuntimeError("Amendment predecessor backup or preservation proof is invalid")
-        if kind == "expansion":
+        if kind in ("resize", "expansion"):
             if not item.get("actor_identity_and_components_preserved") or not item.get("saved_reloaded") or not item.get("geometry_after", {}).get("passed"):
                 raise RuntimeError("Expansion lacks saved actor/component and real collision proof")
-            expansions += 1
+            if kind == "resize":
+                selected = match_plan(item["actors_before"], report["plan"], "old")
+                compare_preservation(item["actors_before"], item["actors_after"], selected)
+                match_plan(item["actors_after"], report["plan"], "new")
+                resizes += 1
+            else:
+                expansions += 1
             if latest is None:
                 expected_files = allowed_files(report["plan"])
                 actual_files = report["saved_package_hashes"]
@@ -180,10 +223,25 @@ def verified_amendment(path, original_sha256):
             roofs += 1
         if item["sha256_before"] == original_sha256:
             latest.update(current_sha256=saved_hash, original_sha256=original_sha256,
-                          verified_expansions=expansions, verified_roof_amendments=roofs)
+                          verified_expansions=expansions, verified_roof_amendments=roofs,
+                          verified_resizes=resizes, verified_preserved_resaves=resaves)
             return latest
         current_hash = item["sha256_before"]
-        if kind == "expansion":
+        if kind == "resize":
+            pointer = report.get("prior_expansion_success")
+            if pointer is None:
+                raise RuntimeError("Resize lacks its verified expansion predecessor")
+            # Verify now, then let the normal chain loop verify its backup and
+            # earlier links. Use a detached seen set to preserve cycle checks.
+            unused, prior = _receipt(pointer, "expansion", set(seen))
+            prior_items = [row for row in prior["maps"] if row["path"] == path]
+            if len(prior_items) != 1:
+                raise RuntimeError("Resize predecessor map is ambiguous")
+            predecessor = prior_items[0]
+            resaves += int(verified_resize_predecessor(item, predecessor, prior["plan"]))
+            current_hash = predecessor["sha256_after"]
+            kind = "expansion"
+        elif kind == "expansion":
             pointer = report.get("previous_success")
             if pointer is None:
                 pointer, kind = report.get("predecessor_roof_success"), "roof"

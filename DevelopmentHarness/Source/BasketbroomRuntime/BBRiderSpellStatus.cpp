@@ -44,8 +44,10 @@ void ABBRiderCharacter::ResetSportSpellState()
 
 void ABBRiderCharacter::ClearConcealmentViews()
 {
-    for (const TWeakObjectPtr<APlayerController>& Entry : ConcealmentViewers)
-        if (APlayerController* Player = Entry.Get()) Player->HiddenActors.Remove(this);
+    for (const auto& Entry : ConcealmentViewers)
+        if (APlayerController* Player = Entry.Key.Get())
+            for (const TWeakObjectPtr<AActor>& Actor : Entry.Value)
+                if (AActor* Hidden = Actor.Get()) Player->HiddenActors.Remove(Hidden);
     ConcealmentViewers.Reset();
 }
 
@@ -101,31 +103,50 @@ void ABBRiderCharacter::RefreshSportSpellVisuals()
     if (!GetWorld()) return;
     // HiddenActors is camera-specific, so two local players can independently
     // detect the same opponent. Track only entries this spell added ourselves.
+    for (auto It=ConcealmentViewers.CreateIterator(); It; ++It)
+    {
+        APlayerController* Player=It.Key().Get();
+        if (!IsValid(Player) || !Player->IsLocalController()
+            || !IsConcealedFrom(Cast<ABBRiderCharacter>(Player->GetPawn())))
+        {
+            if (IsValid(Player))
+                for (const TWeakObjectPtr<AActor>& Actor : It.Value())
+                    if (AActor* Hidden=Actor.Get()) Player->HiddenActors.Remove(Hidden);
+            It.RemoveCurrent();
+        }
+    }
+    TArray<AActor*> CosmeticActors;
+    GetHumanCosmeticActors(CosmeticActors);
+    TArray<AActor*> HiddenActors=CosmeticActors;
+    HiddenActors.Add(this);
     for (FConstPlayerControllerIterator It=GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
         APlayerController* Player=It->Get();
         if (!IsValid(Player) || !Player->IsLocalController()) continue;
         const bool bHide=IsConcealedFrom(Cast<ABBRiderCharacter>(Player->GetPawn()));
-        if (bHide && !Player->HiddenActors.Contains(this))
-        {
-            Player->HiddenActors.Add(this);
-            ConcealmentViewers.Add(Player);
-        }
-        else if (!bHide && ConcealmentViewers.Contains(Player))
-        {
-            Player->HiddenActors.Remove(this);
-            ConcealmentViewers.Remove(Player);
-        }
+        if (bHide)
+            for (AActor* Actor : HiddenActors)
+                if (IsValid(Actor) && !Player->HiddenActors.Contains(Actor))
+                {
+                    Player->HiddenActors.Add(Actor);
+                    ConcealmentViewers.FindOrAdd(Player).Add(Actor);
+                }
     }
-    for (auto It=ConcealmentViewers.CreateIterator(); It; ++It)
-        if (!It->IsValid()) It.RemoveCurrent();
 
     const bool bTransformed=TransformationRemaining>0.f;
     if (bTransformed)
     {
         TArray<UMeshComponent*> Meshes;
         GetComponents<UMeshComponent>(Meshes);
-        for (UMeshComponent* Part : Meshes)
+        TArray<UPrimitiveComponent*> Primitives;
+        for (UMeshComponent* MeshPart : Meshes) Primitives.Add(MeshPart);
+        for (AActor* Actor : CosmeticActors)
+        {
+            TArray<UPrimitiveComponent*> Parts;
+            Actor->GetComponents(Parts);
+            Primitives.Append(Parts);
+        }
+        for (UPrimitiveComponent* Part : Primitives)
         {
             if (!IsValid(Part) || Part==TransformationVisual || Part==SportStatusRings) continue;
             if (!TransformationHiddenBaseline.Contains(Part)) TransformationHiddenBaseline.Add(Part,Part->bHiddenInGame);
@@ -135,7 +156,7 @@ void ABBRiderCharacter::RefreshSportSpellVisuals()
     else if (!TransformationHiddenBaseline.IsEmpty())
     {
         for (const auto& Entry : TransformationHiddenBaseline)
-            if (UMeshComponent* Part=Entry.Key.Get()) Part->SetHiddenInGame(Entry.Value,false);
+            if (UPrimitiveComponent* Part=Entry.Key.Get()) Part->SetHiddenInGame(Entry.Value,false);
         TransformationHiddenBaseline.Reset();
     }
     if (WandLamp)
@@ -164,7 +185,14 @@ bool ABBRiderCharacter::DevelopmentIsHiddenFrom(const ABBRiderCharacter* Observe
 #if !UE_BUILD_SHIPPING
     if (GetWorld() && GetWorld()->WorldType == EWorldType::PIE && IsValid(Observer) && Observer->GetWorld() == GetWorld())
         if (const APlayerController* Player = Cast<APlayerController>(Observer->GetController()))
-            return Player->IsLocalController() && Player->HiddenActors.Contains(this);
+        {
+            if (!Player->IsLocalController() || !Player->HiddenActors.Contains(this)) return false;
+            TArray<AActor*> Actors;
+            GetHumanCosmeticActors(Actors);
+            for (AActor* Actor : Actors)
+                if (!Player->HiddenActors.Contains(Actor)) return false;
+            return true;
+        }
 #endif
     return false;
 }

@@ -5,9 +5,9 @@
   "compatible_changelist": 17155196,
   "runtime_python": false,
   "rules_source": "Rules/alpha_rules.json",
-  "rules_sha256": "e943a43aa1c21eb9689ded93bea8b832c482d35c65d52bef8df32b239dcd0d66",
+  "rules_sha256": "8313c1a693eba6b1fec9097d0fdc2fd937cb624ed535bf4bd53411932ce9b081",
   "arena_source": "SourceArt/Arena/arena_manifest.json",
-  "arena_sha256": "6265e2920e8a86e5a7288e475746c96eedd5c8718206763ad517ba52ab5a722f",
+  "arena_sha256": "59caad29914b623b97bb092af2084d0425b9247d942b0fee923be50dfec1d792",
   "source_imports": [
     {
       "source": "SourceArt/Arena/SM_BB_LargeHoop.obj",
@@ -43,10 +43,10 @@
       "source": "SourceArt/Arena/SM_BB_ReboundNet.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_ReboundNet",
       "asset_type": "StaticMesh",
-      "sha256": "61694cc37a1c84a93c16014a892d9bae9edcc73440345057fd0d8a7d7817cd0f",
+      "sha256": "fab1e6a7f7c7d842365fbf8281f6e29778d2dcbf4226d4878004b84131b114f9",
       "validated": {
-        "vertices": 4896,
-        "polygons": 3264
+        "vertices": 6504,
+        "polygons": 4336
       }
     },
     {
@@ -83,7 +83,7 @@
       "source": "SourceArt/Arena/SM_BB_StoneDetail.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_StoneDetail",
       "asset_type": "StaticMesh",
-      "sha256": "f81c0d90746559c91e89cf26218112331dbc92fda06bb0d55501a43fc781daa4",
+      "sha256": "4cdbf6280e7c51dcf9fdaffc0a45cf904b817d340e8ec586b54aaa9b3961b0f7",
       "validated": {
         "vertices": 1968,
         "polygons": 1476
@@ -93,7 +93,7 @@
       "source": "SourceArt/Arena/SM_BB_CopperDetail.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_CopperDetail",
       "asset_type": "StaticMesh",
-      "sha256": "74d26732fccb606771b781e143bf5113b84d77fc35354c3611e0d213767903b4",
+      "sha256": "1df0a2019cc206222ebf543945be5cf43733147d2fef633bdedb911b613760ea",
       "validated": {
         "vertices": 1360,
         "polygons": 864
@@ -103,7 +103,7 @@
       "source": "SourceArt/Arena/SM_BB_IronDetail.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_IronDetail",
       "asset_type": "StaticMesh",
-      "sha256": "b8e04e111718bcf8c53bdeff2787f6ea73d6b0a16981a17ec1079d4edd80f514",
+      "sha256": "ab7a3225d6744301a8552c141288644bb2a2210b03ed2fa3ea8226301143bfb1",
       "validated": {
         "vertices": 2696,
         "polygons": 1768
@@ -113,7 +113,7 @@
       "source": "SourceArt/Arena/SM_BB_TealSeats.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_TealSeats",
       "asset_type": "StaticMesh",
-      "sha256": "57d3fee920d85fd04aa28a6a02d7bb559873a12d3eaff73b7977c7ba07153e33",
+      "sha256": "282334697d5c4ba9bc33c01a9188db572732b818158b80f6123ef333330b96f8",
       "validated": {
         "vertices": 5600,
         "polygons": 4200
@@ -123,7 +123,7 @@
       "source": "SourceArt/Arena/SM_BB_CopperSeats.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_CopperSeats",
       "asset_type": "StaticMesh",
-      "sha256": "8aa69df97044f93cc9371b5208769376492e0b7fe0af09ddfc4d57f7d26a2a86",
+      "sha256": "3d0977aa491930d27488bf14de44d3317a91bdba7ece18c0d9f5e49f51358782",
       "validated": {
         "vertices": 6720,
         "polygons": 5040
@@ -153,17 +153,17 @@
       "source": "SourceArt/Arena/SM_BB_PyramidNet.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_PyramidNet",
       "asset_type": "StaticMesh",
-      "sha256": "10af76cb1bad61e9b87dce25335e5bb51faac9a162412f123edf055cf2826688",
+      "sha256": "f6053d95ff43098dd4ea4b79cc1dea96a5852276bd8673a2d2ec2a63aac6eec7",
       "validated": {
-        "vertices": 6384,
-        "polygons": 4256
+        "vertices": 9000,
+        "polygons": 6000
       }
     },
     {
       "source": "SourceArt/Arena/SM_BB_PyramidRibs.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_PyramidRibs",
       "asset_type": "StaticMesh",
-      "sha256": "66b07fdcd8e22c383244156a234f6870583805fe127bf3da888caa4b1ffbe9a6",
+      "sha256": "9a3af61d6a52cc10fd76ad0785f1931c46c2e2a5c7811fb6735d9c6a7bfe98a2",
       "validated": {
         "vertices": 224,
         "polygons": 136
@@ -173,7 +173,7 @@
       "source": "SourceArt/Arena/SM_BB_PyramidCopper.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_PyramidCopper",
       "asset_type": "StaticMesh",
-      "sha256": "2b1b4bfd07d1513b6333d22b5eec03a8d28700e7d81439ced504da38e2763a09",
+      "sha256": "ef89b026de9bd9f5c06a518d84a763ab426f5417a1e5e51e790bb5867cee2f50",
       "validated": {
         "vertices": 326,
         "polygons": 200
@@ -183,7 +183,7 @@
       "source": "SourceArt/Arena/SM_BB_PyramidCollision.obj",
       "destination": "/Basketbroom/Art/Meshes/SM_BB_PyramidCollision",
       "asset_type": "StaticMesh",
-      "sha256": "1e7b3c05cc729ebcab86b64920d45594934c695797ad7d578a5956c98f4a6d14",
+      "sha256": "ae7df3abd2c556550b03f30a3cf3de02b34b912c7b45ef8221754e88592cbabe",
       "validated": {
         "vertices": 5,
         "polygons": 4
@@ -269,7 +269,7 @@
     "Own-goal credit, simultaneous event grouping, and exact-tie capture tiebreak",
     "Donnybrook participation, reset, and final point credit",
     "Removal duration and ejection replacement timing",
-    "Longer/wider closed pyramid net: length doubled and width +one third, height unchanged; visibility, chase room and rebound tuning"
+    "Enclosure floor area doubled from September 16 at unchanged height; traversal time, visibility, chase room and rebound tuning"
   ],
   "network_status": "No official HL multiplayer capability established; external frameworks untested"
 }

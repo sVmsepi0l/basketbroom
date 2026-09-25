@@ -40,8 +40,8 @@ def inspect():
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not level.is_in_play_in_editor() or world is None or not re.fullmatch(
-            r"/Basketbroom/Maps/UEDPIE_\d+_BB_Regulation\.BB_Regulation", world.get_path_name()):
-        raise RuntimeError("Start native BB_Regulation PIE before this read-only probe")
+            r"/Basketbroom/Maps/UEDPIE_\d+_(BB_Regulation|BB_Redrock|BB_Redwoods)\.\1", world.get_path_name()):
+        raise RuntimeError("Start an owned native regulation arena PIE before this read-only probe")
     rider_class = unreal.load_class(None, "/Script/BasketbroomRuntime.BBRiderCharacter")
     actors = unreal.GameplayStatics.get_all_actors_of_class(world, rider_class)
     pawn = unreal.GameplayStatics.get_player_pawn(world, 0)

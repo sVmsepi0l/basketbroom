@@ -3,9 +3,11 @@
 
 #include "BBMatchState.h"
 #include "BBSpellCatalog.h"
+#include "BBPauseMenu.h"
 #include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/ChildActorComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -132,6 +134,9 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
     bReplicates = true;
+    // The enlarged pitch exceeds Character's default network cull distance.
+    // Every client needs all sixteen competitors, including the opposite end.
+    bAlwaysRelevant = true;
     SetReplicateMovement(true);
     SetNetUpdateFrequency(40.0f);
     SetMinNetUpdateFrequency(15.0f);
@@ -168,6 +173,13 @@ ABBRiderCharacter::ABBRiderCharacter(const FObjectInitializer& ObjectInitializer
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetMesh()->SetGenerateOverlapEvents(false);
     GetMesh()->SetCanEverAffectNavigation(false);
+
+    // Empty until a verified assembly is explicitly configured. Attaching here
+    // preserves CharacterMovement's existing remote-proxy mesh smoothing.
+    HumanCosmetic = CreateDefaultSubobject<UChildActorComponent>(TEXT("HumanRiderCosmetic"));
+    HumanCosmetic->SetupAttachment(GetMesh());
+    HumanCosmetic->SetChildActorOwnerOnCreation(true);
+    HumanCosmetic->SetIsReplicated(false);
 
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> RiderMesh(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
     static ConstructorHelpers::FObjectFinder<UAnimSequence> FlightPose(TEXT("/Basketbroom/Art/Characters/A_BB_SeatedFlight_Quinn.A_BB_SeatedFlight_Quinn"));
@@ -478,10 +490,27 @@ void ABBRiderCharacter::BeginPlay()
     RefreshUniform();
     RefreshHurley();
     InitializeSportSpellVisuals();
+    InitializeBroomTrails();
     ShieldMaterial = ShieldVisual->CreateDynamicMaterialInstance(0);
     if (ShieldMaterial) ShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.18f, .58f, 1.f));
     CockpitShieldMaterial = CockpitShieldVisual->CreateDynamicMaterialInstance(0);
     if (CockpitShieldMaterial) CockpitShieldMaterial->SetVectorParameterValue(TEXT("Tint"), FLinearColor(.10f, .40f, .72f));
+    // Resolve the optional presentation asset once per rider. SoftObjectPtr
+    // reuses Unreal's loaded object cache; LoadedHumanRoster keeps that shared
+    // object alive. Explicit variants supplied by a class or test take priority.
+    if (GetNetMode() != NM_DedicatedServer && HumanRiderVariants.IsEmpty() && !HumanRoster.IsNull())
+    {
+        LoadedHumanRoster = HumanRoster.LoadSynchronous();
+    }
+    if (const UBBHumanRiderRoster* Roster = LoadedHumanRoster.Get())
+    {
+        // Super::BeginPlay has completed, so Configure performs the refresh.
+        ConfigureHumanCosmetics(Roster->Variants);
+    }
+    else
+    {
+        RefreshHumanCosmetics();
+    }
     RefreshSpellVisuals();
 }
 
@@ -491,6 +520,7 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ABBRiderCharacter, TeamIndex);
     DOREPLIFETIME(ABBRiderCharacter, Position);
     DOREPLIFETIME(ABBRiderCharacter, RosterIndex);
+    DOREPLIFETIME(ABBRiderCharacter, AppearanceIdentity);
     DOREPLIFETIME(ABBRiderCharacter, bInteractHeld);
     DOREPLIFETIME(ABBRiderCharacter, StunRemaining);
     DOREPLIFETIME(ABBRiderCharacter, SpellCooldownRemaining);
@@ -507,11 +537,24 @@ void ABBRiderCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ABBRiderCharacter, FlightBoostCharge);
     DOREPLIFETIME(ABBRiderCharacter, FlightSuperRemaining);
     DOREPLIFETIME(ABBRiderCharacter, FlightAccelerationScale);
+    DOREPLIFETIME(ABBRiderCharacter, bUseCustomBroomTrailColor);
+    DOREPLIFETIME(ABBRiderCharacter, CustomBroomTrailColor);
 }
 
 void ABBRiderCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    // Roster admission occurs after SpawnActor/BeginPlay. Never recalculate the
+    // identity when a role or team change subsequently exchanges roster slots.
+    if (HasAuthority() && AppearanceIdentity == INDEX_NONE && RosterIndex >= 0)
+    {
+        AppearanceIdentity = RosterIndex;
+        ForceNetUpdate();
+    }
+    if (LastHumanAppearance != AppearanceIdentity) RefreshHumanCosmetics();
+    if (bHumanRiderEnabled && (!HumanCosmetic || !ActiveHumanActor.IsValid()
+        || HumanCosmetic->GetChildActor() != ActiveHumanActor.Get()))
+        ResetHumanCosmetics();
     TickFlightEnergy(DeltaSeconds);
     const ABBMatchState* Match = GetWorld()->GetGameState<ABBMatchState>();
     const bool bPenaltyKeeperMovement = Match && Match->bPenaltyShotActive && Match->CanMoveDuringPenalty(this);
@@ -530,10 +573,18 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     RefreshHurley();
     RefreshSpellVisuals();
 
+    TickBroomTrails(DeltaSeconds);
+
     APlayerController* Player = Cast<APlayerController>(Controller);
     if (!Player || !Player->IsLocalController())
     {
+        BroomTrailPreferenceController.Reset();
         return;
+    }
+    if (BroomTrailPreferenceController.Get() != Player)
+    {
+        BroomTrailPreferenceController = Player;
+        BBPauseMenu::LoadBroomTrailPreference(this);
     }
     TickControllerInput(Player);
     // Normal-client delivery: HUD marks its draw before a later Tick replies.
@@ -566,6 +617,15 @@ void ABBRiderCharacter::Tick(float DeltaSeconds)
     if (SpellFeedbackRemaining <= 0.f && ActiveImpedimentAttackId == 0)
         ShowNextSpellNotice();
 #if !UE_BUILD_SHIPPING
+    if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentTrailColors.IsEmpty())
+    {
+        const TArray<FDevelopmentTrailColor> Colors = MoveTemp(PendingDevelopmentTrailColors);
+        for (const FDevelopmentTrailColor& Input : Colors)
+        {
+            if (Input.bRawRPC) ServerSetBroomTrailColor(Input.bCustom, Input.Color);
+            else SetBroomTrailColor(Input.bCustom, Input.Color);
+        }
+    }
     if (GetWorld()->WorldType == EWorldType::PIE && !PendingDevelopmentInputs.IsEmpty())
     {
         // Python reflected calls hold FEditorScriptExecutionGuard, which makes
@@ -844,6 +904,7 @@ FVector ABBRiderCharacter::GetCarryLocation() const
 
 void ABBRiderCharacter::RefreshUniform()
 {
+    RefreshHumanUniform();
     if (bSkeletalRiderEnabled)
     {
         const TArray<TObjectPtr<UMaterialInterface>>& Materials = TeamIndex == 0 ? SkeletalTealMaterials : SkeletalCopperMaterials;
@@ -865,6 +926,181 @@ void ABBRiderCharacter::RefreshUniform()
 }
 
 void ABBRiderCharacter::OnRep_TeamIndex() { RefreshUniform(); }
+
+void ABBRiderCharacter::OnRep_AppearanceIdentity()
+{
+    if (HasActorBegunPlay()) RefreshHumanCosmetics();
+}
+
+bool ABBRiderCharacter::ConfigureHumanCosmetics(const TArray<FBBHumanRiderVariant>& Variants)
+{
+    HumanRiderVariants = Variants;
+    if (HasActorBegunPlay())
+    {
+        RefreshHumanCosmetics();
+        RefreshSportSpellVisuals();
+    }
+    return bHumanRiderEnabled;
+}
+
+void ABBRiderCharacter::GetHumanCosmeticActors(TArray<AActor*>& Actors) const
+{
+    if (!HumanCosmetic) return;
+    if (AActor* Child = HumanCosmetic->GetChildActor(); IsValid(Child))
+    {
+        Actors.Add(Child);
+        Child->GetAllChildActors(Actors, true);
+    }
+}
+
+void ABBRiderCharacter::ResetHumanCosmetics()
+{
+    if (HumanCosmetic && HumanCosmetic->GetChildActor())
+    {
+        // Remove only our per-view concealment entries before destroying child
+        // actors. The next spell refresh reinstates concealment on the fallback.
+        ClearConcealmentViews();
+        HumanCosmetic->SetChildActorClass(nullptr);
+    }
+    if (bHumanRiderEnabled) GetMesh()->SetVisibility(bFallbackBodyWasVisible, false);
+    bHumanRiderEnabled = false;
+    ActiveHumanActor.Reset();
+    ActiveHumanVariant = INDEX_NONE;
+    HumanGarmentSlots.Reset();
+}
+
+void ABBRiderCharacter::RefreshHumanCosmetics()
+{
+    ResetHumanCosmetics();
+    LastHumanAppearance = AppearanceIdentity;
+    // Keeping the validated stock body available makes every failed contract a
+    // visual fallback, never a missing player or a change in gameplay collision.
+    if (!bSkeletalRiderEnabled || !HumanCosmetic || AppearanceIdentity < 0
+        || HumanRiderVariants.IsEmpty() || GetNetMode() == NM_DedicatedServer) return;
+    const int32 VariantIndex = AppearanceIdentity % HumanRiderVariants.Num();
+    const FBBHumanRiderVariant& Variant = HumanRiderVariants[VariantIndex];
+    UClass* ActorClass = Variant.ActorClass.Get();
+    if (!ActorClass || ActorClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists)
+        || ActorClass->IsChildOf(APawn::StaticClass()) || ActorClass->IsChildOf(AController::StaticClass())
+        || ActorClass->GetDefaultObject<AActor>()->GetIsReplicated()
+        || Variant.BodyComponentName.IsNone() || !Variant.FlightAnimation || Variant.Garments.IsEmpty()
+        || Variant.RelativeTransform.ContainsNaN() || Variant.RelativeTransform.GetScale3D().GetMin() <= 0.f)
+        return;
+
+    HumanCosmetic->SetRelativeTransform(Variant.RelativeTransform);
+    HumanCosmetic->SetChildActorClass(ActorClass);
+    AActor* Child = HumanCosmetic->GetChildActor();
+    if (!IsValid(Child)) { ResetHumanCosmetics(); return; }
+    Child->SetActorHiddenInGame(true);
+    TArray<AActor*> Actors;
+    GetHumanCosmeticActors(Actors);
+    TArray<UMeshComponent*> Meshes;
+    for (AActor* Actor : Actors)
+    {
+        if (!IsValid(Actor) || Actor->IsA<APawn>() || Actor->IsA<AController>() || Actor->GetIsReplicated())
+        {
+            ResetHumanCosmetics();
+            return;
+        }
+        TArray<UMeshComponent*> Parts;
+        Actor->GetComponents(Parts);
+        Meshes.Append(Parts);
+    }
+    // Component names are verified against the assembled output, never assumed
+    // from an editor template. Reject ambiguity instead of choosing the first.
+    auto FindMesh = [&Meshes](FName Name) -> UMeshComponent*
+    {
+        UMeshComponent* Found = nullptr;
+        for (UMeshComponent* Mesh : Meshes)
+            if (IsValid(Mesh) && Mesh->GetFName() == Name)
+            {
+                if (Found) return nullptr;
+                Found = Mesh;
+            }
+        return Found;
+    };
+    USkeletalMeshComponent* Body = Cast<USkeletalMeshComponent>(FindMesh(Variant.BodyComponentName));
+    if (!Body || !Body->GetSkeletalMeshAsset() || !Body->GetSkeletalMeshAsset()->GetSkeleton()
+        || Body->GetSkeletalMeshAsset()->GetSkeleton() != Variant.FlightAnimation->GetSkeleton())
+    {
+        ResetHumanCosmetics();
+        return;
+    }
+    for (int32 BindingIndex = 0; BindingIndex < Variant.Garments.Num(); ++BindingIndex)
+    {
+        const FBBHumanGarmentBinding& Binding = Variant.Garments[BindingIndex];
+        UMeshComponent* Garment = FindMesh(Binding.ComponentName);
+        const int32 Slot = Garment && !Binding.MaterialSlotName.IsNone()
+            ? (Binding.MaterialSlotIndex >= 0 ? Binding.MaterialSlotIndex
+                : Garment->GetMaterialIndex(Binding.MaterialSlotName)) : INDEX_NONE;
+        int32 MatchingSlots = 0;
+        bool bExactNamedIndex = false;
+        if (Garment)
+        {
+            const TArray<FName> Names = Garment->GetMaterialSlotNames();
+            bExactNamedIndex = Names.IsValidIndex(Slot) && Names[Slot] == Binding.MaterialSlotName;
+            for (FName Name : Names)
+                if (Name == Binding.MaterialSlotName) ++MatchingSlots;
+        }
+        const bool bDuplicate = HumanGarmentSlots.ContainsByPredicate([Garment, Slot](const FHumanGarmentSlot& Existing)
+            { return Existing.Component.Get() == Garment && Existing.MaterialIndex == Slot; });
+        if (!Garment || Garment == Body || Slot < 0 || Slot >= Garment->GetNumMaterials() || !bExactNamedIndex
+            || (Binding.MaterialSlotIndex == INDEX_NONE && MatchingSlots != 1) || Binding.MaterialSlotIndex < INDEX_NONE
+            || !Binding.TealMaterial || !Binding.CopperMaterial || bDuplicate)
+        {
+            ResetHumanCosmetics();
+            return;
+        }
+        HumanGarmentSlots.Add({Garment, Slot, BindingIndex});
+    }
+    for (AActor* Actor : Actors)
+    {
+        Actor->SetOwner(this);
+        Actor->SetReplicates(false);
+        Actor->SetReplicateMovement(false);
+        Actor->SetActorEnableCollision(false);
+        TArray<UActorComponent*> Components;
+        Actor->GetComponents(Components);
+        for (UActorComponent* Component : Components) Component->SetIsReplicated(false);
+        TArray<UPrimitiveComponent*> Primitives;
+        Actor->GetComponents(Primitives);
+        for (UPrimitiveComponent* Part : Primitives)
+        {
+            Part->SetSimulatePhysics(false);
+            Part->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+            Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Part->SetGenerateOverlapEvents(false);
+            Part->SetCanEverAffectNavigation(false);
+            Part->SetOwnerNoSee(true);
+            Part->SetOnlyOwnerSee(false);
+        }
+    }
+    // Drive only the verified body. Face, groom, cloth and postprocess links
+    // remain exactly as authored by the assembly pipeline.
+    Body->PlayAnimation(Variant.FlightAnimation, true);
+    Body->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+    Body->bEnableUpdateRateOptimizations = false;
+    ActiveHumanVariant = VariantIndex;
+    ActiveHumanActor = Child;
+    bFallbackBodyWasVisible = GetMesh()->IsVisible();
+    GetMesh()->SetVisibility(false, false); // Equipment children stay visible.
+    bHumanRiderEnabled = true;
+    RefreshHumanUniform();
+    Child->SetActorHiddenInGame(false);
+    RefreshSportSpellVisuals();
+}
+
+void ABBRiderCharacter::RefreshHumanUniform()
+{
+    if (!bHumanRiderEnabled || !HumanRiderVariants.IsValidIndex(ActiveHumanVariant)) return;
+    const FBBHumanRiderVariant& Variant = HumanRiderVariants[ActiveHumanVariant];
+    for (const FHumanGarmentSlot& Slot : HumanGarmentSlots)
+        if (UMeshComponent* Garment = Slot.Component.Get(); Garment && Variant.Garments.IsValidIndex(Slot.BindingIndex))
+        {
+            const FBBHumanGarmentBinding& Binding = Variant.Garments[Slot.BindingIndex];
+            Garment->SetMaterial(Slot.MaterialIndex, TeamIndex == 0 ? Binding.TealMaterial.Get() : Binding.CopperMaterial.Get());
+        }
+}
 
 void ABBRiderCharacter::NotifySpellResult(const FString& Message, uint64 ImpedimentAttackId)
 {
@@ -995,6 +1231,7 @@ void ABBRiderCharacter::ResetLocalInput()
     bLocalInteractHeld = false;
     bDevelopmentInteractHeld = false;
     PendingDevelopmentInputs.Reset();
+    PendingDevelopmentTrailColors.Reset();
     bShowRoster = false;
     bShowSpellbook = false;
     PendingSpellNotices.Reset();
@@ -1007,6 +1244,7 @@ void ABBRiderCharacter::ResetLocalInput()
 
 void ABBRiderCharacter::UnPossessed()
 {
+    BroomTrailPreferenceController.Reset();
     if (HasAuthority())
     {
         bInteractHeld = false;
@@ -1019,6 +1257,7 @@ void ABBRiderCharacter::UnPossessed()
 
 void ABBRiderCharacter::PawnClientRestart()
 {
+    BroomTrailPreferenceController.Reset();
     ResetLocalInput();
     Super::PawnClientRestart();
 }

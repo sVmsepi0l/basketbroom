@@ -90,6 +90,10 @@ def net_mode_restore_actions(provenance):
 
 
 class NativeNetworkTests:
+    # Derived cosmetic suites can observe a second remote client while the
+    # established general network suite retains its two-player fixture.
+    player_count = 2
+
     def __init__(self):
         self.started = time.monotonic()
         self.phase = "preflight"
@@ -183,7 +187,7 @@ class NativeNetworkTests:
         settings_class = unreal.load_class(None, "/Script/UnrealEd.LevelEditorPlaySettings")
         self.require(settings_class is not None, "LevelEditorPlaySettings is not reflected")
         self.settings = unreal.get_default_object(settings_class)
-        wanted = {"RunUnderOneProcess": True, "PlayNumberOfClients": 2, "bLaunchSeparateServer": False}
+        wanted = {"RunUnderOneProcess": True, "PlayNumberOfClients": self.player_count, "bLaunchSeparateServer": False}
         if ARGS.get("settings_already_configured", False):
             # UE5.8 exposes these config/EditAnywhere settings but may omit
             # PlayNetMode's Python enum wrapper. The declared external source
@@ -240,7 +244,7 @@ class NativeNetworkTests:
         balls = self.actors(world, "BBBall")
         if len(matches) != 1 or len(riders) != 16 or len(locals_) != 1 or len(balls) != 7:
             return None
-        if sum(rider.is_player_controlled() for rider in riders) != 2:
+        if sum(rider.is_player_controlled() for rider in riders) != self.player_count:
             return None
         return {"world": world, "match": matches[0], "pawn": locals_[0], "riders": riders,
                 "balls": {int(prop(ball, "BallIndex")): ball for ball in balls}}
@@ -497,12 +501,12 @@ class NativeNetworkTests:
                 raise TimeoutError("Local network suite exceeded its wall-time limit")
             if self.phase == "waiting_for_two_worlds":
                 if not self.setup() and elapsed > 60:
-                    self.finish("failed", "Two complete connected native PIE worlds did not appear within 60 seconds.")
+                    self.finish("failed", "%d complete connected native PIE worlds did not appear within 60 seconds." % self.player_count)
                 elif self.phase == "waiting_for_two_worlds" and elapsed - self.last_startup_report > 5:
                     self.last_startup_report = elapsed
                     self.write("running")
                 return
-            if len(self.worlds()) != 2 or not self.level.is_in_play_in_editor():
+            if len(self.worlds()) != self.player_count or not self.level.is_in_play_in_editor():
                 raise RuntimeError("A network PIE world ended before testing completed")
             if self.waiting:
                 wait = self.waiting
