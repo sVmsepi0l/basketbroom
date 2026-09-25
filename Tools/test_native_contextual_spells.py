@@ -199,8 +199,13 @@ class ContextualSpellTests(spells.NativeSpellTests):
         yield self.wait_until(lambda:float(prop(self.guest,'Vitality'))>45,timeout=12)
         self.require(float(prop(self.guest,'Vitality'))>45,'Physical impact measurement needs a recovered target, not knockout recovery')
         before=self.charge();health=float(prop(self.guest,'Vitality'));start=xyz(prop(self.workshop,'ConstructPosition'))
-        self.request(6,30);yield self.wait_until(lambda:bool(prop(self.workshop,'bInFlight')),timeout=.5)
-        self.require(prop(self.workshop,'bInFlight'),'A real throw must be in flight before stopping it')
+        self.request(6,30)
+        # Cast acceptance can set bInFlight before the workshop's first Tick.
+        # Observe swept movement before testing a mid-flight stoppage.
+        yield self.wait_until(lambda:bool(prop(self.workshop,'bInFlight'))
+            and xyz(prop(self.workshop,'ConstructPosition'))!=start,timeout=.5)
+        self.require(prop(self.workshop,'bInFlight') and xyz(prop(self.workshop,'ConstructPosition'))!=start,
+            'A real throw must have moved in flight before stopping it')
         intermediate=xyz(prop(self.workshop,'ConstructPosition'));self.request(5)
         yield self.wait_until(lambda:not prop(self.match,'bLive'),timeout=.5)
         frozen=self.state();yield self.wait(.35);still=self.state();self.request(4)
